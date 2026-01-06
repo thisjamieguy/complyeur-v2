@@ -1,0 +1,1 @@
+pnpm exec auto-changelog -p && git add CHANGELOG.md

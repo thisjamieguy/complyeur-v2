@@ -1,0 +1,51 @@
+# ComplyEUR v2.0 - Project Context
+
+## What This App Does
+B2B SaaS that tracks employee travel compliance with EU Schengen 90/180-day visa rules.
+Target users: HR managers, compliance officers at companies with non-EU employees traveling to Europe.
+
+## Tech Stack
+- Next.js 14 (App Router)
+- TypeScript (strict)
+- Supabase (PostgreSQL + Auth + RLS)
+- Tailwind CSS + Shadcn/UI
+- Deployed on Vercel
+
+## Database Schema (Supabase)
+Tables: companies, profiles, employees, trips, alerts, company_settings, audit_log, schengen_countries
+All tables have RLS enabled. All queries filter by company_id.
+
+## Multi-Tenancy
+- Every user belongs to a company
+- Row Level Security (RLS) isolates data by company_id
+- Never expose data across companies
+
+## Design Standards
+- 8px spacing system
+- 12px border radius everywhere
+- Neutral color palette (from Shadcn)
+- Mobile-first responsive design
+- Loading states for all async actions
+- Toast notifications via Sonner
+
+## Code Standards
+- Use server actions for mutations (not API routes)
+- Use Supabase client from lib/supabase/client.ts (browser)
+- Use Supabase client from lib/supabase/server.ts (server components)
+- All forms need loading + error states
+- TypeScript strict mode - no `any` types
+
+## Key Business Logic
+- 90/180 rule: Max 90 days in Schengen area within any rolling 180-day window
+- Entry and exit dates are INCLUSIVE (both count as days)
+- Ireland (IE) and Cyprus (CY) are NOT Schengen
+- Risk levels: Green (≥30 days remaining), Amber (10-29), Red (<10)
+
+## File Organization
+- app/(auth)/ - Login, signup, password reset
+- app/(dashboard)/ - Protected app pages
+- app/api/ - API routes (minimal use)
+- components/ui/ - Shadcn components
+- components/shared/ - Reusable components
+- lib/supabase/ - Supabase clients
+- types/ - TypeScript types
