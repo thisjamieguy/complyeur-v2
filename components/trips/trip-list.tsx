@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MoreHorizontal, Pencil, Trash2, ArrowUpDown } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, ArrowUpDown, UserMinus } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -20,25 +20,28 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { EditTripModal } from './edit-trip-modal'
 import { DeleteTripDialog } from './delete-trip-dialog'
+import { ReassignTripDialog } from './reassign-trip-dialog'
 import {
   getCountryName,
   isSchengenCountry,
   isNonSchengenEU,
 } from '@/lib/constants/schengen-countries'
-import type { Trip } from '@/types/database'
+import type { Trip, Employee } from '@/types/database'
 
 interface TripListProps {
   trips: Trip[]
   employeeId: string
   employeeName: string
+  employees?: Pick<Employee, 'id' | 'name'>[]
 }
 
 type SortField = 'entry_date' | 'travel_days'
 type SortDirection = 'asc' | 'desc'
 
-export function TripList({ trips, employeeId, employeeName }: TripListProps) {
+export function TripList({ trips, employeeId, employeeName, employees = [] }: TripListProps) {
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null)
   const [deletingTrip, setDeletingTrip] = useState<Trip | null>(null)
+  const [reassigningTrip, setReassigningTrip] = useState<Trip | null>(null)
   const [sortField, setSortField] = useState<SortField>('entry_date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
 
@@ -81,7 +84,11 @@ export function TripList({ trips, employeeId, employeeName }: TripListProps) {
     })
   }
 
-  function getCountryBadge(code: string) {
+  function getCountryBadge(code: string, isPrivate: boolean) {
+    // Don't show Schengen badge for private trips
+    if (isPrivate) {
+      return null
+    }
     if (isSchengenCountry(code)) {
       return (
         <Badge variant="default" className="ml-2 bg-blue-600 text-xs">
@@ -101,6 +108,13 @@ export function TripList({ trips, employeeId, employeeName }: TripListProps) {
         Non-Schengen
       </Badge>
     )
+  }
+
+  function displayCountry(trip: Trip): string {
+    if (trip.is_private) {
+      return 'XX (Private)'
+    }
+    return getCountryName(trip.country)
   }
 
   return (
@@ -143,13 +157,18 @@ export function TripList({ trips, employeeId, employeeName }: TripListProps) {
                 className={trip.ghosted ? 'opacity-50' : ''}
               >
                 <TableCell>
-                  <div className="flex items-center">
+                  <div className="flex items-center flex-wrap gap-1">
                     <span className="font-medium">
-                      {getCountryName(trip.country)}
+                      {displayCountry(trip)}
                     </span>
-                    {getCountryBadge(trip.country)}
+                    {getCountryBadge(trip.country, trip.is_private)}
+                    {trip.is_private && (
+                      <Badge variant="secondary" className="text-xs">
+                        Private
+                      </Badge>
+                    )}
                     {trip.ghosted && (
-                      <Badge variant="outline" className="ml-2 text-xs">
+                      <Badge variant="outline" className="text-xs">
                         Excluded
                       </Badge>
                     )}
@@ -181,6 +200,12 @@ export function TripList({ trips, employeeId, employeeName }: TripListProps) {
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
+                      {employees.length > 1 && (
+                        <DropdownMenuItem onClick={() => setReassigningTrip(trip)}>
+                          <UserMinus className="mr-2 h-4 w-4" />
+                          Reassign
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={() => setDeletingTrip(trip)}
                         className="text-red-600 focus:text-red-600"
@@ -213,6 +238,17 @@ export function TripList({ trips, employeeId, employeeName }: TripListProps) {
           employeeId={employeeId}
           open={!!deletingTrip}
           onOpenChange={(open) => !open && setDeletingTrip(null)}
+        />
+      )}
+
+      {reassigningTrip && (
+        <ReassignTripDialog
+          open={!!reassigningTrip}
+          onOpenChange={(open) => !open && setReassigningTrip(null)}
+          trip={reassigningTrip}
+          currentEmployeeId={employeeId}
+          currentEmployeeName={employeeName}
+          employees={employees}
         />
       )}
     </>
