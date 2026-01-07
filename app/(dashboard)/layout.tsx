@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { logout } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/button'
@@ -17,15 +18,42 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-4 py-3">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200 px-4 py-3">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-semibold text-gray-900">ComplyEUR</h1>
-            <span className="text-sm text-gray-500">Dashboard</span>
+          <div className="flex items-center space-x-6">
+            <Link href="/dashboard">
+              <h1 className="text-xl font-semibold text-slate-900">ComplyEUR</h1>
+            </Link>
+            <nav className="flex items-center space-x-4">
+              <Link
+                href="/dashboard"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/calendar"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Calendar
+              </Link>
+              <Link
+                href="/future-job-alerts"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Future Alerts
+              </Link>
+              <Link
+                href="/trip-forecast"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Trip Forecast
+              </Link>
+            </nav>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">{user.email}</span>
+            <span className="text-sm text-slate-600">{user.email}</span>
             <form action={logout}>
               <Button variant="outline" size="sm" type="submit">
                 Sign out
@@ -34,7 +62,7 @@ export default async function DashboardLayout({
           </div>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         {children}
       </main>
     </div>
