@@ -1,12 +1,13 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Calendar } from 'lucide-react'
-import { getEmployeeById, getTripsByEmployeeId } from '@/lib/db'
+import { getEmployeeById, getTripsByEmployeeId, getEmployees } from '@/lib/db'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmployeeDetailActions } from './employee-detail-actions'
 import { AddTripModal } from '@/components/trips/add-trip-modal'
+import { BulkAddTripsModal } from '@/components/trips/bulk-add-trips-modal'
 import { TripList } from '@/components/trips/trip-list'
 import { isSchengenCountry } from '@/lib/constants/schengen-countries'
 
@@ -34,14 +35,18 @@ function formatDateTime(dateString: string): string {
 
 export default async function EmployeeDetailPage({ params }: EmployeeDetailPageProps) {
   const { id } = await params
-  const [employee, trips] = await Promise.all([
+  const [employee, trips, allEmployees] = await Promise.all([
     getEmployeeById(id),
     getTripsByEmployeeId(id),
+    getEmployees(),
   ])
 
   if (!employee) {
     notFound()
   }
+
+  // Simplified employee list for reassignment (just id and name)
+  const employeesForReassign = allEmployees.map(e => ({ id: e.id, name: e.name }))
 
   // Calculate Schengen days used (only non-ghosted Schengen trips)
   const schengenTrips = trips.filter(
@@ -78,6 +83,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
         </div>
         <div className="flex items-center gap-3">
           <AddTripModal employeeId={employee.id} employeeName={employee.name} />
+          <BulkAddTripsModal employeeId={employee.id} employeeName={employee.name} />
           <EmployeeDetailActions employee={employee} />
         </div>
       </div>
@@ -172,6 +178,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
             trips={trips}
             employeeId={employee.id}
             employeeName={employee.name}
+            employees={employeesForReassign}
           />
         </CardContent>
       </Card>
