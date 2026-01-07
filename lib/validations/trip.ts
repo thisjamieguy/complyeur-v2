@@ -36,6 +36,8 @@ export const tripSchema = z
       .max(100, 'Job reference must be less than 100 characters')
       .optional()
       .transform((val) => val?.trim() || null),
+    is_private: z.boolean().optional().default(false),
+    ghosted: z.boolean().optional().default(false),
   })
   .refine(
     (data) => {
@@ -89,6 +91,7 @@ export const tripUpdateSchema = z
       .optional()
       .nullable()
       .transform((val) => val?.trim() || null),
+    is_private: z.boolean().optional(),
     ghosted: z.boolean().optional(),
   })
   .refine(

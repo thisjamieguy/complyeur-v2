@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { AlertTriangle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   Form,
@@ -24,6 +25,17 @@ import {
 } from '@/lib/constants/schengen-countries'
 import type { Trip } from '@/types/database'
 
+// Form values type (input type for the form)
+export interface TripFormValues {
+  country: string
+  entry_date: string
+  exit_date: string
+  purpose?: string
+  job_ref?: string
+  is_private: boolean
+  ghosted: boolean
+}
+
 // Form-specific schema (subset for form validation)
 const tripFormSchema = z
   .object({
@@ -31,9 +43,8 @@ const tripFormSchema = z
       .string()
       .min(1, 'Country is required')
       .length(2, 'Country code must be 2 letters')
-      .transform((val) => val.toUpperCase())
       .refine(
-        (val) => COUNTRY_NAMES[val] !== undefined,
+        (val) => COUNTRY_NAMES[val.toUpperCase()] !== undefined,
         'Please select a valid country'
       ),
     entry_date: z.string().min(1, 'Entry date is required'),
@@ -46,6 +57,8 @@ const tripFormSchema = z
       .string()
       .max(100, 'Job reference must be less than 100 characters')
       .optional(),
+    is_private: z.boolean(),
+    ghosted: z.boolean(),
   })
   .refine(
     (data) => {
@@ -70,8 +83,6 @@ const tripFormSchema = z
       path: ['entry_date'],
     }
   )
-
-export type TripFormValues = z.infer<typeof tripFormSchema>
 
 interface TripFormProps {
   onSubmit: (data: TripFormValues) => Promise<void>
@@ -106,6 +117,8 @@ export function TripForm({
       exit_date: trip?.exit_date || defaultValues?.exit_date || today,
       purpose: trip?.purpose || defaultValues?.purpose || '',
       job_ref: trip?.job_ref || defaultValues?.job_ref || '',
+      is_private: trip?.is_private || defaultValues?.is_private || false,
+      ghosted: trip?.ghosted || defaultValues?.ghosted || false,
     },
   })
 
@@ -123,6 +136,8 @@ export function TripForm({
         exit_date: trip.exit_date,
         purpose: trip.purpose || '',
         job_ref: trip.job_ref || '',
+        is_private: trip.is_private || false,
+        ghosted: trip.ghosted || false,
       })
     }
   }, [trip, form])
@@ -244,6 +259,56 @@ export function TripForm({
             </FormItem>
           )}
         />
+
+        <div className="space-y-4 pt-2 border-t">
+          <FormField
+            control={form.control}
+            name="is_private"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-sm font-normal">
+                    Private trip
+                  </FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    Country will be hidden in reports (shown as "XX")
+                  </p>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="ghosted"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={isLoading}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="text-sm font-normal">
+                    Exclude from compliance
+                  </FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    Trip will not count toward the 90-day limit (e.g., transit, cancelled)
+                  </p>
+                </div>
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="flex justify-end gap-3 pt-4">
           <Button
