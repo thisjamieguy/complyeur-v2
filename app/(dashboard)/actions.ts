@@ -8,6 +8,8 @@ import {
   createTrip,
   updateTrip,
   deleteTrip,
+  createBulkTrips,
+  reassignTrip,
 } from '@/lib/db'
 import { employeeSchema } from '@/lib/validations/employee'
 import { tripSchema, tripUpdateSchema } from '@/lib/validations/trip'
@@ -40,6 +42,8 @@ export async function addTripAction(formData: {
   exit_date: string
   purpose?: string
   job_ref?: string
+  is_private?: boolean
+  ghosted?: boolean
 }) {
   const validated = tripSchema.parse(formData)
   const tripData: TripInsert = {
@@ -49,6 +53,8 @@ export async function addTripAction(formData: {
     exit_date: validated.exit_date,
     purpose: validated.purpose,
     job_ref: validated.job_ref,
+    is_private: validated.is_private,
+    ghosted: validated.ghosted,
   }
   const trip = await createTrip(tripData)
   revalidatePath(`/employee/${validated.employee_id}`)
@@ -65,6 +71,7 @@ export async function updateTripAction(
     exit_date?: string
     purpose?: string | null
     job_ref?: string | null
+    is_private?: boolean
     ghosted?: boolean
   }
 ) {
@@ -76,6 +83,7 @@ export async function updateTripAction(
   if (validated.exit_date !== undefined) updateData.exit_date = validated.exit_date
   if (validated.purpose !== undefined) updateData.purpose = validated.purpose
   if (validated.job_ref !== undefined) updateData.job_ref = validated.job_ref
+  if (validated.is_private !== undefined) updateData.is_private = validated.is_private
   if (validated.ghosted !== undefined) updateData.ghosted = validated.ghosted
 
   const trip = await updateTrip(tripId, updateData)
@@ -87,5 +95,56 @@ export async function updateTripAction(
 export async function deleteTripAction(tripId: string, employeeId: string) {
   await deleteTrip(tripId)
   revalidatePath(`/employee/${employeeId}`)
+  revalidatePath('/dashboard')
+}
+
+// Bulk trip creation
+interface BulkTripInput {
+  employee_id: string
+  country: string
+  entry_date: string
+  exit_date: string
+  purpose?: string
+  job_ref?: string
+  is_private?: boolean
+  ghosted?: boolean
+}
+
+interface BulkTripResult {
+  created: number
+  errors?: { index: number; message: string }[]
+}
+
+export async function bulkAddTripsAction(
+  trips: BulkTripInput[]
+): Promise<BulkTripResult> {
+  if (!trips || trips.length === 0) {
+    throw new Error('No trips provided')
+  }
+
+  if (trips.length > 20) {
+    throw new Error('Maximum 20 trips per batch')
+  }
+
+  // Get the employee_id from the first trip (all should be same employee)
+  const employeeId = trips[0].employee_id
+
+  const result = await createBulkTrips(trips)
+
+  revalidatePath(`/employee/${employeeId}`)
+  revalidatePath('/dashboard')
+
+  return result
+}
+
+// Trip reassignment
+export async function reassignTripAction(
+  tripId: string,
+  currentEmployeeId: string,
+  newEmployeeId: string
+): Promise<void> {
+  await reassignTrip(tripId, newEmployeeId)
+  revalidatePath(`/employee/${currentEmployeeId}`)
+  revalidatePath(`/employee/${newEmployeeId}`)
   revalidatePath('/dashboard')
 }

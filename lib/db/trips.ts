@@ -355,3 +355,206 @@ function formatDate(dateString: string): string {
     year: 'numeric',
   })
 }
+
+/**
+ * Create multiple trips at once
+ * Validates each trip individually and returns errors per trip
+ */
+interface BulkTripInput {
+  employee_id: string
+  country: string
+  entry_date: string
+  exit_date: string
+  purpose?: string
+  job_ref?: string
+  is_private?: boolean
+  ghosted?: boolean
+}
+
+interface BulkTripResult {
+  created: number
+  errors?: { index: number; message: string }[]
+}
+
+export async function createBulkTrips(trips: BulkTripInput[]): Promise<BulkTripResult> {
+  const supabase = await createClient()
+
+  // Verify auth and get company
+  const { companyId } = await getAuthenticatedUserCompany(supabase)
+
+  // Get the employee_id (all trips should be for the same employee)
+  const employeeId = trips[0]?.employee_id
+  if (!employeeId) {
+    throw new ValidationError('No employee specified')
+  }
+
+  // Verify employee belongs to user's company
+  const { data: employee, error: employeeError } = await supabase
+    .from('employees')
+    .select('id, company_id')
+    .eq('id', employeeId)
+    .single()
+
+  if (employeeError || !employee || employee.company_id !== companyId) {
+    throw new NotFoundError('Employee not found')
+  }
+
+  // Get existing trips for overlap checking
+  const { data: existingTrips, error: tripsError } = await supabase
+    .from('trips')
+    .select('id, entry_date, exit_date')
+    .eq('employee_id', employeeId)
+
+  if (tripsError) {
+    console.error('Error fetching existing trips:', tripsError)
+    throw new DatabaseError('Failed to validate trip dates')
+  }
+
+  const errors: { index: number; message: string }[] = []
+  const validTrips: TripInsert[] = []
+
+  // Include newly validated trips in overlap checking
+  const allTripsForOverlapCheck = [...(existingTrips ?? [])]
+
+  for (let i = 0; i < trips.length; i++) {
+    const trip = trips[i]
+
+    // Validate employee_id matches
+    if (trip.employee_id !== employeeId) {
+      errors.push({ index: i, message: 'All trips must be for the same employee' })
+      continue
+    }
+
+    // Validate dates
+    const entryDate = new Date(trip.entry_date)
+    const exitDate = new Date(trip.exit_date)
+
+    if (isNaN(entryDate.getTime()) || isNaN(exitDate.getTime())) {
+      errors.push({ index: i, message: 'Invalid date format' })
+      continue
+    }
+
+    if (exitDate < entryDate) {
+      errors.push({ index: i, message: 'Exit date must be after entry date' })
+      continue
+    }
+
+    // Check for overlaps with existing trips and previously validated trips in this batch
+    const overlap = checkOverlap(trip.entry_date, trip.exit_date, allTripsForOverlapCheck)
+    if (overlap) {
+      errors.push({ index: i, message: 'Trip overlaps with existing trip' })
+      continue
+    }
+
+    // Add this trip to overlap checking for subsequent trips in batch
+    allTripsForOverlapCheck.push({
+      id: `pending-${i}`,
+      entry_date: trip.entry_date,
+      exit_date: trip.exit_date,
+    })
+
+    validTrips.push({
+      employee_id: trip.employee_id,
+      country: trip.country.toUpperCase(),
+      entry_date: trip.entry_date,
+      exit_date: trip.exit_date,
+      purpose: trip.purpose,
+      job_ref: trip.job_ref,
+      is_private: trip.is_private,
+      ghosted: trip.ghosted,
+    })
+  }
+
+  // If no valid trips, return errors
+  if (validTrips.length === 0) {
+    return { created: 0, errors }
+  }
+
+  // Insert valid trips with company_id
+  const { data: created, error: insertError } = await supabase
+    .from('trips')
+    .insert(validTrips.map(trip => ({ ...trip, company_id: companyId })))
+    .select()
+
+  if (insertError) {
+    console.error('Bulk insert error:', insertError)
+    throw new DatabaseError('Failed to create trips')
+  }
+
+  return {
+    created: created?.length ?? 0,
+    errors: errors.length > 0 ? errors : undefined,
+  }
+}
+
+/**
+ * Reassign a trip from one employee to another
+ */
+export async function reassignTrip(tripId: string, newEmployeeId: string): Promise<Trip> {
+  const supabase = await createClient()
+
+  // Verify auth and get company
+  const { companyId } = await getAuthenticatedUserCompany(supabase)
+
+  // Get the existing trip
+  const { data: trip, error: tripError } = await supabase
+    .from('trips')
+    .select('*')
+    .eq('id', tripId)
+    .single()
+
+  if (tripError || !trip) {
+    throw new NotFoundError('Trip not found')
+  }
+
+  if (trip.company_id !== companyId) {
+    throw new NotFoundError('Trip not found')
+  }
+
+  // Verify new employee belongs to same company
+  const { data: newEmployee, error: employeeError } = await supabase
+    .from('employees')
+    .select('id, company_id')
+    .eq('id', newEmployeeId)
+    .single()
+
+  if (employeeError || !newEmployee) {
+    throw new NotFoundError('Employee not found')
+  }
+
+  if (newEmployee.company_id !== companyId) {
+    throw new NotFoundError('Employee not found')
+  }
+
+  // Check for overlapping trips with new employee
+  const { data: existingTrips, error: tripsError } = await supabase
+    .from('trips')
+    .select('id, entry_date, exit_date')
+    .eq('employee_id', newEmployeeId)
+    .neq('id', tripId) // Exclude the trip being moved
+
+  if (tripsError) {
+    console.error('Error checking for overlapping trips:', tripsError)
+    throw new DatabaseError('Failed to validate trip dates')
+  }
+
+  const overlap = checkOverlap(trip.entry_date, trip.exit_date, existingTrips ?? [])
+  if (overlap) {
+    throw new ValidationError('Trip would overlap with existing trips for this employee')
+  }
+
+  // Update the trip
+  const { data: updated, error: updateError } = await supabase
+    .from('trips')
+    .update({ employee_id: newEmployeeId, updated_at: new Date().toISOString() })
+    .eq('id', tripId)
+    .select()
+    .single()
+
+  if (updateError) {
+    console.error('Error reassigning trip:', updateError)
+    throw new DatabaseError('Failed to reassign trip')
+  }
+
+  return updated
+}
