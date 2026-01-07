@@ -11,6 +11,14 @@ Target users: HR managers, compliance officers at companies with non-EU employee
 - Tailwind CSS + Shadcn/UI
 - Deployed on Vercel
 
+## How to Help Me
+- Assume zero prior knowledge — nothing is "obvious"
+- Plain English first, technical explanation second
+- Step-by-step with copy-ready code blocks
+- Include with code: what it does, why it matters, what to test
+- No theory dumps, academic tone, or vague suggestions
+- Break big changes into small incremental steps
+
 ## Database Schema (Supabase)
 Tables: companies, profiles, employees, trips, alerts, company_settings, audit_log, schengen_countries
 All tables have RLS enabled. All queries filter by company_id.
@@ -20,26 +28,46 @@ All tables have RLS enabled. All queries filter by company_id.
 - Row Level Security (RLS) isolates data by company_id
 - Never expose data across companies
 
-## Design Standards
-- 8px spacing system
-- 12px border radius everywhere
-- Neutral color palette (from Shadcn)
-- Mobile-first responsive design
-- Loading states for all async actions
-- Toast notifications via Sonner
+## Critical: Date Handling
+DO NOT use native JavaScript `Date` for 90/180 calculations — timezone issues will corrupt results.
+```typescript
+// ✅ CORRECT - use date-fns
+import { parseISO, differenceInDays, eachDayOfInterval } from 'date-fns'
+const tripStart = parseISO('2025-10-12')
 
-## Code Standards
-- Use server actions for mutations (not API routes)
-- Use Supabase client from lib/supabase/client.ts (browser)
-- Use Supabase client from lib/supabase/server.ts (server components)
-- All forms need loading + error states
-- TypeScript strict mode - no `any` types
+// ❌ WRONG - timezone shifts
+const tripStart = new Date('2025-10-12')
+```
 
 ## Key Business Logic
 - 90/180 rule: Max 90 days in Schengen area within any rolling 180-day window
 - Entry and exit dates are INCLUSIVE (both count as days)
 - Ireland (IE) and Cyprus (CY) are NOT Schengen
 - Risk levels: Green (≥30 days remaining), Amber (10-29), Red (<10)
+
+## Design Standards
+- 8px spacing system
+- 12px border radius everywhere
+- Neutral color palette (from Shadcn)
+- Mobile-first responsive design
+- Loading states for ALL async actions
+- Toast notifications via Sonner
+- No placeholder "#" links
+- No purple gradients or sparkle emojis
+
+## Code Standards
+- Use server actions for mutations (not API routes)
+- Use Supabase client from lib/supabase/client.ts (browser)
+- Use Supabase client from lib/supabase/server.ts (server components)
+- All forms need loading + error states
+- TypeScript strict mode — no `any` types
+- Try/catch on all async operations
+
+## Supabase Security
+- `anon` key: Safe for frontend
+- `service_role` key: NEVER in frontend — server/Edge Functions only
+- Generate types after schema changes: `npx supabase gen types typescript`
+- Test RLS with two company accounts to verify isolation
 
 ## File Organization
 - app/(auth)/ - Login, signup, password reset
@@ -49,3 +77,137 @@ All tables have RLS enabled. All queries filter by company_id.
 - components/shared/ - Reusable components
 - lib/supabase/ - Supabase clients
 - types/ - TypeScript types
+
+## Permissions & Authorization
+
+### The Golden Rule
+ALL permission checks MUST go through the centralized permissions system.
+This enables future enterprise RBAC without refactoring every component.
+
+### ✅ CORRECT Pattern — Client Components
+```typescript
+'use client';
+import { usePermission } from '@/hooks/use-permissions';
+import { PERMISSIONS } from '@/lib/permissions';
+
+function MyComponent() {
+  const { allowed: canDelete, isLoading } = usePermission(PERMISSIONS.EMPLOYEES_DELETE);
+
+  if (isLoading) return <Skeleton />;
+  if (!canDelete) return null;
+
+  return <DeleteButton />;
+}
+```
+
+### ✅ CORRECT Pattern — Server Components
+```typescript
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
+import { getCurrentUserProfile } from '@/lib/db/profiles';
+
+async function MyServerComponent() {
+  const profile = await getCurrentUserProfile();
+  const canDelete = hasPermission(profile?.role, PERMISSIONS.EMPLOYEES_DELETE);
+
+  if (!canDelete) return null;
+  return <DeleteButton />;
+}
+```
+
+### ❌ NEVER DO THIS
+```typescript
+// Direct role checks — FORBIDDEN
+if (user.role === 'admin') { ... }
+{user.role === 'admin' && <DeleteButton />}
+{profile?.role === 'admin' && <AdminPanel />}
+```
+
+### Permission Categories
+When adding features, follow existing patterns:
+- `[resource].create` — Create new records
+- `[resource].read` — View records
+- `[resource].update` — Modify records
+- `[resource].delete` — Remove records
+- `[resource].export` — Export data
+
+### Adding New Permissions
+1. Add to `PERMISSIONS` object in `lib/permissions.ts`
+2. Add to appropriate role(s) in `ROLE_PERMISSIONS` mapping
+3. Use in components via `usePermission()` hook or `hasPermission()` function
+
+### Server Actions Permission Checks
+Always validate permissions server-side, don't trust client:
+```typescript
+'use server';
+import { hasPermission, PERMISSIONS } from '@/lib/permissions';
+import { getCurrentUserProfile } from '@/lib/db/profiles';
+
+export async function deleteEmployee(id: string) {
+  const profile = await getCurrentUserProfile();
+
+  if (!hasPermission(profile?.role, PERMISSIONS.EMPLOYEES_DELETE)) {
+    throw new Error('Unauthorized');
+  }
+
+  // ... proceed with deletion
+}
+```
+
+---
+
+## Enterprise Readiness Patterns
+
+### Future-Proofing Checklist
+When building features, verify:
+
+**Multi-Tenancy**
+- [ ] All queries include `company_id` filter
+- [ ] RLS policies enforced at database level
+- [ ] No cross-tenant data leakage possible
+
+**Permissions**
+- [ ] All protected actions use `usePermission()` or `hasPermission()`
+- [ ] No hardcoded role checks in components
+- [ ] Server-side validation mirrors client-side checks
+
+**Audit Trail**
+- [ ] Sensitive operations logged to audit_log table
+- [ ] Logs include: user_id, action, resource, timestamp
+
+### Tier-Gated Features (Future)
+When building features that should be tier-restricted:
+```typescript
+import { useCompanyEntitlements } from '@/hooks/use-entitlements';
+
+function CalendarView() {
+  const { canCalendar } = useCompanyEntitlements();
+  
+  if (!canCalendar) {
+    return <UpgradePrompt feature="calendar" />;
+  }
+  return <Calendar />;
+}
+```
+
+### RBAC Migration Path (Do Not Implement Yet)
+When enterprise RBAC is needed, these tables will be added:
+- `roles` — Role definitions (owner, admin, hr_manager, viewer)
+- `permissions` — Permission definitions
+- `role_permissions` — Role-to-permission mapping
+
+The `hasPermission()` function will change from hardcoded lookup to database query.
+NO component code will need to change if we follow the patterns above.
+
+## After Every Change
+1. Verify the change works
+2. Test adjacent features (cascade bugs are common)
+3. Check TypeScript compiles: `npm run typecheck`
+4. Commit with meaningful message
+
+## When Debugging
+1. STOP — don't keep making changes
+2. Isolate the exact file/function failing
+3. Understand the error before fixing
+4. Minimal fix only — no refactoring while debugging
+5. Test adjacent features after fix
+6. Commit working state before moving on
