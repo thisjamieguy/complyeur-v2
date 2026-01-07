@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { logout } from '@/app/(auth)/actions'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
@@ -12,7 +13,7 @@ export default async function DashboardLayout({
 
   if (!user) {
     // This should be handled by middleware, but just in case
-    return null
+    redirect('/login')
   }
 
   return (

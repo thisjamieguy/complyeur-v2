@@ -3,24 +3,56 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { env } from '@/lib/env'
+import {
+  AuthError,
+  ValidationError,
+  DatabaseError,
+  getAuthErrorMessage,
+  getDatabaseErrorMessage,
+} from '@/lib/errors'
+import {
+  loginSchema,
+  signupSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from '@/lib/validations/auth'
+
+/**
+ * Normalizes email address for Supabase auth
+ * Some Supabase instances reject emails with + signs even though they're valid
+ * This function normalizes the email by lowercasing and trimming
+ */
+function normalizeEmailForAuth(email: string): string {
+  return email.toLowerCase().trim()
+}
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
 
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-
-  if (!email || !password) {
-    throw new Error('Email and password are required')
+  const rawData = {
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
   }
 
+  // Validate input
+  const result = loginSchema.safeParse(rawData)
+  if (!result.success) {
+    throw new ValidationError(result.error.issues[0].message)
+  }
+
+  const { email, password } = result.data
+
+  // Normalize email for consistency
+  const normalizedEmail = normalizeEmailForAuth(email)
+
   const { error } = await supabase.auth.signInWithPassword({
-    email,
+    email: normalizedEmail,
     password,
   })
 
   if (error) {
-    throw new Error(error.message)
+    throw new AuthError(getAuthErrorMessage(error))
   }
 
   revalidatePath('/', 'layout')
@@ -30,35 +62,41 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const confirmPassword = formData.get('confirmPassword') as string
-  const companyName = formData.get('companyName') as string
-
-  if (!email || !password || !confirmPassword || !companyName) {
-    throw new Error('All fields are required')
+  const rawData = {
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+    confirmPassword: formData.get('confirmPassword') as string,
+    companyName: formData.get('companyName') as string,
   }
 
-  if (password !== confirmPassword) {
-    throw new Error('Passwords do not match')
+  // Validate input
+  const result = signupSchema.safeParse(rawData)
+  if (!result.success) {
+    throw new ValidationError(result.error.issues[0].message)
   }
 
-  if (password.length < 8) {
-    throw new Error('Password must be at least 8 characters long')
-  }
+  const { email, password, companyName } = result.data
+
+  // Normalize email for Supabase (some instances reject + signs)
+  const normalizedEmail = normalizeEmailForAuth(email)
 
   // Create the user account
   const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
+    email: normalizedEmail,
     password,
   })
 
   if (authError) {
-    throw new Error(authError.message)
+    // Check for specific email validation errors that might need special handling
+    if (authError.message.includes('Email address') && authError.message.includes('is invalid') && normalizedEmail.includes('+')) {
+      throw new AuthError('Email addresses with special characters like "+" may not be supported. Please try using a different email address or contact support.')
+    }
+
+    throw new AuthError(getAuthErrorMessage(authError))
   }
 
   if (!authData.user) {
-    throw new Error('Failed to create user account')
+    throw new AuthError('Failed to create user account')
   }
 
   // Create the company and profile using the database function
@@ -66,16 +104,17 @@ export async function signup(formData: FormData) {
   const { data: companyId, error: signupError } = await supabase
     .rpc('create_company_and_profile', {
       user_id: authData.user.id,
-      user_email: email,
+      user_email: normalizedEmail,
       company_name: companyName
     })
 
   if (signupError) {
-    throw new Error('Failed to create company and profile: ' + signupError.message)
+    console.error('Signup RPC error:', signupError)
+    throw new DatabaseError(getDatabaseErrorMessage(signupError))
   }
 
   if (!companyId) {
-    throw new Error('Failed to create company and profile: no company ID returned')
+    throw new DatabaseError('Failed to create company. Please try again.')
   }
 
   revalidatePath('/', 'layout')
@@ -85,22 +124,58 @@ export async function signup(formData: FormData) {
 export async function forgotPassword(formData: FormData) {
   const supabase = await createClient()
 
-  const email = formData.get('email') as string
-
-  if (!email) {
-    throw new Error('Email is required')
+  const rawData = {
+    email: formData.get('email') as string,
   }
 
+  // Validate input
+  const result = forgotPasswordSchema.safeParse(rawData)
+  if (!result.success) {
+    throw new ValidationError(result.error.issues[0].message)
+  }
+
+  const { email } = result.data
+
+  // Redirect through auth callback to exchange token for session,
+  // then redirect to reset-password page
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+    redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password`,
   })
 
   if (error) {
-    throw new Error(error.message)
+    throw new AuthError(getAuthErrorMessage(error))
   }
 
   // Return success message - don't redirect
   return { success: true, message: 'Check your email for a password reset link' }
+}
+
+export async function resetPassword(formData: FormData) {
+  const supabase = await createClient()
+
+  const rawData = {
+    password: formData.get('password') as string,
+    confirmPassword: formData.get('confirmPassword') as string,
+  }
+
+  // Validate input
+  const result = resetPasswordSchema.safeParse(rawData)
+  if (!result.success) {
+    throw new ValidationError(result.error.issues[0].message)
+  }
+
+  const { password } = result.data
+
+  const { error } = await supabase.auth.updateUser({
+    password,
+  })
+
+  if (error) {
+    throw new AuthError(getAuthErrorMessage(error))
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/login')
 }
 
 export async function logout() {
@@ -109,7 +184,7 @@ export async function logout() {
   const { error } = await supabase.auth.signOut()
 
   if (error) {
-    throw new Error(error.message)
+    throw new AuthError(getAuthErrorMessage(error))
   }
 
   revalidatePath('/', 'layout')

@@ -4,8 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { login } from '../actions'
-import { loginSchema, type LoginInput } from '@/lib/validations/auth'
+import { resetPassword } from '../actions'
+import { resetPasswordSchema, type ResetPasswordInput } from '@/lib/validations/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,26 +19,27 @@ import {
 } from '@/components/ui/form'
 import { toast } from 'sonner'
 
-export default function LoginPage() {
+export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<ResetPasswordInput>({
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      email: '',
       password: '',
+      confirmPassword: '',
     },
   })
 
-  async function onSubmit(data: LoginInput) {
+  async function onSubmit(data: ResetPasswordInput) {
     setIsLoading(true)
     try {
       const formData = new FormData()
-      formData.append('email', data.email)
       formData.append('password', data.password)
-      await login(formData)
+      formData.append('confirmPassword', data.confirmPassword)
+      await resetPassword(formData)
+      toast.success('Password reset successfully')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed')
+      toast.error(error instanceof Error ? error.message : 'Failed to reset password')
     } finally {
       setIsLoading(false)
     }
@@ -47,9 +48,9 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign in to your account</CardTitle>
+        <CardTitle>Set new password</CardTitle>
         <CardDescription>
-          Enter your email and password to access your dashboard
+          Enter your new password below
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -57,14 +58,14 @@ export default function LoginPage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="email"
+              name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>New Password</FormLabel>
                   <FormControl>
                     <Input
-                      type="email"
-                      placeholder="Enter your email"
+                      type="password"
+                      placeholder="Enter your new password"
                       disabled={isLoading}
                       {...field}
                     />
@@ -75,14 +76,14 @@ export default function LoginPage() {
             />
             <FormField
               control={form.control}
-              name="password"
+              name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder="Enter your password"
+                      placeholder="Confirm your new password"
                       disabled={isLoading}
                       {...field}
                     />
@@ -92,23 +93,14 @@ export default function LoginPage() {
               )}
             />
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Resetting...' : 'Reset Password'}
             </Button>
           </form>
         </Form>
-        <div className="mt-4 text-center space-y-2">
-          <Link
-            href="/forgot-password"
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Forgot your password?
+        <div className="mt-4 text-center">
+          <Link href="/login" className="text-sm text-blue-600 hover:underline">
+            Back to sign in
           </Link>
-          <div className="text-sm text-gray-600">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-blue-600 hover:underline">
-              Sign up
-            </Link>
-          </div>
         </div>
       </CardContent>
     </Card>
