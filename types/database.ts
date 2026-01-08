@@ -242,6 +242,15 @@ export interface Database {
         Row: {
           company_id: string
           retention_months: number
+          session_timeout_minutes: number
+          risk_threshold_green: number
+          risk_threshold_amber: number
+          future_job_warning_threshold: number
+          notify_70_days: boolean
+          notify_85_days: boolean
+          notify_90_days: boolean
+          weekly_digest: boolean
+          custom_alert_threshold: number | null
           warning_threshold: number
           critical_threshold: number
           email_notifications: boolean
@@ -254,6 +263,15 @@ export interface Database {
         Insert: {
           company_id: string
           retention_months?: number
+          session_timeout_minutes?: number
+          risk_threshold_green?: number
+          risk_threshold_amber?: number
+          future_job_warning_threshold?: number
+          notify_70_days?: boolean
+          notify_85_days?: boolean
+          notify_90_days?: boolean
+          weekly_digest?: boolean
+          custom_alert_threshold?: number | null
           warning_threshold?: number
           critical_threshold?: number
           email_notifications?: boolean
@@ -266,6 +284,15 @@ export interface Database {
         Update: {
           company_id?: string
           retention_months?: number
+          session_timeout_minutes?: number
+          risk_threshold_green?: number
+          risk_threshold_amber?: number
+          future_job_warning_threshold?: number
+          notify_70_days?: boolean
+          notify_85_days?: boolean
+          notify_90_days?: boolean
+          weekly_digest?: boolean
+          custom_alert_threshold?: number | null
           warning_threshold?: number
           critical_threshold?: number
           email_notifications?: boolean
@@ -645,6 +672,15 @@ export interface NotificationLogInsert {
 export interface CompanySettings {
   company_id: string
   retention_months: number
+  session_timeout_minutes: number
+  risk_threshold_green: number
+  risk_threshold_amber: number
+  future_job_warning_threshold: number
+  notify_70_days: boolean
+  notify_85_days: boolean
+  notify_90_days: boolean
+  weekly_digest: boolean
+  custom_alert_threshold: number | null
   warning_threshold: number
   critical_threshold: number
   email_notifications: boolean
@@ -657,6 +693,15 @@ export interface CompanySettings {
 
 export interface CompanySettingsUpdate {
   retention_months?: number
+  session_timeout_minutes?: number
+  risk_threshold_green?: number
+  risk_threshold_amber?: number
+  future_job_warning_threshold?: number
+  notify_70_days?: boolean
+  notify_85_days?: boolean
+  notify_90_days?: boolean
+  weekly_digest?: boolean
+  custom_alert_threshold?: number | null
   warning_threshold?: number
   critical_threshold?: number
   email_notifications?: boolean
