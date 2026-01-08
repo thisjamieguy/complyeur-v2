@@ -50,6 +50,12 @@ export default async function DashboardLayout({
               >
                 Trip Forecast
               </Link>
+              <Link
+                href="/settings"
+                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                Settings
+              </Link>
             </nav>
           </div>
           <div className="flex items-center space-x-4">

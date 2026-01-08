@@ -1,155 +1,161 @@
 import { Suspense } from 'react'
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { parseISO } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
-import { getEmployees } from '@/lib/db'
-import type { Employee } from '@/types/database'
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
+  calculateCompliance,
+  isSchengenCountry,
+  type Trip as ComplianceTrip,
+} from '@/lib/compliance'
+import type { EmployeeCompliance } from '@/types/dashboard'
+import { ComplianceTable } from '@/components/dashboard/compliance-table'
+import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
-import { EmployeeActions } from '@/components/employees/employee-actions'
+import { AlertBanner } from '@/components/alerts'
+import { getUnacknowledgedAlertsAction } from '../actions'
 
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+/**
+ * Convert database trip to compliance engine format
+ */
+function toComplianceTrip(trip: {
+  id: string
+  country: string
+  entry_date: string
+  exit_date: string
+}): ComplianceTrip {
+  return {
+    id: trip.id,
+    country: trip.country,
+    entryDate: parseISO(trip.entry_date),
+    exitDate: parseISO(trip.exit_date),
+  }
 }
 
-function EmployeeTableSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-10 w-32" />
-      </div>
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="w-[70px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {[...Array(5)].map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                  <TableCell><Skeleton className="h-5 w-16" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
+/**
+ * Calculate compliance data for all employees.
+ * Uses the Phase 7 compliance algorithm for accurate 90/180-day calculations.
+ */
+async function getEmployeeComplianceData(): Promise<EmployeeCompliance[]> {
+  const supabase = await createClient()
 
-function EmptyState() {
-  return (
-    <Card>
-      <CardContent className="flex flex-col items-center justify-center py-16">
-        <div className="text-center space-y-4">
-          <h3 className="text-lg font-medium text-gray-900">No employees yet</h3>
-          <p className="text-sm text-gray-500 max-w-sm">
-            Get started by adding your first employee to track their Schengen compliance.
-          </p>
-          <AddEmployeeDialog />
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
+  // Fetch employees with their trips
+  const { data: employees, error } = await supabase
+    .from('employees')
+    .select(`
+      id,
+      name,
+      trips (
+        id,
+        country,
+        entry_date,
+        exit_date,
+        ghosted
+      )
+    `)
+    .order('name')
 
-function EmployeeTable({ employees }: { employees: Employee[] }) {
-  if (employees.length === 0) {
-    return <EmptyState />
+  if (error) {
+    console.error('Error fetching employees:', error)
+    throw new Error('Failed to fetch employees')
   }
 
-  return (
-    <Card>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {employees.map((employee) => (
-              <TableRow key={employee.id}>
-                <TableCell className="font-medium">
-                  <Link
-                    href={`/employee/${employee.id}`}
-                    className="hover:underline"
-                  >
-                    {employee.name}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">—</Badge>
-                </TableCell>
-                <TableCell className="text-gray-500">
-                  {formatDate(employee.created_at)}
-                </TableCell>
-                <TableCell>
-                  <EmployeeActions employee={employee} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  )
+  if (!employees || employees.length === 0) {
+    return []
+  }
+
+  // Calculate compliance for each employee
+  const today = new Date()
+
+  const complianceData: EmployeeCompliance[] = employees.map((employee) => {
+    // Filter out ghosted trips and non-Schengen countries
+    const trips = (employee.trips || [])
+      .filter((trip) => !trip.ghosted && isSchengenCountry(trip.country))
+      .map(toComplianceTrip)
+
+    // Calculate compliance using Phase 7 algorithm
+    const compliance = calculateCompliance(trips, {
+      mode: 'audit',
+      referenceDate: today,
+    })
+
+    // Find most recent trip (by exit date)
+    const lastTrip = (employee.trips || [])
+      .filter((trip) => !trip.ghosted)
+      .sort((a, b) => b.exit_date.localeCompare(a.exit_date))[0]
+
+    return {
+      id: employee.id,
+      name: employee.name,
+      days_used: compliance.daysUsed,
+      days_remaining: compliance.daysRemaining,
+      risk_level: compliance.riskLevel,
+      last_trip_date: lastTrip?.exit_date || null,
+      total_trips: (employee.trips || []).filter((t) => !t.ghosted).length,
+      is_compliant: compliance.isCompliant,
+    }
+  })
+
+  return complianceData
 }
 
-async function EmployeeList() {
-  const employees = await getEmployees()
-  return <EmployeeTable employees={employees} />
+/**
+ * Server component that fetches and displays employee compliance data.
+ */
+async function EmployeeComplianceList() {
+  const employees = await getEmployeeComplianceData()
+  return <ComplianceTable employees={employees} />
 }
 
+/**
+ * Server component to fetch alerts
+ */
+async function AlertSection() {
+  try {
+    const alerts = await getUnacknowledgedAlertsAction()
+    return <AlertBanner alerts={alerts} />
+  } catch {
+    // Silently fail for alerts - don't break the dashboard
+    return null
+  }
+}
+
+/**
+ * Main dashboard page for Phase 8.
+ * Displays employee compliance status with filtering and sorting.
+ */
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) {
     redirect('/login')
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Alert banner - shows unacknowledged alerts */}
+      <Suspense fallback={null}>
+        <AlertSection />
+      </Suspense>
+
+      {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Employees</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your team&apos;s Schengen compliance
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Employee Compliance
+          </h1>
+          <p className="text-slate-500 mt-1">
+            Track Schengen 90/180-day compliance status
           </p>
         </div>
         <AddEmployeeDialog />
       </div>
 
-      <Suspense fallback={<EmployeeTableSkeleton />}>
-        <EmployeeList />
+      {/* Main content with suspense for streaming */}
+      <Suspense fallback={<DashboardSkeleton />}>
+        <EmployeeComplianceList />
       </Suspense>
     </div>
   )
