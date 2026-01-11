@@ -267,7 +267,7 @@ export async function exportComplianceData(
                 (1000 * 60 * 60 * 24)
             ) + 1,
           purpose: t.purpose,
-          isPrivate: t.is_private,
+          isPrivate: t.is_private ?? false,
         }))
 
         const employeeWithTrips: EmployeeWithTrips = {
@@ -446,9 +446,9 @@ async function exportFutureAlerts(
         exitDate: trip.exit_date,
         purpose: trip.purpose,
         jobRef: trip.job_ref,
-        isPrivate: trip.is_private,
-        ghosted: trip.ghosted,
-        travelDays: trip.travel_days,
+        isPrivate: trip.is_private ?? false,
+        ghosted: trip.ghosted ?? false,
+        travelDays: trip.travel_days ?? 0,
       }))
 
       // Filter to future trips only

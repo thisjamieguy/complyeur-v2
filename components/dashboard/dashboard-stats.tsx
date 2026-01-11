@@ -16,14 +16,14 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon: Icon, iconBgColor, iconColor }: StatCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-slate-500">{title}</p>
           <p className="text-2xl font-semibold text-slate-900 mt-1">{value}</p>
         </div>
-        <div className={cn('p-3 rounded-lg', iconBgColor)}>
-          <Icon className={cn('h-6 w-6', iconColor)} />
+        <div className={cn('p-2.5 sm:p-3 rounded-lg', iconBgColor)}>
+          <Icon className={cn('h-5 w-5 sm:h-6 sm:w-6', iconColor)} />
         </div>
       </div>
     </div>
@@ -36,7 +36,7 @@ function StatCard({ title, value, icon: Icon, iconBgColor, iconColor }: StatCard
  */
 export function DashboardStats({ stats }: DashboardStatsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
         title="Total Employees"
         value={stats.total}

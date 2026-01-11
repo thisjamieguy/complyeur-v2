@@ -17,13 +17,13 @@ interface NotificationSettingsFormProps {
 export function NotificationSettingsForm({ settings, disabled = false }: NotificationSettingsFormProps) {
   const [isPending, startTransition] = useTransition()
 
-  // Form state
-  const [warningThreshold, setWarningThreshold] = useState(settings.warning_threshold)
-  const [criticalThreshold, setCriticalThreshold] = useState(settings.critical_threshold)
-  const [emailNotifications, setEmailNotifications] = useState(settings.email_notifications)
-  const [warningEmailEnabled, setWarningEmailEnabled] = useState(settings.warning_email_enabled)
-  const [urgentEmailEnabled, setUrgentEmailEnabled] = useState(settings.urgent_email_enabled)
-  const [breachEmailEnabled, setBreachEmailEnabled] = useState(settings.breach_email_enabled)
+  // Form state with defaults for nullable values
+  const [warningThreshold, setWarningThreshold] = useState(settings.warning_threshold ?? 60)
+  const [criticalThreshold, setCriticalThreshold] = useState(settings.critical_threshold ?? 80)
+  const [emailNotifications, setEmailNotifications] = useState(settings.email_notifications ?? false)
+  const [warningEmailEnabled, setWarningEmailEnabled] = useState(settings.warning_email_enabled ?? false)
+  const [urgentEmailEnabled, setUrgentEmailEnabled] = useState(settings.urgent_email_enabled ?? false)
+  const [breachEmailEnabled, setBreachEmailEnabled] = useState(settings.breach_email_enabled ?? false)
 
   // Validation: warning < critical < 90
   const isValid = warningThreshold < criticalThreshold && criticalThreshold < 90
@@ -80,12 +80,12 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
   }
 
   const handleReset = () => {
-    setWarningThreshold(settings.warning_threshold)
-    setCriticalThreshold(settings.critical_threshold)
-    setEmailNotifications(settings.email_notifications)
-    setWarningEmailEnabled(settings.warning_email_enabled)
-    setUrgentEmailEnabled(settings.urgent_email_enabled)
-    setBreachEmailEnabled(settings.breach_email_enabled)
+    setWarningThreshold(settings.warning_threshold ?? 60)
+    setCriticalThreshold(settings.critical_threshold ?? 80)
+    setEmailNotifications(settings.email_notifications ?? false)
+    setWarningEmailEnabled(settings.warning_email_enabled ?? false)
+    setUrgentEmailEnabled(settings.urgent_email_enabled ?? false)
+    setBreachEmailEnabled(settings.breach_email_enabled ?? false)
   }
 
   return (

@@ -23,9 +23,9 @@ function toForecastTrip(trip: Trip): ForecastTrip {
     exitDate: trip.exit_date,
     purpose: trip.purpose,
     jobRef: trip.job_ref,
-    isPrivate: trip.is_private,
-    ghosted: trip.ghosted,
-    travelDays: trip.travel_days,
+    isPrivate: trip.is_private ?? false,
+    ghosted: trip.ghosted ?? false,
+    travelDays: trip.travel_days ?? 0,
   };
 }
 

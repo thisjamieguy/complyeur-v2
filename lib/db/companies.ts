@@ -95,7 +95,7 @@ export async function getCurrentUserCompany(): Promise<Company | null> {
     .eq('id', user.id)
     .single()
 
-  if (!profile) {
+  if (!profile?.company_id) {
     return null
   }
 

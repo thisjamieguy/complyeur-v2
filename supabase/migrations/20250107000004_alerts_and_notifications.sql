@@ -54,7 +54,7 @@ COMMENT ON COLUMN alerts.acknowledged_by IS 'User who acknowledged the alert';
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS notification_log (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   alert_id UUID REFERENCES alerts(id) ON DELETE SET NULL,
   employee_id UUID REFERENCES employees(id) ON DELETE SET NULL,
@@ -176,7 +176,7 @@ END $$;
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS notification_preferences (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
 
@@ -186,7 +186,7 @@ CREATE TABLE IF NOT EXISTS notification_preferences (
   receive_breach_emails BOOLEAN DEFAULT true,
 
   -- Unsubscribe token for GDPR compliance
-  unsubscribe_token UUID NOT NULL DEFAULT uuid_generate_v4(),
+  unsubscribe_token UUID NOT NULL DEFAULT gen_random_uuid(),
   unsubscribed_at TIMESTAMPTZ,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

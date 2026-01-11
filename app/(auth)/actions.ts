@@ -67,6 +67,7 @@ export async function signup(formData: FormData) {
     password: formData.get('password') as string,
     confirmPassword: formData.get('confirmPassword') as string,
     companyName: formData.get('companyName') as string,
+    termsAccepted: formData.get('termsAccepted') === 'true',
   }
 
   // Validate input
@@ -75,7 +76,12 @@ export async function signup(formData: FormData) {
     throw new ValidationError(result.error.issues[0].message)
   }
 
-  const { email, password, companyName } = result.data
+  const { email, password, companyName, termsAccepted } = result.data
+
+  // Ensure terms are accepted (double check on server side)
+  if (!termsAccepted) {
+    throw new ValidationError('You must agree to the Terms of Service and Privacy Policy')
+  }
 
   // Normalize email for Supabase (some instances reject + signs)
   const normalizedEmail = normalizeEmailForAuth(email)
@@ -101,11 +107,13 @@ export async function signup(formData: FormData) {
 
   // Create the company and profile using the database function
   // This bypasses RLS during signup since the user isn't fully authenticated yet
+  // Store the terms acceptance timestamp
   const { data: companyId, error: signupError } = await supabase
     .rpc('create_company_and_profile', {
       user_id: authData.user.id,
       user_email: normalizedEmail,
-      company_name: companyName
+      company_name: companyName,
+      user_terms_accepted_at: new Date().toISOString(),
     })
 
   if (signupError) {

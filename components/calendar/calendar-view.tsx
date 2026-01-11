@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import {
   parseISO,
   startOfDay,
@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   calculateCompliance,
   isSchengenCountry,
+  createComplianceCalculator,
   type Trip as ComplianceTrip,
   type RiskLevel,
 } from '@/lib/compliance'
@@ -84,10 +85,12 @@ function toComplianceTrip(trip: DbTrip): ComplianceTrip {
 
 /**
  * Calculate risk level at the end of a specific trip
+ * Uses memoized calculator for performance
  */
 function getTripRiskLevel(
   trip: DbTrip,
-  allEmployeeTrips: DbTrip[]
+  allEmployeeTrips: DbTrip[],
+  calculator: ReturnType<typeof createComplianceCalculator>
 ): RiskLevel {
   // Only calculate for Schengen trips
   if (!isSchengenCountry(trip.country)) {
@@ -99,8 +102,8 @@ function getTripRiskLevel(
     .filter((t) => !t.ghosted && isSchengenCountry(t.country))
     .map(toComplianceTrip)
 
-  // Calculate compliance at end of this trip
-  const result = calculateCompliance(complianceTrips, {
+  // Calculate compliance at end of this trip (memoized)
+  const result = calculator(complianceTrips, {
     mode: 'audit',
     referenceDate: parseISO(trip.exit_date),
   })
@@ -113,6 +116,10 @@ function getTripRiskLevel(
  */
 export function CalendarView({ employees }: CalendarViewProps) {
   const [weeksForward, setWeeksForward] = useState(DEFAULT_WEEKS_FORWARD)
+
+  // Create memoized compliance calculator once per component instance
+  // This caches calculations across all employees and trips
+  const complianceCalculator = useMemo(() => createComplianceCalculator(), [])
 
   // Calculate date range
   const { startDate, endDate, dates } = useMemo(() => {
@@ -129,7 +136,7 @@ export function CalendarView({ employees }: CalendarViewProps) {
     }
   }, [weeksForward])
 
-  // Process employees and their trips
+  // Process employees and their trips with memoized calculations
   const processedEmployees = useMemo((): ProcessedEmployee[] => {
     const today = startOfDay(new Date())
 
@@ -137,12 +144,12 @@ export function CalendarView({ employees }: CalendarViewProps) {
       // Filter out ghosted trips
       const activeTrips = employee.trips.filter((t) => !t.ghosted)
 
-      // Calculate current compliance status
+      // Calculate current compliance status (memoized)
       const complianceTrips = activeTrips
         .filter((t) => isSchengenCountry(t.country))
         .map(toComplianceTrip)
 
-      const currentCompliance = calculateCompliance(complianceTrips, {
+      const currentCompliance = complianceCalculator(complianceTrips, {
         mode: 'audit',
         referenceDate: today,
       })
@@ -160,19 +167,19 @@ export function CalendarView({ employees }: CalendarViewProps) {
         )
       })
 
-      // Process each trip
+      // Process each trip with memoized calculations
       const processedTrips: ProcessedTrip[] = tripsInRange.map((trip) => {
         const entryDate = parseISO(trip.entry_date)
         const exitDate = parseISO(trip.exit_date)
         const duration = differenceInDays(exitDate, entryDate) + 1
         const isSchengen = isSchengenCountry(trip.country)
 
-        // Calculate risk level at end of trip
-        const riskLevel = getTripRiskLevel(trip, activeTrips)
+        // Calculate risk level at end of trip (memoized)
+        const riskLevel = getTripRiskLevel(trip, activeTrips, complianceCalculator)
 
-        // Calculate days remaining at end of trip
+        // Calculate days remaining at end of trip (memoized)
         const tripCompliance = isSchengen
-          ? calculateCompliance(
+          ? complianceCalculator(
               activeTrips
                 .filter((t) => !t.ghosted && isSchengenCountry(t.country))
                 .map(toComplianceTrip),
@@ -206,7 +213,7 @@ export function CalendarView({ employees }: CalendarViewProps) {
         tripsInRange: tripsInRange.length,
       }
     })
-  }, [employees, startDate, endDate])
+  }, [employees, startDate, endDate, complianceCalculator])
 
   return (
     <>

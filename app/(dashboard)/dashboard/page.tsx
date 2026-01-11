@@ -1,102 +1,12 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { parseISO } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
-import {
-  calculateCompliance,
-  isSchengenCountry,
-  type Trip as ComplianceTrip,
-} from '@/lib/compliance'
-import type { EmployeeCompliance } from '@/types/dashboard'
+import { getEmployeeComplianceData } from '@/lib/data'
 import { ComplianceTable } from '@/components/dashboard/compliance-table'
 import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
 import { AlertBanner } from '@/components/alerts'
 import { getUnacknowledgedAlertsAction } from '../actions'
-
-/**
- * Convert database trip to compliance engine format
- */
-function toComplianceTrip(trip: {
-  id: string
-  country: string
-  entry_date: string
-  exit_date: string
-}): ComplianceTrip {
-  return {
-    id: trip.id,
-    country: trip.country,
-    entryDate: parseISO(trip.entry_date),
-    exitDate: parseISO(trip.exit_date),
-  }
-}
-
-/**
- * Calculate compliance data for all employees.
- * Uses the Phase 7 compliance algorithm for accurate 90/180-day calculations.
- */
-async function getEmployeeComplianceData(): Promise<EmployeeCompliance[]> {
-  const supabase = await createClient()
-
-  // Fetch employees with their trips
-  const { data: employees, error } = await supabase
-    .from('employees')
-    .select(`
-      id,
-      name,
-      trips (
-        id,
-        country,
-        entry_date,
-        exit_date,
-        ghosted
-      )
-    `)
-    .order('name')
-
-  if (error) {
-    console.error('Error fetching employees:', error)
-    throw new Error('Failed to fetch employees')
-  }
-
-  if (!employees || employees.length === 0) {
-    return []
-  }
-
-  // Calculate compliance for each employee
-  const today = new Date()
-
-  const complianceData: EmployeeCompliance[] = employees.map((employee) => {
-    // Filter out ghosted trips and non-Schengen countries
-    const trips = (employee.trips || [])
-      .filter((trip) => !trip.ghosted && isSchengenCountry(trip.country))
-      .map(toComplianceTrip)
-
-    // Calculate compliance using Phase 7 algorithm
-    const compliance = calculateCompliance(trips, {
-      mode: 'audit',
-      referenceDate: today,
-    })
-
-    // Find most recent trip (by exit date)
-    const lastTrip = (employee.trips || [])
-      .filter((trip) => !trip.ghosted)
-      .sort((a, b) => b.exit_date.localeCompare(a.exit_date))[0]
-
-    return {
-      id: employee.id,
-      name: employee.name,
-      days_used: compliance.daysUsed,
-      days_remaining: compliance.daysRemaining,
-      risk_level: compliance.riskLevel,
-      last_trip_date: lastTrip?.exit_date || null,
-      total_trips: (employee.trips || []).filter((t) => !t.ghosted).length,
-      is_compliant: compliance.isCompliant,
-    }
-  })
-
-  return complianceData
-}
 
 /**
  * Server component that fetches and displays employee compliance data.
@@ -141,12 +51,12 @@ export default async function DashboardPage() {
       </Suspense>
 
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">
             Employee Compliance
           </h1>
-          <p className="text-slate-500 mt-1">
+          <p className="text-sm sm:text-base text-slate-500 mt-1">
             Track Schengen 90/180-day compliance status
           </p>
         </div>

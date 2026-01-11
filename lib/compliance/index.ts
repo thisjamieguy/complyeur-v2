@@ -159,6 +159,18 @@ export {
 } from './compliance-vector';
 
 // ============================================================================
+// Cached Calculations (Performance Optimization)
+// ============================================================================
+
+export {
+  getCachedCompliance,
+  batchCalculateCompliance,
+  createComplianceCalculator,
+  calculateComplianceRange,
+  getComplianceAtDates,
+} from './cached';
+
+// ============================================================================
 // High-Level Convenience Functions
 // ============================================================================
 

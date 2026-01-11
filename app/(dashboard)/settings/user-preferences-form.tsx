@@ -16,9 +16,9 @@ interface UserPreferencesFormProps {
 export function UserPreferencesForm({ preferences, disabled = false }: UserPreferencesFormProps) {
   const [isPending, startTransition] = useTransition()
 
-  const [receiveWarning, setReceiveWarning] = useState(preferences.receive_warning_emails)
-  const [receiveUrgent, setReceiveUrgent] = useState(preferences.receive_urgent_emails)
-  const [receiveBreach, setReceiveBreach] = useState(preferences.receive_breach_emails)
+  const [receiveWarning, setReceiveWarning] = useState(preferences.receive_warning_emails ?? true)
+  const [receiveUrgent, setReceiveUrgent] = useState(preferences.receive_urgent_emails ?? true)
+  const [receiveBreach, setReceiveBreach] = useState(preferences.receive_breach_emails ?? true)
 
   // Check for changes
   const hasChanges =
@@ -46,9 +46,9 @@ export function UserPreferencesForm({ preferences, disabled = false }: UserPrefe
   }
 
   const handleReset = () => {
-    setReceiveWarning(preferences.receive_warning_emails)
-    setReceiveUrgent(preferences.receive_urgent_emails)
-    setReceiveBreach(preferences.receive_breach_emails)
+    setReceiveWarning(preferences.receive_warning_emails ?? true)
+    setReceiveUrgent(preferences.receive_urgent_emails ?? true)
+    setReceiveBreach(preferences.receive_breach_emails ?? true)
   }
 
   if (isUnsubscribed) {

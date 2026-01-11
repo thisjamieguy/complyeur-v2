@@ -1,12 +1,10 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { parseISO } from 'date-fns'
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { isSchengenCountry } from '@/lib/compliance'
 import { CalendarView } from '@/components/calendar/calendar-view'
 import { CalendarSkeleton } from '@/components/calendar/calendar-skeleton'
 import { CalendarEmptyState } from '@/components/calendar/calendar-empty-state'
-import type { Trip as DbTrip } from '@/types/database'
 
 /**
  * Employee with trips for calendar view
@@ -27,9 +25,10 @@ interface EmployeeWithTrips {
 }
 
 /**
- * Fetch all employees with their trips for the calendar view
+ * Fetch all employees with their trips for the calendar view.
+ * Uses React cache() for request-level deduplication.
  */
-async function getEmployeesWithTrips(): Promise<EmployeeWithTrips[]> {
+const getEmployeesWithTrips = cache(async (): Promise<EmployeeWithTrips[]> => {
   const supabase = await createClient()
 
   const { data: employees, error } = await supabase
@@ -48,6 +47,7 @@ async function getEmployeesWithTrips(): Promise<EmployeeWithTrips[]> {
         ghosted
       )
     `)
+    .is('deleted_at', null)
     .order('name')
 
   if (error) {
@@ -56,7 +56,7 @@ async function getEmployeesWithTrips(): Promise<EmployeeWithTrips[]> {
   }
 
   return (employees || []) as EmployeeWithTrips[]
-}
+})
 
 /**
  * Server component that fetches employee data for calendar

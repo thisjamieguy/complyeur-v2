@@ -1,15 +1,28 @@
 import { z } from 'zod'
 import { validateCountry, COUNTRY_NAMES } from '@/lib/constants/schengen-countries'
+import {
+  isValidISODate,
+  isDateTooFarInPast,
+  isDateTooFarInFuture,
+  getTripDurationDays,
+} from './dates'
 
 /**
  * Trip validation schema and helpers
  *
  * Validates:
  * - Country code (2 letters, known country)
- * - Date range (exit >= entry)
- * - Future date limit (max 1 year in future)
+ * - Entry date (required, valid date, not more than 180 days in the past)
+ * - Exit date (required, valid date, must be >= entry_date, not more than 30 days in future)
+ * - Trip duration cannot exceed 180 days (warning issued for >90 days)
  * - Optional fields (purpose, job_ref)
  */
+
+// Date string validation helper
+const dateStringSchema = z
+  .string()
+  .min(1, 'Date is required')
+  .refine((val) => isValidISODate(val), 'Please enter a valid date')
 
 // Base schema for trip form data
 export const tripSchema = z
@@ -24,8 +37,8 @@ export const tripSchema = z
         (val) => COUNTRY_NAMES[val] !== undefined,
         'Please select a valid country'
       ),
-    entry_date: z.string().min(1, 'Entry date is required'),
-    exit_date: z.string().min(1, 'Exit date is required'),
+    entry_date: dateStringSchema,
+    exit_date: dateStringSchema,
     purpose: z
       .string()
       .max(500, 'Purpose must be less than 500 characters')
@@ -39,6 +52,29 @@ export const tripSchema = z
     is_private: z.boolean().optional().default(false),
     ghosted: z.boolean().optional().default(false),
   })
+  // Validate entry date is not too far in the past (180 days max)
+  .refine(
+    (data) => {
+      const entry = new Date(data.entry_date)
+      return !isDateTooFarInPast(entry, 180)
+    },
+    {
+      message: 'Entry date cannot be more than 180 days in the past',
+      path: ['entry_date'],
+    }
+  )
+  // Validate exit date is not too far in the future (30 days max)
+  .refine(
+    (data) => {
+      const exit = new Date(data.exit_date)
+      return !isDateTooFarInFuture(exit, 30)
+    },
+    {
+      message: 'Exit date cannot be more than 30 days in the future',
+      path: ['exit_date'],
+    }
+  )
+  // Validate exit date is on or after entry date
   .refine(
     (data) => {
       const entry = new Date(data.entry_date)
@@ -50,20 +86,27 @@ export const tripSchema = z
       path: ['exit_date'],
     }
   )
+  // Validate trip duration does not exceed 180 days
   .refine(
     (data) => {
       const entry = new Date(data.entry_date)
-      const oneYearFromNow = new Date()
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
-      return entry <= oneYearFromNow
+      const exit = new Date(data.exit_date)
+      const duration = getTripDurationDays(entry, exit)
+      return duration <= 180
     },
     {
-      message: 'Entry date cannot be more than 1 year in the future',
-      path: ['entry_date'],
+      message: 'Trip duration cannot exceed 180 days',
+      path: ['exit_date'],
     }
   )
 
 export type TripFormData = z.infer<typeof tripSchema>
+
+// Optional date string for updates
+const optionalDateStringSchema = z
+  .string()
+  .refine((val) => !val || isValidISODate(val), 'Please enter a valid date')
+  .optional()
 
 // Schema for updating a trip (all fields optional except dates validation)
 export const tripUpdateSchema = z
@@ -77,8 +120,8 @@ export const tripUpdateSchema = z
         'Please select a valid country'
       )
       .optional(),
-    entry_date: z.string().optional(),
-    exit_date: z.string().optional(),
+    entry_date: optionalDateStringSchema,
+    exit_date: optionalDateStringSchema,
     purpose: z
       .string()
       .max(500, 'Purpose must be less than 500 characters')
@@ -105,6 +148,21 @@ export const tripUpdateSchema = z
     },
     {
       message: 'Exit date must be on or after entry date',
+      path: ['exit_date'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.entry_date && data.exit_date) {
+        const entry = new Date(data.entry_date)
+        const exit = new Date(data.exit_date)
+        const duration = getTripDurationDays(entry, exit)
+        return duration <= 180
+      }
+      return true
+    },
+    {
+      message: 'Trip duration cannot exceed 180 days',
       path: ['exit_date'],
     }
   )

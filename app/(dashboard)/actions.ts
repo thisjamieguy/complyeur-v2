@@ -25,7 +25,7 @@ import {
   getNotificationPreferences,
   updateNotificationPreferences,
 } from '@/lib/db/alerts'
-import type { TripInsert, TripUpdate, CompanySettingsUpdate, NotificationPreferencesUpdate, AlertWithEmployee, CompanySettings, NotificationPreferences } from '@/types/database'
+import type { TripInput, TripUpdate, CompanySettingsUpdate, NotificationPreferencesUpdate, AlertWithEmployee, CompanySettings, NotificationPreferences } from '@/types/database'
 
 /**
  * Helper to run alert detection after trip changes
@@ -78,7 +78,7 @@ export async function addTripAction(formData: {
   ghosted?: boolean
 }) {
   const validated = tripSchema.parse(formData)
-  const tripData: TripInsert = {
+  const tripData: TripInput = {
     employee_id: validated.employee_id,
     country: validated.country,
     entry_date: validated.entry_date,

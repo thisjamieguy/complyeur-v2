@@ -21,6 +21,7 @@ import {
 import { EditTripModal } from './edit-trip-modal'
 import { DeleteTripDialog } from './delete-trip-dialog'
 import { ReassignTripDialog } from './reassign-trip-dialog'
+import { TripCardMobile } from './trip-card-mobile'
 import {
   getCountryName,
   isSchengenCountry,
@@ -62,7 +63,7 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
       comparison =
         new Date(a.entry_date).getTime() - new Date(b.entry_date).getTime()
     } else if (sortField === 'travel_days') {
-      comparison = a.travel_days - b.travel_days
+      comparison = (a.travel_days ?? 0) - (b.travel_days ?? 0)
     }
     return sortDirection === 'asc' ? comparison : -comparison
   })
@@ -119,7 +120,8 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
 
   return (
     <>
-      <div className="rounded-lg border">
+      {/* Desktop table view */}
+      <div className="hidden md:block rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -161,7 +163,7 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
                     <span className="font-medium">
                       {displayCountry(trip)}
                     </span>
-                    {getCountryBadge(trip.country, trip.is_private)}
+                    {getCountryBadge(trip.country, trip.is_private ?? false)}
                     {trip.is_private && (
                       <Badge variant="secondary" className="text-xs">
                         Private
@@ -220,6 +222,20 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
             ))}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile card view */}
+      <div className="md:hidden space-y-3">
+        {sortedTrips.map((trip) => (
+          <TripCardMobile
+            key={trip.id}
+            trip={trip}
+            onEdit={setEditingTrip}
+            onDelete={setDeletingTrip}
+            onReassign={setReassigningTrip}
+            showReassign={employees.length > 1}
+          />
+        ))}
       </div>
 
       {editingTrip && (

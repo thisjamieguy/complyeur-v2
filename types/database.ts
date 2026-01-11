@@ -1,14 +1,3 @@
-/**
- * Database types for Supabase
- *
- * To regenerate these types from your Supabase database:
- * 1. Install the Supabase CLI: npm install -g supabase
- * 2. Login: supabase login
- * 3. Generate types: supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.ts
- *
- * Or run: pnpm db:types (after adding the script to package.json)
- */
-
 export type Json =
   | string
   | number
@@ -17,478 +6,598 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
-  public: {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
+  graphql_public: {
     Tables: {
-      companies: {
-        Row: {
-          id: string
-          name: string
-          slug: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          slug: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          slug?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          id: string
-          company_id: string
-          email: string
-          first_name: string | null
-          last_name: string | null
-          role: 'admin' | 'manager' | 'viewer'
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          company_id: string
-          email: string
-          first_name?: string | null
-          last_name?: string | null
-          role?: 'admin' | 'manager' | 'viewer'
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          email?: string
-          first_name?: string | null
-          last_name?: string | null
-          role?: 'admin' | 'manager' | 'viewer'
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'profiles_company_id_fkey'
-            columns: ['company_id']
-            referencedRelation: 'companies'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      employees: {
-        Row: {
-          id: string
-          company_id: string
-          name: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          name: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          name?: string
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'employees_company_id_fkey'
-            columns: ['company_id']
-            referencedRelation: 'companies'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      trips: {
-        Row: {
-          id: string
-          employee_id: string
-          company_id: string
-          country: string
-          entry_date: string
-          exit_date: string
-          purpose: string | null
-          job_ref: string | null
-          is_private: boolean
-          ghosted: boolean
-          travel_days: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          employee_id: string
-          company_id: string
-          country: string
-          entry_date: string
-          exit_date: string
-          purpose?: string | null
-          job_ref?: string | null
-          is_private?: boolean
-          ghosted?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          employee_id?: string
-          company_id?: string
-          country?: string
-          entry_date?: string
-          exit_date?: string
-          purpose?: string | null
-          job_ref?: string | null
-          is_private?: boolean
-          ghosted?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'trips_employee_id_fkey'
-            columns: ['employee_id']
-            referencedRelation: 'employees'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'trips_company_id_fkey'
-            columns: ['company_id']
-            referencedRelation: 'companies'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      alerts: {
-        Row: {
-          id: string
-          employee_id: string
-          company_id: string
-          alert_type: 'warning' | 'urgent' | 'breach'
-          risk_level: 'green' | 'amber' | 'red'
-          message: string
-          days_used: number | null
-          resolved: boolean
-          resolved_at: string | null
-          acknowledged: boolean
-          acknowledged_at: string | null
-          acknowledged_by: string | null
-          email_sent: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          employee_id: string
-          company_id: string
-          alert_type: 'warning' | 'urgent' | 'breach'
-          risk_level: 'green' | 'amber' | 'red'
-          message: string
-          days_used?: number | null
-          resolved?: boolean
-          resolved_at?: string | null
-          acknowledged?: boolean
-          acknowledged_at?: string | null
-          acknowledged_by?: string | null
-          email_sent?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          employee_id?: string
-          company_id?: string
-          alert_type?: 'warning' | 'urgent' | 'breach'
-          risk_level?: 'green' | 'amber' | 'red'
-          message?: string
-          days_used?: number | null
-          resolved?: boolean
-          resolved_at?: string | null
-          acknowledged?: boolean
-          acknowledged_at?: string | null
-          acknowledged_by?: string | null
-          email_sent?: boolean
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'alerts_employee_id_fkey'
-            columns: ['employee_id']
-            referencedRelation: 'employees'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'alerts_company_id_fkey'
-            columns: ['company_id']
-            referencedRelation: 'companies'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      company_settings: {
-        Row: {
-          company_id: string
-          retention_months: number
-          session_timeout_minutes: number
-          risk_threshold_green: number
-          risk_threshold_amber: number
-          future_job_warning_threshold: number
-          notify_70_days: boolean
-          notify_85_days: boolean
-          notify_90_days: boolean
-          weekly_digest: boolean
-          custom_alert_threshold: number | null
-          warning_threshold: number
-          critical_threshold: number
-          email_notifications: boolean
-          warning_email_enabled: boolean
-          urgent_email_enabled: boolean
-          breach_email_enabled: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          company_id: string
-          retention_months?: number
-          session_timeout_minutes?: number
-          risk_threshold_green?: number
-          risk_threshold_amber?: number
-          future_job_warning_threshold?: number
-          notify_70_days?: boolean
-          notify_85_days?: boolean
-          notify_90_days?: boolean
-          weekly_digest?: boolean
-          custom_alert_threshold?: number | null
-          warning_threshold?: number
-          critical_threshold?: number
-          email_notifications?: boolean
-          warning_email_enabled?: boolean
-          urgent_email_enabled?: boolean
-          breach_email_enabled?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          company_id?: string
-          retention_months?: number
-          session_timeout_minutes?: number
-          risk_threshold_green?: number
-          risk_threshold_amber?: number
-          future_job_warning_threshold?: number
-          notify_70_days?: boolean
-          notify_85_days?: boolean
-          notify_90_days?: boolean
-          weekly_digest?: boolean
-          custom_alert_threshold?: number | null
-          warning_threshold?: number
-          critical_threshold?: number
-          email_notifications?: boolean
-          warning_email_enabled?: boolean
-          urgent_email_enabled?: boolean
-          breach_email_enabled?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'company_settings_company_id_fkey'
-            columns: ['company_id']
-            referencedRelation: 'companies'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      notification_log: {
-        Row: {
-          id: string
-          company_id: string
-          alert_id: string | null
-          employee_id: string | null
-          notification_type: 'warning' | 'urgent' | 'breach' | 'resolution'
-          recipient_email: string
-          subject: string
-          status: 'pending' | 'sent' | 'failed' | 'bounced'
-          resend_message_id: string | null
-          error_message: string | null
-          sent_at: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          alert_id?: string | null
-          employee_id?: string | null
-          notification_type: 'warning' | 'urgent' | 'breach' | 'resolution'
-          recipient_email: string
-          subject: string
-          status?: 'pending' | 'sent' | 'failed' | 'bounced'
-          resend_message_id?: string | null
-          error_message?: string | null
-          sent_at?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          alert_id?: string | null
-          employee_id?: string | null
-          notification_type?: 'warning' | 'urgent' | 'breach' | 'resolution'
-          recipient_email?: string
-          subject?: string
-          status?: 'pending' | 'sent' | 'failed' | 'bounced'
-          resend_message_id?: string | null
-          error_message?: string | null
-          sent_at?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'notification_log_company_id_fkey'
-            columns: ['company_id']
-            referencedRelation: 'companies'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'notification_log_alert_id_fkey'
-            columns: ['alert_id']
-            referencedRelation: 'alerts'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      notification_preferences: {
-        Row: {
-          id: string
-          user_id: string
-          company_id: string
-          receive_warning_emails: boolean
-          receive_urgent_emails: boolean
-          receive_breach_emails: boolean
-          unsubscribe_token: string
-          unsubscribed_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          company_id: string
-          receive_warning_emails?: boolean
-          receive_urgent_emails?: boolean
-          receive_breach_emails?: boolean
-          unsubscribe_token?: string
-          unsubscribed_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          company_id?: string
-          receive_warning_emails?: boolean
-          receive_urgent_emails?: boolean
-          receive_breach_emails?: boolean
-          unsubscribe_token?: string
-          unsubscribed_at?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'notification_preferences_user_id_fkey'
-            columns: ['user_id']
-            referencedRelation: 'profiles'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'notification_preferences_company_id_fkey'
-            columns: ['company_id']
-            referencedRelation: 'companies'
-            referencedColumns: ['id']
-          }
-        ]
-      }
-      audit_log: {
-        Row: {
-          id: string
-          company_id: string
-          user_id: string | null
-          action: string
-          entity_type: string
-          entity_id: string | null
-          details: Json | null
-          ip_address: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          company_id: string
-          user_id?: string | null
-          action: string
-          entity_type: string
-          entity_id?: string | null
-          details?: Json | null
-          ip_address?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          company_id?: string
-          user_id?: string | null
-          action?: string
-          entity_type?: string
-          entity_id?: string | null
-          details?: Json | null
-          ip_address?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'audit_log_company_id_fkey'
-            columns: ['company_id']
-            referencedRelation: 'companies'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'audit_log_user_id_fkey'
-            columns: ['user_id']
-            referencedRelation: 'profiles'
-            referencedColumns: ['id']
-          }
-        ]
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      create_company_and_profile: {
+      graphql: {
         Args: {
-          user_id: string
-          user_email: string
-          company_name: string
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
         }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  public: {
+    Tables: {
+      alerts: {
+        Row: {
+          acknowledged: boolean | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          company_id: string
+          created_at: string
+          days_used: number | null
+          email_sent: boolean | null
+          employee_id: string
+          id: string
+          message: string
+          resolved: boolean | null
+          resolved_at: string | null
+          risk_level: string
+        }
+        Insert: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          company_id: string
+          created_at?: string
+          days_used?: number | null
+          email_sent?: boolean | null
+          employee_id: string
+          id?: string
+          message: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          risk_level: string
+        }
+        Update: {
+          acknowledged?: boolean | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          company_id?: string
+          created_at?: string
+          days_used?: number | null
+          email_sent?: boolean | null
+          employee_id?: string
+          id?: string
+          message?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          risk_level?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_compliance_summary"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "alerts_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_log: {
+        Row: {
+          action: string
+          company_id: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          entry_hash: string | null
+          id: string
+          ip_address: unknown
+          previous_hash: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          company_id: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          entry_hash?: string | null
+          id?: string
+          ip_address?: unknown
+          previous_hash?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          company_id?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          entry_hash?: string | null
+          id?: string
+          ip_address?: unknown
+          previous_hash?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      company_settings: {
+        Row: {
+          breach_email_enabled: boolean | null
+          company_id: string
+          created_at: string
+          critical_threshold: number | null
+          custom_alert_threshold: number | null
+          email_notifications: boolean | null
+          future_job_warning_threshold: number | null
+          notify_70_days: boolean | null
+          notify_85_days: boolean | null
+          notify_90_days: boolean | null
+          retention_months: number | null
+          risk_threshold_amber: number | null
+          risk_threshold_green: number | null
+          session_timeout_minutes: number | null
+          updated_at: string
+          urgent_email_enabled: boolean | null
+          warning_email_enabled: boolean | null
+          warning_threshold: number | null
+          weekly_digest: boolean | null
+        }
+        Insert: {
+          breach_email_enabled?: boolean | null
+          company_id: string
+          created_at?: string
+          critical_threshold?: number | null
+          custom_alert_threshold?: number | null
+          email_notifications?: boolean | null
+          future_job_warning_threshold?: number | null
+          notify_70_days?: boolean | null
+          notify_85_days?: boolean | null
+          notify_90_days?: boolean | null
+          retention_months?: number | null
+          risk_threshold_amber?: number | null
+          risk_threshold_green?: number | null
+          session_timeout_minutes?: number | null
+          updated_at?: string
+          urgent_email_enabled?: boolean | null
+          warning_email_enabled?: boolean | null
+          warning_threshold?: number | null
+          weekly_digest?: boolean | null
+        }
+        Update: {
+          breach_email_enabled?: boolean | null
+          company_id?: string
+          created_at?: string
+          critical_threshold?: number | null
+          custom_alert_threshold?: number | null
+          email_notifications?: boolean | null
+          future_job_warning_threshold?: number | null
+          notify_70_days?: boolean | null
+          notify_85_days?: boolean | null
+          notify_90_days?: boolean | null
+          retention_months?: number | null
+          risk_threshold_amber?: number | null
+          risk_threshold_green?: number | null
+          session_timeout_minutes?: number | null
+          updated_at?: string
+          urgent_email_enabled?: boolean | null
+          warning_email_enabled?: boolean | null
+          warning_threshold?: number | null
+          weekly_digest?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          anonymized_at: string | null
+          company_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          anonymized_at?: string | null
+          company_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          anonymized_at?: string | null
+          company_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_log: {
+        Row: {
+          alert_id: string | null
+          company_id: string
+          created_at: string
+          employee_id: string | null
+          error_message: string | null
+          id: string
+          notification_type: string
+          recipient_email: string
+          resend_message_id: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          alert_id?: string | null
+          company_id: string
+          created_at?: string
+          employee_id?: string | null
+          error_message?: string | null
+          id?: string
+          notification_type: string
+          recipient_email: string
+          resend_message_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+        }
+        Update: {
+          alert_id?: string | null
+          company_id?: string
+          created_at?: string
+          employee_id?: string | null
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          recipient_email?: string
+          resend_message_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_log_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_log_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_compliance_summary"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "notification_log_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          receive_breach_emails: boolean | null
+          receive_urgent_emails: boolean | null
+          receive_warning_emails: boolean | null
+          unsubscribe_token: string
+          unsubscribed_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          receive_breach_emails?: boolean | null
+          receive_urgent_emails?: boolean | null
+          receive_warning_emails?: boolean | null
+          unsubscribe_token?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          receive_breach_emails?: boolean | null
+          receive_urgent_emails?: boolean | null
+          receive_warning_emails?: boolean | null
+          unsubscribe_token?: string
+          unsubscribed_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schengen_countries: {
+        Row: {
+          code: string
+          is_full_member: boolean | null
+          name: string
+          notes: string | null
+        }
+        Insert: {
+          code: string
+          is_full_member?: boolean | null
+          name: string
+          notes?: string | null
+        }
+        Update: {
+          code?: string
+          is_full_member?: boolean | null
+          name?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
+      trips: {
+        Row: {
+          company_id: string
+          country: string
+          created_at: string
+          employee_id: string
+          entry_date: string
+          exit_date: string
+          ghosted: boolean | null
+          id: string
+          is_private: boolean | null
+          job_ref: string | null
+          purpose: string | null
+          travel_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          country: string
+          created_at?: string
+          employee_id: string
+          entry_date: string
+          exit_date: string
+          ghosted?: boolean | null
+          id?: string
+          is_private?: boolean | null
+          job_ref?: string | null
+          purpose?: string | null
+          travel_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          country?: string
+          created_at?: string
+          employee_id?: string
+          entry_date?: string
+          exit_date?: string
+          ghosted?: boolean | null
+          id?: string
+          is_private?: boolean | null
+          job_ref?: string | null
+          purpose?: string | null
+          travel_days?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_compliance_summary"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "trips_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      employee_compliance_summary: {
+        Row: {
+          company_id: string | null
+          employee_id: string | null
+          employee_name: string | null
+          last_trip_end: string | null
+          total_travel_days: number | null
+          total_trips: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Functions: {
+      create_company_and_profile: {
+        Args: { company_name: string; user_email: string; user_id: string }
         Returns: string
       }
-      unsubscribe_by_token: {
-        Args: {
-          token: string
-        }
-        Returns: boolean
-      }
+      get_last_audit_hash: { Args: { p_company_id: string }; Returns: string }
+      unsubscribe_by_token: { Args: { token: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
@@ -499,233 +608,180 @@ export interface Database {
   }
 }
 
-// Convenience types for common operations
-export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
-export type InsertTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
-export type UpdateTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-// Entity types
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {},
+  },
+} as const
+
+// ============================================================================
+// Convenience Type Aliases
+// ============================================================================
+
+// Table Row types
+export type Alert = Tables<'alerts'>
+export type AuditLog = Tables<'audit_log'>
 export type Company = Tables<'companies'>
+export type CompanySettings = Tables<'company_settings'>
+export type Employee = Tables<'employees'>
+export type NotificationLog = Tables<'notification_log'>
+export type NotificationPreferences = Tables<'notification_preferences'>
 export type Profile = Tables<'profiles'>
+export type SchengenCountry = Tables<'schengen_countries'>
+export type Trip = Tables<'trips'>
 
 // Insert types
-export type CompanyInsert = InsertTables<'companies'>
-export type ProfileInsert = InsertTables<'profiles'>
+export type AlertInsert = TablesInsert<'alerts'>
+export type CompanyInsert = TablesInsert<'companies'>
+export type CompanySettingsInsert = TablesInsert<'company_settings'>
+export type EmployeeInsert = TablesInsert<'employees'>
+export type NotificationLogInsert = TablesInsert<'notification_log'>
+export type NotificationPreferencesInsert = TablesInsert<'notification_preferences'>
+export type ProfileInsert = TablesInsert<'profiles'>
+export type TripInsert = TablesInsert<'trips'>
 
 // Update types
-export type CompanyUpdate = UpdateTables<'companies'>
-export type ProfileUpdate = UpdateTables<'profiles'>
+export type AlertUpdate = TablesUpdate<'alerts'>
+export type CompanyUpdate = TablesUpdate<'companies'>
+export type CompanySettingsUpdate = TablesUpdate<'company_settings'>
+export type EmployeeUpdate = TablesUpdate<'employees'>
+export type NotificationPreferencesUpdate = TablesUpdate<'notification_preferences'>
+export type ProfileUpdate = TablesUpdate<'profiles'>
+export type TripUpdate = TablesUpdate<'trips'>
 
-// Profile with company relation
-export type ProfileWithCompany = Profile & {
-  companies: Company | null
-}
-
-// Employee types
-export interface Employee {
-  id: string
-  company_id: string
-  name: string
-  created_at: string
-  updated_at: string
-}
-
-export type EmployeeInsert = Pick<Employee, 'name'> // company_id added server-side
-export type EmployeeUpdate = Partial<Pick<Employee, 'name'>>
-
-// For list views with future compliance data
-export interface EmployeeWithStatus extends Employee {
-  days_used?: number
-  days_remaining?: number
-  status?: 'compliant' | 'at-risk' | 'non-compliant'
-}
-
-// Trip types
-export interface Trip {
-  id: string
-  employee_id: string
-  company_id: string
-  country: string
-  entry_date: string
-  exit_date: string
-  purpose: string | null
-  job_ref: string | null
-  is_private: boolean
-  ghosted: boolean
-  travel_days: number // Generated column in database
-  created_at: string
-  updated_at: string
-}
-
-// Insert type - company_id added server-side, travel_days computed by database
-export interface TripInsert {
-  employee_id: string
-  country: string
-  entry_date: string
-  exit_date: string
-  purpose?: string | null
-  job_ref?: string | null
-  is_private?: boolean
-  ghosted?: boolean
-}
-
-// Update type - partial fields
-export interface TripUpdate {
-  country?: string
-  entry_date?: string
-  exit_date?: string
-  purpose?: string | null
-  job_ref?: string | null
-  is_private?: boolean
-  ghosted?: boolean
-}
-
-// Trip with country name for display
-export interface TripWithCountryName extends Trip {
-  country_name: string
-  is_schengen: boolean
-}
-
-// Alert types
+// Custom types for business logic
 export type AlertType = 'warning' | 'urgent' | 'breach'
 export type AlertRiskLevel = 'green' | 'amber' | 'red'
 
-export interface Alert {
-  id: string
-  employee_id: string
-  company_id: string
-  alert_type: AlertType
-  risk_level: AlertRiskLevel
-  message: string
-  days_used: number | null
-  resolved: boolean
-  resolved_at: string | null
-  acknowledged: boolean
-  acknowledged_at: string | null
-  acknowledged_by: string | null
-  email_sent: boolean
-  created_at: string
+// Input types (without company_id, which is set server-side)
+export type EmployeeInput = Omit<EmployeeInsert, 'company_id'>
+export type TripInput = Omit<TripInsert, 'company_id'>
+
+// Join types
+export type AlertWithEmployee = Alert & {
+  employee: Pick<Employee, 'id' | 'name'> | null
 }
 
-export interface AlertInsert {
-  employee_id: string
-  company_id: string
-  alert_type: AlertType
-  risk_level: AlertRiskLevel
-  message: string
-  days_used?: number
-  resolved?: boolean
-  acknowledged?: boolean
-  email_sent?: boolean
-}
-
-export interface AlertUpdate {
-  resolved?: boolean
-  resolved_at?: string
-  acknowledged?: boolean
-  acknowledged_at?: string
-  acknowledged_by?: string
-  email_sent?: boolean
-}
-
-// Alert with employee info for display
-export interface AlertWithEmployee extends Alert {
-  employee: {
-    id: string
-    name: string
-  }
-}
-
-// Notification log types
-export type NotificationType = 'warning' | 'urgent' | 'breach' | 'resolution'
-export type NotificationStatus = 'pending' | 'sent' | 'failed' | 'bounced'
-
-export interface NotificationLog {
-  id: string
-  company_id: string
-  alert_id: string | null
-  employee_id: string | null
-  notification_type: NotificationType
-  recipient_email: string
-  subject: string
-  status: NotificationStatus
-  resend_message_id: string | null
-  error_message: string | null
-  sent_at: string | null
-  created_at: string
-}
-
-export interface NotificationLogInsert {
-  company_id: string
-  alert_id?: string | null
-  employee_id?: string | null
-  notification_type: NotificationType
-  recipient_email: string
-  subject: string
-  status?: NotificationStatus
-  resend_message_id?: string | null
-  error_message?: string | null
-  sent_at?: string | null
-}
-
-// Company settings types
-export interface CompanySettings {
-  company_id: string
-  retention_months: number
-  session_timeout_minutes: number
-  risk_threshold_green: number
-  risk_threshold_amber: number
-  future_job_warning_threshold: number
-  notify_70_days: boolean
-  notify_85_days: boolean
-  notify_90_days: boolean
-  weekly_digest: boolean
-  custom_alert_threshold: number | null
-  warning_threshold: number
-  critical_threshold: number
-  email_notifications: boolean
-  warning_email_enabled: boolean
-  urgent_email_enabled: boolean
-  breach_email_enabled: boolean
-  created_at: string
-  updated_at: string
-}
-
-export interface CompanySettingsUpdate {
-  retention_months?: number
-  session_timeout_minutes?: number
-  risk_threshold_green?: number
-  risk_threshold_amber?: number
-  future_job_warning_threshold?: number
-  notify_70_days?: boolean
-  notify_85_days?: boolean
-  notify_90_days?: boolean
-  weekly_digest?: boolean
-  custom_alert_threshold?: number | null
-  warning_threshold?: number
-  critical_threshold?: number
-  email_notifications?: boolean
-  warning_email_enabled?: boolean
-  urgent_email_enabled?: boolean
-  breach_email_enabled?: boolean
-}
-
-// Notification preferences types (per-user)
-export interface NotificationPreferences {
-  id: string
-  user_id: string
-  company_id: string
-  receive_warning_emails: boolean
-  receive_urgent_emails: boolean
-  receive_breach_emails: boolean
-  unsubscribe_token: string
-  unsubscribed_at: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface NotificationPreferencesUpdate {
-  receive_warning_emails?: boolean
-  receive_urgent_emails?: boolean
-  receive_breach_emails?: boolean
+export type ProfileWithCompany = Profile & {
+  companies: Pick<Company, 'id' | 'name' | 'slug'> | null
 }

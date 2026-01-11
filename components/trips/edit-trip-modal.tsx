@@ -11,7 +11,8 @@ import {
 } from '@/components/ui/dialog'
 import { TripForm, type TripFormValues } from './trip-form'
 import { updateTripAction } from '@/app/(dashboard)/actions'
-import { toast } from 'sonner'
+import { checkTripOverlap } from '@/lib/validations/trip-overlap'
+import { showSuccess, showError } from '@/lib/toast'
 import type { Trip } from '@/types/database'
 
 interface EditTripModalProps {
@@ -38,22 +39,39 @@ export function EditTripModal({
     setError(null)
 
     try {
+      // Check for overlapping trips before updating (exclude this trip)
+      const overlapResult = await checkTripOverlap(
+        employeeId,
+        data.entry_date,
+        data.exit_date,
+        trip.id // Exclude this trip from overlap check
+      )
+
+      if (overlapResult.hasOverlap) {
+        setError(overlapResult.message || 'Trip overlaps with an existing trip')
+        showError('Trip overlap detected', overlapResult.message)
+        setIsLoading(false)
+        return
+      }
+
       await updateTripAction(trip.id, employeeId, {
         country: data.country,
         entry_date: data.entry_date,
         exit_date: data.exit_date,
         purpose: data.purpose || null,
         job_ref: data.job_ref || null,
+        is_private: data.is_private,
+        ghosted: data.ghosted,
       })
 
-      toast.success('Trip updated successfully')
+      showSuccess('Trip updated successfully')
       onOpenChange(false)
       router.refresh()
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to update trip'
       setError(message)
-      toast.error(message)
+      showError('Failed to update trip', message)
     } finally {
       setIsLoading(false)
     }

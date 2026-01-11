@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Loader2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -18,11 +18,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { CountrySelect } from './country-select'
-import {
-  validateCountry,
-  getCountryName,
-  COUNTRY_NAMES,
-} from '@/lib/constants/schengen-countries'
+import { validateCountry, COUNTRY_NAMES } from '@/lib/constants/schengen-countries'
+import { checkTripDurationWarning, getTripDurationDays } from '@/lib/validations/dates'
 import type { Trip } from '@/types/database'
 
 // Form values type (input type for the form)
@@ -36,7 +33,7 @@ export interface TripFormValues {
   ghosted: boolean
 }
 
-// Form-specific schema (subset for form validation)
+// Form-specific schema with enhanced validation
 const tripFormSchema = z
   .object({
     country: z
@@ -60,6 +57,37 @@ const tripFormSchema = z
     is_private: z.boolean(),
     ghosted: z.boolean(),
   })
+  // Validate entry date is not too far in the past (180 days max)
+  .refine(
+    (data) => {
+      const entry = new Date(data.entry_date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const threshold = new Date(today)
+      threshold.setDate(threshold.getDate() - 180)
+      return entry >= threshold
+    },
+    {
+      message: 'Entry date cannot be more than 180 days in the past',
+      path: ['entry_date'],
+    }
+  )
+  // Validate exit date is not too far in the future (30 days max)
+  .refine(
+    (data) => {
+      const exit = new Date(data.exit_date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const threshold = new Date(today)
+      threshold.setDate(threshold.getDate() + 30)
+      return exit <= threshold
+    },
+    {
+      message: 'Exit date cannot be more than 30 days in the future',
+      path: ['exit_date'],
+    }
+  )
+  // Validate exit date is on or after entry date
   .refine(
     (data) => {
       const entry = new Date(data.entry_date)
@@ -71,16 +99,17 @@ const tripFormSchema = z
       path: ['exit_date'],
     }
   )
+  // Validate trip duration does not exceed 180 days
   .refine(
     (data) => {
       const entry = new Date(data.entry_date)
-      const oneYearFromNow = new Date()
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
-      return entry <= oneYearFromNow
+      const exit = new Date(data.exit_date)
+      const duration = getTripDurationDays(entry, exit)
+      return duration <= 180
     },
     {
-      message: 'Entry date cannot be more than 1 year in the future',
-      path: ['entry_date'],
+      message: 'Trip duration cannot exceed 180 days',
+      path: ['exit_date'],
     }
   )
 
@@ -123,9 +152,24 @@ export function TripForm({
   })
 
   const selectedCountry = form.watch('country')
+  const entryDate = form.watch('entry_date')
+  const exitDate = form.watch('exit_date')
+
   const countryValidation = selectedCountry
     ? validateCountry(selectedCountry)
     : null
+
+  // Calculate trip duration warning
+  const durationWarning = useMemo(() => {
+    if (entryDate && exitDate) {
+      const entry = new Date(entryDate)
+      const exit = new Date(exitDate)
+      if (!isNaN(entry.getTime()) && !isNaN(exit.getTime()) && exit >= entry) {
+        return checkTripDurationWarning(entry, exit)
+      }
+    }
+    return null
+  }, [entryDate, exitDate])
 
   // Update form values when trip prop changes (for edit mode)
   useEffect(() => {
@@ -184,7 +228,7 @@ export function TripForm({
           </Alert>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="entry_date"
@@ -213,6 +257,15 @@ export function TripForm({
             )}
           />
         </div>
+
+        {durationWarning && (
+          <Alert className="border-amber-500 bg-amber-50 text-amber-800">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              {durationWarning}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <FormField
           control={form.control}
@@ -310,16 +363,17 @@ export function TripForm({
           />
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
           <Button
             type="button"
             variant="outline"
             onClick={onCancel}
             disabled={isLoading}
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
             {isLoading ? 'Saving...' : submitLabel}
           </Button>
         </div>

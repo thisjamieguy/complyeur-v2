@@ -96,16 +96,16 @@ export default function LoginPage() {
             </Button>
           </form>
         </Form>
-        <div className="mt-4 text-center space-y-2">
+        <div className="mt-4 text-center space-y-3">
           <Link
             href="/forgot-password"
-            className="text-sm text-blue-600 hover:underline"
+            className="inline-block text-sm text-blue-600 hover:underline py-2 min-h-[44px] leading-relaxed"
           >
             Forgot your password?
           </Link>
           <div className="text-sm text-gray-600">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-blue-600 hover:underline">
+            <Link href="/signup" className="text-blue-600 hover:underline py-2">
               Sign up
             </Link>
           </div>

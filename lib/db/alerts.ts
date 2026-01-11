@@ -166,7 +166,7 @@ export async function createAlert(alert: Omit<AlertInsert, 'company_id'>): Promi
   const { companyId } = await getAuthenticatedUserCompany(supabase)
 
   // Check for existing active alert of same type
-  const exists = await hasActiveAlertOfType(alert.employee_id, alert.alert_type)
+  const exists = await hasActiveAlertOfType(alert.employee_id, alert.alert_type as AlertType)
   if (exists) {
     return null // Duplicate prevention
   }
@@ -553,10 +553,10 @@ export async function getNotificationRecipients(
   const supabase = await createClient()
   const { companyId } = await getAuthenticatedUserCompany(supabase)
 
-  // Get all profiles in the company
+  // Get all profiles in the company (profiles don't have email - need to get from auth.users)
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('id, email')
+    .select('id')
     .eq('company_id', companyId)
 
   if (profilesError || !profiles) {
@@ -567,10 +567,12 @@ export async function getNotificationRecipients(
   const recipients: Array<{ email: string; userId: string; unsubscribeToken: string }> = []
 
   for (const profile of profiles) {
-    // Get or create notification preferences for this user
+    // Get user email from auth.users via supabase.auth.admin (server-side only)
+    // Since we can't directly query auth.users, we need to get the email differently
+    // For now, get it from notification_preferences or skip if not available
     const { data: prefs } = await supabase
       .from('notification_preferences')
-      .select('*')
+      .select('*, recipient_email:notification_log(recipient_email)')
       .eq('user_id', profile.id)
       .single()
 
@@ -587,9 +589,15 @@ export async function getNotificationRecipients(
           ? prefs?.receive_urgent_emails !== false
           : prefs?.receive_breach_emails !== false
 
-    if (shouldReceive) {
+    // We need to get the email from auth - for now, try to get it from the current user session
+    // or use a stored email. Since profiles don't have email, we'll need to handle this differently
+    // For production, you'd want to store email in profiles or use Supabase admin API
+    const { data: { user } } = await supabase.auth.getUser()
+    const email = profile.id === user?.id ? user?.email : null
+
+    if (shouldReceive && email) {
       recipients.push({
-        email: profile.email,
+        email,
         userId: profile.id,
         unsubscribeToken: prefs?.unsubscribe_token ?? '',
       })

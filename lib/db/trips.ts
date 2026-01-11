@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { AuthError, DatabaseError, NotFoundError, ValidationError } from '@/lib/errors'
-import type { Trip, TripInsert, TripUpdate } from '@/types/database'
+import type { Trip, TripInput, TripInsert, TripUpdate } from '@/types/database'
 
 interface AuthContext {
   userId: string
@@ -109,7 +109,7 @@ export async function getTripById(id: string): Promise<Trip | null> {
  * - Employee belongs to user's company
  * - No overlapping trips for the same employee
  */
-export async function createTrip(trip: TripInsert): Promise<Trip> {
+export async function createTrip(trip: TripInput): Promise<Trip> {
   const supabase = await createClient()
 
   // Verify auth and get company
@@ -411,7 +411,7 @@ export async function createBulkTrips(trips: BulkTripInput[]): Promise<BulkTripR
   }
 
   const errors: { index: number; message: string }[] = []
-  const validTrips: TripInsert[] = []
+  const validTrips: TripInput[] = []
 
   // Include newly validated trips in overlap checking
   const allTripsForOverlapCheck = [...(existingTrips ?? [])]

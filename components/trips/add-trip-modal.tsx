@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/dialog'
 import { TripForm, type TripFormValues } from './trip-form'
 import { addTripAction } from '@/app/(dashboard)/actions'
-import { toast } from 'sonner'
+import { checkTripOverlap } from '@/lib/validations/trip-overlap'
+import { showSuccess, showError } from '@/lib/toast'
 
 interface AddTripModalProps {
   employeeId: string
@@ -32,6 +33,20 @@ export function AddTripModal({ employeeId, employeeName }: AddTripModalProps) {
     setError(null)
 
     try {
+      // Check for overlapping trips before saving
+      const overlapResult = await checkTripOverlap(
+        employeeId,
+        data.entry_date,
+        data.exit_date
+      )
+
+      if (overlapResult.hasOverlap) {
+        setError(overlapResult.message || 'Trip overlaps with an existing trip')
+        showError('Trip overlap detected', overlapResult.message)
+        setIsLoading(false)
+        return
+      }
+
       await addTripAction({
         employee_id: employeeId,
         country: data.country,
@@ -39,16 +54,18 @@ export function AddTripModal({ employeeId, employeeName }: AddTripModalProps) {
         exit_date: data.exit_date,
         purpose: data.purpose || undefined,
         job_ref: data.job_ref || undefined,
+        is_private: data.is_private,
+        ghosted: data.ghosted,
       })
 
-      toast.success('Trip added successfully')
+      showSuccess('Trip added successfully')
       setOpen(false)
       router.refresh()
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to add trip'
       setError(message)
-      toast.error(message)
+      showError('Failed to add trip', message)
     } finally {
       setIsLoading(false)
     }

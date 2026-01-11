@@ -59,14 +59,14 @@ function calculateStats(employees: EmployeeCompliance[]): ComplianceStats {
  */
 function EmployeeCard({ employee }: { employee: EmployeeCompliance }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+    <Link
+      href={`/employee/${employee.id}`}
+      className="block bg-white border border-slate-200 rounded-lg p-4 space-y-3 active:bg-slate-50 transition-colors"
+    >
       <div className="flex items-center justify-between">
-        <Link
-          href={`/employee/${employee.id}`}
-          className="font-medium text-slate-900 hover:underline"
-        >
+        <span className="font-medium text-slate-900">
           {employee.name}
-        </Link>
+        </span>
         <StatusBadge status={employee.risk_level} />
       </div>
       <div className="grid grid-cols-2 gap-2 text-sm">
@@ -90,15 +90,11 @@ function EmployeeCard({ employee }: { employee: EmployeeCompliance }) {
           <span className="ml-2">{formatDate(employee.last_trip_date)}</span>
         </div>
       </div>
-      <div className="pt-2 border-t border-slate-100">
-        <Button variant="outline" size="sm" className="w-full" asChild>
-          <Link href={`/employee/${employee.id}`}>
-            <Eye className="h-4 w-4 mr-2" />
-            View Details
-          </Link>
-        </Button>
+      <div className="pt-2 border-t border-slate-100 flex items-center justify-center gap-2 text-sm text-slate-600">
+        <Eye className="h-4 w-4" />
+        <span>View Details</span>
       </div>
-    </div>
+    </Link>
   )
 }
 

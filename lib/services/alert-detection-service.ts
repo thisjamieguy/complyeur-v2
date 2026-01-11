@@ -93,10 +93,10 @@ function getThresholdsCrossed(
   if (daysUsed >= 90) {
     crossed.push('breach')
   }
-  if (daysUsed >= settings.critical_threshold) {
+  if (daysUsed >= (settings.critical_threshold ?? 85)) {
     crossed.push('urgent')
   }
-  if (daysUsed >= settings.warning_threshold) {
+  if (daysUsed >= (settings.warning_threshold ?? 70)) {
     crossed.push('warning')
   }
 
@@ -116,11 +116,11 @@ function shouldSendEmail(
 
   switch (alertType) {
     case 'warning':
-      return settings.warning_email_enabled
+      return settings.warning_email_enabled ?? true
     case 'urgent':
-      return settings.urgent_email_enabled
+      return settings.urgent_email_enabled ?? true
     case 'breach':
-      return settings.breach_email_enabled
+      return settings.breach_email_enabled ?? true
     default:
       return false
   }
@@ -247,8 +247,8 @@ export async function detectAndProcessAlerts(
       alertType === 'breach'
         ? 90
         : alertType === 'urgent'
-          ? settings.critical_threshold
-          : settings.warning_threshold
+          ? (settings.critical_threshold ?? 85)
+          : (settings.warning_threshold ?? 70)
 
     const alert = await createAlert({
       employee_id: context.employeeId,

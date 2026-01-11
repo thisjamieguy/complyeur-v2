@@ -6,6 +6,22 @@
 -- and the schengen_countries reference table.
 -- ============================================================================
 
+-- Enable UUID extension (required for gen_random_uuid())
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ============================================================================
+-- HELPER FUNCTION: update_updated_at_column
+-- ============================================================================
+-- This function is used by triggers to automatically update the updated_at column
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- ============================================================================
 -- SECTION 1: SCHENGEN COUNTRIES REFERENCE TABLE (NO RLS)
 -- ============================================================================
@@ -60,7 +76,7 @@ ON CONFLICT (code) DO UPDATE SET
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS employees (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -117,7 +133,7 @@ CREATE TRIGGER update_employees_updated_at
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS trips (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
   company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   country TEXT NOT NULL,
@@ -197,7 +213,7 @@ CREATE TRIGGER update_trips_updated_at
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS alerts (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   employee_id UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
   company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   risk_level TEXT NOT NULL,
@@ -317,7 +333,7 @@ CREATE TRIGGER update_company_settings_updated_at
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS audit_log (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   user_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
   action TEXT NOT NULL,

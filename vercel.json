@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/gdpr/cron/retention",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

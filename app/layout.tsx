@@ -1,7 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
 import "./globals.css";
+
+// Import CookieYes types for global window augmentation
+import "@/lib/cookieyes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,6 +17,12 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   title: "ComplyEUR - Schengen Compliance Management",
@@ -25,10 +36,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* CookieYes Consent Management Script */}
+        {/* Replace YOUR_SITE_ID with your actual CookieYes site ID */}
+        <Script
+          id="cookieyes"
+          src="https://cdn-cookieyes.com/client_data/YOUR_SITE_ID/script.js"
+          strategy="beforeInteractive"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <MaintenanceBanner />
         {children}
         <Toaster />
       </body>

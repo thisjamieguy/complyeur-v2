@@ -53,7 +53,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
     (trip) => !trip.ghosted && isSchengenCountry(trip.country)
   )
   const totalSchengenDays = schengenTrips.reduce(
-    (sum, trip) => sum + trip.travel_days,
+    (sum, trip) => sum + (trip.travel_days ?? 0),
     0
   )
 

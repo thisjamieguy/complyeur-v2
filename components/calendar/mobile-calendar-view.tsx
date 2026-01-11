@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Monitor } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { RiskLevel } from '@/lib/compliance'
@@ -46,15 +47,29 @@ const riskConfig = {
  */
 export function MobileCalendarView({ employees }: MobileCalendarViewProps) {
   return (
-    <Card className="rounded-xl">
-      <CardHeader className="pb-4">
-        <h2 className="text-sm font-medium text-slate-700">
-          Employee Compliance
-        </h2>
-        <p className="text-xs text-slate-500">
-          Tap an employee to view their trips
-        </p>
-      </CardHeader>
+    <div className="space-y-4">
+      {/* Desktop suggestion banner */}
+      <div className="bg-slate-100 border border-slate-200 rounded-lg p-4 flex items-start gap-3">
+        <Monitor className="h-5 w-5 text-slate-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-slate-700">
+            Timeline view works best on larger screens
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            View on tablet or desktop for the full Gantt chart experience
+          </p>
+        </div>
+      </div>
+
+      <Card className="rounded-xl">
+        <CardHeader className="pb-4">
+          <h2 className="text-sm font-medium text-slate-700">
+            Employee Compliance
+          </h2>
+          <p className="text-xs text-slate-500">
+            Tap an employee to view their trips
+          </p>
+        </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-slate-100">
           {employees.map((employee) => {
@@ -108,5 +123,6 @@ export function MobileCalendarView({ employees }: MobileCalendarViewProps) {
         </div>
       </CardContent>
     </Card>
+    </div>
   )
 }

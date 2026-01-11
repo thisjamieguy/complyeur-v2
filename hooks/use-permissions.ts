@@ -81,7 +81,7 @@ export function useRole(): {
 } {
   const { profile, isLoading } = useProfile();
   return {
-    role: profile?.role,
+    role: profile?.role ?? undefined,
     isLoading,
   };
 }
