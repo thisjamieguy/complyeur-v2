@@ -316,23 +316,26 @@ export function checkFormatRequirements(
   mapping: HeaderMappingResult | null;
   suggestions: string[];
 } {
-  const configs: Record<string, CanonicalField[]> = {
-    employees: {
-      employees: REQUIRED_FIELDS_BY_FORMAT.employees,
-      employees_alt: REQUIRED_FIELDS_BY_FORMAT.employees_alt,
-      employees_simple: REQUIRED_FIELDS_BY_FORMAT.employees_simple,
-    }[format === 'employees' ? 'employees_simple' : format] ?? [],
-    trips: REQUIRED_FIELDS_BY_FORMAT.trips_alt, // Default to name-based
-    gantt: REQUIRED_FIELDS_BY_FORMAT.gantt,
-  };
+  // Determine which field configurations to try based on format
+  let configsToTry: CanonicalField[][];
 
-  // Try each valid configuration for the format
-  const configsToTry =
-    format === 'employees'
-      ? [REQUIRED_FIELDS_BY_FORMAT.employees_simple, REQUIRED_FIELDS_BY_FORMAT.employees_alt]
-      : format === 'trips'
-        ? [REQUIRED_FIELDS_BY_FORMAT.trips_alt, REQUIRED_FIELDS_BY_FORMAT.trips]
-        : [REQUIRED_FIELDS_BY_FORMAT.gantt];
+  switch (format) {
+    case 'employees':
+      configsToTry = [
+        REQUIRED_FIELDS_BY_FORMAT.employees_simple,
+        REQUIRED_FIELDS_BY_FORMAT.employees_alt,
+      ];
+      break;
+    case 'trips':
+      configsToTry = [
+        REQUIRED_FIELDS_BY_FORMAT.trips_alt,
+        REQUIRED_FIELDS_BY_FORMAT.trips,
+      ];
+      break;
+    case 'gantt':
+      configsToTry = [REQUIRED_FIELDS_BY_FORMAT.gantt];
+      break;
+  }
 
   for (const required of configsToTry) {
     const result = mapHeaders(headers, required);
