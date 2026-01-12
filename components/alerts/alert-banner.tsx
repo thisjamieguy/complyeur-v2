@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { acknowledgeAlertAction } from '@/app/(dashboard)/actions'
-import type { AlertWithEmployee, AlertType } from '@/types/database'
+import type { AlertWithEmployee, AlertType } from '@/types/database-helpers'
 
 interface AlertBannerProps {
   alerts: AlertWithEmployee[]

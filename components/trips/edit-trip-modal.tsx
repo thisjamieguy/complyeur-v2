@@ -13,7 +13,7 @@ import { TripForm, type TripFormValues } from './trip-form'
 import { updateTripAction } from '@/app/(dashboard)/actions'
 import { checkTripOverlap } from '@/lib/validations/trip-overlap'
 import { showSuccess, showError } from '@/lib/toast'
-import type { Trip } from '@/types/database'
+import type { Trip } from '@/types/database-helpers'
 
 interface EditTripModalProps {
   trip: Trip

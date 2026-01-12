@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Slider } from '@/components/ui/slider'
 import { updateCompanySettingsAction } from '../actions'
-import type { CompanySettings } from '@/types/database'
+import type { CompanySettings } from '@/types/database-helpers'
 
 interface NotificationSettingsFormProps {
   settings: CompanySettings

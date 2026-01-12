@@ -4,7 +4,7 @@ import { SettingsForm } from '@/components/settings'
 import { UserPreferencesForm } from './user-preferences-form'
 import { getCompanySettings, canViewSettings, canUpdateSettings } from '@/lib/actions/settings'
 import { getNotificationPreferencesAction } from '../actions'
-import type { NotificationPreferences } from '@/types/database'
+import type { NotificationPreferences } from '@/types/database-helpers'
 
 export const metadata = {
   title: 'Settings | ComplyEUR',

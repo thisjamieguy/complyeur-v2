@@ -12,7 +12,7 @@ import type {
   NotificationLogInsert,
   NotificationPreferences,
   NotificationPreferencesUpdate,
-} from '@/types/database'
+} from '@/types/database-helpers'
 
 interface AuthContext {
   userId: string

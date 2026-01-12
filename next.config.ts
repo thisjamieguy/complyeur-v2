@@ -2,6 +2,11 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  // Fix turbopack workspace root detection
+  turbopack: {
+    root: process.cwd(),
+  },
+
   // Performance optimizations
   experimental: {
     // Configure stale-while-revalidate times for client-side router cache

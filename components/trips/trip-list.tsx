@@ -27,7 +27,7 @@ import {
   isSchengenCountry,
   isNonSchengenEU,
 } from '@/lib/constants/schengen-countries'
-import type { Trip, Employee } from '@/types/database'
+import type { Trip, Employee } from '@/types/database-helpers'
 
 interface TripListProps {
   trips: Trip[]

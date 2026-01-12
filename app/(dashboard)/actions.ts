@@ -25,7 +25,7 @@ import {
   getNotificationPreferences,
   updateNotificationPreferences,
 } from '@/lib/db/alerts'
-import type { TripInput, TripUpdate, CompanySettingsUpdate, NotificationPreferencesUpdate, AlertWithEmployee, CompanySettings, NotificationPreferences } from '@/types/database'
+import type { TripCreateInput, TripUpdate, CompanySettingsUpdate, NotificationPreferencesUpdate, AlertWithEmployee, CompanySettings, NotificationPreferences, BulkTripInput } from '@/types/database-helpers'
 
 /**
  * Helper to run alert detection after trip changes
@@ -78,7 +78,7 @@ export async function addTripAction(formData: {
   ghosted?: boolean
 }) {
   const validated = tripSchema.parse(formData)
-  const tripData: TripInput = {
+  const tripData: TripCreateInput = {
     employee_id: validated.employee_id,
     country: validated.country,
     entry_date: validated.entry_date,
@@ -143,37 +143,65 @@ export async function deleteTripAction(tripId: string, employeeId: string) {
 }
 
 // Bulk trip creation
-interface BulkTripInput {
-  employee_id: string
-  country: string
-  entry_date: string
-  exit_date: string
-  purpose?: string
-  job_ref?: string
-  is_private?: boolean
-  ghosted?: boolean
-}
-
 interface BulkTripResult {
+  success: boolean
   created: number
   errors?: { index: number; message: string }[]
 }
 
+/**
+ * Bulk add trips with full Zod validation.
+ * Atomic behavior: if any trip fails validation, none are inserted.
+ */
 export async function bulkAddTripsAction(
   trips: BulkTripInput[]
 ): Promise<BulkTripResult> {
   if (!trips || trips.length === 0) {
-    throw new Error('No trips provided')
+    return { success: false, created: 0, errors: [{ index: 0, message: 'No trips provided' }] }
   }
 
   if (trips.length > 20) {
-    throw new Error('Maximum 20 trips per batch')
+    return { success: false, created: 0, errors: [{ index: 0, message: 'Maximum 20 trips per batch' }] }
   }
 
-  // Get the employee_id from the first trip (all should be same employee)
-  const employeeId = trips[0].employee_id
+  // Validate all trips through tripSchema before processing any
+  const validationErrors: { index: number; message: string }[] = []
+  const validatedTrips: BulkTripInput[] = []
 
-  const result = await createBulkTrips(trips)
+  for (let i = 0; i < trips.length; i++) {
+    const trip = trips[i]
+    const result = tripSchema.safeParse(trip)
+
+    if (!result.success) {
+      // Collect all validation errors for this trip
+      const errors = result.error.issues.map((err) => {
+        const field = err.path.join('.')
+        return field ? `${field}: ${err.message}` : err.message
+      }).join('; ')
+      validationErrors.push({ index: i, message: errors })
+    } else {
+      // Store validated data for later insertion
+      validatedTrips.push({
+        employee_id: result.data.employee_id,
+        country: result.data.country,
+        entry_date: result.data.entry_date,
+        exit_date: result.data.exit_date,
+        purpose: result.data.purpose,
+        job_ref: result.data.job_ref,
+        is_private: result.data.is_private,
+        ghosted: result.data.ghosted,
+      })
+    }
+  }
+
+  // If any trip failed validation, return errors and do NOT insert anything (atomic)
+  if (validationErrors.length > 0) {
+    return { success: false, created: 0, errors: validationErrors }
+  }
+
+  // All trips validated successfully, proceed with insertion
+  const employeeId = validatedTrips[0].employee_id
+  const result = await createBulkTrips(validatedTrips)
 
   // Run alert detection after bulk trip creation (fire-and-forget)
   runAlertDetection(employeeId).catch(() => {})
@@ -181,7 +209,7 @@ export async function bulkAddTripsAction(
   revalidatePath(`/employee/${employeeId}`)
   revalidatePath('/dashboard')
 
-  return result
+  return { success: true, ...result }
 }
 
 // Trip reassignment

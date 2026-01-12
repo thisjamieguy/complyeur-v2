@@ -15,7 +15,7 @@ import {
   getNotificationRecipients,
 } from '@/lib/db/alerts'
 import { sendAlertEmail } from './email-service'
-import type { AlertType, AlertRiskLevel, Trip, CompanySettings, Alert } from '@/types/database'
+import type { AlertType, AlertRiskLevel, Trip, CompanySettings, Alert } from '@/types/database-helpers'
 
 interface DetectionContext {
   employeeId: string

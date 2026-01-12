@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DatabaseError, NotFoundError } from '@/lib/errors'
-import type { Employee, EmployeeInput, EmployeeUpdate } from '@/types/database'
+import type { Employee, EmployeeCreateInput, EmployeeUpdate } from '@/types/database-helpers'
 
 /**
  * Get all employees for current user's company
@@ -47,7 +47,7 @@ export async function getEmployeeById(id: string): Promise<Employee | null> {
 /**
  * Create new employee
  */
-export async function createEmployee(employee: EmployeeInput): Promise<Employee> {
+export async function createEmployee(employee: EmployeeCreateInput): Promise<Employee> {
   const supabase = await createClient()
 
   // Get current user's company_id from their profile

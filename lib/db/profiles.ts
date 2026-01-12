@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DatabaseError, NotFoundError } from '@/lib/errors'
-import type { Profile, ProfileWithCompany, ProfileUpdate } from '@/types/database'
+import type { Profile, ProfileWithCompany, ProfileUpdate } from '@/types/database-helpers'
 
 /**
  * Get the current user's profile with company data

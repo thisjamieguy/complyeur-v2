@@ -20,7 +20,7 @@ import {
 import { CountrySelect } from './country-select'
 import { validateCountry, COUNTRY_NAMES } from '@/lib/constants/schengen-countries'
 import { checkTripDurationWarning, getTripDurationDays } from '@/lib/validations/dates'
-import type { Trip } from '@/types/database'
+import type { Trip } from '@/types/database-helpers'
 
 // Form values type (input type for the form)
 export interface TripFormValues {

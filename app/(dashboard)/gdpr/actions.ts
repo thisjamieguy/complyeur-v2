@@ -13,6 +13,7 @@ import {
   type RetentionStats,
 } from '@/lib/gdpr'
 import { createClient } from '@/lib/supabase/server'
+import { employeeIdSchema } from '@/lib/validations/gdpr'
 
 /**
  * Gets all employees for the GDPR tools page.
@@ -81,7 +82,16 @@ export async function requestDsarExport(employeeId: string): Promise<{
   fileName?: string
   error?: string
 }> {
-  const result = await generateDsarExport(employeeId)
+  // Validate employee ID format
+  const idResult = employeeIdSchema.safeParse(employeeId)
+  if (!idResult.success) {
+    return {
+      success: false,
+      error: 'Invalid employee ID format',
+    }
+  }
+
+  const result = await generateDsarExport(idResult.data)
 
   if (!result.success) {
     return {
@@ -118,7 +128,16 @@ export async function deleteEmployeeGdpr(
   message?: string
   error?: string
 }> {
-  const result = await softDeleteEmployee(employeeId, reason)
+  // Validate employee ID format
+  const idResult = employeeIdSchema.safeParse(employeeId)
+  if (!idResult.success) {
+    return {
+      success: false,
+      error: 'Invalid employee ID format',
+    }
+  }
+
+  const result = await softDeleteEmployee(idResult.data, reason)
 
   if (!result.success) {
     return {
@@ -144,7 +163,16 @@ export async function restoreEmployeeGdpr(employeeId: string): Promise<{
   message?: string
   error?: string
 }> {
-  const result = await restoreEmployee(employeeId)
+  // Validate employee ID format
+  const idResult = employeeIdSchema.safeParse(employeeId)
+  if (!idResult.success) {
+    return {
+      success: false,
+      error: 'Invalid employee ID format',
+    }
+  }
+
+  const result = await restoreEmployee(idResult.data)
 
   if (!result.success) {
     return {
@@ -180,7 +208,16 @@ export async function anonymizeEmployeeGdpr(
   message?: string
   error?: string
 }> {
-  const result = await anonymizeEmployee(employeeId, reason)
+  // Validate employee ID format
+  const idResult = employeeIdSchema.safeParse(employeeId)
+  if (!idResult.success) {
+    return {
+      success: false,
+      error: 'Invalid employee ID format',
+    }
+  }
+
+  const result = await anonymizeEmployee(idResult.data, reason)
 
   if (!result.success) {
     return {

@@ -7,7 +7,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { DatabaseError } from '@/lib/errors';
-import type { Trip } from '@/types/database';
+import type { Trip } from '@/types/database-helpers';
 import type { ForecastTrip, ForecastEmployee } from '@/types/forecast';
 
 /**

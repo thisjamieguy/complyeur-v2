@@ -1,5 +1,5 @@
 import { Resend } from 'resend'
-import type { AlertType } from '@/types/database'
+import type { AlertType } from '@/types/database-helpers'
 
 // Initialize Resend client lazily to avoid build errors when API key is not set
 let resendClient: Resend | null = null

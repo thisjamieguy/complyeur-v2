@@ -14,7 +14,7 @@ import {
   isSchengenCountry,
   isNonSchengenEU,
 } from '@/lib/constants/schengen-countries'
-import type { Trip } from '@/types/database'
+import type { Trip } from '@/types/database-helpers'
 
 interface TripCardMobileProps {
   trip: Trip

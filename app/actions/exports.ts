@@ -8,6 +8,7 @@
  * - Multi-tenant data isolation
  * - CSV injection prevention
  * - Audit logging
+ * - Runtime input validation
  */
 
 import { format, parseISO, subDays } from 'date-fns'
@@ -42,6 +43,7 @@ import {
 import { getCountryName } from '@/lib/constants/schengen-countries'
 import { calculateFutureJobCompliance } from '@/lib/services/forecast-service'
 import type { ForecastTrip } from '@/types/forecast'
+import { exportOptionsSchema } from '@/lib/validations/exports'
 
 /**
  * Generates an export of compliance data.
@@ -52,6 +54,16 @@ import type { ForecastTrip } from '@/types/forecast'
 export async function exportComplianceData(
   options: ExportOptions
 ): Promise<ExportResult> {
+  // Validate export options
+  const validationResult = exportOptionsSchema.safeParse(options)
+  if (!validationResult.success) {
+    const errors = validationResult.error.issues
+      .map((e) => e.message)
+      .join(', ')
+    return { success: false, error: errors }
+  }
+
+  const validatedOptions = validationResult.data
   const supabase = await createClient()
 
   // Get current user
@@ -75,12 +87,12 @@ export async function exportComplianceData(
   }
 
   // Handle future alerts export separately
-  if (options.scope === 'future-alerts') {
+  if (validatedOptions.scope === 'future-alerts') {
     return exportFutureAlerts(
       supabase,
       user,
       profile.company_id,
-      options
+      validatedOptions
     )
   }
 
@@ -106,8 +118,8 @@ export async function exportComplianceData(
       .eq('company_id', profile.company_id)
       .order('name')
 
-    if (options.scope === 'single' && options.employeeId) {
-      query = query.eq('id', options.employeeId)
+    if (validatedOptions.scope === 'single' && validatedOptions.employeeId) {
+      query = query.eq('id', validatedOptions.employeeId)
     }
 
     const { data: employees, error: fetchError } = await query
@@ -122,8 +134,8 @@ export async function exportComplianceData(
     }
 
     // Calculate compliance for each employee
-    const referenceDate = parseISO(options.dateRange.end)
-    const windowStart = parseISO(options.dateRange.start)
+    const referenceDate = parseISO(validatedOptions.dateRange.end)
+    const windowStart = parseISO(validatedOptions.dateRange.start)
     const today = new Date()
 
     const exportData: EmployeeExportRow[] = employees.map((employee) => {
@@ -183,14 +195,14 @@ export async function exportComplianceData(
 
     // Apply status filter if specified
     let filteredData = exportData
-    if (options.scope === 'filtered' && options.statusFilter) {
+    if (validatedOptions.scope === 'filtered' && validatedOptions.statusFilter) {
       const statusMap = {
         compliant: 'Compliant',
         'at-risk': 'At Risk',
         'non-compliant': 'Non-Compliant',
       } as const
       filteredData = exportData.filter(
-        (e) => e.status === statusMap[options.statusFilter!]
+        (e) => e.status === statusMap[validatedOptions.statusFilter!]
       )
     }
 
@@ -219,7 +231,7 @@ export async function exportComplianceData(
     let fileName: string
     let mimeType: string
 
-    if (options.format === 'csv') {
+    if (validatedOptions.format === 'csv') {
       fileContent = generateComplianceCsv(filteredData)
       fileName = getComplianceCsvFilename()
       mimeType = 'text/csv;charset=utf-8'
@@ -231,15 +243,15 @@ export async function exportComplianceData(
         generatedBy: user.email || 'Unknown',
         companyId: profile.company_id,
         companyName: company?.name || 'Company',
-        reportType: options.scope === 'single' ? 'individual' : 'summary',
-        dateRange: options.dateRange,
+        reportType: validatedOptions.scope === 'single' ? 'individual' : 'summary',
+        dateRange: validatedOptions.dateRange,
         recordCount: filteredData.length,
         version: '2.0.0',
       }
 
       let pdfBuffer: Uint8Array
 
-      if (options.scope === 'single' && employees.length === 1) {
+      if (validatedOptions.scope === 'single' && employees.length === 1) {
         // Individual employee report with trip details
         const emp = employees[0]
         const empData = filteredData[0]
@@ -289,14 +301,14 @@ export async function exportComplianceData(
     }
 
     // Log the export
-    await logExport(supabase, user.id, profile.company_id, options.format, {
+    await logExport(supabase, user.id, profile.company_id, validatedOptions.format, {
       reportType:
-        options.scope === 'single'
+        validatedOptions.scope === 'single'
           ? 'individual_employee'
           : 'compliance_summary',
-      employeeId: options.employeeId,
+      employeeId: validatedOptions.employeeId,
       recordCount: filteredData.length,
-      dateRange: options.dateRange,
+      dateRange: validatedOptions.dateRange,
       documentId,
     })
 

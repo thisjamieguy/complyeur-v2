@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { updateNotificationPreferencesAction } from '../actions'
-import type { NotificationPreferences } from '@/types/database'
+import type { NotificationPreferences } from '@/types/database-helpers'
 
 interface UserPreferencesFormProps {
   preferences: NotificationPreferences

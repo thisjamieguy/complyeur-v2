@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pencil, Trash2 } from 'lucide-react'
 import { deleteEmployeeAction } from '@/app/(dashboard)/actions'
-import type { Employee } from '@/types/database'
+import type { Employee } from '@/types/database-helpers'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,

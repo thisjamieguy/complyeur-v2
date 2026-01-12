@@ -198,3 +198,41 @@ export async function logout() {
   revalidatePath('/', 'layout')
   redirect('/login')
 }
+
+/**
+ * Initiates Google OAuth sign-in flow.
+ * Redirects the user to Google's consent screen.
+ *
+ * @param redirectTo - Optional path to redirect to after successful auth (must be relative)
+ */
+export async function signInWithGoogle(redirectTo?: string) {
+  const supabase = await createClient()
+
+  // Validate redirectTo to prevent open redirect attacks
+  let validatedRedirect = '/dashboard'
+  if (redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')) {
+    validatedRedirect = redirectTo
+  }
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(validatedRedirect)}`,
+      queryParams: {
+        // Request minimal scopes for security
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  })
+
+  if (error) {
+    throw new AuthError(getAuthErrorMessage(error))
+  }
+
+  if (data.url) {
+    redirect(data.url)
+  }
+
+  throw new AuthError('Failed to initiate Google sign-in')
+}

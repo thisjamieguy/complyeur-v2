@@ -10,9 +10,11 @@ export async function middleware(request: NextRequest) {
   const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
   const isAuthRoute = authRoutes.includes(pathname)
 
-  // Protected routes (everything under /dashboard and /test-endpoints)
+  // Protected routes (everything under /dashboard, /test-endpoints, and /admin)
   // Note: Route groups like (dashboard) don't appear in the actual URL pathname
-  const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/test-endpoints')
+  const isProtectedRoute = pathname.startsWith('/dashboard') ||
+                           pathname.startsWith('/test-endpoints') ||
+                           pathname.startsWith('/admin')
 
   // If user is authenticated and trying to access auth routes, redirect to dashboard
   if (user && isAuthRoute) {

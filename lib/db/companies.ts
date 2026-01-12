@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DatabaseError, NotFoundError } from '@/lib/errors'
-import type { Company, CompanyUpdate } from '@/types/database'
+import type { Company, CompanyUpdate } from '@/types/database-helpers'
 
 /**
  * Get a company by ID

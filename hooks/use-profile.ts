@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { ProfileWithCompany } from '@/types/database';
+import type { ProfileWithCompany } from '@/types/database-helpers';
 
 interface UseProfileResult {
   profile: ProfileWithCompany | null;

@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { getCountryName } from '@/lib/constants/schengen-countries'
-import type { Trip, Employee } from '@/types/database'
+import type { Trip, Employee } from '@/types/database-helpers'
 
 interface ReassignTripDialogProps {
   open: boolean

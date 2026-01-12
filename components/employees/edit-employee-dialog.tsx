@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { updateEmployeeAction } from '@/app/(dashboard)/actions'
 import { employeeSchema, type EmployeeFormData } from '@/lib/validations/employee'
-import type { Employee } from '@/types/database'
+import type { Employee } from '@/types/database-helpers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {

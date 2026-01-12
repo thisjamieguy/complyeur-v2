@@ -12,33 +12,72 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_user_id: string | null
+          created_at: string | null
+          details: Json | null
+          details_after: Json | null
+          details_before: Json | null
+          id: string
+          ip_address: unknown
+          target_company_id: string | null
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          details_after?: Json | null
+          details_before?: Json | null
+          id?: string
+          ip_address?: unknown
+          target_company_id?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          details_after?: Json | null
+          details_before?: Json | null
+          id?: string
+          ip_address?: unknown
+          target_company_id?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_log_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_log_target_company_id_fkey"
+            columns: ["target_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_log_target_user_id_fkey"
+            columns: ["target_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           acknowledged: boolean | null
@@ -176,6 +215,78 @@ export type Database = {
           },
         ]
       }
+      background_jobs: {
+        Row: {
+          attempts: number | null
+          company_id: string
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          input_data: Json | null
+          job_type: string
+          last_error: string | null
+          max_attempts: number | null
+          output_data: Json | null
+          progress_current: number | null
+          progress_message: string | null
+          progress_total: number | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number | null
+          company_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          input_data?: Json | null
+          job_type: string
+          last_error?: string | null
+          max_attempts?: number | null
+          output_data?: Json | null
+          progress_current?: number | null
+          progress_message?: string | null
+          progress_total?: number | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number | null
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          input_data?: Json | null
+          job_type?: string
+          last_error?: string | null
+          max_attempts?: number | null
+          output_data?: Json | null
+          progress_current?: number | null
+          progress_message?: string | null
+          progress_total?: number | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "background_jobs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "background_jobs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string | null
@@ -202,6 +313,147 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      company_entitlements: {
+        Row: {
+          can_api_access: boolean | null
+          can_audit_logs: boolean | null
+          can_bulk_import: boolean | null
+          can_calendar: boolean | null
+          can_export_csv: boolean | null
+          can_export_pdf: boolean | null
+          can_forecast: boolean | null
+          can_sso: boolean | null
+          company_id: string | null
+          created_at: string | null
+          id: string
+          is_suspended: boolean | null
+          is_trial: boolean | null
+          manual_override: boolean | null
+          max_employees: number | null
+          max_users: number | null
+          override_notes: string | null
+          suspended_at: string | null
+          suspended_reason: string | null
+          tier_slug: string | null
+          trial_ends_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          can_api_access?: boolean | null
+          can_audit_logs?: boolean | null
+          can_bulk_import?: boolean | null
+          can_calendar?: boolean | null
+          can_export_csv?: boolean | null
+          can_export_pdf?: boolean | null
+          can_forecast?: boolean | null
+          can_sso?: boolean | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_suspended?: boolean | null
+          is_trial?: boolean | null
+          manual_override?: boolean | null
+          max_employees?: number | null
+          max_users?: number | null
+          override_notes?: string | null
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          tier_slug?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          can_api_access?: boolean | null
+          can_audit_logs?: boolean | null
+          can_bulk_import?: boolean | null
+          can_calendar?: boolean | null
+          can_export_csv?: boolean | null
+          can_export_pdf?: boolean | null
+          can_forecast?: boolean | null
+          can_sso?: boolean | null
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_suspended?: boolean | null
+          is_trial?: boolean | null
+          manual_override?: boolean | null
+          max_employees?: number | null
+          max_users?: number | null
+          override_notes?: string | null
+          suspended_at?: string | null
+          suspended_reason?: string | null
+          tier_slug?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_entitlements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_entitlements_tier_slug_fkey"
+            columns: ["tier_slug"]
+            isOneToOne: false
+            referencedRelation: "tiers"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      company_notes: {
+        Row: {
+          admin_user_id: string | null
+          category: string | null
+          company_id: string | null
+          created_at: string | null
+          follow_up_date: string | null
+          id: string
+          is_pinned: boolean | null
+          note_content: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_user_id?: string | null
+          category?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          follow_up_date?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          note_content: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_user_id?: string | null
+          category?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          follow_up_date?: string | null
+          id?: string
+          is_pinned?: boolean | null
+          note_content?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_notes_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_settings: {
         Row: {
@@ -277,6 +529,73 @@ export type Database = {
           },
         ]
       }
+      employee_compliance_snapshots: {
+        Row: {
+          company_id: string
+          created_at: string
+          days_remaining: number
+          days_used: number
+          employee_id: string
+          id: string
+          is_compliant: boolean
+          next_reset_date: string | null
+          risk_level: string
+          snapshot_generated_at: string
+          trips_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          days_remaining: number
+          days_used: number
+          employee_id: string
+          id?: string
+          is_compliant?: boolean
+          next_reset_date?: string | null
+          risk_level: string
+          snapshot_generated_at?: string
+          trips_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          days_remaining?: number
+          days_used?: number
+          employee_id?: string
+          id?: string
+          is_compliant?: boolean
+          next_reset_date?: string | null
+          risk_level?: string
+          snapshot_generated_at?: string
+          trips_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_compliance_snapshots_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_compliance_snapshots_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employee_compliance_summary"
+            referencedColumns: ["employee_id"]
+          },
+          {
+            foreignKeyName: "employee_compliance_snapshots_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
           anonymized_at: string | null
@@ -311,6 +630,75 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_sessions: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          created_at: string | null
+          error_rows: number | null
+          file_name: string
+          file_size: number
+          format: string
+          id: string
+          parsed_data: Json | null
+          result: Json | null
+          status: string
+          total_rows: number | null
+          user_id: string
+          valid_rows: number | null
+          validation_errors: Json | null
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_rows?: number | null
+          file_name: string
+          file_size: number
+          format: string
+          id?: string
+          parsed_data?: Json | null
+          result?: Json | null
+          status?: string
+          total_rows?: number | null
+          user_id: string
+          valid_rows?: number | null
+          validation_errors?: Json | null
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_rows?: number | null
+          file_name?: string
+          file_size?: number
+          format?: string
+          id?: string
+          parsed_data?: Json | null
+          result?: Json | null
+          status?: string
+          total_rows?: number | null
+          user_id?: string
+          valid_rows?: number | null
+          validation_errors?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -445,27 +833,42 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_provider: string | null
           company_id: string | null
           created_at: string | null
+          first_name: string | null
           full_name: string | null
           id: string
+          is_superadmin: boolean | null
+          last_name: string | null
           role: string | null
+          terms_accepted_at: string | null
           updated_at: string | null
         }
         Insert: {
+          auth_provider?: string | null
           company_id?: string | null
           created_at?: string | null
+          first_name?: string | null
           full_name?: string | null
           id: string
+          is_superadmin?: boolean | null
+          last_name?: string | null
           role?: string | null
+          terms_accepted_at?: string | null
           updated_at?: string | null
         }
         Update: {
+          auth_provider?: string | null
           company_id?: string | null
           created_at?: string | null
+          first_name?: string | null
           full_name?: string | null
           id?: string
+          is_superadmin?: boolean | null
+          last_name?: string | null
           role?: string | null
+          terms_accepted_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -496,6 +899,72 @@ export type Database = {
           is_full_member?: boolean | null
           name?: string
           notes?: string | null
+        }
+        Relationships: []
+      }
+      tiers: {
+        Row: {
+          can_api_access: boolean | null
+          can_audit_logs: boolean | null
+          can_bulk_import: boolean | null
+          can_calendar: boolean | null
+          can_export_csv: boolean | null
+          can_export_pdf: boolean | null
+          can_forecast: boolean | null
+          can_sso: boolean | null
+          created_at: string | null
+          description: string | null
+          display_name: string
+          is_active: boolean | null
+          max_employees: number
+          max_users: number
+          slug: string
+          sort_order: number | null
+          stripe_price_id_annual: string | null
+          stripe_price_id_monthly: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          can_api_access?: boolean | null
+          can_audit_logs?: boolean | null
+          can_bulk_import?: boolean | null
+          can_calendar?: boolean | null
+          can_export_csv?: boolean | null
+          can_export_pdf?: boolean | null
+          can_forecast?: boolean | null
+          can_sso?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          display_name: string
+          is_active?: boolean | null
+          max_employees?: number
+          max_users?: number
+          slug: string
+          sort_order?: number | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          can_api_access?: boolean | null
+          can_audit_logs?: boolean | null
+          can_bulk_import?: boolean | null
+          can_calendar?: boolean | null
+          can_export_csv?: boolean | null
+          can_export_pdf?: boolean | null
+          can_forecast?: boolean | null
+          can_sso?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          display_name?: string
+          is_active?: boolean | null
+          max_employees?: number
+          max_users?: number
+          slug?: string
+          sort_order?: number | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -592,10 +1061,33 @@ export type Database = {
       }
     }
     Functions: {
-      create_company_and_profile: {
-        Args: { company_name: string; user_email: string; user_id: string }
-        Returns: string
-      }
+      create_company_and_profile:
+        | {
+            Args: { company_name: string; user_email: string; user_id: string }
+            Returns: string
+          }
+        | {
+            Args: {
+              company_name: string
+              user_email: string
+              user_id: string
+              user_terms_accepted_at?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              company_name: string
+              user_auth_provider?: string
+              user_email: string
+              user_first_name?: string
+              user_id: string
+              user_last_name?: string
+              user_terms_accepted_at?: string
+            }
+            Returns: string
+          }
+      get_dashboard_summary: { Args: { p_company_id: string }; Returns: Json }
       get_last_audit_hash: { Args: { p_company_id: string }; Returns: string }
       unsubscribe_by_token: { Args: { token: string }; Returns: boolean }
     }
@@ -726,62 +1218,7 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
 } as const
-
-// ============================================================================
-// Convenience Type Aliases
-// ============================================================================
-
-// Table Row types
-export type Alert = Tables<'alerts'>
-export type AuditLog = Tables<'audit_log'>
-export type Company = Tables<'companies'>
-export type CompanySettings = Tables<'company_settings'>
-export type Employee = Tables<'employees'>
-export type NotificationLog = Tables<'notification_log'>
-export type NotificationPreferences = Tables<'notification_preferences'>
-export type Profile = Tables<'profiles'>
-export type SchengenCountry = Tables<'schengen_countries'>
-export type Trip = Tables<'trips'>
-
-// Insert types
-export type AlertInsert = TablesInsert<'alerts'>
-export type CompanyInsert = TablesInsert<'companies'>
-export type CompanySettingsInsert = TablesInsert<'company_settings'>
-export type EmployeeInsert = TablesInsert<'employees'>
-export type NotificationLogInsert = TablesInsert<'notification_log'>
-export type NotificationPreferencesInsert = TablesInsert<'notification_preferences'>
-export type ProfileInsert = TablesInsert<'profiles'>
-export type TripInsert = TablesInsert<'trips'>
-
-// Update types
-export type AlertUpdate = TablesUpdate<'alerts'>
-export type CompanyUpdate = TablesUpdate<'companies'>
-export type CompanySettingsUpdate = TablesUpdate<'company_settings'>
-export type EmployeeUpdate = TablesUpdate<'employees'>
-export type NotificationPreferencesUpdate = TablesUpdate<'notification_preferences'>
-export type ProfileUpdate = TablesUpdate<'profiles'>
-export type TripUpdate = TablesUpdate<'trips'>
-
-// Custom types for business logic
-export type AlertType = 'warning' | 'urgent' | 'breach'
-export type AlertRiskLevel = 'green' | 'amber' | 'red'
-
-// Input types (without company_id, which is set server-side)
-export type EmployeeInput = Omit<EmployeeInsert, 'company_id'>
-export type TripInput = Omit<TripInsert, 'company_id'>
-
-// Join types
-export type AlertWithEmployee = Alert & {
-  employee: Pick<Employee, 'id' | 'name'> | null
-}
-
-export type ProfileWithCompany = Profile & {
-  companies: Pick<Company, 'id' | 'name' | 'slug'> | null
-}

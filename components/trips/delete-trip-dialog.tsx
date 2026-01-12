@@ -15,7 +15,7 @@ import {
 import { deleteTripAction } from '@/app/(dashboard)/actions'
 import { getCountryName } from '@/lib/constants/schengen-countries'
 import { toast } from 'sonner'
-import type { Trip } from '@/types/database'
+import type { Trip } from '@/types/database-helpers'
 
 interface DeleteTripDialogProps {
   trip: Trip

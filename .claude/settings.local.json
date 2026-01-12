@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(cd /Users/jameswalsh/Dev/Web Projects/ComplyEur-v2/complyeur && npm run typecheck:*)",
+      "Bash(cd /Users/jameswalsh/Dev/Web Projects/ComplyEur-v2/complyeur && npx tsc:*)",
+      "Bash(lsof -ti:3000)",
+      "Bash(xargs kill:*)",
+      "Bash(npm run dev)",
+      "Bash(npx supabase status)",
+      "Bash(npx supabase db query \"SELECT table_name FROM information_schema.tables WHERE table_schema = ''public'' ORDER BY table_name;\")",
+      "Bash(npx supabase db query \"SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = ''profiles'' ORDER BY ordinal_position;\")",
+      "Bash(cd /Users/jameswalsh/Dev/Web\\\\ Projects/ComplyEur-v2/complyeur && npx supabase db query:*)",
+      "Bash(npx supabase db query \"SELECT u.id, u.email, u.created_at as user_created, p.full_name, p.company_id, p.role, p.is_superadmin FROM auth.users u LEFT JOIN profiles p ON u.id = p.id ORDER BY u.created_at DESC;\")",
+      "Bash(npx supabase db query \"SELECT table_name FROM information_schema.tables WHERE table_schema = ''public'' AND table_name IN \\(''tiers'', ''company_entitlements'', ''company_notes'', ''admin_audit_log''\\);\")",
+      "Bash(PGPASSWORD=postgres psql:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)",
+      "Bash(npm run typecheck)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm install:*)",
+      "Bash(npx playwright install)",
+      "Bash(npm cache clean:*)",
+      "Bash(pnpm:*)",
+      "Bash(cd /Users/jameswalsh/Dev/Web\\\\ Projects/ComplyEur-v2/complyeur:*)",
+      "Bash(curl:*)",
+      "Bash(cd /Users/jameswalsh/Dev/Web\\\\ Projects/ComplyEur-v2/complyeur && npx next dev:*)",
+      "Bash(npx tsc:*)",
+      "Bash(supabase db push:*)",
+      "Bash(supabase migration:*)",
+      "Bash(supabase db execute:*)",
+      "Bash(supabase inspect:*)",
+      "Bash(find:*)",
+      "Bash(cd /Users/jameswalsh/Dev/Web Projects/ComplyEur-v2/complyeur && npm run build:*)",
+      "Bash(cd:*)"
+    ]
+  }
+}

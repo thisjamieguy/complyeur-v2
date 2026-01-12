@@ -2,7 +2,7 @@
 
 import { AlertTriangle, AlertCircle, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { AlertType } from '@/types/database'
+import type { AlertType } from '@/types/database-helpers'
 
 interface AlertIndicatorProps {
   alertType: AlertType
