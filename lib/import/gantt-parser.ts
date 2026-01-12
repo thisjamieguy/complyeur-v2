@@ -14,8 +14,8 @@
  */
 
 import { parseDate, type DateParseResult } from './date-parser';
-import { normalizeCountry, isSchengenCountry } from './country-normalizer';
-import { normalizeHeader, type CanonicalField } from './header-aliases';
+import { normalizeCountry } from './country-normalizer';
+import { normalizeHeader } from './header-aliases';
 
 /**
  * Represents a single cell in the Gantt grid.
@@ -622,7 +622,6 @@ export function previewGanttParse(
 } {
   const result = parseGanttFormat(data, options);
   const dateIndices = new Set(result.dateColumns.map((dc) => dc.index));
-  const ignoredIndices = new Set(result.ignoredColumns.map((ic) => ic.index));
 
   const headers = (data[0] as unknown[]).map((h, i) => ({
     index: i,

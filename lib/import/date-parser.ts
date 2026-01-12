@@ -16,8 +16,8 @@
  * NEVER use native JS Date constructor for parsing.
  */
 
-import { parse, isValid, format } from 'date-fns';
-import { enGB, enUS } from 'date-fns/locale';
+import { isValid, format } from 'date-fns';
+import { enGB } from 'date-fns/locale';
 
 /**
  * Recognized date format types.
