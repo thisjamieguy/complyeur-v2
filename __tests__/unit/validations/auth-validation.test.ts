@@ -98,6 +98,7 @@ describe('signupSchema', () => {
     companyName: 'Test Company Ltd',
     password: 'SecurePass123',
     confirmPassword: 'SecurePass123',
+    termsAccepted: true,
   };
 
   describe('valid inputs', () => {

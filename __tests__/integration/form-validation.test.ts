@@ -306,6 +306,7 @@ describe('Auth form validation', () => {
       companyName: 'Test Company Ltd',
       password: 'SecurePass123',
       confirmPassword: 'SecurePass123',
+      termsAccepted: true,
     };
 
     it('accepts valid signup data', () => {

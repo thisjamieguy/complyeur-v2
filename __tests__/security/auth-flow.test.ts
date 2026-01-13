@@ -50,6 +50,7 @@ describe('Authentication flows', () => {
         companyName: 'New Company Ltd',
         password: 'SecurePass123',
         confirmPassword: 'SecurePass123',
+        termsAccepted: true,
       });
 
       expect(input.success).toBe(true);
@@ -80,6 +81,7 @@ describe('Authentication flows', () => {
         companyName: 'Test Company',
         password: 'SecurePass123',
         confirmPassword: 'SecurePass123',
+        termsAccepted: true,
       });
 
       expect(input.success).toBe(false);
@@ -94,6 +96,7 @@ describe('Authentication flows', () => {
         companyName: 'Test Company',
         password: 'weak',
         confirmPassword: 'weak',
+        termsAccepted: true,
       });
 
       expect(input.success).toBe(false);
@@ -126,6 +129,7 @@ describe('Authentication flows', () => {
         companyName: 'Test Company',
         password: 'SecurePass123',
         confirmPassword: 'DifferentPass123',
+        termsAccepted: true,
       });
 
       expect(input.success).toBe(false);
