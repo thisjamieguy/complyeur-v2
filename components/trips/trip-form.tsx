@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { AlertTriangle, Loader2 } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -331,7 +331,7 @@ export function TripForm({
                     Private trip
                   </FormLabel>
                   <p className="text-xs text-muted-foreground">
-                    Country will be hidden in reports (shown as "XX")
+                    Country will be hidden in reports (shown as &quot;XX&quot;)
                   </p>
                 </div>
               </FormItem>
