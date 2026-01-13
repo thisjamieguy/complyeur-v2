@@ -18,6 +18,7 @@ import { StatusFilters } from './status-filters'
 import { SortSelect } from './sort-select'
 import { EmptyState } from './empty-state'
 import { DashboardStats } from './dashboard-stats'
+import { EmployeeSearch } from './employee-search'
 import type {
   EmployeeCompliance,
   StatusFilter,
@@ -110,8 +111,10 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
   // Initialize filter from URL or default to 'all'
   const initialFilter =
     (searchParams.get('status') as StatusFilter) || 'all'
+  const initialSearch = searchParams.get('search') || ''
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilter)
   const [sortBy, setSortBy] = useState<SortOption>('days_remaining_asc')
+  const [searchQuery, setSearchQuery] = useState(initialSearch)
 
   // Calculate stats from all employees (unfiltered)
   const stats = useMemo(() => calculateStats(employees), [employees])
@@ -128,11 +131,31 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
     router.push(`?${params.toString()}`, { scroll: false })
   }
 
+  // Handle search change and update URL
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query)
+    const params = new URLSearchParams(searchParams.toString())
+    if (query.trim()) {
+      params.set('search', query.trim())
+    } else {
+      params.delete('search')
+    }
+    router.push(`?${params.toString()}`, { scroll: false })
+  }
+
   // Apply filtering and sorting
   const filteredAndSorted = useMemo(() => {
     let result = [...employees]
 
-    // Apply filter
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const searchLower = searchQuery.toLowerCase().trim()
+      result = result.filter((e) =>
+        e.name.toLowerCase().includes(searchLower)
+      )
+    }
+
+    // Apply status filter
     if (statusFilter !== 'all') {
       result = result.filter((e) => e.risk_level === statusFilter)
     }
@@ -160,7 +183,7 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
     }
 
     return result
-  }, [employees, statusFilter, sortBy])
+  }, [employees, searchQuery, statusFilter, sortBy])
 
   // Show empty state if no employees at all
   if (employees.length === 0) {
@@ -172,14 +195,23 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
       {/* Summary stats */}
       <DashboardStats stats={stats} />
 
-      {/* Filters and sort controls */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <StatusFilters
-          activeFilter={statusFilter}
-          onFilterChange={handleFilterChange}
-          stats={stats}
-        />
-        <SortSelect value={sortBy} onValueChange={setSortBy} />
+      {/* Search, filters and sort controls */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <EmployeeSearch
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Search by name..."
+          />
+        </div>
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <StatusFilters
+            activeFilter={statusFilter}
+            onFilterChange={handleFilterChange}
+            stats={stats}
+          />
+          <SortSelect value={sortBy} onValueChange={setSortBy} />
+        </div>
       </div>
 
       {/* Desktop table view */}
