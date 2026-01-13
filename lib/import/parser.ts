@@ -9,6 +9,11 @@ import {
   MAX_ROWS,
   ParseResult,
 } from '@/types/import';
+import {
+  parseGanttFormat,
+  generateTripsFromGantt,
+  type GeneratedTrip,
+} from './gantt-parser';
 
 // ============================================================
 // SECURITY: Sanitize Cell Values
@@ -106,11 +111,20 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
       parsedData = parseEmployeeRows(jsonData, rawHeaders);
     } else if (format === 'trips') {
       parsedData = parseTripRows(jsonData, rawHeaders);
+    } else if (format === 'gantt') {
+      // Gantt format - parse schedule and generate trips
+      const ganttResult = parseGanttFromData(buffer);
+      if (!ganttResult.success) {
+        return {
+          success: false,
+          error: ganttResult.error || 'Failed to parse Gantt format',
+        };
+      }
+      parsedData = ganttResult.data!;
     } else {
-      // Gantt format - not implemented in Phase 1
       return {
         success: false,
-        error: 'Gantt format is not yet supported. Please use Employees or Trips format.',
+        error: 'Unknown import format',
       };
     }
 
@@ -273,7 +287,103 @@ function formatDateValue(value: string): string {
 }
 
 // ============================================================
+// PARSE GANTT FORMAT
+// ============================================================
+
+function parseGanttFromData(buffer: ArrayBuffer): ParseResult {
+  try {
+    // Parse workbook to get raw 2D array
+    const workbook = XLSX.read(buffer, {
+      type: 'array',
+      cellDates: false, // Keep dates as strings for Gantt parsing
+      raw: true,
+    });
+
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      return { success: false, error: 'File contains no worksheets' };
+    }
+
+    const sheet = workbook.Sheets[sheetName];
+
+    // Convert to 2D array (including headers)
+    const data = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+      header: 1,
+      defval: '',
+      raw: true,
+    });
+
+    if (data.length < 2) {
+      return {
+        success: false,
+        error: 'File must have at least a header row and one data row.',
+      };
+    }
+
+    // Parse using the Gantt parser
+    const ganttResult = parseGanttFormat(data, {
+      referenceYear: new Date().getFullYear(),
+    });
+
+    if (!ganttResult.success) {
+      return {
+        success: false,
+        error: ganttResult.error || 'Failed to parse schedule format',
+      };
+    }
+
+    // Generate trips from the parsed Gantt data
+    const trips = generateTripsFromGantt(ganttResult, {
+      schengenOnly: false, // Include all trips, validation will filter
+      minDays: 1,
+    });
+
+    if (trips.length === 0) {
+      return {
+        success: false,
+        error: 'No trips could be generated from the schedule. Check that cells contain valid country codes.',
+      };
+    }
+
+    // Check row limit
+    if (trips.length > MAX_ROWS) {
+      return {
+        success: false,
+        error: `Generated ${trips.length} trips, which exceeds the limit of ${MAX_ROWS}. Please use a smaller date range.`,
+      };
+    }
+
+    // Convert generated trips to ParsedTripRow format
+    const parsedData: ParsedTripRow[] = trips.map((trip, index) => ({
+      row_number: trip.sourceRow, // Use original row number for error reporting
+      employee_name: trip.employeeName,
+      entry_date: trip.entryDate,
+      exit_date: trip.exitDate,
+      country: trip.country,
+      purpose: undefined, // Gantt doesn't include purpose
+      // Additional fields for UI display
+      _generated: true,
+      _dayCount: trip.dayCount,
+      _isSchengen: trip.isSchengen,
+    }));
+
+    return {
+      success: true,
+      data: parsedData,
+      headers: ['employee_name', 'entry_date', 'exit_date', 'country'],
+      totalRows: parsedData.length,
+    };
+  } catch (error) {
+    console.error('Gantt parse error:', error);
+    return {
+      success: false,
+      error: 'Failed to parse schedule file. Ensure headers are dates (e.g., "Mon 06 Jan").',
+    };
+  }
+}
+
+// ============================================================
 // EXPORT FOR TESTING
 // ============================================================
 
-export { sanitizeValue, normalizeHeader, formatDateValue };
+export { sanitizeValue, normalizeHeader, formatDateValue, parseGanttFromData };

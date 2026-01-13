@@ -19,7 +19,6 @@ export function FormatSelector() {
   const [isNavigating, setIsNavigating] = useState(false);
 
   const handleSelect = (format: ImportFormat) => {
-    if (format === 'gantt') return; // Disabled for now
     setSelectedFormat(format);
   };
 
@@ -47,7 +46,7 @@ export function FormatSelector() {
         {FORMAT_OPTIONS.map((format) => {
           const Icon = ICONS[format.icon];
           const isSelected = selectedFormat === format.id;
-          const isDisabled = format.id === 'gantt';
+          const isDisabled = false; // All formats now enabled
 
           return (
             <Card
