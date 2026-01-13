@@ -116,9 +116,10 @@ const NON_COUNTING_VALUES = new Set([
   'work from home',
   'home',
   'remote',
-  'n/w',
+  // NOTE: 'n/w' is NOT here - "n/w-XX" means not working but still abroad, counts as travel
   'off',
   'sick',
+  's/d', // Sick day
   'sl',
   'sick leave',
   'leave',
@@ -134,40 +135,97 @@ const NON_COUNTING_VALUES = new Set([
   'null',
   'free',
   'available',
+  'unallocated',
+  'other duties',
+  ' ', // Single space
+  'tr', // Just "tr" with no country is not useful
+]);
+
+
+/**
+ * Known country codes for validation.
+ */
+const KNOWN_COUNTRY_CODES = new Set([
+  'AT', 'BE', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU',
+  'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'SE', 'SI', 'SK',
+  'IE', 'CY', 'BG', 'RO', 'GB', 'UK', 'US', 'CA', 'AU', 'MX', 'JP', 'CN', 'IN'
 ]);
 
 /**
- * Cell values that indicate domestic (UK) work - don't count for Schengen.
+ * Extracts a country code from job/project descriptions.
+ *
+ * Pattern: "string-COUNTRYCODE-string" → take element AFTER first hyphen
+ * Examples:
+ * - "HP-DE-DP38 Install" → DE
+ * - "Axc-BE-GSD & Purion" → BE
+ * - "ST-FR-Crolles-6x Implanters" → FR
+ * - "tr-DE" → DE (travel day)
+ * - "n/w-BE" → BE (night/weekend)
+ *
+ * Everything after the second hyphen is client info - ignored.
  */
-const DOMESTIC_VALUES = new Set([
-  'uk',
-  'gb',
-  'office',
-  'london',
-  'domestic',
-  'hq',
-  'headquarters',
-  'home office',
-  'manchester',
-  'birmingham',
-  'leeds',
-  'glasgow',
-  'edinburgh',
-  'cardiff',
-  'belfast',
-  'bristol',
-  'liverpool',
-  'newcastle',
-]);
+function extractCountryFromText(text: string): { code: string | null; isTravelDay: boolean } {
+  const trimmed = text.trim();
+
+  // Check for travel day prefix (tr-XX)
+  const isTravelDay = /^tr[\-\/\s]/i.test(trimmed);
+
+  // Check for n/w (not working but still abroad) prefix - e.g., "n/w-DE"
+  // This is NOT a non-counting value - person is still in that country
+  const nwMatch = trimmed.match(/^n\/w[\-]?([A-Z]{2})\b/i);
+  if (nwMatch) {
+    const code = nwMatch[1].toUpperCase();
+    if (KNOWN_COUNTRY_CODES.has(code)) {
+      return { code: code === 'UK' ? 'GB' : code, isTravelDay: false };
+    }
+  }
+
+  // Split by hyphen and look for country code in second position
+  const parts = trimmed.split('-');
+
+  if (parts.length >= 2) {
+    // Get the second part (after first hyphen)
+    const potentialCode = parts[1].trim().toUpperCase();
+
+    // Check if it's a valid 2-letter country code
+    if (potentialCode.length === 2 && KNOWN_COUNTRY_CODES.has(potentialCode)) {
+      return {
+        code: potentialCode === 'UK' ? 'GB' : potentialCode,
+        isTravelDay
+      };
+    }
+
+    // Sometimes the code might have extra text, try to extract just 2 letters
+    const twoLetterMatch = potentialCode.match(/^([A-Z]{2})/);
+    if (twoLetterMatch && KNOWN_COUNTRY_CODES.has(twoLetterMatch[1])) {
+      const code = twoLetterMatch[1];
+      return {
+        code: code === 'UK' ? 'GB' : code,
+        isTravelDay
+      };
+    }
+  }
+
+  // Fallback: Just a 2-letter code by itself (e.g., "FR", "DE")
+  if (/^[A-Z]{2}$/i.test(trimmed)) {
+    const upper = trimmed.toUpperCase();
+    if (KNOWN_COUNTRY_CODES.has(upper)) {
+      return { code: upper === 'UK' ? 'GB' : upper, isTravelDay: false };
+    }
+  }
+
+  return { code: null, isTravelDay: false };
+}
 
 /**
  * Parses a cell value to determine if it represents travel and to which country.
+ * Simple logic: Look for country code after first hyphen. That's it.
  */
 function parseCell(value: unknown, rowIdx: number, colIdx: number): GanttCell {
   const raw = String(value ?? '').trim();
   const lower = raw.toLowerCase();
 
-  // Empty or non-counting values
+  // Empty or non-counting values (hol, sick, n/a, etc.)
   if (NON_COUNTING_VALUES.has(lower)) {
     return {
       rowIndex: rowIdx,
@@ -180,36 +238,155 @@ function parseCell(value: unknown, rowIdx: number, colIdx: number): GanttCell {
     };
   }
 
-  // Domestic values (UK-based)
-  if (DOMESTIC_VALUES.has(lower)) {
+  // Try to extract country code from text
+  // Pattern: anything-COUNTRYCODE-anything → take COUNTRYCODE
+  const extracted = extractCountryFromText(raw);
+
+  if (extracted.code) {
+    const result = normalizeCountry(extracted.code);
     return {
       rowIndex: rowIdx,
       colIndex: colIdx,
       rawValue: raw,
-      countryCode: 'GB',
-      isSchengen: false,
-      isTravelDay: false,
-      countsAsDay: false, // Domestic doesn't count for Schengen
+      countryCode: result.code,
+      isSchengen: result.isSchengen,
+      isTravelDay: extracted.isTravelDay,
+      countsAsDay: result.isSchengen, // Only Schengen countries count for 90/180
     };
   }
 
-  // Check for travel day prefix: "TR/FR", "tr-DE", "TR DE", etc.
-  const travelMatch = raw.match(/^(?:tr[\/\-\s]?)([A-Za-z]{2,})$/i);
-  const isTravelDay = !!travelMatch;
-  const countryPart = travelMatch ? travelMatch[1] : raw;
-
-  // Normalize the country
-  const result = normalizeCountry(countryPart);
-
+  // No country code found - doesn't count
   return {
     rowIndex: rowIdx,
     colIndex: colIdx,
     rawValue: raw,
-    countryCode: result.code,
-    isSchengen: result.isSchengen,
-    isTravelDay,
-    countsAsDay: result.isSchengen, // Only Schengen countries count for 90/180
+    countryCode: null,
+    isSchengen: false,
+    isTravelDay: false,
+    countsAsDay: false,
   };
+}
+
+/**
+ * Finds the row containing date headers in the data.
+ * Handles files where dates are not in the first row (e.g., week numbers, day names first).
+ * Prioritizes Excel serial date numbers over parsed date strings.
+ */
+function findDateHeaderRow(
+  data: unknown[][],
+  referenceYear: number
+): { rowIndex: number; dateColumns: GanttDateColumn[] } | null {
+  // First pass: Look specifically for Excel serial dates (most reliable)
+  for (let rowIdx = 0; rowIdx < Math.min(10, data.length); rowIdx++) {
+    const row = data[rowIdx];
+    if (!row || !Array.isArray(row)) continue;
+
+    const dateColumns: GanttDateColumn[] = [];
+
+    // Only check first 100 columns to avoid garbage data at the end
+    const maxCol = Math.min(row.length, 100);
+
+    for (let colIdx = 1; colIdx < maxCol; colIdx++) {
+      const cell = row[colIdx];
+
+      // Check for Excel serial date numbers (numbers between ~40000 and ~50000 for 2010-2035)
+      if (typeof cell === 'number' && cell >= 40000 && cell <= 50000) {
+        const dateResult = parseDate(cell, { referenceYear, isGanttHeader: true });
+        if (dateResult.date) {
+          dateColumns.push({
+            index: colIdx,
+            header: String(cell),
+            date: dateResult,
+          });
+        }
+      }
+    }
+
+    // If we found at least 5 Excel serial dates, use this row
+    if (dateColumns.length >= 5) {
+      return { rowIndex: rowIdx, dateColumns };
+    }
+  }
+
+  // Second pass: Look for formatted date strings (e.g., "Mon 06 Jan")
+  for (let rowIdx = 0; rowIdx < Math.min(5, data.length); rowIdx++) {
+    const row = data[rowIdx];
+    if (!row || !Array.isArray(row)) continue;
+
+    const dateColumns: GanttDateColumn[] = [];
+    const maxCol = Math.min(row.length, 100);
+
+    for (let colIdx = 1; colIdx < maxCol; colIdx++) {
+      const cell = row[colIdx];
+
+      if (typeof cell === 'string') {
+        const header = cell.trim();
+        // Must contain month name to be considered a date header
+        if (header && /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(header)) {
+          const dateResult = parseDate(header, { referenceYear, isGanttHeader: true });
+          if (dateResult.date) {
+            dateColumns.push({
+              index: colIdx,
+              header,
+              date: dateResult,
+            });
+          }
+        }
+      }
+    }
+
+    // If we found at least 3 formatted dates, use this row
+    if (dateColumns.length >= 3) {
+      return { rowIndex: rowIdx, dateColumns };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Finds the first row after the date header that contains employee data.
+ * Skips empty rows and rows that look like sub-headers.
+ */
+function findDataStartRow(
+  data: unknown[][],
+  dateHeaderRow: number,
+  nameColumn: number
+): number {
+  for (let rowIdx = dateHeaderRow + 1; rowIdx < data.length; rowIdx++) {
+    const row = data[rowIdx];
+    if (!row || !Array.isArray(row)) continue;
+
+    const name = String(row[nameColumn] ?? '').trim();
+
+    // Skip empty rows
+    if (!name) continue;
+
+    // Skip known header-like values
+    const lower = name.toLowerCase();
+    if (lower === 'employee' || lower === 'name' || lower === 'unallocated') continue;
+
+    // Found first data row
+    return rowIdx;
+  }
+
+  return dateHeaderRow + 1;
+}
+
+/**
+ * Checks if a row should be skipped (not an employee row).
+ */
+function shouldSkipRow(name: string): boolean {
+  const lower = name.toLowerCase().trim();
+  return (
+    !name ||
+    lower === 'unallocated' ||
+    lower === '' ||
+    lower === 'employee' ||
+    lower === 'name' ||
+    // Skip rows that are just numbers (week numbers, etc.)
+    /^\d+$/.test(name)
+  );
 }
 
 /**
@@ -252,11 +429,14 @@ export function parseGanttFormat(
     };
   }
 
-  const headers = data[0] as unknown[];
-  if (!headers || headers.length < 2) {
+  // Find the row containing date headers (handles multi-row headers)
+  const dateHeaderResult = findDateHeaderRow(data, referenceYear);
+
+  if (!dateHeaderResult) {
     return {
       success: false,
-      error: 'Header row must have at least employee name and one date column.',
+      error:
+        'No date columns found. Headers should be dates like "Mon 06 Jan", "06/01", "2025-01-06", or Excel serial numbers.',
       dateColumns: [],
       rows: [],
       referenceYear,
@@ -264,55 +444,7 @@ export function parseGanttFormat(
     };
   }
 
-  // Parse headers to identify date columns
-  const dateColumns: GanttDateColumn[] = [];
-  const ignoredColumns: Array<{ index: number; header: string }> = [];
-  let emailColumn = options.emailColumn;
-
-  for (let i = 0; i < headers.length; i++) {
-    // Skip the name column
-    if (i === nameColumn) continue;
-
-    const header = String(headers[i] ?? '').trim();
-    if (!header) {
-      ignoredColumns.push({ index: i, header: '(empty)' });
-      continue;
-    }
-
-    // Check if this is a known field (email, department, etc.)
-    const normalized = normalizeHeader(header);
-    if (normalized && !['entry_date', 'exit_date'].includes(normalized)) {
-      if (normalized === 'email' && emailColumn === undefined) {
-        emailColumn = i;
-      }
-      ignoredColumns.push({ index: i, header });
-      continue;
-    }
-
-    // Try to parse as date
-    const dateResult = parseDate(header, { referenceYear, isGanttHeader: true });
-    if (dateResult.date) {
-      dateColumns.push({
-        index: i,
-        header,
-        date: dateResult,
-      });
-    } else {
-      ignoredColumns.push({ index: i, header });
-    }
-  }
-
-  if (dateColumns.length === 0) {
-    return {
-      success: false,
-      error:
-        'No date columns found. Headers should be dates like "Mon 06 Jan", "06/01", or "2025-01-06".',
-      dateColumns: [],
-      rows: [],
-      referenceYear,
-      ignoredColumns,
-    };
-  }
+  const { rowIndex: dateHeaderRowIndex, dateColumns } = dateHeaderResult;
 
   // Sort date columns chronologically
   dateColumns.sort((a, b) => {
@@ -320,22 +452,56 @@ export function parseGanttFormat(
     return a.date.date.localeCompare(b.date.date);
   });
 
+  // Find ignored columns (columns that aren't dates)
+  const dateColIndices = new Set(dateColumns.map((dc) => dc.index));
+  const ignoredColumns: Array<{ index: number; header: string }> = [];
+  const headerRow = data[dateHeaderRowIndex] as unknown[];
+
+  for (let i = 0; i < headerRow.length; i++) {
+    if (i === nameColumn) continue;
+    if (!dateColIndices.has(i)) {
+      ignoredColumns.push({ index: i, header: String(headerRow[i] ?? '(empty)') });
+    }
+  }
+
+  // Find where employee data starts
+  const dataStartRow = findDataStartRow(data, dateHeaderRowIndex, nameColumn);
+
+  // Auto-detect email column if not specified
+  let emailColumn = options.emailColumn;
+  if (emailColumn === undefined) {
+    // Check all header rows for email column
+    for (let r = 0; r <= dateHeaderRowIndex; r++) {
+      const row = data[r] as unknown[];
+      for (let c = 0; c < row.length; c++) {
+        const header = String(row[c] ?? '').toLowerCase();
+        if (header === 'email' || header === 'e-mail') {
+          emailColumn = c;
+          break;
+        }
+      }
+      if (emailColumn !== undefined) break;
+    }
+  }
+
   // Parse data rows
   const rows: GanttRow[] = [];
 
-  for (let r = 1; r < data.length; r++) {
+  for (let r = dataStartRow; r < data.length; r++) {
     const row = data[r];
     if (!row || !Array.isArray(row)) continue;
 
     const employeeName = String(row[nameColumn] ?? '').trim();
-    if (!employeeName) continue; // Skip empty name rows
+
+    // Skip non-employee rows
+    if (shouldSkipRow(employeeName)) continue;
 
     const email = emailColumn !== undefined ? String(row[emailColumn] ?? '').trim() : undefined;
 
-    const cells = dateColumns.map((dc) => parseCell(row[dc.index], r - 1, dc.index));
+    const cells = dateColumns.map((dc) => parseCell(row[dc.index], r, dc.index));
 
     rows.push({
-      index: r - 1,
+      index: r,
       employeeName,
       email: email || undefined,
       cells,
@@ -583,7 +749,7 @@ export function validateGanttData(result: GanttParseResult): GanttValidationResu
     for (const cell of row.cells) {
       if (cell.rawValue && !cell.countryCode && cell.rawValue !== '-') {
         const lower = cell.rawValue.toLowerCase();
-        if (!NON_COUNTING_VALUES.has(lower) && !DOMESTIC_VALUES.has(lower)) {
+        if (!NON_COUNTING_VALUES.has(lower)) {
           unrecognized.add(cell.rawValue);
         }
       }
