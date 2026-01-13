@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Menu, LayoutDashboard, Calendar, Bell, TrendingUp, Settings, Shield } from 'lucide-react'
+import { Menu, LayoutDashboard, Upload, Calendar, Bell, TrendingUp, Settings, Shield } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/import', label: 'Import', icon: Upload },
   { href: '/calendar', label: 'Calendar', icon: Calendar },
   { href: '/future-job-alerts', label: 'Future Alerts', icon: Bell },
   { href: '/trip-forecast', label: 'Trip Forecast', icon: TrendingUp },

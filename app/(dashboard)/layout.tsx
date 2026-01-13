@@ -62,6 +62,12 @@ export default async function DashboardLayout({
               Dashboard
             </Link>
             <Link
+              href="/import"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Import
+            </Link>
+            <Link
               href="/calendar"
               className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
             >
