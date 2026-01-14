@@ -42,3 +42,29 @@ if (!isValidUrl) {
 }
 
 export type Env = typeof env
+
+/**
+ * Gets the base URL dynamically based on the environment.
+ * For Server Actions: pass headers to extract the host from the request.
+ * Falls back to VERCEL_URL for Vercel deployments, then NEXT_PUBLIC_APP_URL.
+ *
+ * @param requestHeaders - Headers from the incoming request (from next/headers)
+ */
+export function getBaseUrl(requestHeaders?: Headers): string {
+  // 1. Try to get from request headers (works in Server Actions)
+  if (requestHeaders) {
+    const host = requestHeaders.get('host')
+    const protocol = requestHeaders.get('x-forwarded-proto') || 'https'
+    if (host) {
+      return `${protocol}://${host}`
+    }
+  }
+
+  // 2. Check for Vercel deployment URL (preview and production)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  // 3. Fall back to configured app URL (or localhost default)
+  return env.NEXT_PUBLIC_APP_URL
+}

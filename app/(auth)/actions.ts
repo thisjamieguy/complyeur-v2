@@ -1,9 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { env } from '@/lib/env'
+import { getBaseUrl } from '@/lib/env'
 import {
   AuthError,
   ValidationError,
@@ -131,6 +132,8 @@ export async function signup(formData: FormData) {
 
 export async function forgotPassword(formData: FormData) {
   const supabase = await createClient()
+  const requestHeaders = await headers()
+  const baseUrl = getBaseUrl(requestHeaders)
 
   const rawData = {
     email: formData.get('email') as string,
@@ -147,7 +150,7 @@ export async function forgotPassword(formData: FormData) {
   // Redirect through auth callback to exchange token for session,
   // then redirect to reset-password page
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/reset-password`,
+    redirectTo: `${baseUrl}/auth/callback?next=/reset-password`,
   })
 
   if (error) {
@@ -207,6 +210,8 @@ export async function logout() {
  */
 export async function signInWithGoogle(redirectTo?: string) {
   const supabase = await createClient()
+  const requestHeaders = await headers()
+  const baseUrl = getBaseUrl(requestHeaders)
 
   // Validate redirectTo to prevent open redirect attacks
   let validatedRedirect = '/dashboard'
@@ -217,7 +222,7 @@ export async function signInWithGoogle(redirectTo?: string) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(validatedRedirect)}`,
+      redirectTo: `${baseUrl}/auth/callback?next=${encodeURIComponent(validatedRedirect)}`,
       queryParams: {
         // Request minimal scopes for security
         access_type: 'offline',
