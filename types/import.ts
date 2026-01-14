@@ -51,7 +51,8 @@ export const EmployeeRowSchema = z.object({
 });
 
 export const TripRowSchema = z.object({
-  employee_name: z.string().min(2, 'Employee name is required'),
+  employee_email: z.string().email('Invalid email format'),
+  employee_name: z.string().optional(),
   entry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   exit_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   country: z.string().min(2, 'Country is required'),
@@ -64,12 +65,17 @@ export const TripRowSchema = z.object({
 
 export interface ParsedEmployeeRow {
   row_number: number;
-  name: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  nationality?: string;
+  passport_number?: string;
 }
 
 export interface ParsedTripRow {
   row_number: number;
-  employee_name: string;
+  employee_email: string;
+  employee_name?: string;
   entry_date: string;
   exit_date: string;
   country: string;
@@ -84,11 +90,11 @@ export type ParsedRow = ParsedEmployeeRow | ParsedTripRow;
 
 // Type guards
 export function isParsedEmployeeRow(row: ParsedRow): row is ParsedEmployeeRow {
-  return 'name' in row && !('employee_name' in row);
+  return 'first_name' in row && 'last_name' in row && 'email' in row && !('employee_name' in row);
 }
 
 export function isParsedTripRow(row: ParsedRow): row is ParsedTripRow {
-  return 'employee_name' in row;
+  return 'entry_date' in row && 'exit_date' in row;
 }
 
 // ============================================================
@@ -144,6 +150,24 @@ export interface ImportResult {
   errors: ValidationError[];
   warnings: ValidationError[];
 }
+
+// ============================================================
+// DUPLICATE HANDLING OPTIONS
+// ============================================================
+
+export type DuplicateHandlingMode = 'skip' | 'update';
+
+export interface DuplicateOptions {
+  /** How to handle employees that already exist (matched by email) */
+  employees: DuplicateHandlingMode;
+  /** How to handle trips that already exist (matched by employee + dates) */
+  trips: DuplicateHandlingMode;
+}
+
+export const DEFAULT_DUPLICATE_OPTIONS: DuplicateOptions = {
+  employees: 'skip',
+  trips: 'skip',
+};
 
 // ============================================================
 // FORMAT CARD DATA
@@ -264,10 +288,14 @@ export type TripTargetField = (typeof TRIP_TARGET_FIELDS)[number];
 export type TargetField = EmployeeTargetField | TripTargetField;
 
 // Required fields that MUST be mapped for import to proceed
-export const REQUIRED_EMPLOYEE_FIELDS: EmployeeTargetField[] = ['name'];
+export const REQUIRED_EMPLOYEE_FIELDS: EmployeeTargetField[] = [
+  'first_name',
+  'last_name',
+  'email',
+];
 
 export const REQUIRED_TRIP_FIELDS: TripTargetField[] = [
-  'employee_name',
+  'employee_email',
   'entry_date',
   'exit_date',
   'country',
@@ -417,18 +445,18 @@ export const EMPLOYEE_FIELD_METADATA: FieldMetadata[] = [
 
 export const TRIP_FIELD_METADATA: FieldMetadata[] = [
   {
-    field: 'employee_name',
-    label: 'Employee Name',
-    description: 'Name of the employee taking this trip',
-    required: true,
-    example: 'John Smith',
-  },
-  {
     field: 'employee_email',
     label: 'Employee Email',
-    description: 'Email of the employee taking this trip',
-    required: false,
+    description: 'Email of the employee taking this trip (used to link trip to employee)',
+    required: true,
     example: 'john.smith@company.com',
+  },
+  {
+    field: 'employee_name',
+    label: 'Employee Name',
+    description: 'Name of the employee taking this trip (optional, for reference)',
+    required: false,
+    example: 'John Smith',
   },
   {
     field: 'entry_date',

@@ -54,6 +54,8 @@ describe('employeeSchema', () => {
         'Björk Guðmundsdóttir',
         'Zoë Smith',
         'Naïve Doe',
+        'Müller',           // German umlaut
+        'Søren Østergård',  // Nordic characters
       ];
 
       internationalNames.forEach(name => {
@@ -116,9 +118,17 @@ describe('employeeSchema', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].message).toBe(
-          'Name can only contain letters, spaces, hyphens, and apostrophes'
+          'Name can only contain letters, spaces, hyphens, apostrophes, and periods'
         );
       }
+    });
+
+    it('rejects numeric-only names', () => {
+      const result = employeeSchema.safeParse({
+        name: '12345',
+      });
+
+      expect(result.success).toBe(false);
     });
 
     it('rejects name with special characters', () => {

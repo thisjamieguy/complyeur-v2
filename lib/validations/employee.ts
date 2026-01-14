@@ -11,8 +11,8 @@ import { z } from 'zod'
  * - Name: Required, 2-100 characters, letters/spaces/hyphens/apostrophes only
  */
 
-// Name pattern: allows letters (including accented), spaces, hyphens, apostrophes
-const namePattern = /^[\p{L}\s\-']+$/u
+// Name pattern: allows letters (including accented), spaces, hyphens, apostrophes, periods
+const namePattern = /^[\p{L}\s\-'.]+$/u
 
 /**
  * Base employee schema (matches current database structure)
@@ -26,7 +26,7 @@ export const employeeSchema = z.object({
     .trim()
     .refine(
       (val) => namePattern.test(val),
-      'Name can only contain letters, spaces, hyphens, and apostrophes'
+      'Name can only contain letters, spaces, hyphens, apostrophes, and periods'
     ),
 })
 
@@ -43,7 +43,7 @@ export const employeeUpdateSchema = z.object({
     .trim()
     .refine(
       (val) => namePattern.test(val),
-      'Name can only contain letters, spaces, hyphens, and apostrophes'
+      'Name can only contain letters, spaces, hyphens, apostrophes, and periods'
     )
     .optional(),
 })

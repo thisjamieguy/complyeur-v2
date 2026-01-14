@@ -12,6 +12,7 @@ import {
   isParsedTripRow,
 } from '@/types/import';
 import { parseISO, isValid, isBefore, isAfter, addDays, subYears } from 'date-fns';
+import { toCountryCode } from './country-codes';
 
 // ============================================================
 // VALIDATE ALL ROWS
@@ -59,43 +60,92 @@ function validateEmployeeRow(
   existingNames?: Set<string>
 ): void {
   const rowNum = row.row_number;
+  const namePattern = /^[\p{L}\s\-'.]+$/u;
 
-  // Name validation
-  if (!row.name || row.name.length < 2) {
+  // First name validation
+  if (!row.first_name || row.first_name.length < 1) {
     errors.push({
       row: rowNum,
-      column: 'name',
-      value: row.name,
-      message: 'Name is required (2-100 characters)',
+      column: 'first_name',
+      value: row.first_name ?? '',
+      message: 'First name is required',
       severity: 'error',
     });
-  } else if (row.name.length > 100) {
+  } else if (row.first_name.length > 50) {
     errors.push({
       row: rowNum,
-      column: 'name',
-      value: row.name.substring(0, 50) + '...',
-      message: 'Name must be 100 characters or less',
+      column: 'first_name',
+      value: row.first_name.substring(0, 30) + '...',
+      message: 'First name must be 50 characters or less',
       severity: 'error',
     });
-  } else {
-    // Check for invalid characters (allow letters, spaces, hyphens, apostrophes, periods)
-    if (!/^[a-zA-Z\s\-'.]+$/.test(row.name)) {
-      errors.push({
-        row: rowNum,
-        column: 'name',
-        value: row.name,
-        message: "Name can only contain letters, spaces, hyphens, apostrophes, and periods",
-        severity: 'error',
-      });
-    }
+  } else if (!namePattern.test(row.first_name)) {
+    errors.push({
+      row: rowNum,
+      column: 'first_name',
+      value: row.first_name,
+      message: "First name can only contain letters, spaces, hyphens, apostrophes, and periods",
+      severity: 'error',
+    });
+  }
 
-    // Check for duplicates in the file
-    const lowerName = row.name.toLowerCase().trim();
+  // Last name validation
+  if (!row.last_name || row.last_name.length < 1) {
+    errors.push({
+      row: rowNum,
+      column: 'last_name',
+      value: row.last_name ?? '',
+      message: 'Last name is required',
+      severity: 'error',
+    });
+  } else if (row.last_name.length > 50) {
+    errors.push({
+      row: rowNum,
+      column: 'last_name',
+      value: row.last_name.substring(0, 30) + '...',
+      message: 'Last name must be 50 characters or less',
+      severity: 'error',
+    });
+  } else if (!namePattern.test(row.last_name)) {
+    errors.push({
+      row: rowNum,
+      column: 'last_name',
+      value: row.last_name,
+      message: "Last name can only contain letters, spaces, hyphens, apostrophes, and periods",
+      severity: 'error',
+    });
+  }
+
+  // Email validation
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!row.email || row.email.length < 1) {
+    errors.push({
+      row: rowNum,
+      column: 'email',
+      value: row.email ?? '',
+      message: 'Email is required',
+      severity: 'error',
+    });
+  } else if (!emailPattern.test(row.email)) {
+    errors.push({
+      row: rowNum,
+      column: 'email',
+      value: row.email,
+      message: 'Invalid email format',
+      severity: 'error',
+    });
+  }
+
+  // Duplicate and existing name check (using combined name)
+  if (row.first_name && row.last_name) {
+    const fullName = `${row.first_name.trim()} ${row.last_name.trim()}`;
+    const lowerName = fullName.toLowerCase();
+
     if (seenNames.has(lowerName)) {
       warnings.push({
         row: rowNum,
-        column: 'name',
-        value: row.name,
+        column: 'first_name',
+        value: fullName,
         message: 'Duplicate name in file (will create separate employee)',
         severity: 'warning',
       });
@@ -103,12 +153,11 @@ function validateEmployeeRow(
       seenNames.add(lowerName);
     }
 
-    // Check if employee already exists
     if (existingNames?.has(lowerName)) {
       warnings.push({
         row: rowNum,
-        column: 'name',
-        value: row.name,
+        column: 'first_name',
+        value: fullName,
         message: 'Employee with this name already exists (will be skipped)',
         severity: 'warning',
       });
@@ -131,13 +180,22 @@ function validateTripRow(
   const twoYearsAgo = subYears(today, 2);
   const sevenDaysFromNow = addDays(today, 7);
 
-  // Employee name validation
-  if (!row.employee_name || row.employee_name.length < 2) {
+  // Employee email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!row.employee_email) {
     errors.push({
       row: rowNum,
-      column: 'employee_name',
-      value: row.employee_name,
-      message: 'Employee name is required',
+      column: 'employee_email',
+      value: row.employee_email ?? '',
+      message: 'Employee email is required',
+      severity: 'error',
+    });
+  } else if (!emailRegex.test(row.employee_email)) {
+    errors.push({
+      row: rowNum,
+      column: 'employee_email',
+      value: row.employee_email,
+      message: 'Invalid email format',
       severity: 'error',
     });
   }
@@ -217,7 +275,7 @@ function validateTripRow(
     }
   }
 
-  // Country validation
+  // Country validation - convert name to ISO code first
   if (!row.country) {
     errors.push({
       row: rowNum,
@@ -227,9 +285,18 @@ function validateTripRow(
       severity: 'error',
     });
   } else {
-    const countryUpper = row.country.toUpperCase().trim();
+    // Convert country name (in any supported language) to ISO code
+    const countryCode = toCountryCode(row.country);
 
-    if (NON_SCHENGEN_EU.has(countryUpper)) {
+    if (!countryCode) {
+      errors.push({
+        row: rowNum,
+        column: 'country',
+        value: row.country,
+        message: `Unrecognized country: "${row.country}". Use a 2-letter country code (e.g., DE, FR) or country name in English, French, German, or Spanish.`,
+        severity: 'error',
+      });
+    } else if (NON_SCHENGEN_EU.has(countryCode)) {
       warnings.push({
         row: rowNum,
         column: 'country',
@@ -237,14 +304,19 @@ function validateTripRow(
         message: `${row.country} is not a Schengen country. This trip will not count towards the 90/180 rule but will still be recorded.`,
         severity: 'warning',
       });
-    } else if (!SCHENGEN_COUNTRIES.has(countryUpper)) {
+      // Store the converted code back on the row for downstream use
+      row.country = countryCode;
+    } else if (!SCHENGEN_COUNTRIES.has(countryCode)) {
       errors.push({
         row: rowNum,
         column: 'country',
         value: row.country,
-        message: `Unrecognized country: "${row.country}". Use a 2-letter country code (e.g., DE, FR) or full country name.`,
+        message: `Unrecognized country: "${row.country}". Use a 2-letter country code (e.g., DE, FR) or country name in English, French, German, or Spanish.`,
         severity: 'error',
       });
+    } else {
+      // Valid Schengen country - store the converted code
+      row.country = countryCode;
     }
   }
 

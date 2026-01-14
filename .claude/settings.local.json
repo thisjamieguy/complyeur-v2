@@ -32,7 +32,24 @@
       "Bash(supabase inspect:*)",
       "Bash(find:*)",
       "Bash(cd /Users/jameswalsh/Dev/Web Projects/ComplyEur-v2/complyeur && npm run build:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(cd /Users/jameswalsh/Dev/Web Projects/ComplyEur-v2/complyeur && grep:*)",
+      "Bash(npm run lint)",
+      "Bash(else echo \"❌ $file.tsx missing\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(grep:*)",
+      "Bash(npm run)",
+      "Bash(cd /Users/jameswalsh/Dev/Web\\\\ Projects/ComplyEur-v2/complyeur && npx supabase db push:*)",
+      "Bash(pkill:*)",
+      "Bash(npm test -- __tests__/unit/validations/employee-validation.test.ts)",
+      "Bash(cd /Users/jameswalsh/Dev/Web Projects/ComplyEur-v2/complyeur && npm run lint:*)",
+      "Bash(cd /Users/jameswalsh/Dev/Web Projects/ComplyEur-v2/complyeur && npx vitest run:*)",
+      "Bash(cd /Users/jameswalsh/Dev/Web\\\\ Projects/ComplyEur-v2/complyeur && npx vitest run:*)",
+      "Bash(npx supabase:*)",
+      "Bash(npm test -- --run __tests__/unit/import/country-codes.test.ts)",
+      "Bash(npm test -- --run __tests__/unit/import/)",
+      "Bash(git add:*)"
     ]
   }
 }

@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
+import Link from 'next/link'
+import { ChevronRight, FileSpreadsheet, History } from 'lucide-react'
 import { SettingsForm } from '@/components/settings'
 import { UserPreferencesForm } from './user-preferences-form'
 import { getCompanySettings, canViewSettings, canUpdateSettings } from '@/lib/actions/settings'
@@ -91,6 +93,52 @@ export default async function SettingsPage() {
           <UserPreferencesForm preferences={userPreferences} disabled={false} />
         </Suspense>
       </div>
+
+      {/* Column Mappings link */}
+      <Link
+        href="/settings/mappings"
+        className="block bg-white rounded-xl border shadow-sm p-6 hover:border-slate-300 transition-colors group"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <FileSpreadsheet className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
+                Column Mappings
+              </h2>
+              <p className="text-sm text-slate-600">
+                Manage saved column mappings for data imports
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+        </div>
+      </Link>
+
+      {/* Import History link */}
+      <Link
+        href="/settings/import-history"
+        className="block bg-white rounded-xl border shadow-sm p-6 hover:border-slate-300 transition-colors group"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+              <History className="h-5 w-5 text-slate-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 group-hover:text-slate-700 transition-colors">
+                Import History
+              </h2>
+              <p className="text-sm text-slate-600">
+                View past import sessions and their results
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
+        </div>
+      </Link>
     </div>
   )
 }

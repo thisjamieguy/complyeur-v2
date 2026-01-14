@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, type FileRejection } from 'react-dropzone';
 import { Upload, File, X, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -47,10 +47,14 @@ export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzon
   }, []);
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
+    (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       setError(null);
 
       if (acceptedFiles.length === 0) {
+        const rejection = fileRejections[0];
+        if (rejection?.errors?.length) {
+          setError(rejection.errors[0].message);
+        }
         return;
       }
 
@@ -71,8 +75,10 @@ export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzon
     onDrop,
     accept: {
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.ms-excel': ['.xls', '.csv'],
       'text/csv': ['.csv'],
+      'text/plain': ['.csv'],
+      'application/csv': ['.csv'],
     },
     maxFiles: 1,
     multiple: false,

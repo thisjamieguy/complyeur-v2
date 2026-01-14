@@ -16,6 +16,18 @@ import {
 } from './gantt-parser';
 
 // ============================================================
+// RAW PARSE RESULT (for Phase 3 column mapping)
+// ============================================================
+
+export interface RawParseResult {
+  success: boolean;
+  rawData?: Record<string, unknown>[];
+  rawHeaders?: string[];
+  error?: string;
+  totalRows?: number;
+}
+
+// ============================================================
 // SECURITY: Sanitize Cell Values
 // ============================================================
 
@@ -144,6 +156,86 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
 }
 
 // ============================================================
+// PARSE FILE RAW (for Phase 3 column mapping)
+// ============================================================
+
+/**
+ * Parses a file and returns raw data without strict header validation.
+ * Used by Phase 3 column mapping to allow flexible column names.
+ *
+ * @param file - The file to parse
+ * @returns Raw headers and row data
+ */
+export async function parseFileRaw(file: File): Promise<RawParseResult> {
+  try {
+    // Read file as ArrayBuffer
+    const buffer = await file.arrayBuffer();
+
+    // Parse workbook
+    const workbook = XLSX.read(buffer, {
+      type: 'array',
+      cellDates: true,
+      dateNF: 'yyyy-mm-dd',
+    });
+
+    // Get first sheet
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      return { success: false, error: 'File contains no worksheets' };
+    }
+
+    const sheet = workbook.Sheets[sheetName];
+
+    // Convert to JSON with headers
+    const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+      defval: '',
+      raw: false,
+    });
+
+    // Check for empty file
+    if (jsonData.length === 0) {
+      return {
+        success: false,
+        error: 'File appears empty. Add data rows below the header row and try again.',
+      };
+    }
+
+    // Check row limit
+    if (jsonData.length > MAX_ROWS) {
+      return {
+        success: false,
+        error: `Import limited to ${MAX_ROWS} rows for performance. Your file has ${jsonData.length} rows. Please split into smaller files.`,
+      };
+    }
+
+    // Get raw headers from first row (don't normalize - preserve original names)
+    const rawHeaders = Object.keys(jsonData[0] || {});
+
+    // Sanitize all values
+    const sanitizedData = jsonData.map((row) => {
+      const sanitized: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(row)) {
+        sanitized[key] = sanitizeValue(value);
+      }
+      return sanitized;
+    });
+
+    return {
+      success: true,
+      rawData: sanitizedData,
+      rawHeaders,
+      totalRows: sanitizedData.length,
+    };
+  } catch (error) {
+    console.error('Raw parse error:', error);
+    return {
+      success: false,
+      error: 'Failed to parse file. Ensure it is a valid Excel or CSV file.',
+    };
+  }
+}
+
+// ============================================================
 // VALIDATE HEADERS (STRICT MODE)
 // ============================================================
 
@@ -206,7 +298,11 @@ function parseEmployeeRows(
 ): ParsedEmployeeRow[] {
   return rows.map((row, index) => ({
     row_number: index + 2, // +2 because row 1 is header, and we're 0-indexed
-    name: findColumnValue(row, rawHeaders, 'name'),
+    first_name: findColumnValue(row, rawHeaders, 'first_name'),
+    last_name: findColumnValue(row, rawHeaders, 'last_name'),
+    email: findColumnValue(row, rawHeaders, 'email'),
+    nationality: findColumnValue(row, rawHeaders, 'nationality') || undefined,
+    passport_number: findColumnValue(row, rawHeaders, 'passport_number') || undefined,
   }));
 }
 
@@ -217,7 +313,8 @@ function parseEmployeeRows(
 function parseTripRows(rows: Record<string, unknown>[], rawHeaders: string[]): ParsedTripRow[] {
   return rows.map((row, index) => ({
     row_number: index + 2,
-    employee_name: findColumnValue(row, rawHeaders, 'employee_name'),
+    employee_email: findColumnValue(row, rawHeaders, 'email'),
+    employee_name: findColumnValue(row, rawHeaders, 'employee_name') || undefined,
     entry_date: formatDateValue(findColumnValue(row, rawHeaders, 'entry_date')),
     exit_date: formatDateValue(findColumnValue(row, rawHeaders, 'exit_date')),
     country: findColumnValue(row, rawHeaders, 'country'),
@@ -356,6 +453,7 @@ function parseGanttFromData(buffer: ArrayBuffer): ParseResult {
     // Convert generated trips to ParsedTripRow format
     const parsedData: ParsedTripRow[] = trips.map((trip, index) => ({
       row_number: trip.sourceRow, // Use original row number for error reporting
+      employee_email: trip.employeeEmail ?? '', // Gantt may not have email, validation will catch it
       employee_name: trip.employeeName,
       entry_date: trip.entryDate,
       exit_date: trip.exitDate,

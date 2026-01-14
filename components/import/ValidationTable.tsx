@@ -63,19 +63,19 @@ export function ValidationTable({
   const getRowData = (row: ValidatedRow<ParsedRow>) => {
     const data = row.data;
     if (format === 'employees' && isParsedEmployeeRow(data)) {
-      return [data.name];
+      return [data.first_name, data.last_name, data.email];
     }
-    if (format === 'trips' && isParsedTripRow(data)) {
-      return [data.employee_name, data.entry_date, data.exit_date, data.country];
+    if ((format === 'trips' || format === 'gantt') && isParsedTripRow(data)) {
+      return [data.employee_email, data.entry_date, data.exit_date, data.country];
     }
     return [];
   };
 
   const getHeaders = () => {
     if (format === 'employees') {
-      return ['Name'];
+      return ['First Name', 'Last Name', 'Email'];
     }
-    return ['Employee Name', 'Entry Date', 'Exit Date', 'Country'];
+    return ['Employee Email', 'Entry Date', 'Exit Date', 'Country'];
   };
 
   if (filteredRows.length === 0) {

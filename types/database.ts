@@ -287,6 +287,63 @@ export type Database = {
           },
         ]
       }
+      column_mappings: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          created_by: string
+          description: string | null
+          format: string
+          id: string
+          last_used_at: string | null
+          mappings: Json
+          name: string
+          times_used: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          format: string
+          id?: string
+          last_used_at?: string | null
+          mappings?: Json
+          name: string
+          times_used?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          format?: string
+          id?: string
+          last_used_at?: string | null
+          mappings?: Json
+          name?: string
+          times_used?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "column_mappings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "column_mappings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string | null
@@ -602,6 +659,7 @@ export type Database = {
           company_id: string
           created_at: string
           deleted_at: string | null
+          email: string | null
           id: string
           name: string
           updated_at: string
@@ -611,6 +669,7 @@ export type Database = {
           company_id: string
           created_at?: string
           deleted_at?: string | null
+          email?: string | null
           id?: string
           name: string
           updated_at?: string
@@ -620,6 +679,7 @@ export type Database = {
           company_id?: string
           created_at?: string
           deleted_at?: string | null
+          email?: string | null
           id?: string
           name?: string
           updated_at?: string
@@ -1089,6 +1149,10 @@ export type Database = {
           }
       get_dashboard_summary: { Args: { p_company_id: string }; Returns: Json }
       get_last_audit_hash: { Args: { p_company_id: string }; Returns: string }
+      increment_mapping_usage: {
+        Args: { mapping_id: string }
+        Returns: undefined
+      }
       unsubscribe_by_token: { Args: { token: string }; Returns: boolean }
     }
     Enums: {

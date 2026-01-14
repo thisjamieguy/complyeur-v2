@@ -72,6 +72,8 @@ const HEADER_ALIASES: Record<CanonicalField, readonly string[]> = {
     'employee email',
     'work email',
     'email_address',
+    'traveler email',
+    'traveller email',
   ],
   entry_date: [
     'entry_date',
@@ -80,8 +82,8 @@ const HEADER_ALIASES: Record<CanonicalField, readonly string[]> = {
     'start date',
     'start',
     'from',
-    'departure',
-    'departure date',
+    'arrival',
+    'arrival date',
     'begin',
     'begin date',
     'travel start',
@@ -96,6 +98,8 @@ const HEADER_ALIASES: Record<CanonicalField, readonly string[]> = {
     'end date',
     'end',
     'to',
+    'departure',
+    'departure date',
     'return',
     'return date',
     'finish',
@@ -215,7 +219,14 @@ export function normalizeHeader(header: string): CanonicalField | null {
     .replace(/\s+/g, ' ') // Normalize multiple spaces to single
     .replace(/[_-]+/g, ' '); // Replace underscores/hyphens with spaces
 
-  return ALIAS_TO_CANONICAL.get(cleaned) ?? null;
+  const directMatch = ALIAS_TO_CANONICAL.get(cleaned);
+  if (directMatch) {
+    return directMatch;
+  }
+
+  // Handle cases like "E-Mail" → "e mail" by compacting spaces.
+  const compact = cleaned.replace(/\s+/g, '');
+  return ALIAS_TO_CANONICAL.get(compact) ?? null;
 }
 
 /**
@@ -328,8 +339,8 @@ export function checkFormatRequirements(
       break;
     case 'trips':
       configsToTry = [
-        REQUIRED_FIELDS_BY_FORMAT.trips_alt,
-        REQUIRED_FIELDS_BY_FORMAT.trips,
+        REQUIRED_FIELDS_BY_FORMAT.trips, // Primary: email-based (trips link via email)
+        REQUIRED_FIELDS_BY_FORMAT.trips_alt, // Fallback: name-based
       ];
       break;
     case 'gantt':

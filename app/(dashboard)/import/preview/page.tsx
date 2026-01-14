@@ -5,15 +5,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Loader2, ArrowLeft, Upload } from 'lucide-react';
+import { Loader2, ArrowLeft, Upload, Download, AlertTriangle } from 'lucide-react';
 import { ValidationSummary } from '@/components/import/ValidationSummary';
 import { ValidationTable } from '@/components/import/ValidationTable';
+import { DuplicateHandlingOptions } from '@/components/import/DuplicateHandlingOptions';
+import { generateErrorCsv, getErrorCsvFilename, downloadCsv } from '@/lib/import/error-export';
 import {
   ImportSession,
   ImportFormat,
   ValidatedRow,
   ParsedRow,
   ValidationSummary as ValidationSummaryType,
+  DuplicateOptions,
+  DEFAULT_DUPLICATE_OPTIONS,
 } from '@/types/import';
 import { validateRows, getValidationSummary } from '@/lib/import/validator';
 import { getImportSession, executeImport } from '../actions';
@@ -30,6 +34,8 @@ export default function PreviewPage() {
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [importStage, setImportStage] = useState<'idle' | 'preparing' | 'saving' | 'finalizing'>('idle');
+  const [duplicateOptions, setDuplicateOptions] = useState<DuplicateOptions>(DEFAULT_DUPLICATE_OPTIONS);
 
   useEffect(() => {
     async function loadSession() {
@@ -81,9 +87,18 @@ export default function PreviewPage() {
     }
 
     setIsImporting(true);
+    setImportStage('preparing');
 
     try {
-      const result = await executeImport(sessionId, session.format as ImportFormat, validatedRows);
+      // Show saving stage for larger imports
+      if (validRows.length > 50) {
+        await new Promise((resolve) => setTimeout(resolve, 300)); // Brief delay to show stage
+      }
+      setImportStage('saving');
+
+      const result = await executeImport(sessionId, session.format as ImportFormat, validatedRows, duplicateOptions);
+
+      setImportStage('finalizing');
 
       if (result.success) {
         showSuccess('Import Complete', `Successfully imported ${session.format}`);
@@ -97,7 +112,24 @@ export default function PreviewPage() {
       showError('Import Error', 'An unexpected error occurred during import');
     } finally {
       setIsImporting(false);
+      setImportStage('idle');
     }
+  };
+
+  const handleDownloadErrors = () => {
+    if (!session) return;
+
+    // Gather all errors and warnings from validated rows
+    const allErrors = validatedRows.flatMap((row) => [...row.errors, ...row.warnings]);
+
+    if (allErrors.length === 0) {
+      showError('No Errors', 'There are no errors to download');
+      return;
+    }
+
+    const csv = generateErrorCsv(allErrors);
+    const fileName = getErrorCsvFilename(session.file_name);
+    downloadCsv(csv, fileName);
   };
 
   if (isLoading) {
@@ -164,6 +196,39 @@ export default function PreviewPage() {
         showOnlyErrors={showOnlyErrors}
       />
 
+      {/* Duplicate Handling Options */}
+      <DuplicateHandlingOptions
+        format={session.format as ImportFormat}
+        value={duplicateOptions}
+        onChange={setDuplicateOptions}
+        disabled={isImporting}
+      />
+
+      {/* Warning Callout for Partial Import */}
+      {summary.errors > 0 && (
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-medium text-amber-800">
+              {summary.errors} row{summary.errors !== 1 ? 's have' : ' has'} errors and will be skipped
+            </p>
+            <p className="text-sm text-amber-700 mt-1">
+              Only {summary.valid} valid row{summary.valid !== 1 ? 's' : ''} will be imported.
+              Download the errors to fix them in your file.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadErrors}
+            className="flex-shrink-0 border-amber-300 text-amber-700 hover:bg-amber-100"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download Errors
+          </Button>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="flex justify-between items-center pt-4 border-t">
         <Button
@@ -175,16 +240,20 @@ export default function PreviewPage() {
           Back to Format Selection
         </Button>
 
-        <div className="flex items-center gap-4">
-          {summary.errors > 0 && (
-            <p className="text-sm text-amber-600">
-              {summary.errors} row(s) with errors will be skipped
+        <div className="flex flex-col items-end gap-2">
+          {/* Progress Stage Indicator */}
+          {isImporting && summary.valid > 50 && (
+            <p className="text-sm text-slate-500">
+              {importStage === 'preparing' && 'Preparing import...'}
+              {importStage === 'saving' && `Saving ${summary.valid} records...`}
+              {importStage === 'finalizing' && 'Finalizing...'}
             </p>
           )}
+
           <Button
             onClick={handleImport}
             disabled={!canImport || isImporting}
-            className="min-w-[160px]"
+            className="min-w-[180px]"
           >
             {isImporting ? (
               <>
@@ -193,7 +262,7 @@ export default function PreviewPage() {
               </>
             ) : (
               <>
-                Import {summary.valid} Row{summary.valid !== 1 ? 's' : ''}
+                Import {summary.valid} Valid Row{summary.valid !== 1 ? 's' : ''}
               </>
             )}
           </Button>
