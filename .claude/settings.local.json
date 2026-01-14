@@ -49,7 +49,10 @@
       "Bash(npx supabase:*)",
       "Bash(npm test -- --run __tests__/unit/import/country-codes.test.ts)",
       "Bash(npm test -- --run __tests__/unit/import/)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(import\\): add column mapping, duplicate handling, and import polish\n\nPhase 3 - Column Mapping:\n- Add ColumnMappingUI component for manual column mapping\n- Add multi-language country code support \\(EN, FR, DE, ES\\)\n- Add header alias detection for common column names\n- Add saved column mappings feature with settings page\n- Add column_mappings table migration\n\nPhase 4 - Import Polish:\n- Add partial import with clear \"Import X Valid Rows\" UI\n- Add error CSV download with Row/Field/Value/Message columns\n- Add import history page at /settings/import-history\n- Add duplicate handling: skip or update for employees \\(by email\\)\n- Add trip duplicate detection \\(by employee + dates\\)\n- Add progress indicator for large imports \\(>50 rows\\)\n\nAlso includes:\n- Sample test data \\(45 employees, 102 trips\\)\n- Unit tests for country codes, header aliases, mapping\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push)",
+      "Bash(npx eslint:*)"
     ]
   }
 }

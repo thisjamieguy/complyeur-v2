@@ -1,0 +1,65 @@
+'use client'
+
+import type { ReactNode } from 'react'
+import Link from 'next/link'
+import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context'
+import { Sidebar } from './sidebar'
+import { MobileNav } from '@/components/navigation/mobile-nav'
+import { Footer } from './footer'
+import type { UserMenuUser } from './user-menu'
+import { cn } from '@/lib/utils'
+
+interface AppShellProps {
+  children: ReactNode
+  user: UserMenuUser
+}
+
+function AppShellContent({ children, user }: AppShellProps) {
+  const { isOpen } = useSidebar()
+
+  return (
+    <div className="flex min-h-screen bg-slate-50">
+      {/* Desktop Sidebar - fixed position */}
+      <div className="hidden lg:block fixed inset-y-0 left-0 z-40">
+        <Sidebar user={user} />
+      </div>
+
+      {/* Mobile Header - visible below 1024px */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4">
+        <MobileNav />
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
+            CE
+          </div>
+          <span className="text-lg font-semibold text-slate-900">ComplyEUR</span>
+        </Link>
+      </header>
+
+      {/* Main content area - adjusts margin based on sidebar state */}
+      <main
+        className={cn(
+          'flex-1 flex flex-col min-h-screen w-full transition-[margin-left] duration-200 ease-out',
+          // Mobile: no margin-left, add top padding for fixed mobile header
+          'pt-16 lg:pt-0',
+          // Desktop: margin-left matches sidebar width (256px expanded, 72px collapsed)
+          isOpen ? 'lg:ml-64' : 'lg:ml-[72px]'
+        )}
+      >
+        {/* Content container with max-width and responsive padding */}
+        <div className="flex-1 w-full max-w-[1280px] mx-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+          {children}
+        </div>
+
+        <Footer />
+      </main>
+    </div>
+  )
+}
+
+export function AppShell({ children, user }: AppShellProps) {
+  return (
+    <SidebarProvider>
+      <AppShellContent user={user}>{children}</AppShellContent>
+    </SidebarProvider>
+  )
+}

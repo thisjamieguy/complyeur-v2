@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Menu, LayoutDashboard, Upload, Calendar, Bell, TrendingUp, Settings, Shield } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -11,29 +11,21 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { navItems } from '@/components/navigation/nav-items'
+import { useSidebar } from '@/contexts/sidebar-context'
 import { cn } from '@/lib/utils'
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/import', label: 'Import', icon: Upload },
-  { href: '/calendar', label: 'Calendar', icon: Calendar },
-  { href: '/future-job-alerts', label: 'Future Alerts', icon: Bell },
-  { href: '/trip-forecast', label: 'Trip Forecast', icon: TrendingUp },
-  { href: '/settings', label: 'Settings', icon: Settings },
-  { href: '/gdpr', label: 'GDPR', icon: Shield },
-]
-
 export function MobileNav() {
-  const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const { isMobileOpen, toggleMobile, closeMobile } = useSidebar()
 
   // Close on route change
   useEffect(() => {
-    setOpen(false)
-  }, [pathname])
+    closeMobile()
+  }, [pathname, closeMobile])
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={isMobileOpen} onOpenChange={toggleMobile}>
       <SheetTrigger asChild>
         <button
           className="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md hover:bg-slate-100 transition-colors"
