@@ -53,9 +53,12 @@ export type Env = typeof env
 export function getBaseUrl(requestHeaders?: Headers): string {
   // 1. Try to get from request headers (works in Server Actions)
   if (requestHeaders) {
-    const host = requestHeaders.get('host')
+    const host = requestHeaders.get('x-forwarded-host') || requestHeaders.get('host')
     const protocol = requestHeaders.get('x-forwarded-proto') || 'https'
-    if (host) {
+
+    // Use detected host, unless it's localhost and we're in a Vercel environment
+    // (This prevents internal routing or misconfigured headers from causing redirects to localhost in prod)
+    if (host && !(process.env.VERCEL_URL && host.includes('localhost'))) {
       return `${protocol}://${host}`
     }
   }
