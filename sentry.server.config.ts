@@ -10,8 +10,9 @@ Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 
-  // Adjust this value in production, or use tracesSampler for greater control
-  tracesSampleRate: 1,
+  // Sample 10% of transactions for performance monitoring
+  // This reduces costs while still providing meaningful data
+  tracesSampleRate: 0.1,
 
   // Disable in development to avoid noise
   enabled: process.env.NODE_ENV === 'production',

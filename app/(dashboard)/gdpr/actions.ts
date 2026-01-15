@@ -72,9 +72,15 @@ export async function getEmployeesForGdpr(): Promise<
   }))
 }
 
+// Maximum size for base64 export (5MB) - larger exports should use storage
+const MAX_BASE64_EXPORT_SIZE = 5 * 1024 * 1024
+
 /**
  * Generates a DSAR export for an employee.
  * Returns the download URL or error.
+ *
+ * For small exports (<5MB): Returns base64 data URL for immediate download
+ * For large exports: Uploads to Supabase storage and returns signed URL
  */
 export async function requestDsarExport(employeeId: string): Promise<{
   success: boolean
@@ -100,12 +106,55 @@ export async function requestDsarExport(employeeId: string): Promise<{
     }
   }
 
-  // Store the ZIP in a temporary endpoint for download
-  // For security, we'll use a one-time token
-  const token = crypto.randomUUID()
+  const zipSize = result.zipBuffer.length
 
-  // Store in a global cache (in production, use Redis or similar)
-  // For now, we'll return base64 encoded data directly
+  // For large exports, try to use Supabase storage
+  if (zipSize > MAX_BASE64_EXPORT_SIZE) {
+    const supabase = await createClient()
+    const exportId = crypto.randomUUID()
+    const storagePath = `dsar-exports/${exportId}/${result.fileName}`
+
+    // Try to upload to storage bucket
+    const { error: uploadError } = await supabase.storage
+      .from('gdpr-exports')
+      .upload(storagePath, result.zipBuffer, {
+        contentType: 'application/zip',
+        cacheControl: '300', // 5 minute cache
+      })
+
+    if (!uploadError) {
+      // Generate signed URL (expires in 1 hour)
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from('gdpr-exports')
+        .createSignedUrl(storagePath, 3600)
+
+      if (!signedUrlError && signedUrlData?.signedUrl) {
+        revalidatePath('/gdpr')
+        return {
+          success: true,
+          downloadUrl: signedUrlData.signedUrl,
+          fileName: result.fileName,
+        }
+      }
+    }
+
+    // If storage upload failed, warn but continue with base64 fallback
+    console.warn(
+      '[DSAR Export] Storage upload failed, falling back to base64. ' +
+      'Consider setting up gdpr-exports storage bucket for large exports.',
+      uploadError
+    )
+  }
+
+  // For small exports or if storage failed, use base64 encoding
+  // Add size check to prevent memory issues
+  if (zipSize > 10 * 1024 * 1024) {
+    return {
+      success: false,
+      error: 'Export file is too large. Please contact support for assistance with large data exports.',
+    }
+  }
+
   const base64 = result.zipBuffer.toString('base64')
 
   revalidatePath('/gdpr')

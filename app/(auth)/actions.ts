@@ -55,7 +55,6 @@ export async function login(formData: FormData) {
   if (error) {
     throw new AuthError(getAuthErrorMessage(error))
   }
-
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }

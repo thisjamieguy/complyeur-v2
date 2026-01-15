@@ -10,13 +10,12 @@ Sentry.init({
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
 
-  // Adjust this value in production, or use tracesSampler for greater control
-  tracesSampleRate: 1,
+  // Sample 10% of transactions for performance monitoring
+  // This reduces costs while still providing meaningful data
+  tracesSampleRate: 0.1,
 
-  // You can remove this option if you're not planning to use the Sentry Session Replay feature:
-  replaysSessionSampleRate: 0.1,
-
-  // If you don't want to use Session Replay, just remove the line below:
+  // Session replay sampling: 5% of sessions, 100% when errors occur
+  replaysSessionSampleRate: 0.05,
   replaysOnErrorSampleRate: 1.0,
 
   // Disable in development to avoid noise

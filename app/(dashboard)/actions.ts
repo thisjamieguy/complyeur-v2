@@ -47,6 +47,16 @@ async function runAlertDetection(employeeId: string): Promise<void> {
   }
 }
 
+/**
+ * Wrapper for fire-and-forget alert detection with proper error logging
+ * Use this instead of .catch(() => {}) to ensure errors are logged
+ */
+function runAlertDetectionBackground(employeeId: string): void {
+  runAlertDetection(employeeId).catch((error) => {
+    console.error('[AlertDetection] Unexpected error in background task:', error)
+  })
+}
+
 export async function addEmployeeAction(formData: { name: string }) {
   const validated = employeeSchema.parse(formData)
   await createEmployee(validated)
@@ -91,7 +101,7 @@ export async function addTripAction(formData: {
   const trip = await createTrip(tripData)
 
   // Run alert detection after trip creation (fire-and-forget)
-  runAlertDetection(validated.employee_id).catch(() => {})
+  runAlertDetectionBackground(validated.employee_id)
 
   revalidatePath(`/employee/${validated.employee_id}`)
   revalidatePath('/dashboard')
@@ -125,7 +135,7 @@ export async function updateTripAction(
   const trip = await updateTrip(tripId, updateData)
 
   // Run alert detection after trip update (fire-and-forget)
-  runAlertDetection(employeeId).catch(() => {})
+  runAlertDetectionBackground(employeeId)
 
   revalidatePath(`/employee/${employeeId}`)
   revalidatePath('/dashboard')
@@ -136,7 +146,7 @@ export async function deleteTripAction(tripId: string, employeeId: string) {
   await deleteTrip(tripId)
 
   // Run alert detection after trip deletion (may resolve alerts)
-  runAlertDetection(employeeId).catch(() => {})
+  runAlertDetectionBackground(employeeId)
 
   revalidatePath(`/employee/${employeeId}`)
   revalidatePath('/dashboard')
@@ -204,7 +214,7 @@ export async function bulkAddTripsAction(
   const result = await createBulkTrips(validatedTrips)
 
   // Run alert detection after bulk trip creation (fire-and-forget)
-  runAlertDetection(employeeId).catch(() => {})
+  runAlertDetectionBackground(employeeId)
 
   revalidatePath(`/employee/${employeeId}`)
   revalidatePath('/dashboard')
@@ -221,8 +231,8 @@ export async function reassignTripAction(
   await reassignTrip(tripId, newEmployeeId)
 
   // Run alert detection for both employees (trip removed from one, added to other)
-  runAlertDetection(currentEmployeeId).catch(() => {})
-  runAlertDetection(newEmployeeId).catch(() => {})
+  runAlertDetectionBackground(currentEmployeeId)
+  runAlertDetectionBackground(newEmployeeId)
 
   revalidatePath(`/employee/${currentEmployeeId}`)
   revalidatePath(`/employee/${newEmployeeId}`)

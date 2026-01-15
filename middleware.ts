@@ -1,12 +1,22 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function middleware(request: NextRequest) {
-  const { supabaseResponse, user } = await updateSession(request)
-
   const { pathname } = request.nextUrl
 
-  // Auth routes (public routes for authentication)
+  // 1. Rate Limiting - applies to API routes and auth routes
+  // Uses Upstash Redis for distributed rate limiting in serverless environments
+  if (pathname.startsWith('/api/') || pathname.startsWith('/login') ||
+      pathname.startsWith('/signup') || pathname.startsWith('/forgot-password') ||
+      pathname.startsWith('/reset-password') || pathname.startsWith('/auth/')) {
+    const rateLimitResponse = await checkRateLimit(request)
+    if (rateLimitResponse) return rateLimitResponse
+  }
+
+  // 2. Auth & Session Management
+  const { supabaseResponse, user } = await updateSession(request)
+
   const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
   const isAuthRoute = authRoutes.includes(pathname)
 

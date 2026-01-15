@@ -154,18 +154,14 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
       return { success: false, error: 'User profile not found' };
     }
 
-    // TODO: Re-enable tier check before production
-    // Check entitlements
-    // const canBulkImport = await checkBulkImportEntitlement(
-    //   profile.company_id,
-    //   profile.is_superadmin === true
-    // );
-    // if (!canBulkImport) {
-    //   return {
-    //     success: false,
-    //     error: 'Bulk import is not available on your current plan. Please upgrade to access this feature.',
-    //   };
-    // }
+    // Check entitlements - users must have bulk import enabled on their plan
+    const canBulkImport = await checkBulkImportEntitlement(profile.company_id, false)
+    if (!canBulkImport) {
+      return {
+        success: false,
+        error: 'Bulk import is not available on your current plan. Please upgrade to access this feature.',
+      }
+    }
 
     // Extract form data
     const file = formData.get('file') as File | null;

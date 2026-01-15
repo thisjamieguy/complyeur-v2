@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { AuthError, DatabaseError, NotFoundError } from '@/lib/errors'
 import type {
   Alert,
@@ -546,6 +547,9 @@ export async function updateNotificationPreferences(
 
 /**
  * Get all users in a company who should receive a specific notification type
+ *
+ * This function uses batch queries to avoid N+1 performance issues.
+ * Uses admin client to fetch emails from auth.users since profiles don't store email.
  */
 export async function getNotificationRecipients(
   notificationType: 'warning' | 'urgent' | 'breach'
@@ -553,35 +557,79 @@ export async function getNotificationRecipients(
   const supabase = await createClient()
   const { companyId } = await getAuthenticatedUserCompany(supabase)
 
-  // Get all profiles in the company (profiles don't have email - need to get from auth.users)
-  const { data: profiles, error: profilesError } = await supabase
+  // Batch fetch: Get all profiles with their notification preferences in a single query
+  const { data: profilesWithPrefs, error } = await supabase
     .from('profiles')
-    .select('id')
+    .select(`
+      id,
+      notification_preferences (
+        receive_warning_emails,
+        receive_urgent_emails,
+        receive_breach_emails,
+        unsubscribed_at,
+        unsubscribe_token
+      )
+    `)
     .eq('company_id', companyId)
 
-  if (profilesError || !profiles) {
-    console.error('Error fetching profiles:', profilesError)
+  if (error || !profilesWithPrefs) {
+    console.error('Error fetching profiles with preferences:', error)
     return []
   }
 
+  // Get user IDs for batch email lookup
+  const userIds = profilesWithPrefs.map(p => p.id)
+
+  if (userIds.length === 0) {
+    return []
+  }
+
+  // Batch fetch emails from auth.users using admin client
+  const emailMap: Map<string, string> = new Map()
+  try {
+    const adminClient = createAdminClient()
+    const { data: authUsers, error: authError } = await adminClient.auth.admin.listUsers({
+      perPage: 1000, // Should be enough for most companies
+    })
+
+    if (authError) {
+      console.error('Error fetching auth users:', authError)
+      return []
+    }
+
+    // Create lookup map of user ID -> email
+    for (const user of authUsers.users) {
+      if (user.email && userIds.includes(user.id)) {
+        emailMap.set(user.id, user.email)
+      }
+    }
+  } catch (adminError) {
+    // Admin client may not be configured in all environments
+    console.error('Error using admin client for email lookup:', adminError)
+    return []
+  }
+
+  // Process results in memory (no additional queries needed)
   const recipients: Array<{ email: string; userId: string; unsubscribeToken: string }> = []
 
-  for (const profile of profiles) {
-    // Get user email from auth.users via supabase.auth.admin (server-side only)
-    // Since we can't directly query auth.users, we need to get the email differently
-    // For now, get it from notification_preferences or skip if not available
-    const { data: prefs } = await supabase
-      .from('notification_preferences')
-      .select('*, recipient_email:notification_log(recipient_email)')
-      .eq('user_id', profile.id)
-      .single()
+  for (const profile of profilesWithPrefs) {
+    // Get email from our lookup map
+    const email = emailMap.get(profile.id)
+    if (!email) {
+      continue
+    }
+
+    // Get preferences (might be null if user hasn't set any)
+    const prefs = Array.isArray(profile.notification_preferences)
+      ? profile.notification_preferences[0]
+      : profile.notification_preferences
 
     // Check if user has unsubscribed entirely
     if (prefs?.unsubscribed_at) {
       continue
     }
 
-    // Check type-specific preference
+    // Check type-specific preference (default to true if no preferences set)
     const shouldReceive =
       notificationType === 'warning'
         ? prefs?.receive_warning_emails !== false
@@ -589,13 +637,7 @@ export async function getNotificationRecipients(
           ? prefs?.receive_urgent_emails !== false
           : prefs?.receive_breach_emails !== false
 
-    // We need to get the email from auth - for now, try to get it from the current user session
-    // or use a stored email. Since profiles don't have email, we'll need to handle this differently
-    // For production, you'd want to store email in profiles or use Supabase admin API
-    const { data: { user } } = await supabase.auth.getUser()
-    const email = profile.id === user?.id ? user?.email : null
-
-    if (shouldReceive && email) {
+    if (shouldReceive) {
       recipients.push({
         email,
         userId: profile.id,
