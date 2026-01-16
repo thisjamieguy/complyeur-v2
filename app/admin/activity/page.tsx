@@ -18,6 +18,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 const actionConfig: Record<string, { icon: LucideIcon; color: string; label: string; bgColor: string }> = {
   'company.suspended': { icon: XCircle, color: 'text-red-500', bgColor: 'bg-red-50', label: 'Suspended company' },
   'company.restored': { icon: CheckCircle, color: 'text-green-500', bgColor: 'bg-green-50', label: 'Restored company' },

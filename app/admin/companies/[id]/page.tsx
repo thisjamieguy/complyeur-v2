@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation'
 import { CompanyHeader } from '@/components/admin/company-header'
 import { CompanyTabs } from '@/components/admin/company-tabs'
 
+export const dynamic = 'force-dynamic'
+
 export default async function CompanyDetailPage({
   params,
 }: {

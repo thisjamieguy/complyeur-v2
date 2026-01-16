@@ -6,6 +6,8 @@ import { CalendarView } from '@/components/calendar/calendar-view'
 import { CalendarSkeleton } from '@/components/calendar/calendar-skeleton'
 import { CalendarEmptyState } from '@/components/calendar/calendar-empty-state'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Employee with trips for calendar view
  */

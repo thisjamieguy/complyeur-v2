@@ -2,6 +2,8 @@ import { requireSuperAdmin } from '@/lib/admin/auth'
 import { AdminSidebar } from '@/components/admin/admin-sidebar'
 import { AdminHeader } from '@/components/admin/admin-header'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Admin | ComplyEUR',
   description: 'ComplyEUR administration panel',

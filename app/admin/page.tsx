@@ -7,6 +7,8 @@ import { RecentActivity } from '@/components/admin/recent-activity'
 import { TrialsExpiringSoon } from '@/components/admin/trials-expiring-soon'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminDashboard() {
   await requireSuperAdmin()
   const supabase = createAdminClient()

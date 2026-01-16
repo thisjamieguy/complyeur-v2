@@ -5,6 +5,8 @@ import { ExportForm } from '@/components/exports'
 import { getEmployeesForExport } from '@/app/actions/exports'
 import { Skeleton } from '@/components/ui/skeleton'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Export Data | ComplyEUR',
   description: 'Export compliance data as CSV or PDF reports',

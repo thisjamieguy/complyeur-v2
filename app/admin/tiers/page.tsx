@@ -13,6 +13,8 @@ import {
 import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+export const dynamic = 'force-dynamic'
+
 function FeatureCell({ enabled }: { enabled: boolean | null }) {
   return enabled ? (
     <Check className="h-4 w-4 text-green-600 mx-auto" />

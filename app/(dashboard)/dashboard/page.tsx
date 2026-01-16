@@ -8,6 +8,8 @@ import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
 import { AlertBanner } from '@/components/alerts'
 import { getUnacknowledgedAlertsAction } from '../actions'
 
+export const dynamic = 'force-dynamic'
+
 /**
  * Server component that fetches and displays employee compliance data.
  */

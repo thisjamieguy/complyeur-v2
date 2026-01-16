@@ -38,10 +38,9 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* CookieYes Consent Management Script */}
-        {/* Replace YOUR_SITE_ID with your actual CookieYes site ID */}
         <Script
           id="cookieyes"
-          src="https://cdn-cookieyes.com/client_data/YOUR_SITE_ID/script.js"
+          src={`https://cdn-cookieyes.com/client_data/${process.env.NEXT_PUBLIC_COOKIEYES_SITE_ID || 'YOUR_SITE_ID'}/script.js`}
           strategy="beforeInteractive"
         />
       </head>

@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { CompaniesTable } from '@/components/admin/companies-table'
 import { CompanyFilters } from '@/components/admin/company-filters'
 
+export const dynamic = 'force-dynamic'
+
 interface SearchParams {
   search?: string
   tier?: string

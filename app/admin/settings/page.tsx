@@ -3,6 +3,8 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, Shield, Database, Key } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminSettingsPage() {
   const { user, profile } = await requireSuperAdmin()
 
