@@ -217,10 +217,25 @@ export async function getImportSession(sessionId: string): Promise<ImportSession
   try {
     const supabase = await createClient();
 
+    // SECURITY: Get user's company for defense-in-depth validation
+    // Even though RLS filters by company, we explicitly validate here
+    // to prevent any potential RLS bypass
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .single();
+
+    if (profileError || !profile?.company_id) {
+      console.error('Could not determine user company');
+      return null;
+    }
+
+    // Query with explicit company_id filter (defense-in-depth)
     const { data, error } = await supabase
       .from('import_sessions')
       .select('*')
       .eq('id', sessionId)
+      .eq('company_id', profile.company_id)  // SECURITY: Explicit company check
       .single();
 
     if (error) {
