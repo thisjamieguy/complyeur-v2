@@ -8,6 +8,8 @@ import { getCompanySettings, canViewSettings, canUpdateSettings } from '@/lib/ac
 import { getNotificationPreferencesAction } from '../actions'
 import type { NotificationPreferences } from '@/types/database-helpers'
 
+import { SecuritySettings } from '@/components/settings'
+
 export const metadata = {
   title: 'Settings | ComplyEUR',
   description: 'Configure your company settings for Schengen compliance tracking',
@@ -79,6 +81,9 @@ export default async function SettingsPage() {
 
       {/* Company-wide settings form with all sections */}
       <SettingsForm settings={settings} canEdit={canEdit} />
+
+      {/* Security Settings (Password, MFA) */}
+      <SecuritySettings />
 
       {/* Personal email preferences - separate section */}
       <div className="bg-white rounded-xl border shadow-sm p-6">
