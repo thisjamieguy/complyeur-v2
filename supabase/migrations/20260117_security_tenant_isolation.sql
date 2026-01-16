@@ -157,17 +157,31 @@ CREATE POLICY "Admins can view deleted employees from their company"
 -- but block all modifications
 DROP POLICY IF EXISTS "Anyone can view tiers" ON tiers;
 DROP POLICY IF EXISTS "Deny all modifications to tiers" ON tiers;
+DROP POLICY IF EXISTS "Deny inserts to tiers" ON tiers;
+DROP POLICY IF EXISTS "Deny updates to tiers" ON tiers;
+DROP POLICY IF EXISTS "Deny deletes to tiers" ON tiers;
 
 CREATE POLICY "Anyone can view tiers"
   ON tiers
   FOR SELECT
   USING (true);  -- Tier definitions are not sensitive
 
-CREATE POLICY "Deny all modifications to tiers"
+-- Separate policies for each modification type (FOR ALL doesn't work with deny patterns)
+CREATE POLICY "Deny inserts to tiers"
   ON tiers
-  FOR ALL
+  FOR INSERT
+  WITH CHECK (false);
+
+CREATE POLICY "Deny updates to tiers"
+  ON tiers
+  FOR UPDATE
   USING (false)
   WITH CHECK (false);
+
+CREATE POLICY "Deny deletes to tiers"
+  ON tiers
+  FOR DELETE
+  USING (false);
 
 -- COMPANY_ENTITLEMENTS table: Users can see their own company's entitlements
 -- but cannot modify (admin-only via service role)
@@ -184,7 +198,6 @@ CREATE POLICY "Users can view own company entitlements"
 CREATE POLICY "Deny modifications to entitlements"
   ON company_entitlements
   FOR INSERT
-  USING (false)
   WITH CHECK (false);
 
 CREATE POLICY "Deny updates to entitlements"
@@ -200,21 +213,41 @@ CREATE POLICY "Deny deletes to entitlements"
 
 -- COMPANY_NOTES table: Deny all access (internal admin only)
 DROP POLICY IF EXISTS "Deny all access to company notes" ON company_notes;
+DROP POLICY IF EXISTS "Deny select on company notes" ON company_notes;
+DROP POLICY IF EXISTS "Deny insert on company notes" ON company_notes;
+DROP POLICY IF EXISTS "Deny update on company notes" ON company_notes;
+DROP POLICY IF EXISTS "Deny delete on company notes" ON company_notes;
 
-CREATE POLICY "Deny all access to company notes"
-  ON company_notes
-  FOR ALL
-  USING (false)
-  WITH CHECK (false);
+CREATE POLICY "Deny select on company notes"
+  ON company_notes FOR SELECT USING (false);
+
+CREATE POLICY "Deny insert on company notes"
+  ON company_notes FOR INSERT WITH CHECK (false);
+
+CREATE POLICY "Deny update on company notes"
+  ON company_notes FOR UPDATE USING (false) WITH CHECK (false);
+
+CREATE POLICY "Deny delete on company notes"
+  ON company_notes FOR DELETE USING (false);
 
 -- ADMIN_AUDIT_LOG table: Deny all access (internal admin only)
 DROP POLICY IF EXISTS "Deny all access to admin audit log" ON admin_audit_log;
+DROP POLICY IF EXISTS "Deny select on admin audit log" ON admin_audit_log;
+DROP POLICY IF EXISTS "Deny insert on admin audit log" ON admin_audit_log;
+DROP POLICY IF EXISTS "Deny update on admin audit log" ON admin_audit_log;
+DROP POLICY IF EXISTS "Deny delete on admin audit log" ON admin_audit_log;
 
-CREATE POLICY "Deny all access to admin audit log"
-  ON admin_audit_log
-  FOR ALL
-  USING (false)
-  WITH CHECK (false);
+CREATE POLICY "Deny select on admin audit log"
+  ON admin_audit_log FOR SELECT USING (false);
+
+CREATE POLICY "Deny insert on admin audit log"
+  ON admin_audit_log FOR INSERT WITH CHECK (false);
+
+CREATE POLICY "Deny update on admin audit log"
+  ON admin_audit_log FOR UPDATE USING (false) WITH CHECK (false);
+
+CREATE POLICY "Deny delete on admin audit log"
+  ON admin_audit_log FOR DELETE USING (false);
 
 -- ============================================================
 -- FIX 4: Add helper function for consistent company_id lookup
