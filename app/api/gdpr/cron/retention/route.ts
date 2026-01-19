@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runRetentionPurge } from '@/lib/gdpr'
+import { withCronAuth } from '@/lib/security/cron-auth'
 
 /**
  * GDPR Data Retention Auto-Purge Cron Endpoint
@@ -9,9 +10,11 @@ import { runRetentionPurge } from '@/lib/gdpr'
  * 2. Hard deletes employees who were soft-deleted more than 30 days ago
  * 3. Removes orphaned employees with no trips and no recent activity
  *
- * Security:
- * - Requires CRON_SECRET header to match environment variable
- * - Designed to be called by Vercel Cron or similar scheduler
+ * Security (Fail-Closed):
+ * - REQUIRES valid CRON_SECRET in Authorization header (Bearer token)
+ * - Missing or invalid secret = 401 rejection (no bypass)
+ * - Production requires CRON_SECRET at boot time
+ * - SOC 2 Controls: CC6 (Logical Access), A1 (Availability)
  *
  * Vercel Cron Configuration (vercel.json):
  * {
@@ -23,25 +26,7 @@ import { runRetentionPurge } from '@/lib/gdpr'
  *
  * The schedule "0 3 * * *" runs at 3:00 AM UTC daily.
  */
-export async function GET(request: NextRequest) {
-  // Verify the request is from the cron job
-  const authHeader = request.headers.get('authorization')
-  const cronSecret = process.env.CRON_SECRET
-
-  // If CRON_SECRET is set, verify it
-  if (cronSecret) {
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      console.warn('[Retention Cron] Unauthorized access attempt')
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-  } else {
-    // In development, allow without secret but log warning
-    console.warn('[Retention Cron] Running without CRON_SECRET - not recommended for production')
-  }
-
+async function handleRetentionPurge(_request: NextRequest): Promise<NextResponse> {
   console.log('[Retention Cron] Starting data retention purge...')
 
   try {
@@ -82,9 +67,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Wrap with fail-closed CRON authentication
+export const GET = withCronAuth(handleRetentionPurge)
+
 /**
  * POST is also supported for manual triggers via API
+ * Same fail-closed authentication applies
  */
-export async function POST(request: NextRequest) {
-  return GET(request)
-}
+export const POST = withCronAuth(handleRetentionPurge)
