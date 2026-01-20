@@ -12,6 +12,7 @@
  */
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { logger } from '../../../lib/logger.mjs'
 
 interface AuthHookPayload {
   user_id?: string
@@ -39,11 +40,11 @@ serve(async (req) => {
   try {
     const payload: AuthHookPayload = await req.json()
 
-    console.log('Auth hook received:', {
+    logger.info('Auth hook received', {
       event_type: payload.event_type,
       email: payload.email,
       provider: payload.provider,
-      has_identities: payload.identities?.length ?? 0
+      has_identities: payload.identities?.length ?? 0,
     })
 
     // Check 1: Reject unverified Google emails
@@ -93,10 +94,10 @@ serve(async (req) => {
           const existingUser = data.users[0]
           const existingProvider = existingUser.app_metadata?.provider || 'email'
 
-          console.log('Blocking duplicate email:', {
+          logger.warn('Blocking duplicate email', {
             email: payload.email,
             existingProvider,
-            attemptedProvider: payload.provider
+            attemptedProvider: payload.provider,
           })
 
           return new Response(
@@ -119,7 +120,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Auth hook error:', error)
+    logger.error('Auth hook error', { error })
 
     // On error, fail closed (reject) for security
     return new Response(

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Shield, Smartphone, Key, Lock, History } from "lucide-react"
+import { Shield, Key, Lock, History } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -25,10 +25,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
 import { updatePasswordAction } from "@/lib/actions/security"
+import { MfaEnrollmentPanel } from "@/components/mfa/mfa-enrollment"
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
@@ -45,7 +44,6 @@ const passwordSchema = z.object({
 type PasswordFormValues = z.infer<typeof passwordSchema>
 
 export function SecuritySettings() {
-  const [isMfaEnabled, setIsMfaEnabled] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<PasswordFormValues>({
@@ -76,15 +74,6 @@ export function SecuritySettings() {
       toast.error("Failed to update password")
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleMfaToggle = async (checked: boolean) => {
-    setIsMfaEnabled(checked)
-    if (checked) {
-      toast.info("MFA setup wizard would start here")
-    } else {
-      toast.warning("MFA has been disabled")
     }
   }
 
@@ -165,40 +154,11 @@ export function SecuritySettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <FormLabel className="text-base">Authenticator App</FormLabel>
-                {isMfaEnabled && <Badge variant="default" className="bg-green-600">Active</Badge>}
-              </div>
-              <FormDescription>
-                Use an app like Google Authenticator or Authy to generate verification codes.
-              </FormDescription>
-            </div>
-            <Switch
-              checked={isMfaEnabled}
-              onCheckedChange={handleMfaToggle}
-            />
-          </div>
-          
-          {isMfaEnabled && (
-            <div className="rounded-lg border p-4 bg-slate-50">
-              <div className="flex items-start gap-4">
-                <div className="p-2 bg-white rounded-md border">
-                  <Smartphone className="h-6 w-6 text-slate-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-slate-900">Recovery Codes</h4>
-                  <p className="text-sm text-slate-500 mt-1">
-                    Generate backup codes in case you lose access to your authenticator device.
-                  </p>
-                  <Button variant="outline" size="sm" className="mt-3">
-                    View Codes
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+          <FormDescription>
+            Use an app like Google Authenticator or Authy to generate verification codes.
+          </FormDescription>
+          <Separator />
+          <MfaEnrollmentPanel />
         </CardContent>
       </Card>
 

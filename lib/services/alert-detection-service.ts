@@ -16,6 +16,7 @@ import {
 } from '@/lib/db/alerts'
 import { sendAlertEmail } from './email-service'
 import type { AlertType, AlertRiskLevel, Trip, CompanySettings, Alert } from '@/types/database-helpers'
+import { logger } from '@/lib/logger.mjs'
 
 interface DetectionContext {
   employeeId: string
@@ -142,11 +143,14 @@ async function sendAlertEmails(
   const recipients = await getNotificationRecipients(alertType)
 
   if (recipients.length === 0) {
-    console.log(`[AlertDetection] No recipients for ${alertType} alerts`)
+    logger.info('[AlertDetection] No recipients for alert type', { alertType })
     return
   }
 
-  console.log(`[AlertDetection] Sending ${alertType} emails to ${recipients.length} recipients`)
+  logger.info('[AlertDetection] Sending alert emails', {
+    alertType,
+    recipientCount: recipients.length,
+  })
 
   for (const recipient of recipients) {
     // Create notification log entry
@@ -211,7 +215,7 @@ export async function detectAndProcessAlerts(
     .eq('employee_id', context.employeeId)
 
   if (error) {
-    console.error('[AlertDetection] Failed to fetch trips:', error)
+    logger.error('[AlertDetection] Failed to fetch trips', { error })
     throw error
   }
 
@@ -225,7 +229,11 @@ export async function detectAndProcessAlerts(
   const { daysUsed, daysRemaining } = result
   const thresholdsCrossed = getThresholdsCrossed(daysUsed, settings)
 
-  console.log(`[AlertDetection] Employee ${context.employeeName}: ${daysUsed} days used, thresholds crossed: ${thresholdsCrossed.join(', ') || 'none'}`)
+  logger.info('[AlertDetection] Compliance thresholds evaluated', {
+    employeeName: context.employeeName,
+    daysUsed,
+    thresholdsCrossed,
+  })
 
   // Track what we create
   const alertsCreated: AlertType[] = []
@@ -260,16 +268,22 @@ export async function detectAndProcessAlerts(
 
     if (alert) {
       alertsCreated.push(alertType)
-      console.log(`[AlertDetection] Created ${alertType} alert for ${context.employeeName}`)
+      logger.info('[AlertDetection] Alert created', {
+        alertType,
+        employeeName: context.employeeName,
+      })
 
       // Send email if enabled (non-blocking)
       if (shouldSendEmail(alertType, settings)) {
         sendAlertEmails(alert, context, daysUsed, daysRemaining, settings).catch(err => {
-          console.error('[AlertDetection] Failed to send alert emails:', err)
+          logger.error('[AlertDetection] Failed to send alert emails', { error: err })
         })
       }
     } else {
-      console.log(`[AlertDetection] ${alertType} alert already exists for ${context.employeeName}`)
+      logger.info('[AlertDetection] Alert already exists', {
+        alertType,
+        employeeName: context.employeeName,
+      })
     }
   }
 

@@ -8,10 +8,12 @@ This document contains operational procedures for deploying, monitoring, and mai
 1. [How to Deploy](#how-to-deploy)
 2. [How to Rollback](#how-to-rollback)
 3. [How to Run Database Migrations](#how-to-run-database-migrations)
-4. [How to Check Logs](#how-to-check-logs)
-5. [How to Enable Maintenance Mode](#how-to-enable-maintenance-mode)
-6. [Emergency Contacts](#emergency-contacts)
-7. [First 24 Hours After Launch](#first-24-hours-after-launch)
+4. [Availability Targets (RTO/RPO)](#availability-targets-rtorpo)
+5. [Backup Restore Testing](#backup-restore-testing)
+6. [How to Check Logs](#how-to-check-logs)
+7. [How to Enable Maintenance Mode](#how-to-enable-maintenance-mode)
+8. [Emergency Contacts](#emergency-contacts)
+9. [First 24 Hours After Launch](#first-24-hours-after-launch)
 
 ---
 
@@ -85,6 +87,46 @@ The previous deployment will be instantly live. No rebuild required.
 -- Check RLS policies
 SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public';
 ```
+
+---
+
+## Availability Targets (RTO/RPO)
+
+### Recovery Time Objective (RTO)
+- **Target RTO:** 8 hours
+- **Definition:** Maximum acceptable time to restore production service after a full outage.
+
+### Recovery Point Objective (RPO)
+- **Target RPO:** 24 hours
+- **Definition:** Maximum acceptable data loss based on backup cadence.
+
+### Backup Assumptions
+- Supabase managed Postgres with daily automated backups.
+- Point-in-time recovery (PITR) is used when available for finer restore points.
+- Vercel is stateless and can redeploy quickly after code-level incidents.
+- DSAR exports are stored in Supabase Storage and treated as sensitive data.
+
+---
+
+## Backup Restore Testing
+
+### Procedure (Quarterly or After Major Data Changes)
+1. Identify restore point (timestamp or daily backup).
+2. Request restore via Supabase dashboard (PITR or backup restore).
+3. Restore into a staging or isolated project (avoid overwriting production).
+4. Validate critical data integrity:
+   - `companies`, `profiles`, `employees`, `trips`
+   - `audit_log`, `admin_audit_log`
+5. Record evidence (see below) and store in the compliance evidence folder.
+
+### Evidence Expectations
+- Date/time of test
+- Restore point or backup ID
+- Person executing the test
+- Target environment/project
+- Validation queries and results
+- Screenshots of Supabase restore confirmation
+- Sign-off from reviewer
 
 ---
 

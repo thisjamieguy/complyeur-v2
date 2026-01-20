@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DatabaseError, NotFoundError } from '@/lib/errors'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { Company, CompanyUpdate } from '@/types/database-helpers'
 
 /**
@@ -56,6 +57,8 @@ export async function updateCompany(
   updates: CompanyUpdate
 ): Promise<Company> {
   const supabase = await createClient()
+
+  await requireCompanyAccess(supabase, companyId)
 
   const { data: company, error } = await supabase
     .from('companies')

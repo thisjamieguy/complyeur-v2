@@ -50,6 +50,8 @@ export type CompanyEntitlements = Tables['company_entitlements']['Row']
 // Admin tables
 export type AdminAuditLog = Tables['admin_audit_log']['Row']
 export type CompanyNotes = Tables['company_notes']['Row']
+export type MfaBackupCode = Tables['mfa_backup_codes']['Row']
+export type MfaBackupSession = Tables['mfa_backup_sessions']['Row']
 
 // Compliance tables
 export type EmployeeComplianceSnapshot = Tables['employee_compliance_snapshots']['Row']
@@ -77,6 +79,8 @@ export type CompanyEntitlementsInput = Tables['company_entitlements']['Insert']
 // Admin insert types
 export type AdminAuditLogInput = Tables['admin_audit_log']['Insert']
 export type CompanyNotesInput = Tables['company_notes']['Insert']
+export type MfaBackupCodeInput = Tables['mfa_backup_codes']['Insert']
+export type MfaBackupSessionInput = Tables['mfa_backup_sessions']['Insert']
 
 // Compliance insert types
 export type EmployeeComplianceSnapshotInput = Tables['employee_compliance_snapshots']['Insert']
@@ -112,6 +116,8 @@ export type CompanyEntitlementsUpdate = Tables['company_entitlements']['Update']
 // Admin update types
 export type AdminAuditLogUpdate = Tables['admin_audit_log']['Update']
 export type CompanyNotesUpdate = Tables['company_notes']['Update']
+export type MfaBackupCodeUpdate = Tables['mfa_backup_codes']['Update']
+export type MfaBackupSessionUpdate = Tables['mfa_backup_sessions']['Update']
 
 // Compliance update types
 export type EmployeeComplianceSnapshotUpdate = Tables['employee_compliance_snapshots']['Update']

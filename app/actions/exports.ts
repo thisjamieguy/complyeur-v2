@@ -44,6 +44,9 @@ import { getCountryName } from '@/lib/constants/schengen-countries'
 import { calculateFutureJobCompliance } from '@/lib/services/forecast-service'
 import type { ForecastTrip } from '@/types/forecast'
 import { exportOptionsSchema } from '@/lib/validations/exports'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { requireExportPermission } from '@/lib/security/authorization'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 
 /**
  * Generates an export of compliance data.
@@ -66,32 +69,29 @@ export async function exportComplianceData(
   const validatedOptions = validationResult.data
   const supabase = await createClient()
 
-  // Get current user
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-  if (authError || !user) {
-    return { success: false, error: 'Unauthorized' }
+  const auth = await requireExportPermission(supabase, validatedOptions.format)
+  if (!auth.allowed) {
+    return { success: false, error: auth.error }
   }
 
-  // Get user's company
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id')
-    .eq('id', user.id)
-    .single()
+  const rateLimit = await checkServerActionRateLimit(auth.user.id, 'exportComplianceData')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error }
+  }
 
-  if (!profile?.company_id) {
+  if (!auth.profile.company_id) {
     return { success: false, error: 'No company associated with user' }
   }
+
+  const user = auth.user
+  const companyId = auth.profile.company_id
 
   // Handle future alerts export separately
   if (validatedOptions.scope === 'future-alerts') {
     return exportFutureAlerts(
       supabase,
       user,
-      profile.company_id,
+      companyId,
       validatedOptions
     )
   }
@@ -115,7 +115,7 @@ export async function exportComplianceData(
         )
       `
       )
-      .eq('company_id', profile.company_id)
+      .eq('company_id', companyId)
       .order('name')
 
     if (validatedOptions.scope === 'single' && validatedOptions.employeeId) {
@@ -223,7 +223,7 @@ export async function exportComplianceData(
     const { data: company } = await supabase
       .from('companies')
       .select('name')
-      .eq('id', profile.company_id)
+      .eq('id', companyId)
       .single()
 
     // Generate export
@@ -241,7 +241,7 @@ export async function exportComplianceData(
         documentId,
         generatedAt: new Date().toISOString(),
         generatedBy: user.email || 'Unknown',
-        companyId: profile.company_id,
+        companyId: companyId,
         companyName: company?.name || 'Company',
         reportType: validatedOptions.scope === 'single' ? 'individual' : 'summary',
         dateRange: validatedOptions.dateRange,
@@ -301,7 +301,7 @@ export async function exportComplianceData(
     }
 
     // Log the export
-    await logExport(supabase, user.id, profile.company_id, validatedOptions.format, {
+    await logExport(supabase, user.id, companyId, validatedOptions.format, {
       reportType:
         validatedOptions.scope === 'single'
           ? 'individual_employee'
@@ -346,6 +346,8 @@ async function logExport(
   }
 ): Promise<void> {
   try {
+    await requireCompanyAccess(supabase, companyId)
+
     // Try to insert into audit_log if it exists
     await supabase.from('audit_log').insert({
       company_id: companyId,
@@ -373,27 +375,19 @@ export async function getEmployeesForExport(): Promise<
 > {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) {
+  const auth = await requireExportPermission(supabase, 'csv')
+  if (!auth.allowed) {
     return []
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.company_id) {
+  if (!auth.profile.company_id) {
     return []
   }
 
   const { data: employees } = await supabase
     .from('employees')
     .select('id, name')
-    .eq('company_id', profile.company_id)
+    .eq('company_id', auth.profile.company_id)
     .order('name')
 
   return employees || []

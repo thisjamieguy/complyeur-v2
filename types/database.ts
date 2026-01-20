@@ -78,6 +78,70 @@ export type Database = {
           },
         ]
       }
+      mfa_backup_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mfa_backup_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mfa_backup_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          session_hash: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          session_hash: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          session_hash?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mfa_backup_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           acknowledged: boolean | null
@@ -900,6 +964,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_superadmin: boolean | null
+          last_activity_at: string | null
           last_name: string | null
           role: string | null
           terms_accepted_at: string | null
@@ -913,6 +978,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_superadmin?: boolean | null
+          last_activity_at?: string | null
           last_name?: string | null
           role?: string | null
           terms_accepted_at?: string | null
@@ -926,6 +992,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_superadmin?: boolean | null
+          last_activity_at?: string | null
           last_name?: string | null
           role?: string | null
           terms_accepted_at?: string | null

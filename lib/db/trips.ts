@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { AuthError, DatabaseError, NotFoundError, ValidationError } from '@/lib/errors'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { Trip, TripCreateInput, TripUpdate, BulkTripInput } from '@/types/database-helpers'
 
 interface AuthContext {
@@ -14,25 +15,15 @@ interface AuthContext {
 async function getAuthenticatedUserCompany(
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<AuthContext> {
-  // Explicit auth check
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
+  try {
+    const { userId, companyId } = await requireCompanyAccess(supabase)
+    return { userId, companyId }
+  } catch (error) {
+    if (error instanceof AuthError || error instanceof DatabaseError) {
+      throw error
+    }
     throw new AuthError('Unauthorized')
   }
-
-  // Get user's company
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('company_id')
-    .eq('id', user.id)
-    .single()
-
-  if (profileError || !profile?.company_id) {
-    throw new DatabaseError('User has no associated company')
-  }
-
-  return { userId: user.id, companyId: profile.company_id }
 }
 
 /**

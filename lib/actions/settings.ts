@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { settingsSchema } from '@/lib/validations/settings'
 import type { CompanySettings, UpdateSettingsInput } from '@/lib/types/settings'
 import { hasPermission, PERMISSIONS } from '@/lib/permissions'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 
 interface ActionResult<T = void> {
   success: boolean
@@ -104,6 +105,8 @@ export async function updateCompanySettings(
   if (!profile?.company_id) {
     return { success: false, error: 'Company not found' }
   }
+
+  await requireCompanyAccess(supabase, profile.company_id)
 
   // Check permission
   if (!hasPermission(profile.role, PERMISSIONS.SETTINGS_UPDATE)) {

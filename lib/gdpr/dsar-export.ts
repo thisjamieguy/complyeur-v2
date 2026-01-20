@@ -17,6 +17,8 @@
 import JSZip from 'jszip'
 import { format, parseISO, subDays } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
+import { requireAdminAccess } from '@/lib/security/authorization'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import { logGdprAction, type DsarExportDetails } from './audit'
 import {
   calculateCompliance,
@@ -242,40 +244,21 @@ export async function generateDsarExport(
   const supabase = await createClient()
 
   try {
-    // Get current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
+    const auth = await requireAdminAccess(supabase)
+    if (!auth.allowed) {
       return {
         success: false,
-        error: 'Unauthorized - you must be logged in',
+        error: auth.error,
         code: 'UNAUTHORIZED',
       }
     }
 
-    // Get user's profile and company
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('company_id, role')
-      .eq('id', user.id)
-      .single()
+    const { user, profile } = auth
 
-    if (profileError || !profile) {
+    if (!profile?.company_id) {
       return {
         success: false,
-        error: 'Could not find your profile',
-        code: 'DATABASE_ERROR',
-      }
-    }
-
-    // Check admin permission (only admins can generate DSAR exports)
-    if (profile.role !== 'admin') {
-      return {
-        success: false,
-        error: 'Only administrators can generate DSAR exports',
+        error: 'No company associated with user',
         code: 'UNAUTHORIZED',
       }
     }
@@ -294,6 +277,17 @@ export async function generateDsarExport(
         code: 'NOT_FOUND',
       }
     }
+
+    const employeeCompanyId = (employee as Record<string, unknown>).company_id as string | null
+    if (!employeeCompanyId) {
+      return {
+        success: false,
+        error: 'Employee not found or access denied',
+        code: 'NOT_FOUND',
+      }
+    }
+
+    await requireCompanyAccess(supabase, employeeCompanyId)
 
     // Get company info
     const { data: company, error: companyError } = await supabase

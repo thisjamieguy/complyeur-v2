@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import type { Json } from '@/types/database';
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import {
   ImportFormat,
   ImportSession,
@@ -143,15 +146,29 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
       return { success: false, error: 'Not authenticated' };
     }
 
+    const rateLimit = await checkServerActionRateLimit(user.id, 'createImportSession')
+    if (!rateLimit.allowed) {
+      return { success: false, error: rateLimit.error };
+    }
+
     // Get user's company
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('company_id')
+      .select('company_id, role')
       .eq('id', user.id)
       .single();
 
     if (profileError || !profile?.company_id) {
       return { success: false, error: 'User profile not found' };
+    }
+
+    await requireCompanyAccess(supabase, profile.company_id)
+
+    if (profile.role === 'admin') {
+      const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
+      if (!mfa.ok) {
+        return { success: false, error: 'MFA required. Complete setup or verification to continue.' }
+      }
     }
 
     // Check entitlements - users must have bulk import enabled on their plan
@@ -348,6 +365,19 @@ export async function updateSessionStatus(
   try {
     const supabase = await createClient();
 
+    const { data: session, error: sessionError } = await supabase
+      .from('import_sessions')
+      .select('company_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError || !session?.company_id) {
+      console.error('Failed to load import session for update:', sessionError);
+      return false;
+    }
+
+    await requireCompanyAccess(supabase, session.company_id)
+
     const updateData: Record<string, unknown> = {
       status,
       ...additionalData,
@@ -389,6 +419,19 @@ export async function saveParsedData(
   try {
     const supabase = await createClient();
 
+    const { data: session, error: sessionError } = await supabase
+      .from('import_sessions')
+      .select('company_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError || !session?.company_id) {
+      console.error('Failed to load import session for save:', sessionError);
+      return false;
+    }
+
+    await requireCompanyAccess(supabase, session.company_id)
+
     const { error } = await supabase
       .from('import_sessions')
       .update({
@@ -425,6 +468,81 @@ export async function executeImport(
   duplicateOptions: DuplicateOptions = DEFAULT_DUPLICATE_OPTIONS
 ): Promise<ImportResult> {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return {
+        success: false,
+        employees_created: 0,
+        employees_updated: 0,
+        trips_created: 0,
+        trips_skipped: 0,
+        errors: [
+          {
+            row: 0,
+            column: '',
+            value: '',
+            message: 'Not authenticated',
+            severity: 'error',
+          },
+        ],
+        warnings: [],
+      }
+    }
+
+    const rateLimit = await checkServerActionRateLimit(user.id, 'executeImport')
+    if (!rateLimit.allowed) {
+      return {
+        success: false,
+        employees_created: 0,
+        employees_updated: 0,
+        trips_created: 0,
+        trips_skipped: 0,
+        errors: [
+          {
+            row: 0,
+            column: '',
+            value: '',
+            message: rateLimit.error ?? 'Rate limit exceeded',
+            severity: 'error',
+          },
+        ],
+        warnings: [],
+      }
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role === 'admin') {
+      const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
+      if (!mfa.ok) {
+        return {
+          success: false,
+          employees_created: 0,
+          employees_updated: 0,
+          trips_created: 0,
+          trips_skipped: 0,
+          errors: [
+            {
+              row: 0,
+              column: '',
+              value: '',
+              message: 'MFA required. Complete setup or verification to continue.',
+              severity: 'error',
+            },
+          ],
+          warnings: [],
+        }
+      }
+    }
+
     // Import the inserter dynamically to avoid circular dependencies
     const { insertValidRows } = await import('@/lib/import/inserter');
 
@@ -470,6 +588,19 @@ export async function executeImport(
 export async function deleteImportSession(sessionId: string): Promise<boolean> {
   try {
     const supabase = await createClient();
+
+    const { data: session, error: sessionError } = await supabase
+      .from('import_sessions')
+      .select('company_id')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError || !session?.company_id) {
+      console.error('Failed to load import session for delete:', sessionError);
+      return false;
+    }
+
+    await requireCompanyAccess(supabase, session.company_id)
 
     const { error } = await supabase.from('import_sessions').delete().eq('id', sessionId);
 
@@ -616,6 +747,8 @@ export async function saveColumnMapping(
       return null;
     }
 
+    await requireCompanyAccess(supabase, profile.company_id)
+
     // Insert the mapping
     const { data, error } = await supabase
       .from('column_mappings')
@@ -653,7 +786,19 @@ export async function deleteColumnMapping(mappingId: string): Promise<boolean> {
   try {
     const supabase = await createClient();
 
-    // RLS will ensure user can only delete their company's mappings
+    const { data: mapping, error: fetchError } = await supabase
+      .from('column_mappings')
+      .select('company_id')
+      .eq('id', mappingId)
+      .single();
+
+    if (fetchError || !mapping?.company_id) {
+      console.error('Failed to load column mapping for delete:', fetchError);
+      return false;
+    }
+
+    await requireCompanyAccess(supabase, mapping.company_id)
+
     const { error } = await supabase
       .from('column_mappings')
       .delete()
@@ -686,7 +831,7 @@ export async function incrementMappingUsage(mappingId: string): Promise<boolean>
     // Get current times_used, then increment
     const { data: current, error: fetchError } = await supabase
       .from('column_mappings')
-      .select('times_used')
+      .select('times_used, company_id')
       .eq('id', mappingId)
       .single();
 
@@ -694,6 +839,13 @@ export async function incrementMappingUsage(mappingId: string): Promise<boolean>
       console.error('Failed to fetch mapping:', fetchError);
       return false;
     }
+
+    if (!current?.company_id) {
+      console.error('Mapping has no company_id');
+      return false;
+    }
+
+    await requireCompanyAccess(supabase, current.company_id)
 
     const currentTimesUsed = current?.times_used ?? 0;
 

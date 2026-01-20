@@ -26,6 +26,7 @@ import {
   type HardDeleteDetails,
 } from './audit'
 import { RECOVERY_PERIOD_DAYS } from './constants'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 
 // Re-export for convenience
 export { RECOVERY_PERIOD_DAYS }
@@ -122,6 +123,17 @@ export async function softDeleteEmployee(
         code: 'NOT_FOUND',
       }
     }
+
+    const employeeCompanyId = (employee as Record<string, unknown>).company_id as string | null
+    if (!employeeCompanyId) {
+      return {
+        success: false,
+        error: 'Employee not found or access denied',
+        code: 'NOT_FOUND',
+      }
+    }
+
+    await requireCompanyAccess(supabase, employeeCompanyId)
 
     // Check if already deleted
     if ((employee as Record<string, unknown>).deleted_at) {
@@ -281,6 +293,17 @@ export async function restoreEmployee(
       }
     }
 
+    const employeeCompanyId = (employee as Record<string, unknown>).company_id as string | null
+    if (!employeeCompanyId) {
+      return {
+        success: false,
+        error: 'Employee not found or access denied',
+        code: 'NOT_FOUND',
+      }
+    }
+
+    await requireCompanyAccess(supabase, employeeCompanyId)
+
     const deletedAt = (employee as Record<string, unknown>).deleted_at as string | null
 
     // Check if actually deleted
@@ -427,11 +450,15 @@ export async function hardDeleteEmployee(
     // Get employee info for audit log
     const { data: employee, error: fetchError } = await supabase
       .from('employees')
-      .select('id, name')
+      .select('id, name, company_id')
       .eq('id', employeeId)
       .single()
 
     if (fetchError || !employee) {
+      return { success: false, tripsDeleted: 0, error: 'Employee not found' }
+    }
+
+    if (employee.company_id !== companyId) {
       return { success: false, tripsDeleted: 0, error: 'Employee not found' }
     }
 

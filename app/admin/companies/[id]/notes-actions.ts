@@ -2,8 +2,10 @@
 
 import { requireSuperAdmin } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { logAdminAction, ADMIN_ACTIONS } from '@/lib/admin/audit'
 import { revalidatePath } from 'next/cache'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import {
   companyIdSchema,
   addNoteSchema,
@@ -12,6 +14,11 @@ import {
   type AddNoteData,
   type UpdateNoteData,
 } from '@/lib/validations/admin'
+
+async function requireAdminCompanyAccess(companyId: string): Promise<void> {
+  const supabase = await createClient()
+  await requireCompanyAccess(supabase, companyId, { allowSuperadmin: true })
+}
 
 export async function addNote(companyId: string, data: AddNoteData) {
   // Validate company ID
@@ -28,6 +35,7 @@ export async function addNote(companyId: string, data: AddNoteData) {
   }
 
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
   const { data: note, error } = await supabase
@@ -87,6 +95,7 @@ export async function updateNote(
   }
 
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
   const { error } = await supabase
@@ -127,6 +136,7 @@ export async function deleteNote(noteId: string, companyId: string) {
   }
 
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
   const { error } = await supabase
@@ -168,6 +178,7 @@ export async function togglePinNote(
   }
 
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
   const { error } = await supabase

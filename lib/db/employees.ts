@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DatabaseError, NotFoundError } from '@/lib/errors'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { Employee, EmployeeCreateInput, EmployeeUpdate } from '@/types/database-helpers'
 
 /**
@@ -50,24 +51,11 @@ export async function getEmployeeById(id: string): Promise<Employee | null> {
 export async function createEmployee(employee: EmployeeCreateInput): Promise<Employee> {
   const supabase = await createClient()
 
-  // Get current user's company_id from their profile
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('company_id')
-    .single()
-
-  if (profileError) {
-    console.error('Error fetching user profile:', profileError)
-    throw new DatabaseError('Failed to get user profile')
-  }
-
-  if (!profile?.company_id) {
-    throw new DatabaseError('User has no associated company')
-  }
+  const { companyId } = await requireCompanyAccess(supabase)
 
   const { data, error } = await supabase
     .from('employees')
-    .insert({ ...employee, company_id: profile.company_id })
+    .insert({ ...employee, company_id: companyId })
     .select()
     .single()
 
@@ -84,6 +72,18 @@ export async function createEmployee(employee: EmployeeCreateInput): Promise<Emp
  */
 export async function updateEmployee(id: string, updates: EmployeeUpdate): Promise<Employee> {
   const supabase = await createClient()
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('employees')
+    .select('company_id')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !existing) {
+    throw new NotFoundError('Employee not found')
+  }
+
+  await requireCompanyAccess(supabase, existing.company_id)
 
   const { data, error } = await supabase
     .from('employees')
@@ -109,6 +109,18 @@ export async function updateEmployee(id: string, updates: EmployeeUpdate): Promi
  */
 export async function deleteEmployee(id: string): Promise<void> {
   const supabase = await createClient()
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('employees')
+    .select('company_id')
+    .eq('id', id)
+    .single()
+
+  if (fetchError || !existing) {
+    throw new NotFoundError('Employee not found')
+  }
+
+  await requireCompanyAccess(supabase, existing.company_id)
 
   const { error } = await supabase
     .from('employees')

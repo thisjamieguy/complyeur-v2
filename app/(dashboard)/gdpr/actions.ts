@@ -14,6 +14,7 @@ import {
 } from '@/lib/gdpr'
 import { createClient } from '@/lib/supabase/server'
 import { employeeIdSchema } from '@/lib/validations/gdpr'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 /**
  * Gets all employees for the GDPR tools page.
@@ -88,6 +89,23 @@ export async function requestDsarExport(employeeId: string): Promise<{
   fileName?: string
   error?: string
 }> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return {
+      success: false,
+      error: 'Unauthorized',
+    }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'requestDsarExport')
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      error: rateLimit.error,
+    }
+  }
+
   // Validate employee ID format
   const idResult = employeeIdSchema.safeParse(employeeId)
   if (!idResult.success) {
@@ -110,7 +128,6 @@ export async function requestDsarExport(employeeId: string): Promise<{
 
   // For large exports, try to use Supabase storage
   if (zipSize > MAX_BASE64_EXPORT_SIZE) {
-    const supabase = await createClient()
     const exportId = crypto.randomUUID()
     const storagePath = `dsar-exports/${exportId}/${result.fileName}`
 
