@@ -47,13 +47,25 @@ export async function login(formData: FormData) {
   // Normalize email for consistency
   const normalizedEmail = normalizeEmailForAuth(email)
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: normalizedEmail,
     password,
   })
 
   if (error) {
     throw new AuthError(getAuthErrorMessage(error))
+  }
+
+  if (data.user) {
+    const { error: activityError } = await supabase
+      .from('profiles')
+      .update({ last_activity_at: new Date().toISOString() })
+      .eq('id', data.user.id)
+
+    if (activityError) {
+      await supabase.auth.signOut()
+      throw new DatabaseError(getDatabaseErrorMessage(activityError))
+    }
   }
   revalidatePath('/', 'layout')
   redirect('/dashboard')
@@ -123,6 +135,16 @@ export async function signup(formData: FormData) {
 
   if (!companyId) {
     throw new DatabaseError('Failed to create company. Please try again.')
+  }
+
+  const { error: activityError } = await supabase
+    .from('profiles')
+    .update({ last_activity_at: new Date().toISOString() })
+    .eq('id', authData.user.id)
+
+  if (activityError) {
+    await supabase.auth.signOut()
+    throw new DatabaseError(getDatabaseErrorMessage(activityError))
   }
 
   revalidatePath('/', 'layout')

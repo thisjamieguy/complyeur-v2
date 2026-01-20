@@ -52,7 +52,24 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat\\(import\\): add column mapping, duplicate handling, and import polish\n\nPhase 3 - Column Mapping:\n- Add ColumnMappingUI component for manual column mapping\n- Add multi-language country code support \\(EN, FR, DE, ES\\)\n- Add header alias detection for common column names\n- Add saved column mappings feature with settings page\n- Add column_mappings table migration\n\nPhase 4 - Import Polish:\n- Add partial import with clear \"Import X Valid Rows\" UI\n- Add error CSV download with Row/Field/Value/Message columns\n- Add import history page at /settings/import-history\n- Add duplicate handling: skip or update for employees \\(by email\\)\n- Add trip duplicate detection \\(by employee + dates\\)\n- Add progress indicator for large imports \\(>50 rows\\)\n\nAlso includes:\n- Sample test data \\(45 employees, 102 trips\\)\n- Unit tests for country codes, header aliases, mapping\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git push)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: add force-dynamic to pages and improve URL detection\n\n- Add `export const dynamic = ''force-dynamic''` to all dashboard and admin pages to prevent stale data caching\n- Refactor getBaseUrl\\(\\) to prioritize VERCEL_URL in production environments\n- Add isLocalHost\\(\\) helper to prevent localhost redirects in production\n- Update .gitignore to exclude db diagnostics and local Claude settings\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: add force-dynamic to pages and improve URL detection\n\n- Add force-dynamic to all dashboard and admin pages\n- Refactor getBaseUrl\\(\\) to prioritize VERCEL_URL in production\n- Add isLocalHost\\(\\) helper to prevent localhost redirects\n- Update .gitignore to exclude db diagnostics and local settings\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: add password change functionality to security settings\n\n- Add security actions for password update with validation\n- Create security settings component with password change form\n- Add separator UI component\n- Update settings page and component exports\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\ndocs: add architecture, environment, and security documentation\n\n- Add architecture docs \\(environments, migrations, production safety\\)\n- Add UI heuristic review documentation\n- Add security audit gap analysis\n- Add e2e performance test configuration\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nsecurity: add tenant isolation and defense-in-depth checks\n\n- Add explicit company_id validation to import session queries\n- Update initial schema migration\n- Add tenant isolation security migration\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: add tenant isolation and defense-in-depth checks\n\n- Add explicit company_id validation to import session queries\n- Update initial schema migration\n- Add tenant isolation security migration\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git reset:*)",
+      "Bash(git commit:*)",
+      "Bash(CRON_SECRET=test_secret timeout 10 npm run dev)",
+      "Bash(CRON_SECRET=test_secret npm run build)",
+      "Bash(npm run lint -- --quiet lib/rate-limit.ts)",
+      "Bash(chmod:*)",
+      "Bash(vercel --version:*)",
+      "Bash(npm run build:*)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel login)",
+      "Bash(vercel:*)"
     ]
   }
 }

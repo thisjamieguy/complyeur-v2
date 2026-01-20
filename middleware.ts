@@ -7,9 +7,11 @@ export async function middleware(request: NextRequest) {
 
   // 1. Rate Limiting - applies to API routes and auth routes
   // Uses Upstash Redis for distributed rate limiting in serverless environments
-  if (pathname.startsWith('/api/') || pathname.startsWith('/login') ||
+  // Health endpoint is excluded for monitoring availability
+  const isHealthEndpoint = pathname === '/api/health'
+  if (!isHealthEndpoint && (pathname.startsWith('/api/') || pathname.startsWith('/login') ||
       pathname.startsWith('/signup') || pathname.startsWith('/forgot-password') ||
-      pathname.startsWith('/reset-password') || pathname.startsWith('/auth/')) {
+      pathname.startsWith('/reset-password') || pathname.startsWith('/auth/'))) {
     const rateLimitResponse = await checkRateLimit(request)
     if (rateLimitResponse) return rateLimitResponse
   }
@@ -26,14 +28,22 @@ export async function middleware(request: NextRequest) {
                            pathname.startsWith('/test-endpoints') ||
                            pathname.startsWith('/admin')
 
+  const redirectWithCookies = (url: URL) => {
+    const response = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      response.cookies.set(cookie)
+    })
+    return response
+  }
+
   // If user is authenticated and trying to access auth routes, redirect to dashboard
   if (user && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return redirectWithCookies(new URL('/dashboard', request.url))
   }
 
   // If user is not authenticated and trying to access protected routes, redirect to login
   if (!user && isProtectedRoute) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return redirectWithCookies(new URL('/login', request.url))
   }
 
   // Continue with the response

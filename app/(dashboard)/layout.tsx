@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AppShell } from '@/components/layout/app-shell'
 import { OfflineBanner } from '@/components/ui/offline-banner'
+import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,6 +24,13 @@ export default async function DashboardLayout({
     .select('full_name, role')
     .eq('id', user.id)
     .single()
+
+  if (profile?.role === 'admin') {
+    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
+    if (!mfa.ok) {
+      redirect('/mfa')
+    }
+  }
 
   return (
     <AppShell

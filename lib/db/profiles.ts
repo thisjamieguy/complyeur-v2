@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DatabaseError, NotFoundError } from '@/lib/errors'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { Profile, ProfileWithCompany, ProfileUpdate } from '@/types/database-helpers'
 
 /**
@@ -63,6 +64,18 @@ export async function updateProfile(
   updates: ProfileUpdate
 ): Promise<Profile> {
   const supabase = await createClient()
+
+  const { data: targetProfile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('company_id')
+    .eq('id', userId)
+    .single()
+
+  if (fetchError || !targetProfile?.company_id) {
+    throw new NotFoundError('Profile not found')
+  }
+
+  await requireCompanyAccess(supabase, targetProfile.company_id)
 
   const { data: profile, error } = await supabase
     .from('profiles')

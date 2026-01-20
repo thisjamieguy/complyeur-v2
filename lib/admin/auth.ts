@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 
 interface AdminProfile {
   is_superadmin: boolean | null
@@ -35,6 +36,11 @@ export async function requireSuperAdmin() {
     redirect('/dashboard')
   }
 
+  const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
+  if (!mfa.ok) {
+    redirect('/mfa')
+  }
+
   return { user, profile }
 }
 
@@ -51,13 +57,16 @@ export async function isSuperAdmin(): Promise<boolean> {
 
     if (!user) return false
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('is_superadmin')
-      .eq('id', user.id)
-      .single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_superadmin')
+    .eq('id', user.id)
+    .single()
 
-    return profile?.is_superadmin === true
+    if (profile?.is_superadmin !== true) return false
+
+    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
+    return mfa.ok
   } catch {
     return false
   }
@@ -74,13 +83,16 @@ export async function getAdminUser() {
 
     if (!user) return null
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id, full_name, is_superadmin')
-      .eq('id', user.id)
-      .single()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, full_name, is_superadmin')
+    .eq('id', user.id)
+    .single()
 
     if (!profile?.is_superadmin) return null
+
+    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
+    if (!mfa.ok) return null
 
     return {
       id: user.id,

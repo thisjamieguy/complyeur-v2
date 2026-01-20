@@ -2,8 +2,10 @@
 
 import { requireSuperAdmin } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { logAdminAction, ADMIN_ACTIONS } from '@/lib/admin/audit'
 import { revalidatePath } from 'next/cache'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import {
   companyIdSchema,
   updateEntitlementsSchema,
@@ -11,6 +13,11 @@ import {
   suspendCompanySchema,
   type UpdateEntitlementsData,
 } from '@/lib/validations/admin'
+
+async function requireAdminCompanyAccess(companyId: string): Promise<void> {
+  const supabase = await createClient()
+  await requireCompanyAccess(supabase, companyId, { allowSuperadmin: true })
+}
 
 export async function updateEntitlements(
   companyId: string,
@@ -30,6 +37,7 @@ export async function updateEntitlements(
   }
 
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
   // Get current state for audit log
@@ -71,6 +79,7 @@ export async function updateEntitlements(
 
 export async function changeTier(companyId: string, tierSlug: string) {
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyId)
   const supabase = createAdminClient()
 
   // Get current state
@@ -127,6 +136,7 @@ export async function extendTrial(
   }
 
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
   // Get current trial end date
@@ -180,6 +190,7 @@ export async function extendTrial(
 
 export async function convertTrial(companyId: string) {
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyId)
   const supabase = createAdminClient()
 
   const { error } = await supabase
@@ -221,6 +232,7 @@ export async function suspendCompany(companyId: string, reason: string) {
   }
 
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
   const { error } = await supabase
@@ -251,6 +263,7 @@ export async function suspendCompany(companyId: string, reason: string) {
 
 export async function restoreCompany(companyId: string) {
   const { user } = await requireSuperAdmin()
+  await requireAdminCompanyAccess(companyId)
   const supabase = createAdminClient()
 
   const { error } = await supabase

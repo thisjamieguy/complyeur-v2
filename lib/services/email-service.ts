@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import type { AlertType } from '@/types/database-helpers'
+import { logger } from '@/lib/logger.mjs'
 
 // Initialize Resend client lazily to avoid build errors when API key is not set
 let resendClient: Resend | null = null
@@ -269,16 +270,20 @@ function calculateNextAvailableDate(daysUsed: number): string | null {
 export async function sendAlertEmail(data: AlertEmailData): Promise<EmailResult> {
   // Skip if no API key (development/testing)
   if (!process.env.RESEND_API_KEY) {
-    console.log('[Email] Skipping email send - no RESEND_API_KEY configured')
-    console.log('[Email] Would send to:', data.recipientEmail)
-    console.log('[Email] Subject:', getAlertSubject(data.alertType, data.employeeName))
+    logger.info('[Email] Skipping email send - no RESEND_API_KEY configured', {
+      recipientEmail: data.recipientEmail,
+      alertType: data.alertType,
+      employeeName: data.employeeName,
+    })
     return { success: true, messageId: 'dev-mode-skip' }
   }
 
   try {
     const resend = getResendClient()
     if (!resend) {
-      console.log('[Email] Skipping - Resend client not available')
+      logger.warn('[Email] Skipping - Resend client not available', {
+        alertType: data.alertType,
+      })
       return { success: true, messageId: 'client-unavailable' }
     }
 
@@ -295,15 +300,15 @@ export async function sendAlertEmail(data: AlertEmailData): Promise<EmailResult>
     })
 
     if (error) {
-      console.error('[Email] Resend error:', error)
+      logger.error('[Email] Resend error', { error })
       return { success: false, error: error.message }
     }
 
-    console.log('[Email] Sent successfully:', result?.id)
+    logger.info('[Email] Sent successfully', { messageId: result?.id })
     return { success: true, messageId: result?.id }
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-    console.error('[Email] Failed to send:', errorMessage)
+    logger.error('[Email] Failed to send', { error: err })
     return { success: false, error: errorMessage }
   }
 }
@@ -318,11 +323,14 @@ export async function sendAlertEmailsAsync(
   Promise.all(
     emails.map(email =>
       sendAlertEmail(email).catch(err => {
-        console.error('[Email] Failed to send to', email.recipientEmail, err)
+        logger.error('[Email] Failed to send to recipient', {
+          recipientEmail: email.recipientEmail,
+          error: err,
+        })
       })
     )
   ).catch(err => {
-    console.error('[Email] Batch send failed:', err)
+    logger.error('[Email] Batch send failed', { error: err })
   })
 }
 

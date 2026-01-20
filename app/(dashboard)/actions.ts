@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { createClient } from '@/lib/supabase/server'
 import {
   createEmployee,
   updateEmployee,
@@ -26,6 +27,8 @@ import {
   updateNotificationPreferences,
 } from '@/lib/db/alerts'
 import type { TripCreateInput, TripUpdate, CompanySettingsUpdate, NotificationPreferencesUpdate, AlertWithEmployee, CompanySettings, NotificationPreferences, BulkTripInput } from '@/types/database-helpers'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 
 /**
  * Helper to run alert detection after trip changes
@@ -166,6 +169,33 @@ interface BulkTripResult {
 export async function bulkAddTripsAction(
   trips: BulkTripInput[]
 ): Promise<BulkTripResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { success: false, created: 0, errors: [{ index: 0, message: 'Not authenticated' }] }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'bulkAddTripsAction')
+  if (!rateLimit.allowed) {
+    return { success: false, created: 0, errors: [{ index: 0, message: rateLimit.error ?? 'Rate limit exceeded' }] }
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role === 'admin') {
+    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
+    if (!mfa.ok) {
+      return { success: false, created: 0, errors: [{ index: 0, message: 'MFA required. Complete setup or verification to continue.' }] }
+    }
+  }
+
   if (!trips || trips.length === 0) {
     return { success: false, created: 0, errors: [{ index: 0, message: 'No trips provided' }] }
   }

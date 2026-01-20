@@ -18,6 +18,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { logGdprAction, type AnonymizeDetails } from './audit'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 
 /**
  * Result type for anonymization
@@ -127,6 +128,17 @@ export async function anonymizeEmployee(
         code: 'NOT_FOUND',
       }
     }
+
+    const employeeCompanyId = (employee as Record<string, unknown>).company_id as string | null
+    if (!employeeCompanyId) {
+      return {
+        success: false,
+        error: 'Employee not found or access denied',
+        code: 'NOT_FOUND',
+      }
+    }
+
+    await requireCompanyAccess(supabase, employeeCompanyId)
 
     // Check if already anonymized
     if ((employee as Record<string, unknown>).anonymized_at) {

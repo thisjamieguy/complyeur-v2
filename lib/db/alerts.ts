@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { AuthError, DatabaseError, NotFoundError } from '@/lib/errors'
+import { DatabaseError, NotFoundError } from '@/lib/errors'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type {
   Alert,
   AlertInsert,
@@ -26,23 +27,8 @@ interface AuthContext {
 async function getAuthenticatedUserCompany(
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<AuthContext> {
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    throw new AuthError('Unauthorized')
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('company_id')
-    .eq('id', user.id)
-    .single()
-
-  if (profileError || !profile?.company_id) {
-    throw new DatabaseError('User has no associated company')
-  }
-
-  return { userId: user.id, companyId: profile.company_id }
+  const { userId, companyId } = await requireCompanyAccess(supabase)
+  return { userId, companyId }
 }
 
 // ============================================================================
@@ -304,7 +290,18 @@ export async function resolveAlertsForEmployee(employeeId: string): Promise<numb
  */
 export async function markAlertEmailSent(alertId: string): Promise<void> {
   const supabase = await createClient()
-  await getAuthenticatedUserCompany(supabase)
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('alerts')
+    .select('company_id')
+    .eq('id', alertId)
+    .single()
+
+  if (fetchError || !existing) {
+    throw new NotFoundError('Alert not found')
+  }
+
+  await requireCompanyAccess(supabase, existing.company_id)
 
   const { error } = await supabase
     .from('alerts')
@@ -432,7 +429,18 @@ export async function updateNotificationLogStatus(
   details?: { resend_message_id?: string; error_message?: string }
 ): Promise<void> {
   const supabase = await createClient()
-  await getAuthenticatedUserCompany(supabase)
+
+  const { data: existing, error: fetchError } = await supabase
+    .from('notification_log')
+    .select('company_id')
+    .eq('id', logId)
+    .single()
+
+  if (fetchError || !existing) {
+    throw new NotFoundError('Notification log not found')
+  }
+
+  await requireCompanyAccess(supabase, existing.company_id)
 
   const { error } = await supabase
     .from('notification_log')

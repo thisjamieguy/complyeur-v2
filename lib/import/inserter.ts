@@ -13,6 +13,7 @@ import {
   DEFAULT_DUPLICATE_OPTIONS,
 } from '@/types/import';
 import { toCountryCode } from './country-codes';
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 
 // ============================================================
 // INSERT VALID ROWS
@@ -45,6 +46,54 @@ export async function insertValidRows(
           column: '',
           value: '',
           message: 'Failed to get user profile',
+          severity: 'error',
+        },
+      ],
+      warnings: [],
+    };
+  }
+
+  const { data: session, error: sessionError } = await supabase
+    .from('import_sessions')
+    .select('company_id')
+    .eq('id', sessionId)
+    .single();
+
+  if (sessionError || !session?.company_id) {
+    return {
+      success: false,
+      employees_created: 0,
+      employees_updated: 0,
+      trips_created: 0,
+      trips_skipped: 0,
+      errors: [
+        {
+          row: 0,
+          column: '',
+          value: '',
+          message: 'Import session not found',
+          severity: 'error',
+        },
+      ],
+      warnings: [],
+    };
+  }
+
+  try {
+    await requireCompanyAccess(supabase, session.company_id)
+  } catch (error) {
+    return {
+      success: false,
+      employees_created: 0,
+      employees_updated: 0,
+      trips_created: 0,
+      trips_skipped: 0,
+      errors: [
+        {
+          row: 0,
+          column: '',
+          value: '',
+          message: 'Access denied for import session',
           severity: 'error',
         },
       ],

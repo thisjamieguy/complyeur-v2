@@ -204,6 +204,19 @@ export async function GET(request: Request) {
     }
   }
 
+  const { error: activityError } = await supabase
+    .from('profiles')
+    .update({ last_activity_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (activityError) {
+    console.error('Failed to update last activity after auth callback:', activityError)
+    await supabase.auth.signOut()
+    return NextResponse.redirect(
+      `${origin}/login?error=${encodeURIComponent('Failed to complete sign-in. Please try again.')}`
+    )
+  }
+
   // Success - redirect to intended destination
   return NextResponse.redirect(`${origin}${next}`)
 }
