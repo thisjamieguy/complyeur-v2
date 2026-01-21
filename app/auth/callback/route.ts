@@ -12,28 +12,7 @@ import { createClient } from '@/lib/supabase/server'
  * For OAuth users, this also provisions their company/profile on first sign-in.
  */
 
-/**
- * Validates the redirect URL to prevent open redirect attacks.
- * Only allows relative paths starting with /
- */
-function validateRedirectUrl(next: string | null): string {
-  // Default destination
-  const defaultRedirect = '/dashboard'
-
-  if (!next) return defaultRedirect
-
-  // Must start with / (relative path) to prevent open redirects
-  if (!next.startsWith('/')) return defaultRedirect
-
-  // Disallow protocol-relative URLs //
-  if (next.startsWith('//')) return defaultRedirect
-
-  // Disallow absolute URLs
-  if (next.includes('://')) return defaultRedirect
-
-  // The URL is a safe, relative path
-  return next
-}
+import { validateRedirectUrl } from '@/lib/utils/redirect'
 
 /**
  * Extracts company name from email domain.

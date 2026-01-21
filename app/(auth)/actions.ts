@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getBaseUrl } from '@/lib/env'
+import { validateRedirectUrl } from '@/lib/utils/redirect'
 import {
   AuthError,
   ValidationError,
@@ -235,10 +236,7 @@ export async function signInWithGoogle(redirectTo?: string) {
   const baseUrl = getBaseUrl(requestHeaders)
 
   // Validate redirectTo to prevent open redirect attacks
-  let validatedRedirect = '/dashboard'
-  if (redirectTo && redirectTo.startsWith('/') && !redirectTo.startsWith('//')) {
-    validatedRedirect = redirectTo
-  }
+  const validatedRedirect = validateRedirectUrl(redirectTo)
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
