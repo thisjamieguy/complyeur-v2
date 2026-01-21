@@ -37,12 +37,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* CookieYes Consent Management Script */}
-        <Script
-          id="cookieyes"
-          src={`https://cdn-cookieyes.com/client_data/${process.env.NEXT_PUBLIC_COOKIEYES_SITE_ID || 'YOUR_SITE_ID'}/script.js`}
-          strategy="beforeInteractive"
-        />
+        {/* CookieYes Consent Management Script - GDPR compliance */}
+        {process.env.NODE_ENV === 'production' && (
+          <Script
+            id="cookieyes"
+            src="https://cdn-cookieyes.com/client_data/8c2e311aa3e53bd1fc42091adb588e5c/script.js"
+            strategy="beforeInteractive"
+          />
+        )}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
