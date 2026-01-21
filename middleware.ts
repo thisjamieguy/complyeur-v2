@@ -7,9 +7,10 @@ export async function middleware(request: NextRequest) {
 
   // 1. Rate Limiting - applies to API routes and auth routes
   // Uses Upstash Redis for distributed rate limiting in serverless environments
-  // Health endpoint is excluded for monitoring availability
+  // Excluded: health endpoint (monitoring), auth/callback (OAuth redirects from providers)
   const isHealthEndpoint = pathname === '/api/health'
-  if (!isHealthEndpoint && (pathname.startsWith('/api/') || pathname.startsWith('/login') ||
+  const isAuthCallback = pathname.startsWith('/auth/callback')
+  if (!isHealthEndpoint && !isAuthCallback && (pathname.startsWith('/api/') || pathname.startsWith('/login') ||
       pathname.startsWith('/signup') || pathname.startsWith('/forgot-password') ||
       pathname.startsWith('/reset-password') || pathname.startsWith('/auth/'))) {
     const rateLimitResponse = await checkRateLimit(request)
