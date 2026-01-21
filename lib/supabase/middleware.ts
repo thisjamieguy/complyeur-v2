@@ -46,7 +46,7 @@ export async function updateSession(request: NextRequest) {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, company_id, last_activity_at, created_at')
+    .select('id, company_id, created_at')
     .eq('id', user.id)
     .single()
 
@@ -64,28 +64,30 @@ export async function updateSession(request: NextRequest) {
     return { supabaseResponse, user: null, sessionExpired: true }
   }
 
-  const { data: settings } = await supabase
-    .from('company_settings')
-    .select('session_timeout_minutes')
-    .eq('company_id', profile.company_id)
-    .single()
-
-  const sessionTimeoutMinutes = settings?.session_timeout_minutes ?? 30
-  const now = new Date()
-  const lastActivityAt = profile.last_activity_at ? new Date(profile.last_activity_at) : null
-
-  if (lastActivityAt) {
-    const inactivityMs = now.getTime() - lastActivityAt.getTime()
-    if (inactivityMs > sessionTimeoutMinutes * 60 * 1000) {
-      await supabase.auth.signOut()
-      return { supabaseResponse, user: null, sessionExpired: true }
-    }
-  }
-
-  await supabase
-    .from('profiles')
-    .update({ last_activity_at: now.toISOString() })
-    .eq('id', user.id)
+  // Session timeout check disabled - last_activity_at column not yet deployed
+  // TODO: Re-enable after deploying the last_activity_at migration
+  // const { data: settings } = await supabase
+  //   .from('company_settings')
+  //   .select('session_timeout_minutes')
+  //   .eq('company_id', profile.company_id)
+  //   .single()
+  //
+  // const sessionTimeoutMinutes = settings?.session_timeout_minutes ?? 30
+  // const now = new Date()
+  // const lastActivityAt = profile.last_activity_at ? new Date(profile.last_activity_at) : null
+  //
+  // if (lastActivityAt) {
+  //   const inactivityMs = now.getTime() - lastActivityAt.getTime()
+  //   if (inactivityMs > sessionTimeoutMinutes * 60 * 1000) {
+  //     await supabase.auth.signOut()
+  //     return { supabaseResponse, user: null, sessionExpired: true }
+  //   }
+  // }
+  //
+  // await supabase
+  //   .from('profiles')
+  //   .update({ last_activity_at: now.toISOString() })
+  //   .eq('id', user.id)
 
   return { supabaseResponse, user, sessionExpired: false }
 }
