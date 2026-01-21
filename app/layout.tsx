@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
 import "./globals.css";
@@ -53,6 +54,7 @@ export default function RootLayout({
         <MaintenanceBanner />
         {children}
         <Toaster />
+        <SpeedInsights />
       </body>
     </html>
   );
