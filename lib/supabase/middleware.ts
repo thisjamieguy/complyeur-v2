@@ -37,13 +37,29 @@ export async function updateSession(request: NextRequest) {
     return { supabaseResponse, user, sessionExpired: false }
   }
 
+  // Skip profile validation for auth callback route - it handles its own profile creation
+  // This prevents race conditions where the profile hasn't been created yet
+  const { pathname } = request.nextUrl
+  if (pathname.startsWith('/auth/callback')) {
+    return { supabaseResponse, user, sessionExpired: false }
+  }
+
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, company_id, last_activity_at')
+    .select('id, company_id, last_activity_at, created_at')
     .eq('id', user.id)
     .single()
 
+  // For new users (created within last 30 seconds), allow time for profile creation
+  // This handles the race condition where OAuth callback hasn't finished creating the profile
+  const userCreatedAt = user.created_at ? new Date(user.created_at) : null
+  const isNewUser = userCreatedAt && (Date.now() - userCreatedAt.getTime()) < 30000
+
   if (profileError || !profile?.company_id) {
+    // Don't sign out new users immediately - give profile creation time to complete
+    if (isNewUser) {
+      return { supabaseResponse, user, sessionExpired: false }
+    }
     await supabase.auth.signOut()
     return { supabaseResponse, user: null, sessionExpired: true }
   }
