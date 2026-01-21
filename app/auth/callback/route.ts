@@ -204,17 +204,15 @@ export async function GET(request: Request) {
     }
   }
 
+  // Update last activity (non-blocking - don't fail auth if this fails)
   const { error: activityError } = await supabase
     .from('profiles')
     .update({ last_activity_at: new Date().toISOString() })
     .eq('id', user.id)
 
   if (activityError) {
-    console.error('Failed to update last activity after auth callback:', activityError)
-    await supabase.auth.signOut()
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent('Failed to complete sign-in. Please try again.')}`
-    )
+    // Log but don't block auth - last_activity_at column may not exist yet
+    console.warn('Failed to update last activity after auth callback:', activityError.message)
   }
 
   // Success - redirect to intended destination
