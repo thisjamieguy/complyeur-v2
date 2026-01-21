@@ -22,27 +22,16 @@ function validateRedirectUrl(next: string | null): string {
 
   if (!next) return defaultRedirect
 
-  // Must start with / (relative path)
+  // Must start with / (relative path) to prevent open redirects
   if (!next.startsWith('/')) return defaultRedirect
 
-  // Must not start with // (protocol-relative URL)
+  // Disallow protocol-relative URLs //
   if (next.startsWith('//')) return defaultRedirect
 
-  // Must not contain protocol
+  // Disallow absolute URLs
   if (next.includes('://')) return defaultRedirect
 
-  // Block encoded characters that could bypass checks
-  if (next.includes('%')) {
-    try {
-      const decoded = decodeURIComponent(next)
-      if (decoded.startsWith('//') || decoded.includes('://')) {
-        return defaultRedirect
-      }
-    } catch {
-      return defaultRedirect
-    }
-  }
-
+  // The URL is a safe, relative path
   return next
 }
 
