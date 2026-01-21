@@ -5,14 +5,20 @@ import { checkRateLimit } from '@/lib/rate-limit'
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // 1. Rate Limiting - applies to API routes and auth routes
+  // 1. Rate Limiting - applies to API routes and auth form submissions (POST only)
   // Uses Upstash Redis for distributed rate limiting in serverless environments
   // Excluded: health endpoint (monitoring), auth/callback (OAuth redirects from providers)
+  // Note: Only rate limit POST requests to auth pages to avoid limiting page views
   const isHealthEndpoint = pathname === '/api/health'
   const isAuthCallback = pathname.startsWith('/auth/callback')
-  if (!isHealthEndpoint && !isAuthCallback && (pathname.startsWith('/api/') || pathname.startsWith('/login') ||
+  const isAuthPage = pathname.startsWith('/login') ||
       pathname.startsWith('/signup') || pathname.startsWith('/forgot-password') ||
-      pathname.startsWith('/reset-password') || pathname.startsWith('/auth/'))) {
+      pathname.startsWith('/reset-password') || pathname.startsWith('/auth/')
+  const shouldRateLimit = !isHealthEndpoint && !isAuthCallback && (
+    pathname.startsWith('/api/') ||
+    (isAuthPage && request.method === 'POST')
+  )
+  if (shouldRateLimit) {
     const rateLimitResponse = await checkRateLimit(request)
     if (rateLimitResponse) return rateLimitResponse
   }
