@@ -1,0 +1,9 @@
+{
+  "template": "keepachangelog",
+  "tagPrefix": "v",
+  "hideCredit": true,
+  "commitLimit": 10,
+  "backfillLimit": 10,
+  "unreleased": true,
+  "sortCommits": "date-desc"
+}
