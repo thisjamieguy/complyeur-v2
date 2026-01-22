@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0](https://github.com/thisjamieguy/complyeur-v2/compare/v1.0.0...0.1.0)
+## [1.0.0](https://github.com/thisjamieguy/complyeur-v2/compare/v1.0.0...1.0.0)
 
 ### Commits
 
+- chore: bump version to 1.0.0 to match git tag [`08516de`](https://github.com/thisjamieguy/complyeur-v2/commit/08516debf00be83be812cdb50076849e2eae9f36)
 - chore: configure auto-changelog with Keep a Changelog format [`6d592e4`](https://github.com/thisjamieguy/complyeur-v2/commit/6d592e4e8116537f258241c7627142fd4f27cb88)
 
 ## v1.0.0 - 2026-01-22
