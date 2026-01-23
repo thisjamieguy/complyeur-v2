@@ -4,7 +4,7 @@
  * Validates the redirect URL to prevent open redirect attacks.
  * Only allows relative paths starting with /
  */
-export function validateRedirectUrl(next: string | null): string {
+export function validateRedirectUrl(next: string | null | undefined): string {
   // Default destination
   const defaultRedirect = '/dashboard'
 
