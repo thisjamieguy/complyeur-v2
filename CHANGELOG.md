@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: accept undefined in validateRedirectUrl type signature [`deb5cad`](https://github.com/thisjamieguy/complyeur-v2/commit/deb5cade5c4002ef64b06b082822bec969be1e94)
 - docs: update changelog [`74dc1ee`](https://github.com/thisjamieguy/complyeur-v2/commit/74dc1ee764fd6642020ead05b5d545a7f8fc605c)
 - chore: use git tags only for changelog versioning [`650be4d`](https://github.com/thisjamieguy/complyeur-v2/commit/650be4daafa82ee728a1266c6665b76ff0eb8993)
 - chore: bump version to 1.0.0 to match git tag [`08516de`](https://github.com/thisjamieguy/complyeur-v2/commit/08516debf00be83be812cdb50076849e2eae9f36)

@@ -105,7 +105,7 @@ export async function insertValidRows(
 
   if (format === 'employees') {
     return insertEmployees(supabase, companyId, rows, duplicateOptions);
-  } else if (format === 'trips') {
+  } else if (format === 'trips' || format === 'gantt') {
     return insertTrips(supabase, companyId, rows, duplicateOptions);
   }
 
@@ -290,18 +290,131 @@ async function insertTrips(
   const warnings: ValidationError[] = [];
   let tripsCreated = 0;
   let tripsSkipped = 0;
+  let employeesCreated = 0;
 
   // Get all employees for this company to match by email
   const { data: employees } = await supabase
     .from('employees')
-    .select('id, email')
+    .select('id, email, name')
     .eq('company_id', companyId);
+
+  const normalizeName = (name: string): string =>
+    name.trim().replace(/\s+/g, ' ').toLowerCase();
+
+  const deriveNameFromEmail = (email: string): string => {
+    const localPart = email.split('@')[0]?.trim();
+    if (!localPart) return 'Unknown';
+    const cleaned = localPart.replace(/[._-]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!cleaned) return 'Unknown';
+    return cleaned
+      .split(' ')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  };
 
   const employeeEmailMap = new Map(
     (employees ?? [])
       .filter((e) => e.email)
       .map((e) => [e.email!.toLowerCase().trim(), e.id])
   );
+
+  const employeeNameMap = new Map<string, string>();
+  const duplicateNameKeys = new Set<string>();
+
+  for (const employee of employees ?? []) {
+    if (!employee.name) continue;
+    const key = normalizeName(employee.name);
+    if (!key) continue;
+
+    if (employeeNameMap.has(key)) {
+      duplicateNameKeys.add(key);
+    } else {
+      employeeNameMap.set(key, employee.id);
+    }
+  }
+
+  for (const key of duplicateNameKeys) {
+    employeeNameMap.delete(key);
+  }
+
+  const validRows = rows.filter((r) => r.is_valid);
+  const warnedDuplicateNames = new Set<string>();
+
+  const missingEmailEmployees = new Map<string, { email: string; name: string }>();
+  const missingNameEmployees = new Map<string, { name: string }>();
+
+  for (const row of validRows) {
+    if (!isParsedTripRow(row.data)) continue;
+
+    const tripData = row.data as ParsedTripRow;
+    const normalizedEmail = (tripData.employee_email ?? '').toLowerCase().trim();
+    const hasEmail = normalizedEmail.length > 0;
+    const hasName = !!tripData.employee_name?.trim();
+
+    if (hasEmail) {
+      if (!employeeEmailMap.has(normalizedEmail) && !missingEmailEmployees.has(normalizedEmail)) {
+        const name =
+          tripData.employee_name?.trim() || deriveNameFromEmail(normalizedEmail) || 'Unknown';
+        missingEmailEmployees.set(normalizedEmail, { email: normalizedEmail, name });
+      }
+      continue;
+    }
+
+    if (hasName) {
+      const nameKey = normalizeName(tripData.employee_name!.trim());
+      const hasExisting = employeeNameMap.has(nameKey);
+      const isDuplicate = duplicateNameKeys.has(nameKey);
+      if ((!hasExisting || isDuplicate) && !missingNameEmployees.has(nameKey)) {
+        missingNameEmployees.set(nameKey, { name: tripData.employee_name!.trim() });
+      }
+    }
+  }
+
+  const employeesToInsert: { name: string; email?: string | null; company_id: string }[] = [];
+
+  for (const entry of missingEmailEmployees.values()) {
+    employeesToInsert.push({
+      name: entry.name,
+      email: entry.email,
+      company_id: companyId,
+    });
+  }
+
+  for (const entry of missingNameEmployees.values()) {
+    employeesToInsert.push({
+      name: entry.name,
+      email: null,
+      company_id: companyId,
+    });
+  }
+
+  if (employeesToInsert.length > 0) {
+    const { data: insertedEmployees, error: insertEmployeesError } = await supabase
+      .from('employees')
+      .insert(employeesToInsert)
+      .select('id, email, name');
+
+    if (insertEmployeesError) {
+      console.error('Failed to create employees for trip import:', insertEmployeesError);
+      errors.push({
+        row: 0,
+        column: '',
+        value: '',
+        message: `Failed to create missing employees: ${insertEmployeesError.message}`,
+        severity: 'error',
+      });
+    } else {
+      employeesCreated += insertedEmployees?.length ?? 0;
+      for (const employee of insertedEmployees ?? []) {
+        if (employee.email) {
+          employeeEmailMap.set(employee.email.toLowerCase().trim(), employee.id);
+        }
+        if (employee.name) {
+          employeeNameMap.set(normalizeName(employee.name), employee.id);
+        }
+      }
+    }
+  }
 
   // Get existing trips for duplicate detection
   const { data: existingTrips } = await supabase
@@ -320,9 +433,6 @@ async function insertTrips(
     warnings.push(...row.warnings);
   }
 
-  // Filter valid rows
-  const validRows = rows.filter((r) => r.is_valid);
-
   // Prepare trips to insert
   const tripsToInsert: {
     employee_id: string;
@@ -340,10 +450,39 @@ async function insertTrips(
     if (!isParsedTripRow(row.data)) continue;
 
     const tripData = row.data as ParsedTripRow;
-    const normalizedEmail = tripData.employee_email.toLowerCase().trim();
+    const normalizedEmail = (tripData.employee_email ?? '').toLowerCase().trim();
+    const hasEmail = normalizedEmail.length > 0;
+    const hasName = !!tripData.employee_name?.trim();
 
-    // Find matching employee by email
-    const employeeId = employeeEmailMap.get(normalizedEmail);
+    // Find matching employee by email (preferred)
+    let employeeId = hasEmail ? employeeEmailMap.get(normalizedEmail) : undefined;
+
+    // Fallback: match by exact employee name when no email provided
+    if (!employeeId && !hasEmail && hasName) {
+      const nameKey = normalizeName(tripData.employee_name!.trim());
+      if (duplicateNameKeys.has(nameKey) && !warnedDuplicateNames.has(nameKey)) {
+        warnings.push({
+          row: row.row_number,
+          column: 'employee_name',
+          value: tripData.employee_name ?? '',
+          message: `Multiple employees found with name "${tripData.employee_name}". A new employee was created for this import.`,
+          severity: 'warning',
+        });
+        warnedDuplicateNames.add(nameKey);
+      }
+      employeeId = employeeNameMap.get(nameKey);
+      if (!employeeId) {
+        warnings.push({
+          row: row.row_number,
+          column: 'employee_name',
+          value: tripData.employee_name ?? '',
+          message: `No employee found with name "${tripData.employee_name}", skipped`,
+          severity: 'warning',
+        });
+        tripsSkipped++;
+        continue;
+      }
+    }
 
     if (!employeeId) {
       errors.push({
@@ -425,7 +564,7 @@ async function insertTrips(
 
   return {
     success: errors.filter((e) => e.severity === 'error').length === 0,
-    employees_created: 0,
+    employees_created: employeesCreated,
     employees_updated: 0,
     trips_created: tripsCreated,
     trips_skipped: tripsSkipped,

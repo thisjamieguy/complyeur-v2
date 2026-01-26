@@ -96,7 +96,7 @@ export default function PreviewPage() {
       }
       setImportStage('saving');
 
-      const result = await executeImport(sessionId, session.format as ImportFormat, validatedRows, duplicateOptions);
+      const result = await executeImport(sessionId, duplicateOptions);
 
       setImportStage('finalizing');
 
