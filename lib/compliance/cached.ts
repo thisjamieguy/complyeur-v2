@@ -26,7 +26,7 @@ import {
  */
 function createTripsKey(trips: readonly Trip[]): string {
   return trips
-    .map(t => `${t.id ?? ''}-${t.entryDate.toISOString()}-${t.exitDate.toISOString()}-${t.country}`)
+    .map(t => `${t.id ?? ''}-${t.entryDate.toISOString()}-${t.exitDate?.toISOString() ?? 'active'}-${t.country}`)
     .sort()
     .join('|')
 }
@@ -137,7 +137,7 @@ export function calculateComplianceRange(
       daysUsed,
       daysRemaining,
       riskLevel,
-      isCompliant: daysUsed <= 90,
+      isCompliant: daysUsed < 90,  // 90 days = violation
     })
 
     // Move to next day
@@ -185,7 +185,7 @@ export function getComplianceAtDates(
       daysUsed,
       daysRemaining,
       riskLevel,
-      isCompliant: daysUsed <= 90,
+      isCompliant: daysUsed < 90,  // 90 days = violation
     })
   }
 

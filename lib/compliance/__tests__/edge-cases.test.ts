@@ -74,8 +74,8 @@ describe('Required Test Scenarios', () => {
       expect(result.isCompliant).toBe(true);
     });
 
-    // Scenario 2: At limit
-    it('2. Exactly 90 days used shows 0 remaining', () => {
+    // Scenario 2: At limit (90 days = violation)
+    it('2. Exactly 90 days used shows 0 remaining and is VIOLATION', () => {
       const trips = [createTrip('2025-10-12', '2026-01-09')]; // 90 days
       const config = createConfig({ referenceDate: new Date('2026-01-10T00:00:00.000Z') });
 
@@ -83,7 +83,8 @@ describe('Required Test Scenarios', () => {
 
       expect(result.daysUsed).toBe(90);
       expect(result.daysRemaining).toBe(0);
-      expect(result.isCompliant).toBe(true);
+      expect(result.isCompliant).toBe(false);  // 90 days = violation
+      expect(result.riskLevel).toBe('red');    // 0 remaining = red
     });
 
     // Scenario 3: Over limit
@@ -287,28 +288,31 @@ describe('Required Test Scenarios', () => {
   });
 
   describe('Risk Level Thresholds', () => {
-    // Scenario 17: Green threshold
-    it('17. 30+ days remaining = green', () => {
+    // New thresholds: green >= 16, amber >= 1, red < 1
+    // Warning at 75+ days used (15 or fewer remaining)
+
+    // Scenario 17: Green threshold (16+ days remaining)
+    it('17. 16+ days remaining = green', () => {
+      expect(getRiskLevel(16)).toBe('green');
       expect(getRiskLevel(30)).toBe('green');
       expect(getRiskLevel(45)).toBe('green');
       expect(getRiskLevel(90)).toBe('green');
     });
 
-    // Scenario 18: Amber threshold
-    it('18. 10-29 days remaining = amber', () => {
+    // Scenario 18: Amber threshold (1-15 days remaining = warning zone)
+    it('18. 1-15 days remaining = amber (warning zone)', () => {
+      expect(getRiskLevel(1)).toBe('amber');
+      expect(getRiskLevel(5)).toBe('amber');
       expect(getRiskLevel(10)).toBe('amber');
-      expect(getRiskLevel(20)).toBe('amber');
-      expect(getRiskLevel(29)).toBe('amber');
+      expect(getRiskLevel(15)).toBe('amber');
     });
 
-    // Scenario 19: Red threshold
-    it('19. <10 days remaining = red', () => {
-      expect(getRiskLevel(9)).toBe('red');
-      expect(getRiskLevel(5)).toBe('red');
+    // Scenario 19: Red threshold (0 days = violation)
+    it('19. 0 days remaining = red (violation)', () => {
       expect(getRiskLevel(0)).toBe('red');
     });
 
-    // Scenario 20: Negative days
+    // Scenario 20: Negative days (over limit = violation)
     it('20. Negative days (over limit) = red', () => {
       expect(getRiskLevel(-1)).toBe('red');
       expect(getRiskLevel(-5)).toBe('red');
@@ -545,5 +549,94 @@ describe('Production Edge Cases', () => {
       // Only Oct 12 counts
       expect(result.daysUsed).toBe(1);
     });
+  });
+});
+
+// ============================================================================
+// Window Boundary Edge Cases
+// ============================================================================
+
+describe('Window Boundary Edge Cases', () => {
+  it('trip starting before 180-day window and ending within counts partial days', () => {
+    // Reference: Apr 10, 2026
+    // Window: [Oct 12, 2025, Apr 9, 2026] (ref - 180 to ref - 1, excludes ref date)
+    // Trip: Oct 1-20, 2025 (20 days)
+    // Only Oct 12-20 (9 days) are within the window
+    const trips = [createTrip('2025-10-01', '2025-10-20')];
+    const config = createConfig({
+      referenceDate: new Date('2026-04-10T00:00:00.000Z'),
+      complianceStartDate: new Date('2025-01-01T00:00:00.000Z'), // Earlier to not interfere
+    });
+
+    const result = calculateCompliance(trips, config);
+
+    // Oct 12-20 = 9 days within window
+    expect(result.daysUsed).toBe(9);
+  });
+
+  it('trip entirely before 180-day window is excluded', () => {
+    // Reference: Jul 15, 2026
+    // Window: [Jan 17, 2026, Jul 14, 2026] (ref - 180 to ref - 1)
+    // Trip: Oct 12-21, 2025 (entirely outside window)
+    const trips = [createTrip('2025-10-12', '2025-10-21')];
+    const config = createConfig({
+      referenceDate: new Date('2026-07-15T00:00:00.000Z'),
+    });
+
+    const result = calculateCompliance(trips, config);
+
+    expect(result.daysUsed).toBe(0);
+  });
+
+  it('multiple concurrent active trips are deduplicated correctly', () => {
+    // Two active trips running at the same time
+    // Trip 1: Nov 1 onwards (no exit)
+    // Trip 2: Nov 5 onwards (no exit) - overlaps with trip 1
+    // Reference: Nov 15, 2025
+    // Window: [May 19, Nov 14] (ref - 180 to ref - 1, excludes ref date)
+    // Active trips clipped to Nov 15, but only Nov 1-14 counted in window
+    const trips: Trip[] = [
+      {
+        entryDate: new Date('2025-11-01T00:00:00.000Z'),
+        exitDate: null,
+        country: 'FR',
+      },
+      {
+        entryDate: new Date('2025-11-05T00:00:00.000Z'),
+        exitDate: null,
+        country: 'DE',
+      },
+    ];
+    const config = createConfig({
+      referenceDate: new Date('2025-11-15T00:00:00.000Z'),
+    });
+
+    const result = calculateCompliance(trips, config);
+
+    // Nov 1-14 = 14 unique days (deduplicated, window excludes ref date Nov 15)
+    expect(result.daysUsed).toBe(14);
+  });
+
+  it('active trip is clipped to reference date in audit mode', () => {
+    // Trip: Nov 1 onwards (no exit)
+    // Reference: Nov 10, 2025
+    // Window: [May 14, Nov 9] (ref - 180 to ref - 1, excludes ref date)
+    // Active trip clipped to Nov 10, but only Nov 1-9 counted in window
+    const trips: Trip[] = [
+      {
+        entryDate: new Date('2025-11-01T00:00:00.000Z'),
+        exitDate: null, // Still traveling
+        country: 'FR',
+      },
+    ];
+    const config = createConfig({
+      mode: 'audit',
+      referenceDate: new Date('2025-11-10T00:00:00.000Z'),
+    });
+
+    const result = calculateCompliance(trips, config);
+
+    // Nov 1-9 = 9 days (window excludes reference date Nov 10)
+    expect(result.daysUsed).toBe(9);
   });
 });

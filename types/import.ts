@@ -20,6 +20,7 @@ export type ImportStatus = (typeof IMPORT_STATUSES)[number];
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const MAX_ROWS = 500;
+export const MAX_GANTT_TRIPS = 5000;
 export const ALLOWED_EXTENSIONS = ['.xlsx', '.xls', '.csv'] as const;
 export const ALLOWED_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

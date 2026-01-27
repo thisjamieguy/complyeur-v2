@@ -32,8 +32,11 @@ export async function validateRows<T extends ParsedRow>(
 
     if (format === 'employees' && isParsedEmployeeRow(row)) {
       validateEmployeeRow(row, errors, warnings, seenNames, existingNames);
-    } else if (format === 'trips' && isParsedTripRow(row)) {
-      validateTripRow(row, errors, warnings);
+    } else if ((format === 'trips' || format === 'gantt') && isParsedTripRow(row)) {
+      validateTripRow(row, errors, warnings, {
+        requireEmail: format === 'trips',
+        requireEmployeeName: format === 'gantt',
+      });
     }
 
     results.push({
@@ -172,7 +175,11 @@ function validateEmployeeRow(
 function validateTripRow(
   row: ParsedTripRow,
   errors: ValidationError[],
-  warnings: ValidationError[]
+  warnings: ValidationError[],
+  options: { requireEmail: boolean; requireEmployeeName: boolean } = {
+    requireEmail: true,
+    requireEmployeeName: false,
+  }
 ): void {
   const rowNum = row.row_number;
   const today = new Date();
@@ -182,15 +189,25 @@ function validateTripRow(
 
   // Employee email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!row.employee_email) {
-    errors.push({
-      row: rowNum,
-      column: 'employee_email',
-      value: row.employee_email ?? '',
-      message: 'Employee email is required',
-      severity: 'error',
-    });
-  } else if (!emailRegex.test(row.employee_email)) {
+  if (options.requireEmail) {
+    if (!row.employee_email) {
+      errors.push({
+        row: rowNum,
+        column: 'employee_email',
+        value: row.employee_email ?? '',
+        message: 'Employee email is required',
+        severity: 'error',
+      });
+    } else if (!emailRegex.test(row.employee_email)) {
+      errors.push({
+        row: rowNum,
+        column: 'employee_email',
+        value: row.employee_email,
+        message: 'Invalid email format',
+        severity: 'error',
+      });
+    }
+  } else if (row.employee_email && !emailRegex.test(row.employee_email)) {
     errors.push({
       row: rowNum,
       column: 'employee_email',
@@ -198,6 +215,19 @@ function validateTripRow(
       message: 'Invalid email format',
       severity: 'error',
     });
+  }
+
+  // Employee name validation (Gantt)
+  if (options.requireEmployeeName) {
+    if (!row.employee_name || !row.employee_name.trim()) {
+      errors.push({
+        row: rowNum,
+        column: 'employee_name',
+        value: row.employee_name ?? '',
+        message: 'Employee name is required',
+        severity: 'error',
+      });
+    }
   }
 
   // Entry date validation

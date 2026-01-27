@@ -20,7 +20,7 @@ import { addDays, subDays, isBefore, isAfter, isEqual, differenceInDays } from '
 
 export interface OracleTrip {
   entryDate: Date;
-  exitDate: Date;
+  exitDate: Date | null;
   country: string;
 }
 
@@ -122,7 +122,10 @@ export function oraclePresenceDays(
     }
 
     const normalizedEntry = normalizeDate(trip.entryDate);
-    const normalizedExit = normalizeDate(trip.exitDate);
+    // For active trips (null exitDate), use reference date
+    const normalizedExit = trip.exitDate
+      ? normalizeDate(trip.exitDate)
+      : normalizedRef;
 
     // Skip if trip ends before compliance start
     if (isBefore(normalizedExit, normalizedComplianceStart)) {
@@ -216,11 +219,12 @@ export function oracleDaysRemaining(
 
 /**
  * Oracle implementation of getRiskLevel.
+ * Matches production thresholds: warning at 75+ days used (15 or fewer remaining).
  */
 export function oracleRiskLevel(daysRemaining: number): 'green' | 'amber' | 'red' {
-  if (daysRemaining >= 30) return 'green';
-  if (daysRemaining >= 10) return 'amber';
-  return 'red';
+  if (daysRemaining >= 16) return 'green';  // 0-74 days used
+  if (daysRemaining >= 1) return 'amber';   // 75-89 days used
+  return 'red';                              // 90+ days used (violation)
 }
 
 /**
@@ -267,7 +271,7 @@ export function oracleCalculate(
   return {
     daysUsed,
     daysRemaining,
-    isCompliant: daysUsed <= limit,
+    isCompliant: daysUsed < limit,  // 90 days = violation, 89 or fewer = compliant
     riskLevel: oracleRiskLevel(daysRemaining),
   };
 }

@@ -265,3 +265,92 @@ describe('getSchengenCountries', () => {
     expect(names).toEqual(sorted);
   });
 });
+
+describe('Country Code Validation Edge Cases', () => {
+  describe('Invalid/malformed country codes', () => {
+    it('returns false for completely invalid country code', () => {
+      expect(isSchengenCountry('XYZ')).toBe(false);
+      expect(isSchengenCountry('ABC')).toBe(false);
+      expect(isSchengenCountry('ZZ')).toBe(false);
+    });
+
+    it('returns false for numeric strings', () => {
+      expect(isSchengenCountry('123')).toBe(false);
+      expect(isSchengenCountry('12')).toBe(false);
+      expect(isSchengenCountry('1')).toBe(false);
+    });
+
+    it('returns false for empty string', () => {
+      expect(isSchengenCountry('')).toBe(false);
+    });
+
+    it('returns false for whitespace-only string', () => {
+      expect(isSchengenCountry('   ')).toBe(false);
+      expect(isSchengenCountry('\t')).toBe(false);
+      expect(isSchengenCountry('\n')).toBe(false);
+    });
+
+    it('returns false for null and undefined', () => {
+      expect(isSchengenCountry(null)).toBe(false);
+      expect(isSchengenCountry(undefined)).toBe(false);
+    });
+
+    it('returns false for special characters', () => {
+      expect(isSchengenCountry('FR!')).toBe(false);
+      expect(isSchengenCountry('F@R')).toBe(false);
+      expect(isSchengenCountry('FR-DE')).toBe(false);
+    });
+  });
+
+  describe('Case sensitivity handling', () => {
+    it('handles lowercase country codes', () => {
+      expect(isSchengenCountry('fr')).toBe(true);
+      expect(isSchengenCountry('de')).toBe(true);
+    });
+
+    it('handles mixed case country codes', () => {
+      expect(isSchengenCountry('Fr')).toBe(true);
+      expect(isSchengenCountry('fR')).toBe(true);
+    });
+
+    it('handles lowercase country names', () => {
+      expect(isSchengenCountry('france')).toBe(true);
+      expect(isSchengenCountry('germany')).toBe(true);
+    });
+
+    it('handles mixed case country names', () => {
+      expect(isSchengenCountry('FrAnCe')).toBe(true);
+      expect(isSchengenCountry('GERMANY')).toBe(true);
+    });
+  });
+
+  describe('Whitespace handling', () => {
+    it('trims leading/trailing whitespace', () => {
+      expect(isSchengenCountry(' FR ')).toBe(true);
+      expect(isSchengenCountry('  France  ')).toBe(true);
+    });
+  });
+
+  describe('validateCountry returns correct structure for invalid inputs', () => {
+    it('returns null fields for invalid code', () => {
+      const result = validateCountry('XYZ');
+      expect(result.isSchengen).toBe(false);
+      expect(result.countryCode).toBeNull();
+      expect(result.countryName).toBeNull();
+      expect(result.exclusionReason).toBeNull();
+      expect(result.isMicrostate).toBe(false);
+    });
+
+    it('returns null fields for empty input', () => {
+      const result = validateCountry('');
+      expect(result.isSchengen).toBe(false);
+      expect(result.countryCode).toBeNull();
+    });
+
+    it('returns null fields for null input', () => {
+      const result = validateCountry(null);
+      expect(result.isSchengen).toBe(false);
+      expect(result.countryCode).toBeNull();
+    });
+  });
+});

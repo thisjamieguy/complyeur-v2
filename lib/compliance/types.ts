@@ -49,8 +49,12 @@ export interface RiskThresholds {
 export interface Trip {
   /** Date of entry (counts as Day 1, even if entering at 23:59) */
   readonly entryDate: Date;
-  /** Date of exit (counts as full day, even if leaving at 00:01) */
-  readonly exitDate: Date;
+  /**
+   * Date of exit (counts as full day, even if leaving at 00:01).
+   * If null/undefined, the trip is considered "active" (currently traveling)
+   * and will count through the reference date in calculations.
+   */
+  readonly exitDate: Date | null;
   /** ISO 3166-1 alpha-2 country code or full country name */
   readonly country: CountryCode;
   /** Optional trip identifier for tracking */

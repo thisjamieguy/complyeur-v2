@@ -31,13 +31,16 @@ export const WINDOW_SIZE_DAYS = 180;
 
 /**
  * Default risk level thresholds.
- * - green: 30+ days remaining
- * - amber: 10-29 days remaining
- * - red: <10 days remaining
+ * - green: 16+ days remaining (74 or fewer days used)
+ * - amber: 1-15 days remaining (75-89 days used) - WARNING zone
+ * - red: 0 or negative days remaining (90+ days used) - VIOLATION
+ *
+ * These thresholds are user-configurable via company settings.
+ * The defaults align with the business requirement: warn at 75+ days used.
  */
 export const DEFAULT_RISK_THRESHOLDS: Readonly<RiskThresholds> = {
-  green: 30,
-  amber: 10,
+  green: 16,
+  amber: 1,
 } as const;
 
 /**

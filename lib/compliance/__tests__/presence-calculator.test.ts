@@ -248,17 +248,22 @@ describe('presenceDays', () => {
       expect(() => presenceDays(trips, config)).toThrow(InvalidTripError);
     });
 
-    it('throws InvalidTripError for missing exit date', () => {
+    it('handles active trips with null exit date (counts through reference date)', () => {
+      // Active trips (currently traveling) have null exit dates
+      // They count from entry date through the reference date
       const trips = [
         {
-          entryDate: new Date('2025-11-01'),
-          exitDate: null as unknown as Date,
+          entryDate: new Date('2025-11-01T00:00:00.000Z'),
+          exitDate: null,
           country: 'FR',
         },
       ];
-      const config = createConfig();
+      const config = createConfig({ referenceDate: new Date('2025-11-10T00:00:00.000Z') });
 
-      expect(() => presenceDays(trips, config)).toThrow(InvalidTripError);
+      const result = presenceDays(trips, config);
+
+      // Nov 1-10 = 10 days
+      expect(result.size).toBe(10);
     });
 
     it('throws InvalidTripError for empty country', () => {

@@ -54,10 +54,11 @@ function keyToDate(key: string): Date {
  * Validates a single trip's data.
  *
  * @param trip - Trip to validate
+ * @param referenceDate - Reference date used for active trips (null exitDate)
  * @throws InvalidTripError if trip data is invalid
  * @throws InvalidDateRangeError if exit is before entry
  */
-function validateTrip(trip: Trip): void {
+function validateTrip(trip: Trip, referenceDate: Date): void {
   // Validate entry date
   if (!trip.entryDate) {
     throw new InvalidTripError('entryDate', trip.entryDate, 'Entry date is required');
@@ -66,17 +67,16 @@ function validateTrip(trip: Trip): void {
     throw new InvalidTripError('entryDate', trip.entryDate, 'Entry date must be a valid Date object');
   }
 
-  // Validate exit date
-  if (!trip.exitDate) {
-    throw new InvalidTripError('exitDate', trip.exitDate, 'Exit date is required');
-  }
-  if (!(trip.exitDate instanceof Date) || !isValid(trip.exitDate)) {
-    throw new InvalidTripError('exitDate', trip.exitDate, 'Exit date must be a valid Date object');
-  }
+  // Validate exit date (null is allowed for active trips)
+  if (trip.exitDate !== null && trip.exitDate !== undefined) {
+    if (!(trip.exitDate instanceof Date) || !isValid(trip.exitDate)) {
+      throw new InvalidTripError('exitDate', trip.exitDate, 'Exit date must be a valid Date object or null');
+    }
 
-  // Validate date range
-  if (isAfter(trip.entryDate, trip.exitDate)) {
-    throw new InvalidDateRangeError(trip.entryDate, trip.exitDate);
+    // Validate date range (only if exit date is provided)
+    if (isAfter(trip.entryDate, trip.exitDate)) {
+      throw new InvalidDateRangeError(trip.entryDate, trip.exitDate);
+    }
   }
 
   // Validate country
@@ -132,7 +132,7 @@ export function presenceDays(
 
   for (const trip of trips) {
     // Validate trip data
-    validateTrip(trip);
+    validateTrip(trip, referenceDate);
 
     // Skip non-Schengen countries (including Ireland, Cyprus)
     if (!isSchengenCountry(trip.country)) {
@@ -140,7 +140,10 @@ export function presenceDays(
     }
 
     const normalizedEntry = normalizeToUTCDate(trip.entryDate);
-    const normalizedExit = normalizeToUTCDate(trip.exitDate);
+    // For active trips (null exitDate), use reference date as the end
+    const normalizedExit = trip.exitDate
+      ? normalizeToUTCDate(trip.exitDate)
+      : referenceDate;
 
     // Skip if trip ends before compliance tracking started
     if (isBefore(normalizedExit, normalizedComplianceStart)) {
@@ -159,6 +162,10 @@ export function presenceDays(
     // In audit mode, don't count days after the reference date
     // (for trips that span across the reference date)
     let effectiveEnd = normalizedExit;
+    // In audit mode, clip active/spanning trips to the reference date.
+    // This counts presence "as of" the reference date, including that day itself.
+    // Note: The window calculation excludes the reference date, so these days
+    // contribute to historical presence but not to today's own window.
     if (config.mode === 'audit' && isAfter(normalizedExit, referenceDate)) {
       // Clip to reference date - but only for the day generation
       // We count up to and including the reference date

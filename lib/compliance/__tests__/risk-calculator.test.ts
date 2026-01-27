@@ -13,23 +13,27 @@ import { InvalidConfigError } from '../errors';
 
 describe('getRiskLevel', () => {
   describe('default thresholds', () => {
-    it('returns green for 30+ days remaining', () => {
+    // New thresholds: green >= 16, amber >= 1, red < 1
+    // This means: warning at 75+ days used (15 or fewer remaining)
+    it('returns green for 16+ days remaining', () => {
+      expect(getRiskLevel(16)).toBe('green');
       expect(getRiskLevel(30)).toBe('green');
       expect(getRiskLevel(45)).toBe('green');
       expect(getRiskLevel(90)).toBe('green');
     });
 
-    it('returns amber for 10-29 days remaining', () => {
+    it('returns amber for 1-15 days remaining (warning zone)', () => {
+      expect(getRiskLevel(1)).toBe('amber');
+      expect(getRiskLevel(5)).toBe('amber');
       expect(getRiskLevel(10)).toBe('amber');
       expect(getRiskLevel(15)).toBe('amber');
-      expect(getRiskLevel(29)).toBe('amber');
     });
 
-    it('returns red for less than 10 days remaining', () => {
-      expect(getRiskLevel(9)).toBe('red');
-      expect(getRiskLevel(5)).toBe('red');
-      expect(getRiskLevel(1)).toBe('red');
+    it('returns red for 0 or negative days remaining (violation)', () => {
       expect(getRiskLevel(0)).toBe('red');
+      expect(getRiskLevel(-1)).toBe('red');
+      expect(getRiskLevel(-5)).toBe('red');
+      expect(getRiskLevel(-10)).toBe('red');
     });
 
     it('returns red for negative days (over limit)', () => {
@@ -40,14 +44,14 @@ describe('getRiskLevel', () => {
   });
 
   describe('threshold boundaries', () => {
-    it('green boundary is >= 30', () => {
-      expect(getRiskLevel(30)).toBe('green');
-      expect(getRiskLevel(29)).toBe('amber');
+    it('green boundary is >= 16', () => {
+      expect(getRiskLevel(16)).toBe('green');
+      expect(getRiskLevel(15)).toBe('amber');
     });
 
-    it('amber boundary is >= 10', () => {
-      expect(getRiskLevel(10)).toBe('amber');
-      expect(getRiskLevel(9)).toBe('red');
+    it('amber boundary is >= 1', () => {
+      expect(getRiskLevel(1)).toBe('amber');
+      expect(getRiskLevel(0)).toBe('red');
     });
   });
 
@@ -138,40 +142,35 @@ describe('getRiskAction', () => {
 
 describe('getSeverityScore', () => {
   describe('score ranges', () => {
-    it('returns 0-33 for green zone', () => {
+    // New thresholds: green >= 16, amber >= 1, red < 1
+    it('returns 0-33 for green zone (16+ days remaining)', () => {
       expect(getSeverityScore(90)).toBeGreaterThanOrEqual(0);
       expect(getSeverityScore(90)).toBeLessThanOrEqual(33);
 
       expect(getSeverityScore(45)).toBeGreaterThanOrEqual(0);
       expect(getSeverityScore(45)).toBeLessThanOrEqual(33);
 
-      expect(getSeverityScore(30)).toBeGreaterThanOrEqual(0);
-      expect(getSeverityScore(30)).toBeLessThanOrEqual(33);
+      expect(getSeverityScore(16)).toBeGreaterThanOrEqual(0);
+      expect(getSeverityScore(16)).toBeLessThanOrEqual(33);
     });
 
-    it('returns 34-66 for amber zone', () => {
-      expect(getSeverityScore(29)).toBeGreaterThanOrEqual(34);
-      expect(getSeverityScore(29)).toBeLessThanOrEqual(66);
+    it('returns 34-66 for amber zone (1-15 days remaining)', () => {
+      expect(getSeverityScore(15)).toBeGreaterThanOrEqual(34);
+      expect(getSeverityScore(15)).toBeLessThanOrEqual(66);
 
-      expect(getSeverityScore(20)).toBeGreaterThanOrEqual(34);
-      expect(getSeverityScore(20)).toBeLessThanOrEqual(66);
+      expect(getSeverityScore(8)).toBeGreaterThanOrEqual(34);
+      expect(getSeverityScore(8)).toBeLessThanOrEqual(66);
 
-      expect(getSeverityScore(10)).toBeGreaterThanOrEqual(34);
-      expect(getSeverityScore(10)).toBeLessThanOrEqual(66);
+      expect(getSeverityScore(1)).toBeGreaterThanOrEqual(34);
+      expect(getSeverityScore(1)).toBeLessThanOrEqual(66);
     });
 
-    it('returns 67-100 for red zone', () => {
-      expect(getSeverityScore(9)).toBeGreaterThanOrEqual(67);
-      expect(getSeverityScore(9)).toBeLessThanOrEqual(100);
-
-      expect(getSeverityScore(5)).toBeGreaterThanOrEqual(67);
-      expect(getSeverityScore(5)).toBeLessThanOrEqual(100);
-
+    it('returns 67-100 for red zone (0 days remaining)', () => {
       expect(getSeverityScore(0)).toBeGreaterThanOrEqual(67);
       expect(getSeverityScore(0)).toBeLessThanOrEqual(100);
     });
 
-    it('returns 100+ for over limit', () => {
+    it('returns 100+ for over limit (negative days)', () => {
       expect(getSeverityScore(-1)).toBeGreaterThan(100);
       expect(getSeverityScore(-5)).toBeGreaterThan(100);
       expect(getSeverityScore(-10)).toBeGreaterThan(100);

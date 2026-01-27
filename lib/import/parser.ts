@@ -7,6 +7,7 @@ import {
   EMPLOYEE_COLUMNS,
   TRIP_COLUMNS,
   MAX_ROWS,
+  MAX_GANTT_TRIPS,
   ParseResult,
 } from '@/types/import';
 import {
@@ -443,10 +444,10 @@ function parseGanttFromData(buffer: ArrayBuffer): ParseResult {
     }
 
     // Check row limit
-    if (trips.length > MAX_ROWS) {
+    if (trips.length > MAX_GANTT_TRIPS) {
       return {
         success: false,
-        error: `Generated ${trips.length} trips, which exceeds the limit of ${MAX_ROWS}. Please use a smaller date range.`,
+        error: `Generated ${trips.length} trips, which exceeds the limit of ${MAX_GANTT_TRIPS}. Please use a smaller date range.`,
       };
     }
 

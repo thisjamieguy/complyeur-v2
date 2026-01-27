@@ -209,7 +209,8 @@ export function calculateCompliance(
   const limit = config.limit ?? SCHENGEN_DAY_LIMIT;
   const daysRemaining = limit - daysUsed;
   const riskLevel = getRiskLevel(daysRemaining, config.thresholds);
-  const isCompliantNow = daysUsed <= limit;
+  // Compliant if 89 or fewer days used (90+ is violation per EU Regulation 610/2013)
+  const isCompliantNow = daysUsed <= limit - 1;
 
   return {
     referenceDate: config.referenceDate,
