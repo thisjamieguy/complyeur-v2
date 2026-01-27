@@ -201,7 +201,7 @@ describe('Trip management flow', () => {
       expect(result.riskLevel).toBe('amber');
     });
 
-    it('exactly 90 days is compliant but critical', () => {
+    it('exactly 90 days is VIOLATION (max compliant is 89)', () => {
       const config = createConfig({ referenceDate: '2026-01-10' });
 
       const trips = createTripsWithDaysUsed(90);
@@ -209,46 +209,48 @@ describe('Trip management flow', () => {
 
       expect(result.daysUsed).toBe(90);
       expect(result.daysRemaining).toBe(0);
-      expect(result.isCompliant).toBe(true);
-      expect(result.riskLevel).toBe('red'); // 0 remaining = red
+      expect(result.isCompliant).toBe(false);  // 90 days = violation
+      expect(result.riskLevel).toBe('red');    // 0 remaining = red
     });
   });
 
   describe('risk level transitions', () => {
     it('green → amber when approaching limit', () => {
       // Reference date must be well after trips end to count all days
-      // 65 days from Oct 12 ends Dec 15, so use a later reference date
       const config = createConfig({ referenceDate: '2026-02-01' });
 
-      // Start with 50 days used (40 remaining = green, since >=30)
+      // New thresholds: green >= 16 remaining, amber >= 1 and < 16, red < 1
+      // Start with 50 days used (40 remaining = green)
       const trips50 = createTripsWithDaysUsed(50);
       expect(calculateCompliance(trips50, config).riskLevel).toBe('green');
 
-      // 65 days used (25 remaining = amber, since <30 and >=10)
-      const trips65 = createTripsWithDaysUsed(65);
-      expect(calculateCompliance(trips65, config).riskLevel).toBe('amber');
+      // 75 days used (15 remaining = amber, since <16 and >=1)
+      const trips75 = createTripsWithDaysUsed(75);
+      expect(calculateCompliance(trips75, config).riskLevel).toBe('amber');
     });
 
-    it('amber → red when critically low', () => {
+    it('amber → red when at violation', () => {
       // Reference date must be after trip ends
       const config = createConfig({ referenceDate: '2026-02-15' });
 
-      // 75 days (15 remaining = amber, since <30 and >=10)
+      // New thresholds: green >= 16, amber >= 1, red < 1
+      // 75 days (15 remaining = amber, since <16 and >=1)
       const trips75 = createTripsWithDaysUsed(75);
       expect(calculateCompliance(trips75, config).riskLevel).toBe('amber');
 
-      // 82 days (8 remaining = red, since <10)
-      const trips82 = createTripsWithDaysUsed(82);
-      expect(calculateCompliance(trips82, config).riskLevel).toBe('red');
+      // 90 days (0 remaining = red, since <1)
+      const trips90 = createTripsWithDaysUsed(90);
+      expect(calculateCompliance(trips90, config).riskLevel).toBe('red');
     });
 
     it('deleting trips can restore green status', () => {
       // Reference date must be after trips end
       const config = createConfig({ referenceDate: '2026-02-01' });
 
-      // 65 days (25 remaining = amber)
-      const trips65 = createTripsWithDaysUsed(65);
-      const amberResult = calculateCompliance(trips65, config);
+      // New thresholds: green >= 16 remaining
+      // 80 days (10 remaining = amber, since <16 and >=1)
+      const trips80 = createTripsWithDaysUsed(80);
+      const amberResult = calculateCompliance(trips80, config);
       expect(amberResult.riskLevel).toBe('amber');
 
       // Delete trips to 50 days (40 remaining = green)

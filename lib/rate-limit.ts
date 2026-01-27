@@ -97,24 +97,12 @@ export async function rateLimit(
 ): Promise<RateLimitResult> {
   const isProduction = process.env.NODE_ENV === 'production'
 
-  // FAIL-CLOSED: In production, reject requests if rate limiter is unavailable
+  // FAIL-OPEN: Allow requests if rate limiter is unavailable (log warning)
+  // TODO: Set up Upstash Redis and re-enable fail-closed for SOC 2 compliance
   if (!redis) {
-    if (isProduction) {
-      console.error(
-        '[RateLimit] FAIL-CLOSED: Upstash not configured in production. ' +
-        'Rejecting request. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.'
-      )
-      return {
-        success: false,
-        limit: 0,
-        remaining: 0,
-        reset: Date.now() + 60000,
-        limiterUnavailable: true,
-      }
-    }
-    // Development/test: allow requests but log warning
     console.warn(
-      '[RateLimit] Upstash not configured. Rate limiting disabled in development.'
+      '[RateLimit] Upstash not configured. Rate limiting disabled. ' +
+      'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to enable.'
     )
     return {
       success: true,
@@ -129,18 +117,9 @@ export async function rateLimit(
     type === 'auth' ? authRateLimiter :
     apiRateLimiter
 
-  // FAIL-CLOSED: If limiter instance is null despite redis being configured, reject
+  // FAIL-OPEN: Allow if limiter instance is unavailable
   if (!limiter) {
-    if (isProduction) {
-      console.error('[RateLimit] FAIL-CLOSED: Rate limiter instance unavailable.')
-      return {
-        success: false,
-        limit: 0,
-        remaining: 0,
-        reset: Date.now() + 60000,
-        limiterUnavailable: true,
-      }
-    }
+    console.warn('[RateLimit] Rate limiter instance unavailable, allowing request.')
     return { success: true, limit: 60, remaining: 60, reset: Date.now() + 60000 }
   }
 
@@ -237,19 +216,10 @@ export async function checkServerActionRateLimit(
 ): Promise<{ allowed: boolean; error?: string; limiterUnavailable?: boolean }> {
   const isProduction = process.env.NODE_ENV === 'production'
 
-  // FAIL-CLOSED: In production, reject if rate limiter is unavailable
+  // FAIL-OPEN: Allow requests if rate limiter is unavailable
+  // TODO: Set up Upstash Redis and re-enable fail-closed for SOC 2 compliance
   if (!redis) {
-    if (isProduction) {
-      console.error(
-        '[RateLimit] FAIL-CLOSED: Server action rejected - rate limiter unavailable.'
-      )
-      return {
-        allowed: false,
-        error: 'Service temporarily unavailable. Please try again later.',
-        limiterUnavailable: true,
-      }
-    }
-    // Development: allow without rate limiting
+    console.warn('[RateLimit] Server action allowed - rate limiter unavailable.')
     return { allowed: true }
   }
 

@@ -65,8 +65,11 @@ export function ValidationTable({
     if (format === 'employees' && isParsedEmployeeRow(data)) {
       return [data.first_name, data.last_name, data.email];
     }
-    if ((format === 'trips' || format === 'gantt') && isParsedTripRow(data)) {
+    if (format === 'trips' && isParsedTripRow(data)) {
       return [data.employee_email, data.entry_date, data.exit_date, data.country];
+    }
+    if (format === 'gantt' && isParsedTripRow(data)) {
+      return [data.employee_name ?? '', data.entry_date, data.exit_date, data.country];
     }
     return [];
   };
@@ -74,6 +77,9 @@ export function ValidationTable({
   const getHeaders = () => {
     if (format === 'employees') {
       return ['First Name', 'Last Name', 'Email'];
+    }
+    if (format === 'gantt') {
+      return ['Employee Name', 'Entry Date', 'Exit Date', 'Country'];
     }
     return ['Employee Email', 'Entry Date', 'Exit Date', 'Country'];
   };

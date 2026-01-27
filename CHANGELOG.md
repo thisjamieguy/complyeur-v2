@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: seo, accessibility, and marketing pages [`7a0c0d9`](https://github.com/thisjamieguy/complyeur-v2/commit/7a0c0d9963e9bc5fc95591eba7eb66ad610f0bed)
 - chore(db): migrations cleanup and RLS optimization [`f66de21`](https://github.com/thisjamieguy/complyeur-v2/commit/f66de21bdc4feb0ad46b8af8b6da15269f2c76f6)
 - refactor: compliance engine and import parser improvements [`18f35fd`](https://github.com/thisjamieguy/complyeur-v2/commit/18f35fd82fa05accfe1598c7b2e8dead090a6560)
 - feat: add Google Analytics 4 integration [`a5d009f`](https://github.com/thisjamieguy/complyeur-v2/commit/a5d009f9599c514bebcde3fb41c41319695e6eb9)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs: update changelog [`74dc1ee`](https://github.com/thisjamieguy/complyeur-v2/commit/74dc1ee764fd6642020ead05b5d545a7f8fc605c)
 - chore: use git tags only for changelog versioning [`650be4d`](https://github.com/thisjamieguy/complyeur-v2/commit/650be4daafa82ee728a1266c6665b76ff0eb8993)
 - chore: bump version to 1.0.0 to match git tag [`08516de`](https://github.com/thisjamieguy/complyeur-v2/commit/08516debf00be83be812cdb50076849e2eae9f36)
-- chore: configure auto-changelog with Keep a Changelog format [`6d592e4`](https://github.com/thisjamieguy/complyeur-v2/commit/6d592e4e8116537f258241c7627142fd4f27cb88)
 
 ## v1.0.0 - 2026-01-22
 

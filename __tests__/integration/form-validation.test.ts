@@ -63,7 +63,7 @@ describe('Employee form validation', () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].message).toBe(
-          'Name can only contain letters, spaces, hyphens, and apostrophes'
+          'Name can only contain letters, spaces, hyphens, apostrophes, and periods'
         );
       }
     });

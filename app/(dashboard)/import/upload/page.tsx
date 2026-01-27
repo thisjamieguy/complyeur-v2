@@ -7,7 +7,7 @@ import { ColumnMappingUI } from '@/components/import/ColumnMappingUI';
 import { DateFormatConfirmation } from '@/components/import/DateFormatConfirmation';
 import type { ImportFormat, MappingState, ParsedRow } from '@/types/import';
 import { IMPORT_FORMATS } from '@/types/import';
-import { parseFileRaw, type RawParseResult } from '@/lib/import/parser';
+import { parseFileRaw, parseGanttFromData } from '@/lib/import/parser';
 import { validateRows, getValidationSummary } from '@/lib/import/validator';
 import {
   initializeMappingState,
@@ -87,6 +87,33 @@ export default function UploadPage() {
       }
 
       setSessionId(sessionResult.session.id);
+
+      // Special handling for Gantt/Schedule format
+      if (format === 'gantt') {
+        const buffer = await file.arrayBuffer();
+        const ganttResult = parseGanttFromData(buffer);
+
+        if (!ganttResult.success || !ganttResult.data) {
+          showError('Parse Error', ganttResult.error ?? 'Failed to parse schedule file');
+          setIsProcessing(false);
+          return;
+        }
+
+        const validatedRows = await validateRows(ganttResult.data, 'gantt');
+        const summary = getValidationSummary(validatedRows);
+        const allErrors = validatedRows.flatMap((r) => [...r.errors, ...r.warnings]);
+
+        await saveParsedData(
+          sessionResult.session.id,
+          ganttResult.data,
+          summary.valid,
+          summary.errors,
+          allErrors
+        );
+
+        router.push(`/import/preview?session=${sessionResult.session.id}`);
+        return;
+      }
 
       // Step 2: Parse file raw (without strict validation)
       const parseResult = await parseFileRaw(file);

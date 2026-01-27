@@ -60,13 +60,13 @@ function isLocalHost(host: string): boolean {
  * @param requestHeaders - Headers from the incoming request (from next/headers)
  */
 export function getBaseUrl(requestHeaders?: Headers): string {
-  // 1. In Vercel production/preview, prefer VERCEL_URL to avoid any header manipulation issues
-  // This ensures OAuth redirects always go to the correct Vercel URL
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
+  // 1. Prefer an explicit app URL when provided (custom domains in any environment).
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (appUrl && !isLocalHost(appUrl)) {
+    return appUrl
   }
 
-  // 2. Try to get from request headers (works in Server Actions for non-Vercel deployments)
+  // 2. Try to get from request headers (works in Server Actions and custom domains)
   if (requestHeaders) {
     const host = requestHeaders.get('x-forwarded-host') || requestHeaders.get('host')
     const protocol = requestHeaders.get('x-forwarded-proto') || 'https'
@@ -77,11 +77,9 @@ export function getBaseUrl(requestHeaders?: Headers): string {
     }
   }
 
-  // 3. Fall back to configured app URL (read at runtime, not from cached env object)
-  // This handles non-Vercel deployments where NEXT_PUBLIC_APP_URL is set
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
-  if (appUrl && !isLocalHost(appUrl)) {
-    return appUrl
+  // 3. In Vercel production/preview, fall back to VERCEL_URL
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
   }
 
   // 4. Final fallback for local development only

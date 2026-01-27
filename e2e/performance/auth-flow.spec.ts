@@ -1,13 +1,31 @@
 import { test, expect, Page } from '@playwright/test'
+import { deleteUserByEmail, ensureTestUser, hasAdminConfig } from '../utils/supabase-admin'
 
 // Helper function to generate a unique email for signup tests
 function generateUniqueEmail() {
   const timestamp = Date.now()
-  return `testuser+${timestamp}@example.com`
+  return `testuser_${timestamp}@example.com`
 }
 
 test.describe('Authentication Performance', () => {
   let page: Page
+  const defaultPassword = 'TestPassword123!'
+  const loginEmail = process.env.E2E_LOGIN_EMAIL || 'e2e.login@complyeur.test'
+  const loginPassword = process.env.E2E_LOGIN_PASSWORD || defaultPassword
+  const canProvision = hasAdminConfig()
+
+  test.beforeAll(async () => {
+    if (!canProvision) return
+    const provision = await ensureTestUser({
+      email: loginEmail,
+      password: loginPassword,
+      companyName: 'E2E Performance Test Company',
+    })
+    if (provision.ok) {
+      process.env.E2E_LOGIN_EMAIL = loginEmail
+      process.env.E2E_LOGIN_PASSWORD = loginPassword
+    }
+  })
 
   test.beforeEach(async ({ browser }) => {
     page = await browser.newPage()
@@ -18,14 +36,18 @@ test.describe('Authentication Performance', () => {
   })
 
   test('should measure login performance', async () => {
+    if (!process.env.E2E_LOGIN_EMAIL || !process.env.E2E_LOGIN_PASSWORD) {
+      test.skip(true, 'E2E login credentials are not configured for performance tests.')
+    }
+
     await page.goto('/login')
 
-    await page.fill('input[name="email"]', 'test@example.com') // Assuming a pre-existing test user
-    await page.fill('input[name="password"]', 'TestPassword123!') // Assuming a pre-existing test user
+    await page.getByLabel('Email').fill(process.env.E2E_LOGIN_EMAIL!)
+    await page.getByLabel('Password').fill(process.env.E2E_LOGIN_PASSWORD!)
 
     const startTime = performance.now()
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard') // Wait for navigation to the dashboard
+    await page.getByRole('button', { name: /sign in/i }).click()
+    await page.waitForURL(/\/dashboard/) // Wait for navigation to the dashboard
     const duration = performance.now() - startTime
 
     console.log(`Login performance: ${duration.toFixed(2)} ms`)
@@ -35,20 +57,21 @@ test.describe('Authentication Performance', () => {
     const uniqueEmail = generateUniqueEmail()
     await page.goto('/signup')
 
-    await page.fill('input[name="email"]', uniqueEmail)
-    await page.fill('input[name="password"]', 'TestPassword123!')
-    await page.fill('input[name="confirmPassword"]', 'TestPassword123!')
-    await page.fill('input[name="companyName"]', 'Performance Test Company')
-    await page.click('input[type="checkbox"][name="termsAccepted"]') // Assuming a checkbox for terms
+    await page.getByLabel('Email').fill(uniqueEmail)
+    await page.getByLabel('Company Name').fill('Performance Test Company')
+    await page.locator('input[name="password"]').fill(defaultPassword)
+    await page.locator('input[name="confirmPassword"]').fill(defaultPassword)
+    await page.getByRole('checkbox').click()
 
     const startTime = performance.now()
-    await page.click('button[type="submit"]')
-    await page.waitForURL('/dashboard') // Wait for navigation to the dashboard
+    await page.getByRole('button', { name: /create account/i }).click()
+    await page.waitForURL(/\/dashboard/) // Wait for navigation to the dashboard
     const duration = performance.now() - startTime
 
     console.log(`Signup performance: ${duration.toFixed(2)} ms`)
 
-    // Optional: Clean up the created user if possible, e.g., via an API call
-    // This would require more advanced setup not covered in this basic example.
+    if (canProvision) {
+      await deleteUserByEmail(uniqueEmail)
+    }
   })
 })

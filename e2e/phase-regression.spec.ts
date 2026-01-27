@@ -27,10 +27,10 @@ test.describe('Phase 1-2: Auth & Foundation', () => {
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/login/);
 
-    await page.goto('/employees');
+    await page.goto('/calendar');
     await expect(page).toHaveURL(/login/);
 
-    await page.goto('/trips');
+    await page.goto('/settings');
     await expect(page).toHaveURL(/login/);
   });
 
