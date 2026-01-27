@@ -1,10 +1,6 @@
-import { redirect } from 'next/navigation'
+import { logout } from '@/app/(auth)/actions'
+import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
-import { AppShell } from '@/components/layout/app-shell'
-import { OfflineBanner } from '@/components/ui/offline-banner'
-import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
-
-export const dynamic = 'force-dynamic'
 
 export default async function DashboardLayout({
   children,
@@ -15,34 +11,31 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
-  }
-
-  // Fetch the user's profile to get their name and role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, role')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.role === 'admin') {
-    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
-    if (!mfa.ok) {
-      redirect('/mfa')
-    }
+    // This should be handled by middleware, but just in case
+    return null
   }
 
   return (
-    <AppShell
-      user={{
-        id: user.id,
-        email: user.email!,
-        full_name: profile?.full_name,
-        role: profile?.role,
-      }}
-    >
-      <OfflineBanner />
-      {children}
-    </AppShell>
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-xl font-semibold text-gray-900">ComplyEUR</h1>
+            <span className="text-sm text-gray-500">Dashboard</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-600">{user.email}</span>
+            <form action={logout}>
+              <Button variant="outline" size="sm" type="submit">
+                Sign out
+              </Button>
+            </form>
+          </div>
+        </div>
+      </header>
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {children}
+      </main>
+    </div>
   )
 }

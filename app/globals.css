@@ -21,6 +21,19 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --radius: var(--radius);
+
+  /* Brand colors derived from logo #385070 */
+  --color-brand-50: #f0f4f8;
+  --color-brand-100: #d9e2eb;
+  --color-brand-200: #b3c5d7;
+  --color-brand-300: #8da8c3;
+  --color-brand-400: #5c7fa3;
+  --color-brand-500: #456285;
+  --color-brand-600: #385070;
+  --color-brand-700: #2d405a;
+  --color-brand-800: #223044;
+  --color-brand-900: #17202e;
+  --color-brand-950: #0d1319;
 }
 
 :root {

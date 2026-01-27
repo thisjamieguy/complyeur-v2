@@ -240,20 +240,26 @@ function SignupForm() {
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 py-2">
                   <FormControl>
                     <Checkbox
+                      id="terms-accepted"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       disabled={isAnyLoading}
-                      aria-describedby="terms-description"
+                      aria-labelledby="terms-label"
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel className="text-sm font-normal cursor-pointer">
+                    <label
+                      id="terms-label"
+                      htmlFor="terms-accepted"
+                      className="text-sm font-normal cursor-pointer leading-none"
+                    >
                       I agree to the{' '}
                       <Link
                         href="/terms"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-700 underline"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         Terms of Service
                       </Link>{' '}
@@ -263,10 +269,11 @@ function SignupForm() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-700 underline"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         Privacy Policy
                       </Link>
-                    </FormLabel>
+                    </label>
                     <FormMessage />
                   </div>
                 </FormItem>

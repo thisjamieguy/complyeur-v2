@@ -16,6 +16,18 @@ export function Footer() {
           <p>&copy; {new Date().getFullYear()} ComplyEUR. All rights reserved.</p>
           <div className="flex flex-wrap justify-center gap-4 mt-4">
             <Link
+              href="/about"
+              className="hover:text-slate-700 transition-colors"
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className="hover:text-slate-700 transition-colors"
+            >
+              Contact
+            </Link>
+            <Link
               href="/privacy"
               className="hover:text-slate-700 transition-colors"
             >

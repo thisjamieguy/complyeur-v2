@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(db): migrations cleanup and RLS optimization [`f66de21`](https://github.com/thisjamieguy/complyeur-v2/commit/f66de21bdc4feb0ad46b8af8b6da15269f2c76f6)
 - refactor: compliance engine and import parser improvements [`18f35fd`](https://github.com/thisjamieguy/complyeur-v2/commit/18f35fd82fa05accfe1598c7b2e8dead090a6560)
 - feat: add Google Analytics 4 integration [`a5d009f`](https://github.com/thisjamieguy/complyeur-v2/commit/a5d009f9599c514bebcde3fb41c41319695e6eb9)
 - docs: update changelog [`8e37648`](https://github.com/thisjamieguy/complyeur-v2/commit/8e37648912b5804c820c04a38998df3e84b88850)

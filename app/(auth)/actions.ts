@@ -121,13 +121,31 @@ export async function signup(formData: FormData) {
   // Create the company and profile using the database function
   // This bypasses RLS during signup since the user isn't fully authenticated yet
   // Store the terms acceptance timestamp
-  const { data: companyId, error: signupError } = await supabase
-    .rpc('create_company_and_profile', {
+  const termsAcceptedAt = new Date().toISOString()
+  const fullSignature = await supabase.rpc('create_company_and_profile', {
+    user_id: authData.user.id,
+    user_email: normalizedEmail,
+    company_name: companyName,
+    user_terms_accepted_at: termsAcceptedAt,
+    user_auth_provider: 'email',
+    user_first_name: null,
+    user_last_name: null,
+  })
+
+  let companyId = fullSignature.data
+  let signupError = fullSignature.error
+
+  // Backward compatibility for environments that only support the legacy signature
+  if (signupError?.code === 'PGRST202') {
+    const legacySignature = await supabase.rpc('create_company_and_profile', {
       user_id: authData.user.id,
       user_email: normalizedEmail,
       company_name: companyName,
-      user_terms_accepted_at: new Date().toISOString(),
+      user_terms_accepted_at: termsAcceptedAt,
     })
+    companyId = legacySignature.data
+    signupError = legacySignature.error
+  }
 
   if (signupError) {
     console.error('Signup RPC error:', signupError)

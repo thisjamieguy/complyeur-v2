@@ -1,9 +1,12 @@
 import { Metadata } from 'next'
+import { createPageMetadata } from '@/lib/metadata'
 
-export const metadata: Metadata = {
-  title: 'Accessibility Statement | ComplyEUR',
-  description: 'Learn about our commitment to accessibility and how we make ComplyEUR usable for everyone.',
-}
+export const metadata: Metadata = createPageMetadata({
+  title: 'Accessibility Statement',
+  description:
+    'ComplyEUR is committed to digital accessibility. We make our Schengen compliance platform usable for everyone, following WCAG 2.1 guidelines.',
+  path: '/accessibility',
+})
 
 export default function AccessibilityLayout({
   children,

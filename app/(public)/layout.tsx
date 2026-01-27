@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Footer } from '@/components/layout/footer'
+import { SkipLink } from '@/components/ui/skip-link'
 
 export default function PublicLayout({
   children,
@@ -8,6 +9,7 @@ export default function PublicLayout({
 }) {
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      <SkipLink />
       {/* Simple header with logo */}
       <header className="border-b border-slate-200 px-4 py-4">
         <div className="max-w-3xl mx-auto">
@@ -18,7 +20,7 @@ export default function PublicLayout({
       </header>
 
       {/* Main content */}
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {children}
       </main>
 
