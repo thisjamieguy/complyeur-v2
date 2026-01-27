@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- docs: update changelog [`8e37648`](https://github.com/thisjamieguy/complyeur-v2/commit/8e37648912b5804c820c04a38998df3e84b88850)
 - fix: auto-create employees for trip imports [`05498e7`](https://github.com/thisjamieguy/complyeur-v2/commit/05498e75a7f2dc709230b0822caa931702421b84)
 - fix: accept undefined in validateRedirectUrl type signature [`deb5cad`](https://github.com/thisjamieguy/complyeur-v2/commit/deb5cade5c4002ef64b06b082822bec969be1e94)
 - docs: update changelog [`74dc1ee`](https://github.com/thisjamieguy/complyeur-v2/commit/74dc1ee764fd6642020ead05b5d545a7f8fc605c)

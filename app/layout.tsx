@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
+import { defaultMetadata } from "@/lib/metadata";
 import "./globals.css";
 
 // Import CookieYes types for global window augmentation
@@ -25,10 +27,7 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
-export const metadata: Metadata = {
-  title: "ComplyEUR - Schengen Compliance Management",
-  description: "Track employee travel compliance with EU Schengen 90/180-day visa rules",
-};
+export const metadata: Metadata = defaultMetadata;
 
 export default function RootLayout({
   children,
@@ -55,6 +54,9 @@ export default function RootLayout({
         {children}
         <Toaster />
         <SpeedInsights />
+        {process.env.NODE_ENV === 'production' && (
+          <GoogleAnalytics gaId="G-PKKZZFWD63" />
+        )}
       </body>
     </html>
   );
