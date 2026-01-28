@@ -126,12 +126,15 @@ export const GanttChart = memo(function GanttChart({
         className="shrink-0 bg-white border-r border-slate-200 z-20"
         style={{ width: NAME_COLUMN_WIDTH }}
       >
-        {/* Header cell */}
-        <div className="sticky top-0 z-30 bg-slate-50 border-b border-slate-200">
-          {/* Match the height of DateHeader (month row + day row) */}
-          <div className="h-[28px] border-b border-slate-100" />
-          <div className="px-3 py-2">
-            <span className="text-sm font-medium text-slate-500">Employee</span>
+        {/* Header cell - heights must match DateHeader exactly */}
+        <div className="sticky top-0 z-30 bg-white border-b border-slate-200">
+          {/* Month row placeholder - matches DateHeader month row (py-1 + text-xs) */}
+          <div className="px-2 py-1 border-b border-slate-100">
+            <span className="text-xs font-medium text-slate-600 invisible">Month</span>
+          </div>
+          {/* Employee label - matches DateHeader day row (py-1.5 + text-xs) */}
+          <div className="px-3 py-1.5 bg-slate-50 flex items-center">
+            <span className="text-xs font-medium text-slate-500">Employee</span>
           </div>
         </div>
 
@@ -147,13 +150,13 @@ export const GanttChart = memo(function GanttChart({
               return (
                 <div
                   key={employee.id}
-                  className="absolute left-0 w-full px-3 py-2 border-b border-slate-100 bg-white"
+                  className="absolute left-0 w-full px-3 border-b border-slate-100 bg-white flex items-center"
                   style={{
                     height: virtualRow.size,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  <span className="text-sm text-slate-700 truncate block">
+                  <span className="text-sm text-slate-700 truncate">
                     {employee.name}
                   </span>
                 </div>
