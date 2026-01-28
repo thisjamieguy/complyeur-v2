@@ -58,7 +58,7 @@ export function BrowserFrame({
       </div>
 
       {/* Content */}
-      <div className="relative">{children}</div>
+      <div className="relative overflow-hidden">{children}</div>
     </div>
   )
 }

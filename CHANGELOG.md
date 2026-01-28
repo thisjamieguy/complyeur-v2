@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: improve import system, calendar, and data refresh [`1aec5fa`](https://github.com/thisjamieguy/complyeur-v2/commit/1aec5fa5d680356b7cd9b5bc73e09e30eb177855)
 - fix: update landing page headline to emphasize consequences [`bcb3dc2`](https://github.com/thisjamieguy/complyeur-v2/commit/bcb3dc2c01f78c57dff50ebbd1159e1d6c5b1338)
 - fix: remove preview mode banner for live landing page [`8b547fa`](https://github.com/thisjamieguy/complyeur-v2/commit/8b547fa90b100526b7d3e6e702ef184faf339040)
 - feat: launch landing page in waitlist-only mode [`c1636e2`](https://github.com/thisjamieguy/complyeur-v2/commit/c1636e2bfa5444d64eef785db57a3e8b4387a0a0)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: lock employee name column during horizontal scroll [`03b9abd`](https://github.com/thisjamieguy/complyeur-v2/commit/03b9abd01c0a35bd0244fc04026e3ae96deed586)
 - perf: virtualize calendar employee rows with TanStack Virtual [`672959a`](https://github.com/thisjamieguy/complyeur-v2/commit/672959afe4715a1d4af465284577985778a93078)
 - feat: add danger zone, bulk delete, and preview landing page [`d6e2b50`](https://github.com/thisjamieguy/complyeur-v2/commit/d6e2b50fe72be50db01f6b7414af8d78dd71b95b)
-- docs: add delete data feature design [`084f44b`](https://github.com/thisjamieguy/complyeur-v2/commit/084f44b404d5de67949bb930557ac949d8aea154)
 
 ## v1.0.0 - 2026-01-22
 

@@ -109,7 +109,7 @@ export function DemoCalendar() {
   const timelineWidth = TOTAL_DAYS * DAY_WIDTH
 
   return (
-    <div className="bg-white overflow-hidden">
+    <div className="bg-white overflow-hidden max-w-full">
       {/* Header with month label */}
       <div className="px-3 py-2 border-b border-slate-200 bg-slate-50">
         <span className="text-sm font-medium text-slate-700">Timeline View</span>

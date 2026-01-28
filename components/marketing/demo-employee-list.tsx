@@ -159,7 +159,7 @@ export function DemoEmployeeList() {
   return (
     <div className="bg-slate-50 p-4">
       {/* Mini stats row */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <div className="bg-white rounded-lg p-3 border border-slate-200">
           <div className="text-2xl font-bold text-slate-900">5</div>
           <div className="text-xs text-slate-500">Total</div>
@@ -185,8 +185,8 @@ export function DemoEmployeeList() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <table className="w-full">
+      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+        <table className="w-full min-w-[400px]">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="text-left px-4 py-3 text-sm font-semibold text-slate-700">
@@ -195,7 +195,7 @@ export function DemoEmployeeList() {
               <th className="text-left px-4 py-3 text-sm font-semibold text-slate-700">
                 Status
               </th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-slate-700">
+              <th className="text-left px-4 py-3 text-sm font-semibold text-slate-700 hidden sm:table-cell">
                 Days Used
               </th>
               <th className="text-left px-4 py-3 text-sm font-semibold text-slate-700">
@@ -215,7 +215,7 @@ export function DemoEmployeeList() {
                 <td className="px-4 py-3">
                   <DemoStatusBadge status={employee.status} />
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-4 py-3 hidden sm:table-cell">
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-slate-600 tabular-nums transition-all duration-500">
                       {employee.daysUsed} / 90
