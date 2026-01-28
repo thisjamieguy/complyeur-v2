@@ -48,9 +48,14 @@ export async function middleware(request: NextRequest) {
     return redirectWithCookies(new URL('/dashboard', request.url))
   }
 
-  // If user is not authenticated and trying to access protected routes, redirect to login
+  // If user is not authenticated and trying to access protected routes, redirect to landing
   if (!user && isProtectedRoute) {
-    return redirectWithCookies(new URL('/login', request.url))
+    return redirectWithCookies(new URL('/landing', request.url))
+  }
+
+  // Redirect all auth routes to landing page (waitlist mode - no signups/logins yet)
+  if (!user && isAuthRoute) {
+    return redirectWithCookies(new URL('/landing', request.url))
   }
 
   // Continue with the response

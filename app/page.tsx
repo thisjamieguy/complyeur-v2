@@ -17,10 +17,10 @@ export default async function Home() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Redirect authenticated users to dashboard, others to login
+  // Redirect authenticated users to dashboard, others to landing page
   if (user) {
     redirect('/dashboard')
   } else {
-    redirect('/login')
+    redirect('/landing')
   }
 }

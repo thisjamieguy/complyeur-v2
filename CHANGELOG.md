@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: launch landing page in waitlist-only mode [`ca0b129`](https://github.com/thisjamieguy/complyeur-v2/commit/ca0b129a01bdfc394a7addaa4827bcc2927a7af5)
+- fix: prevent false country matches from 3+ letter codes in gantt parser [`679240c`](https://github.com/thisjamieguy/complyeur-v2/commit/679240cd8c258f02c26cbc38fad1f645774bc300)
 - feat: improve calendar UI with row separators and 180-day window [`c50278b`](https://github.com/thisjamieguy/complyeur-v2/commit/c50278bddaa0b28c75916f753794c3296fd1913c)
 - fix: align employee name column with timeline rows [`9fd1318`](https://github.com/thisjamieguy/complyeur-v2/commit/9fd1318469f0de29a1fc7fad30f4b2524bbdbf23)
 - fix: lock employee name column during horizontal scroll [`03b9abd`](https://github.com/thisjamieguy/complyeur-v2/commit/03b9abd01c0a35bd0244fc04026e3ae96deed586)
@@ -17,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs: add delete data feature design [`084f44b`](https://github.com/thisjamieguy/complyeur-v2/commit/084f44b404d5de67949bb930557ac949d8aea154)
 - docs: update changelog [`882cdfc`](https://github.com/thisjamieguy/complyeur-v2/commit/882cdfc3dcca72fb5641036d80581e2dd025d2a3)
 - chore: test infrastructure and config updates [`e05e008`](https://github.com/thisjamieguy/complyeur-v2/commit/e05e008977cb1939da1f6b8dc8524b19ecd9434f)
-- feat: seo, accessibility, and marketing pages [`7a0c0d9`](https://github.com/thisjamieguy/complyeur-v2/commit/7a0c0d9963e9bc5fc95591eba7eb66ad610f0bed)
-- chore(db): migrations cleanup and RLS optimization [`f66de21`](https://github.com/thisjamieguy/complyeur-v2/commit/f66de21bdc4feb0ad46b8af8b6da15269f2c76f6)
 
 ## v1.0.0 - 2026-01-22
 

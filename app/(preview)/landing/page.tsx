@@ -6,8 +6,10 @@ import Link from 'next/link'
 import { joinWaitlist, type WaitlistState } from './actions'
 import { cn } from '@/lib/utils'
 import { BrowserFrame } from '@/components/marketing/browser-frame'
+import { DemoCalendar } from '@/components/marketing/demo-calendar'
 import { DemoEmployeeList } from '@/components/marketing/demo-employee-list'
 import { FeatureTicker } from '@/components/marketing/feature-ticker'
+import { FeatureCards } from '@/components/marketing/feature-cards'
 import { SkipLink } from '@/components/ui/skip-link'
 
 // Waitlist form component
@@ -122,27 +124,6 @@ function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'minimal'
   )
 }
 
-// Feature card component
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode
-  title: string
-  description: string
-}) {
-  return (
-    <div className="group relative bg-white rounded-2xl p-8 border border-slate-100 hover:border-slate-200 hover:shadow-lg motion-safe:transition-[border-color,box-shadow] motion-safe:duration-300">
-      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-white mb-6 motion-safe:group-hover:scale-110 motion-safe:transition-transform">
-        {icon}
-      </div>
-      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
-      <p className="text-slate-600 leading-relaxed">{description}</p>
-    </div>
-  )
-}
-
 // Step component for "How it works"
 function Step({
   number,
@@ -189,20 +170,12 @@ export default function LandingPage() {
               priority
             />
           </Link>
-          <div className="flex items-center gap-6">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              Log in
-            </Link>
-            <Link
-              href="#waitlist"
-              className="text-sm font-medium px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-            >
-              Join Waitlist
-            </Link>
-          </div>
+          <Link
+            href="#waitlist"
+            className="text-sm font-medium px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+          >
+            Join Waitlist
+          </Link>
         </div>
       </nav>
 
@@ -267,57 +240,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-24">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4 text-balance">
-              Everything you need to stay compliant
-            </h2>
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-              ComplyEUR handles the complexity so you can focus on your business.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <FeatureCard
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              }
-              title="Employee Tracking"
-              description="Manage profiles for every team member who travels to the EU. See compliance status at a glance."
-            />
-            <FeatureCard
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-              }
-              title="Rolling Window Math"
-              description="Our calculator handles the complex 180-day rolling window logic. Always accurate, always up-to-date."
-            />
-            <FeatureCard
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              }
-              title="Smart Alerts"
-              description="Get notified before employees hit their limits. Warning, urgent, and breach alerts via email."
-            />
-            <FeatureCard
-              icon={
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-              }
-              title="Bulk Import"
-              description="Upload trips from spreadsheets or travel systems. No manual data entry required."
-            />
-          </div>
-        </div>
-      </section>
+      <FeatureCards />
 
       {/* How It Works */}
       <section className="py-24 bg-slate-50">
@@ -350,16 +273,10 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Placeholder for calendar component */}
+            {/* Interactive calendar demo */}
             <div className="lg:sticky lg:top-32">
               <BrowserFrame title="Trip Calendar" showUrlBar={false}>
-                <Image
-                  src="/images/screenshots/dashboard.png"
-                  alt="Calendar view showing upcoming trips and compliance windows"
-                  width={1200}
-                  height={800}
-                  className="w-full h-auto"
-                />
+                <DemoCalendar />
               </BrowserFrame>
             </div>
           </div>
