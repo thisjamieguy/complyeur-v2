@@ -30,6 +30,8 @@ interface EmployeeRowProps {
   dayWidth: number
   /** Fixed height from virtualizer (pre-calculated) */
   fixedHeight?: number
+  /** Hide the name column (rendered separately in GanttChart) */
+  hideNameColumn?: boolean
 }
 
 /**
@@ -80,6 +82,7 @@ export const EmployeeRow = memo(function EmployeeRow({
   dates,
   dayWidth,
   fixedHeight,
+  hideNameColumn = false,
 }: EmployeeRowProps) {
   // Calculate trip positions
   const tripPositions = useMemo(() => {
@@ -127,12 +130,14 @@ export const EmployeeRow = memo(function EmployeeRow({
 
   return (
     <div className="flex border-b border-slate-100 last:border-b-0">
-      {/* Employee name - sticky */}
-      <div className="w-40 flex-shrink-0 px-3 py-2 border-r border-slate-100 bg-white sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
-        <span className="text-sm text-slate-700 truncate block">
-          {employee.name}
-        </span>
-      </div>
+      {/* Employee name - only shown when not hidden */}
+      {!hideNameColumn && (
+        <div className="w-40 shrink-0 px-3 py-2 border-r border-slate-100 bg-white sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+          <span className="text-sm text-slate-700 truncate block">
+            {employee.name}
+          </span>
+        </div>
+      )}
 
       {/* Trip bars area */}
       <div className="flex-1 relative" style={{ height: `${rowHeight}px` }}>

@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 interface DateHeaderProps {
   dates: Date[]
   dayWidth: number
+  /** Whether to show the employee column (default: true) */
+  showEmployeeColumn?: boolean
 }
 
 interface MonthSpan {
@@ -21,6 +23,7 @@ interface MonthSpan {
 export const DateHeader = memo(function DateHeader({
   dates,
   dayWidth,
+  showEmployeeColumn = true,
 }: DateHeaderProps) {
   // Calculate month spans for the header
   const monthSpans = useMemo(() => {
@@ -65,7 +68,9 @@ export const DateHeader = memo(function DateHeader({
       {/* Month row */}
       <div className="flex">
         {/* Empty cell for employee column */}
-        <div className="w-40 flex-shrink-0 border-r border-slate-200" />
+        {showEmployeeColumn && (
+          <div className="w-40 shrink-0 border-r border-slate-200" />
+        )}
 
         {/* Month labels */}
         <div className="flex">
@@ -86,9 +91,11 @@ export const DateHeader = memo(function DateHeader({
       {/* Day number row */}
       <div className="flex">
         {/* Employee column header */}
-        <div className="w-40 flex-shrink-0 px-3 py-2 border-r border-slate-200 bg-slate-50">
-          <span className="text-sm font-medium text-slate-500">Employee</span>
-        </div>
+        {showEmployeeColumn && (
+          <div className="w-40 shrink-0 px-3 py-2 border-r border-slate-200 bg-slate-50">
+            <span className="text-sm font-medium text-slate-500">Employee</span>
+          </div>
+        )}
 
         {/* Day numbers */}
         <div className="flex">
