@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- docs: update changelog [`882cdfc`](https://github.com/thisjamieguy/complyeur-v2/commit/882cdfc3dcca72fb5641036d80581e2dd025d2a3)
 - chore: test infrastructure and config updates [`e05e008`](https://github.com/thisjamieguy/complyeur-v2/commit/e05e008977cb1939da1f6b8dc8524b19ecd9434f)
 - feat: seo, accessibility, and marketing pages [`7a0c0d9`](https://github.com/thisjamieguy/complyeur-v2/commit/7a0c0d9963e9bc5fc95591eba7eb66ad610f0bed)
 - chore(db): migrations cleanup and RLS optimization [`f66de21`](https://github.com/thisjamieguy/complyeur-v2/commit/f66de21bdc4feb0ad46b8af8b6da15269f2c76f6)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: auto-create employees for trip imports [`05498e7`](https://github.com/thisjamieguy/complyeur-v2/commit/05498e75a7f2dc709230b0822caa931702421b84)
 - fix: accept undefined in validateRedirectUrl type signature [`deb5cad`](https://github.com/thisjamieguy/complyeur-v2/commit/deb5cade5c4002ef64b06b082822bec969be1e94)
 - docs: update changelog [`74dc1ee`](https://github.com/thisjamieguy/complyeur-v2/commit/74dc1ee764fd6642020ead05b5d545a7f8fc605c)
-- chore: use git tags only for changelog versioning [`650be4d`](https://github.com/thisjamieguy/complyeur-v2/commit/650be4daafa82ee728a1266c6665b76ff0eb8993)
 
 ## v1.0.0 - 2026-01-22
 
