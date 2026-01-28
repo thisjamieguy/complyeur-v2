@@ -9,6 +9,7 @@ import { getNotificationPreferencesAction } from '../actions'
 import type { NotificationPreferences } from '@/types/database-helpers'
 
 import { SecuritySettings } from '@/components/settings'
+import { DangerZone } from '@/components/settings/danger-zone'
 
 export const metadata = {
   title: 'Settings | ComplyEUR',
@@ -144,6 +145,9 @@ export default async function SettingsPage() {
           <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
         </div>
       </Link>
+
+      {/* Danger Zone - at the bottom */}
+      <DangerZone />
     </div>
   )
 }

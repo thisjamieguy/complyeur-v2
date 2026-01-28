@@ -26,11 +26,12 @@ export type GdprAction =
   | 'RESTORE'          // Employee restored from soft delete
   | 'HARD_DELETE'      // Employee permanently deleted
   | 'AUTO_PURGE'       // System-initiated deletion via retention policy
+  | 'BULK_DELETE'      // Bulk data deletion from settings
 
 /**
  * Entity types affected by GDPR actions
  */
-export type GdprEntityType = 'employee' | 'trip' | 'company' | 'batch'
+export type GdprEntityType = 'employee' | 'trip' | 'company' | 'batch' | 'bulk_data'
 
 /**
  * Input for creating an audit entry
@@ -40,7 +41,7 @@ export interface AuditEntry {
   userId: string
   action: GdprAction
   entityType: GdprEntityType
-  entityId: string
+  entityId: string | null
   details: Record<string, unknown>
   ipAddress?: string
 }
@@ -187,7 +188,7 @@ export async function logGdprAction(entry: AuditEntry): Promise<void> {
     entry.userId,
     entry.action,
     entry.entityType,
-    entry.entityId,
+    entry.entityId ?? 'NONE',
     entry.details,
     createdAt
   )
@@ -321,6 +322,7 @@ export async function getGdprAuditLog(
       'RESTORE',
       'HARD_DELETE',
       'AUTO_PURGE',
+      'BULK_DELETE',
     ])
     .order('created_at', { ascending: false })
 

@@ -144,10 +144,12 @@ async function insertEmployees(
   let employeesUpdated = 0;
 
   // Get existing employees (include email for duplicate detection)
+  // Filter out soft-deleted employees so re-imports work after deletion
   const { data: existingEmployees } = await supabase
     .from('employees')
     .select('id, name, email')
-    .eq('company_id', companyId);
+    .eq('company_id', companyId)
+    .is('deleted_at', null);
 
   // Build email lookup map for duplicate detection
   const existingEmailMap = new Map(
@@ -292,11 +294,13 @@ async function insertTrips(
   let tripsSkipped = 0;
   let employeesCreated = 0;
 
-  // Get all employees for this company to match by email
+  // Get all active employees for this company to match by email
+  // Filter out soft-deleted employees so trips link to active employees only
   const { data: employees } = await supabase
     .from('employees')
     .select('id, email, name')
-    .eq('company_id', companyId);
+    .eq('company_id', companyId)
+    .is('deleted_at', null);
 
   const normalizeName = (name: string): string =>
     name.trim().replace(/\s+/g, ' ').toLowerCase();

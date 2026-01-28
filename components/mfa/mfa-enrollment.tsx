@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState, useTransition } from 'react'
-import { Shield, Smartphone, Key } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Shield, Smartphone, Key, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,7 @@ import {
 type EnrollData = { factorId: string; qrCode: string; secret: string }
 
 export function MfaEnrollmentPanel({ required = false }: { required?: boolean }) {
+  const router = useRouter()
   const [status, setStatus] = useState<Awaited<ReturnType<typeof getMfaStatusAction>> | null>(null)
   const [enrollData, setEnrollData] = useState<EnrollData | null>(null)
   const [totpCode, setTotpCode] = useState('')
@@ -226,6 +228,19 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {required && isVerified && (
+        <div className="pt-4 border-t">
+          <Button
+            onClick={() => router.push('/dashboard')}
+            className="w-full"
+            size="lg"
+          >
+            Continue to Dashboard
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       )}
     </div>

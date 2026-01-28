@@ -1,6 +1,7 @@
-import { logout } from '@/app/(auth)/actions'
-import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
+import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
+import { redirect } from 'next/navigation'
+import { AppShell } from '@/components/layout/app-shell'
 
 export default async function DashboardLayout({
   children,
@@ -15,27 +16,54 @@ export default async function DashboardLayout({
     return null
   }
 
+  // Check if user is privileged (admin or superadmin) and enforce MFA
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role, is_superadmin, full_name')
+    .eq('id', user.id)
+    .single()
+
+  // Handle profile query securely to prevent MFA bypass for privileged users
+  // If we can't determine privilege level (error or null), we can't safely skip MFA enforcement
+  if (profileError || !profile) {
+    if (profileError) {
+      // Log the error for debugging
+      if (profileError.code === 'PGRST116') {
+        console.error('[DashboardLayout] User profile not found for authenticated user:', user.id)
+      } else {
+        console.error('[DashboardLayout] Failed to fetch user profile:', profileError)
+      }
+    }
+    // Security: If we can't determine privilege level, we can't verify the user is NOT privileged
+    // Therefore, we must require MFA to prevent privileged users from bypassing MFA enforcement
+    // This ensures that even if a privileged user's profile lookup fails, MFA is still enforced
+    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
+    if (!mfa.ok) {
+      redirect('/mfa')
+    }
+  } else {
+    // Profile successfully retrieved - check privilege and enforce MFA
+    const isPrivileged = profile.role === 'admin' || profile.is_superadmin === true
+
+    if (isPrivileged) {
+      const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
+      if (!mfa.ok) {
+        redirect('/mfa')
+      }
+    }
+  }
+
+  // Build user object for AppShell
+  const appUser = {
+    id: user.id,
+    email: user.email ?? '',
+    full_name: profile?.full_name ?? null,
+    role: profile?.role ?? null,
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-semibold text-gray-900">ComplyEUR</h1>
-            <span className="text-sm text-gray-500">Dashboard</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">{user.email}</span>
-            <form action={logout}>
-              <Button variant="outline" size="sm" type="submit">
-                Sign out
-              </Button>
-            </form>
-          </div>
-        </div>
-      </header>
-      <main className="max-w-7xl mx-auto px-4 py-6">
-        {children}
-      </main>
-    </div>
+    <AppShell user={appUser}>
+      {children}
+    </AppShell>
   )
 }

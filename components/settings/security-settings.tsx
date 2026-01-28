@@ -18,7 +18,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -154,9 +153,9 @@ export function SecuritySettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <FormDescription>
+          <p className="text-sm text-slate-500">
             Use an app like Google Authenticator or Authy to generate verification codes.
-          </FormDescription>
+          </p>
           <Separator />
           <MfaEnrollmentPanel />
         </CardContent>

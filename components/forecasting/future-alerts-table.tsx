@@ -7,6 +7,7 @@
  * days remaining, and compliant-from dates.
  */
 
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -53,8 +54,13 @@ export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
         <TableBody>
           {forecasts.map((forecast) => (
             <TableRow key={forecast.tripId}>
-              <TableCell className="font-medium text-slate-900">
-                {forecast.employeeName}
+              <TableCell className="font-medium">
+                <Link
+                  href={`/employee/${forecast.employeeId}`}
+                  className="text-slate-900 hover:text-blue-600 hover:underline transition-colors"
+                >
+                  {forecast.employeeName}
+                </Link>
               </TableCell>
               <TableCell>
                 <span className="inline-flex items-center gap-2">

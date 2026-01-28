@@ -97,18 +97,34 @@ export async function rateLimit(
 ): Promise<RateLimitResult> {
   const isProduction = process.env.NODE_ENV === 'production'
 
-  // FAIL-OPEN: Allow requests if rate limiter is unavailable (log warning)
-  // TODO: Set up Upstash Redis and re-enable fail-closed for SOC 2 compliance
+  // FAIL-CLOSED in production: Reject requests if rate limiter is unavailable
+  // FAIL-OPEN in development: Allow requests for local dev
   if (!redis) {
-    console.warn(
-      '[RateLimit] Upstash not configured. Rate limiting disabled. ' +
-      'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to enable.'
-    )
-    return {
-      success: true,
-      limit: 60,
-      remaining: 60,
-      reset: Date.now() + 60000,
+    if (isProduction) {
+      console.error(
+        '[RateLimit] CRITICAL: Upstash Redis not configured in production. ' +
+        'Rejecting request for SOC 2 compliance. ' +
+        'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to enable.'
+      )
+      return {
+        success: false,
+        limit: 60,
+        remaining: 0,
+        reset: Date.now() + 60000,
+        limiterUnavailable: true,
+      }
+    } else {
+      console.warn(
+        '[RateLimit] Upstash not configured. Rate limiting disabled (dev mode). ' +
+        'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to enable.'
+      )
+      return {
+        success: true,
+        limit: 60,
+        remaining: 60,
+        reset: Date.now() + 60000,
+        limiterUnavailable: false,
+      }
     }
   }
 
@@ -117,10 +133,22 @@ export async function rateLimit(
     type === 'auth' ? authRateLimiter :
     apiRateLimiter
 
-  // FAIL-OPEN: Allow if limiter instance is unavailable
+  // FAIL-CLOSED in production: Reject if limiter instance is unavailable
+  // FAIL-OPEN in development: Allow for local dev
   if (!limiter) {
-    console.warn('[RateLimit] Rate limiter instance unavailable, allowing request.')
-    return { success: true, limit: 60, remaining: 60, reset: Date.now() + 60000 }
+    if (isProduction) {
+      console.error('[RateLimit] CRITICAL: Rate limiter instance unavailable in production. Rejecting request.')
+      return {
+        success: false,
+        limit: 60,
+        remaining: 0,
+        reset: Date.now() + 60000,
+        limiterUnavailable: true,
+      }
+    } else {
+      console.warn('[RateLimit] Rate limiter instance unavailable, allowing request (dev mode).')
+      return { success: true, limit: 60, remaining: 60, reset: Date.now() + 60000, limiterUnavailable: false }
+    }
   }
 
   const result = await limiter.limit(identifier)
@@ -130,6 +158,7 @@ export async function rateLimit(
     limit: result.limit,
     remaining: result.remaining,
     reset: result.reset,
+    limiterUnavailable: false, // Explicitly set to false for successful checks
   }
 }
 
@@ -216,11 +245,20 @@ export async function checkServerActionRateLimit(
 ): Promise<{ allowed: boolean; error?: string; limiterUnavailable?: boolean }> {
   const isProduction = process.env.NODE_ENV === 'production'
 
-  // FAIL-OPEN: Allow requests if rate limiter is unavailable
-  // TODO: Set up Upstash Redis and re-enable fail-closed for SOC 2 compliance
+  // FAIL-CLOSED in production: Reject if rate limiter is unavailable
+  // FAIL-OPEN in development: Allow for local dev
   if (!redis) {
-    console.warn('[RateLimit] Server action allowed - rate limiter unavailable.')
-    return { allowed: true }
+    if (isProduction) {
+      console.error('[RateLimit] CRITICAL: Server action rejected - rate limiter unavailable in production.')
+      return {
+        allowed: false,
+        error: 'Service temporarily unavailable. Please try again later.',
+        limiterUnavailable: true,
+      }
+    } else {
+      console.warn('[RateLimit] Server action allowed - rate limiter unavailable (dev mode).')
+      return { allowed: true }
+    }
   }
 
   // Use user ID + action name as identifier for more granular control

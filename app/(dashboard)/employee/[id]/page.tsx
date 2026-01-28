@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Calendar } from 'lucide-react'
+import { parseISO, format } from 'date-fns'
 import { getEmployeeById, getTripsByEmployeeId, getEmployees } from '@/lib/db'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,27 +11,63 @@ import { AddTripModal } from '@/components/trips/add-trip-modal'
 import { BulkAddTripsModal } from '@/components/trips/bulk-add-trips-modal'
 import { TripList } from '@/components/trips/trip-list'
 import { isSchengenCountry } from '@/lib/constants/schengen-countries'
+import { calculateCompliance, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'
 
 interface EmployeeDetailPageProps {
   params: Promise<{ id: string }>
 }
 
 function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
+  return format(parseISO(dateString), 'd MMMM yyyy')
 }
 
 function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return format(parseISO(dateString), "d MMMM yyyy 'at' HH:mm")
+}
+
+/**
+ * Convert database trip to compliance engine format
+ * Uses parseISO from date-fns to avoid timezone issues
+ */
+function toComplianceTrip(trip: { entry_date: string; exit_date: string; country: string }): ComplianceTrip {
+  return {
+    entryDate: parseISO(trip.entry_date),
+    exitDate: parseISO(trip.exit_date),
+    country: trip.country,
+  }
+}
+
+/**
+ * Get badge styling based on risk level
+ */
+function getStatusBadgeProps(riskLevel: RiskLevel, isCompliant: boolean): {
+  label: string
+  className: string
+} {
+  if (!isCompliant) {
+    return {
+      label: 'Violation',
+      className: 'bg-red-100 text-red-800 border-red-200',
+    }
+  }
+  switch (riskLevel) {
+    case 'red':
+      return {
+        label: 'Critical',
+        className: 'bg-red-100 text-red-800 border-red-200',
+      }
+    case 'amber':
+      return {
+        label: 'Warning',
+        className: 'bg-amber-100 text-amber-800 border-amber-200',
+      }
+    case 'green':
+    default:
+      return {
+        label: 'Compliant',
+        className: 'bg-green-100 text-green-800 border-green-200',
+      }
+  }
 }
 
 export default async function EmployeeDetailPage({ params }: EmployeeDetailPageProps) {
@@ -56,6 +93,15 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
     (sum, trip) => sum + (trip.travel_days ?? 0),
     0
   )
+
+  // Calculate compliance using the compliance engine (rolling 180-day window)
+  const complianceTrips = schengenTrips.map(toComplianceTrip)
+  const complianceResult = schengenTrips.length > 0
+    ? calculateCompliance(complianceTrips, {
+        mode: 'audit',
+        referenceDate: new Date(),
+      })
+    : null
 
   // Recent trips for the summary card (last 5)
   const recentTrips = trips.slice(0, 5)
@@ -92,29 +138,47 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
         <Card>
           <CardHeader>
             <CardTitle>Compliance Status</CardTitle>
-            <CardDescription>Current Schengen visa status</CardDescription>
+            <CardDescription>Current Schengen visa status (rolling 180-day window)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Status</span>
-                <Badge variant="outline">—</Badge>
+                {complianceResult ? (
+                  <Badge
+                    variant="outline"
+                    className={getStatusBadgeProps(complianceResult.riskLevel, complianceResult.isCompliant).className}
+                  >
+                    {getStatusBadgeProps(complianceResult.riskLevel, complianceResult.isCompliant).label}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200">
+                    No trips
+                  </Badge>
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Days Used</span>
                 <span className="font-medium">
-                  {trips.length > 0 ? totalSchengenDays : '—'}
+                  {complianceResult ? `${complianceResult.daysUsed} / 90` : '0 / 90'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Days Remaining</span>
-                <span className="font-medium">—</span>
+                <span className={`font-medium ${
+                  complianceResult && complianceResult.daysRemaining < 0
+                    ? 'text-red-600'
+                    : complianceResult && complianceResult.daysRemaining < 10
+                      ? 'text-amber-600'
+                      : ''
+                }`}>
+                  {complianceResult
+                    ? complianceResult.daysRemaining >= 0
+                      ? complianceResult.daysRemaining
+                      : `${Math.abs(complianceResult.daysRemaining)} over limit`
+                    : '90'}
+                </span>
               </div>
-              <p className="text-xs text-gray-400 pt-2 border-t">
-                {trips.length > 0
-                  ? 'Full compliance calculation coming in Phase 6.'
-                  : 'Compliance tracking will be available after adding trips.'}
-              </p>
             </div>
           </CardContent>
         </Card>
