@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
-- feat: launch landing page in waitlist-only mode [`ca0b129`](https://github.com/thisjamieguy/complyeur-v2/commit/ca0b129a01bdfc394a7addaa4827bcc2927a7af5)
+- feat: launch landing page in waitlist-only mode [`c1636e2`](https://github.com/thisjamieguy/complyeur-v2/commit/c1636e2bfa5444d64eef785db57a3e8b4387a0a0)
 - fix: prevent false country matches from 3+ letter codes in gantt parser [`679240c`](https://github.com/thisjamieguy/complyeur-v2/commit/679240cd8c258f02c26cbc38fad1f645774bc300)
 - feat: improve calendar UI with row separators and 180-day window [`c50278b`](https://github.com/thisjamieguy/complyeur-v2/commit/c50278bddaa0b28c75916f753794c3296fd1913c)
 - fix: align employee name column with timeline rows [`9fd1318`](https://github.com/thisjamieguy/complyeur-v2/commit/9fd1318469f0de29a1fc7fad30f4b2524bbdbf23)
