@@ -230,7 +230,7 @@ export default function LandingPage() {
       <section className="py-24 bg-slate-900 text-white">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-balance">
-            The 90/180 rule is harder than it looks
+            Fines. Bans. Stranded employees.
           </h2>
           <p className="text-xl text-slate-300 leading-relaxed max-w-2xl mx-auto">
             Your employees can only spend 90 days in the Schengen area within any rolling 180-day window.

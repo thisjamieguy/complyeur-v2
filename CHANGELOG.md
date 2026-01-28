@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: remove preview mode banner for live landing page [`8b547fa`](https://github.com/thisjamieguy/complyeur-v2/commit/8b547fa90b100526b7d3e6e702ef184faf339040)
 - feat: launch landing page in waitlist-only mode [`c1636e2`](https://github.com/thisjamieguy/complyeur-v2/commit/c1636e2bfa5444d64eef785db57a3e8b4387a0a0)
 - fix: prevent false country matches from 3+ letter codes in gantt parser [`679240c`](https://github.com/thisjamieguy/complyeur-v2/commit/679240cd8c258f02c26cbc38fad1f645774bc300)
 - feat: improve calendar UI with row separators and 180-day window [`c50278b`](https://github.com/thisjamieguy/complyeur-v2/commit/c50278bddaa0b28c75916f753794c3296fd1913c)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: add danger zone, bulk delete, and preview landing page [`d6e2b50`](https://github.com/thisjamieguy/complyeur-v2/commit/d6e2b50fe72be50db01f6b7414af8d78dd71b95b)
 - docs: add delete data feature design [`084f44b`](https://github.com/thisjamieguy/complyeur-v2/commit/084f44b404d5de67949bb930557ac949d8aea154)
 - docs: update changelog [`882cdfc`](https://github.com/thisjamieguy/complyeur-v2/commit/882cdfc3dcca72fb5641036d80581e2dd025d2a3)
-- chore: test infrastructure and config updates [`e05e008`](https://github.com/thisjamieguy/complyeur-v2/commit/e05e008977cb1939da1f6b8dc8524b19ecd9434f)
 
 ## v1.0.0 - 2026-01-22
 
