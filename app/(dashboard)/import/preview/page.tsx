@@ -3,11 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Loader2, ArrowLeft, Upload, Download, AlertTriangle } from 'lucide-react';
 import { ValidationSummary } from '@/components/import/ValidationSummary';
-import { ValidationTable } from '@/components/import/ValidationTable';
+import { WarningSummaryBanners } from '@/components/import/WarningSummaryBanners';
 import { DuplicateHandlingOptions } from '@/components/import/DuplicateHandlingOptions';
 import { generateErrorCsv, getErrorCsvFilename, downloadCsv } from '@/lib/import/error-export';
 import {
@@ -31,7 +29,6 @@ export default function PreviewPage() {
   const [session, setSession] = useState<ImportSession | null>(null);
   const [validatedRows, setValidatedRows] = useState<ValidatedRow<ParsedRow>[]>([]);
   const [summary, setSummary] = useState<ValidationSummaryType | null>(null);
-  const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [importStage, setImportStage] = useState<'idle' | 'preparing' | 'saving' | 'finalizing'>('idle');
@@ -99,6 +96,11 @@ export default function PreviewPage() {
       const result = await executeImport(sessionId, duplicateOptions);
 
       setImportStage('finalizing');
+
+      // Set flag to signal data was updated - helps other pages know to refresh
+      if (typeof window !== 'undefined' && (result.trips_created > 0 || result.employees_created > 0)) {
+        sessionStorage.setItem('complyeur_data_updated', Date.now().toString());
+      }
 
       if (result.success) {
         showSuccess('Import Complete', `Successfully imported ${session.format}`);
@@ -175,26 +177,8 @@ export default function PreviewPage() {
       {/* Summary Stats */}
       <ValidationSummary summary={summary} />
 
-      {/* Error Filter Toggle */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Switch
-            id="show-errors"
-            checked={showOnlyErrors}
-            onCheckedChange={setShowOnlyErrors}
-          />
-          <Label htmlFor="show-errors" className="text-sm text-slate-600">
-            Show only rows with errors/warnings
-          </Label>
-        </div>
-      </div>
-
-      {/* Validation Table */}
-      <ValidationTable
-        rows={validatedRows}
-        format={session.format as ImportFormat}
-        showOnlyErrors={showOnlyErrors}
-      />
+      {/* Grouped Warning Banners */}
+      <WarningSummaryBanners rows={validatedRows} />
 
       {/* Duplicate Handling Options */}
       <DuplicateHandlingOptions

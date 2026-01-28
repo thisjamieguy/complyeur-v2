@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useMemo } from 'react'
-import { isToday, differenceInDays, subDays, startOfDay, isWithinInterval, isSameDay } from 'date-fns'
+import { isToday, differenceInDays, subDays, startOfDay, isWithinInterval, isSameDay, isWeekend } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { TripBar } from './trip-bar'
 import type { RiskLevel } from '@/lib/compliance'
@@ -149,12 +149,14 @@ export const EmployeeRow = memo(function EmployeeRow({
             const isIn180Window = isWithinInterval(date, { start: windowStart, end: today })
             const isTodayDate = isToday(date)
             const isWindowStart = isSameDay(date, windowStart)
+            const isWeekendDay = isWeekend(date)
 
             return (
               <div
                 key={index}
                 className={cn(
                   'shrink-0 h-full',
+                  isWeekendDay && !isTodayDate && 'bg-slate-100/50',
                   isIn180Window && !isTodayDate && 'bg-amber-50/40',
                   isTodayDate && 'bg-blue-100',
                   isWindowStart && 'border-l-2 border-amber-500'

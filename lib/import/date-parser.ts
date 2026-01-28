@@ -90,16 +90,43 @@ export interface DateParseOptions {
   isGanttHeader?: boolean;
 }
 
-// Excel epoch: December 30, 1899 (accounting for Excel's leap year bug)
-const EXCEL_EPOCH = new Date(1899, 11, 30);
+// Excel date calculation constants
+// IMPORTANT: Use Date.UTC to avoid timezone issues - see CLAUDE.md
+const JAN_1_1900_UTC = Date.UTC(1900, 0, 1);
 
 /**
- * Converts an Excel serial date to a JavaScript Date.
- * Excel serial dates are days since January 1, 1900.
+ * Converts an Excel serial date to an ISO date string (YYYY-MM-DD).
+ *
+ * Excel's date system:
+ * - Serial 1 = January 1, 1900
+ * - Serial 60 = February 29, 1900 (phantom date - Excel bug, 1900 wasn't a leap year)
+ * - For dates >= serial 60, Excel is 1 day ahead of reality due to this bug
+ *
+ * IMPORTANT: Uses UTC to avoid timezone-dependent date shifts.
+ * Without UTC, the same Excel serial could parse to different dates
+ * depending on the user's timezone (off-by-one errors).
  */
-function excelSerialToDate(serial: number): Date {
-  // Subtract 1 because Excel incorrectly treats 1900 as a leap year
-  return new Date(EXCEL_EPOCH.getTime() + (serial - 1) * 86400000);
+function excelSerialToISODate(serial: number): string {
+  // For dates after Feb 28, 1900 (serial >= 60), subtract 2 to account for:
+  // 1. Serial starts at 1, not 0
+  // 2. Excel's phantom February 29, 1900
+  // For earlier dates (serial < 60), just subtract 1 for the serial offset
+  const daysToAdd = serial >= 60 ? serial - 2 : serial - 1;
+  const msFromEpoch = JAN_1_1900_UTC + daysToAdd * 86400000;
+  const d = new Date(msFromEpoch);
+  // Extract UTC components to avoid local timezone conversion
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Validates an Excel serial date and checks if it's in a reasonable range.
+ */
+function isValidExcelSerial(serial: number): boolean {
+  // Excel dates: 1 = Jan 1, 1900, valid range roughly 1900-2100
+  return serial >= 1 && serial <= 73000;
 }
 
 /**
@@ -189,18 +216,15 @@ export function parseDate(
 
   // Handle Excel serial dates (numbers in reasonable range)
   if (typeof input === 'number') {
-    // Excel dates: 1 = Jan 1, 1900, valid range roughly 1900-2100
-    if (input >= 1 && input <= 73000) {
-      const d = excelSerialToDate(input);
-      if (isValid(d)) {
-        return {
-          date: format(d, 'yyyy-MM-dd'),
-          original: String(input),
-          format: 'EXCEL_SERIAL',
-          isAmbiguous: false,
-          confidence: 'high',
-        };
-      }
+    if (isValidExcelSerial(input)) {
+      const isoDate = excelSerialToISODate(input);
+      return {
+        date: isoDate,
+        original: String(input),
+        format: 'EXCEL_SERIAL',
+        isAmbiguous: false,
+        confidence: 'high',
+      };
     }
     return {
       date: null,

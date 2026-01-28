@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/layout/app-shell'
+import { DataRefreshHandler } from '@/components/data-refresh-handler'
 
 export default async function DashboardLayout({
   children,
@@ -63,6 +64,7 @@ export default async function DashboardLayout({
 
   return (
     <AppShell user={appUser}>
+      <DataRefreshHandler />
       {children}
     </AppShell>
   )

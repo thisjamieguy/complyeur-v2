@@ -170,14 +170,27 @@ export function DangerZone() {
     }
   }
 
-  const toggleSelectAll = (
+  const toggleSelectAll = async (
     category: 'employees' | 'trips' | 'mappings' | 'history'
   ) => {
     const setters = { employees: setEmployees, trips: setTrips, mappings: setMappings, history: setHistory }
+    const loaders = { employees: loadEmployees, trips: loadTrips, mappings: loadMappings, history: loadHistory }
     const states = { employees, trips, mappings, history }
 
     const setter = setters[category]
+    const loader = loaders[category]
     const state = states[category]
+
+    // If items haven't been loaded yet, load them first
+    if (state.items.length === 0) {
+      await loader()
+      // After loading, select all (the setter will use the updated items)
+      setter((prev) => ({
+        ...prev,
+        selectedIds: new Set(prev.items.map((item) => item.id)),
+      }))
+      return
+    }
 
     if (state.selectedIds.size === state.items.length && state.items.length > 0) {
       // Deselect all

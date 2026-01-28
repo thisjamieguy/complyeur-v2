@@ -109,7 +109,9 @@ export function ValidationTable({
           <TableBody>
             {displayRows.map((row) => {
               const isExpanded = expandedRows.has(row.row_number);
-              const hasIssues = row.errors.length > 0 || row.warnings.length > 0;
+              const hasErrors = row.errors.length > 0;
+              // Only show expandable details for rows with errors (warnings are shown in grouped banner)
+              const isExpandable = hasErrors;
 
               return (
                 <>
@@ -117,9 +119,9 @@ export function ValidationTable({
                     key={row.row_number}
                     className={`
                       ${!row.is_valid ? 'bg-red-50' : row.warnings.length > 0 ? 'bg-amber-50' : ''}
-                      ${hasIssues ? 'cursor-pointer hover:bg-slate-50' : ''}
+                      ${isExpandable ? 'cursor-pointer hover:bg-slate-50' : ''}
                     `}
-                    onClick={() => hasIssues && toggleRow(row.row_number)}
+                    onClick={() => isExpandable && toggleRow(row.row_number)}
                   >
                     <TableCell className="font-mono text-sm text-slate-500">
                       {row.row_number}
@@ -131,7 +133,7 @@ export function ValidationTable({
                       </TableCell>
                     ))}
                     <TableCell>
-                      {hasIssues && (
+                      {isExpandable && (
                         <Button variant="ghost" size="icon-sm" className="h-6 w-6">
                           {isExpanded ? (
                             <ChevronUp className="h-4 w-4" />
@@ -142,7 +144,7 @@ export function ValidationTable({
                       )}
                     </TableCell>
                   </TableRow>
-                  {isExpanded && hasIssues && (
+                  {isExpanded && isExpandable && (
                     <TableRow key={`${row.row_number}-details`}>
                       <TableCell colSpan={getHeaders().length + 3} className="bg-slate-50 py-3">
                         <div className="space-y-2 px-4">
@@ -159,18 +161,6 @@ export function ValidationTable({
                                     (value: &quot;{error.value}&quot;)
                                   </span>
                                 )}
-                              </span>
-                            </div>
-                          ))}
-                          {row.warnings.map((warning, idx) => (
-                            <div
-                              key={`warning-${idx}`}
-                              className="flex items-start gap-2 text-sm text-amber-600"
-                            >
-                              <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                              <span>
-                                <span className="font-medium">{warning.column}:</span>{' '}
-                                {warning.message}
                               </span>
                             </div>
                           ))}

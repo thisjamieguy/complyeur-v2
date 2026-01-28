@@ -1,40 +1,11 @@
-import { Resend } from 'resend'
-import { logger } from '@/lib/logger.mjs'
+// TEMPORARY - Delete after testing
+// Visit http://localhost:3000/api/test-email to preview
 
-// Initialize Resend client lazily
-let resendClient: Resend | null = null
+import { NextResponse } from 'next/server'
 
-function getResendClient(): Resend | null {
-  if (!process.env.RESEND_API_KEY) {
-    return null
-  }
-  if (!resendClient) {
-    resendClient = new Resend(process.env.RESEND_API_KEY)
-  }
-  return resendClient
-}
-
-// Email configuration
-const FROM_EMAIL = process.env.EMAIL_FROM || 'ComplyEur <hello@complyeur.com>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://complyeur.com'
 
-interface WaitlistEmailData {
-  email: string
-  companyName?: string
-}
-
-interface EmailResult {
-  success: boolean
-  messageId?: string
-  error?: string
-}
-
-/**
- * Generate waitlist confirmation email HTML
- */
-function generateWaitlistEmailHtml(data: WaitlistEmailData): string {
-  const { companyName } = data
-
+function generateWaitlistEmailHtml(companyName?: string): string {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -104,74 +75,13 @@ function generateWaitlistEmailHtml(data: WaitlistEmailData): string {
 `
 }
 
-/**
- * Generate plain text version of the email
- */
-function generateWaitlistEmailText(data: WaitlistEmailData): string {
-  const { companyName } = data
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const companyName = searchParams.get('company') || undefined
 
-  return `
-Welcome to the ComplyEUR Waitlist!
+  const html = generateWaitlistEmailHtml(companyName)
 
-You're on the list${companyName ? `, ${companyName}` : ''}!
-
-Thank you for joining the ComplyEUR waitlist. You'll be among the first to know when we launch.
-
-What is ComplyEUR?
-ComplyEUR helps UK businesses track Schengen visa compliance for employees traveling to the EU. No more spreadsheets, no more guesswork — just automated tracking of the 90/180-day rule.
-
-We'll be in touch soon with updates on our launch. In the meantime, if you have any questions, just reply to this email.
-
----
-© ${new Date().getFullYear()} ComplyEUR. All rights reserved.
-${APP_URL}
-`.trim()
-}
-
-/**
- * Send waitlist confirmation email via Resend
- */
-export async function sendWaitlistEmail(data: WaitlistEmailData): Promise<EmailResult> {
-  // Skip if no API key (development/testing)
-  if (!process.env.RESEND_API_KEY) {
-    logger.info('[Waitlist Email] Skipping send - no RESEND_API_KEY configured', {
-      email: data.email,
-    })
-    return { success: true, messageId: 'dev-mode-skip' }
-  }
-
-  try {
-    const resend = getResendClient()
-    if (!resend) {
-      logger.warn('[Waitlist Email] Skipping - Resend client not available')
-      return { success: true, messageId: 'client-unavailable' }
-    }
-
-    const { data: result, error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: data.email,
-      subject: "You're on the ComplyEUR waitlist!",
-      html: generateWaitlistEmailHtml(data),
-      text: generateWaitlistEmailText(data),
-      tags: [
-        { name: 'type', value: 'waitlist' },
-        { name: 'category', value: 'marketing' },
-      ],
-    })
-
-    if (error) {
-      logger.error('[Waitlist Email] Resend error', { error })
-      return { success: false, error: error.message }
-    }
-
-    logger.info('[Waitlist Email] Sent successfully', {
-      messageId: result?.id,
-      email: data.email,
-    })
-    return { success: true, messageId: result?.id }
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-    logger.error('[Waitlist Email] Failed to send', { error: err })
-    return { success: false, error: errorMessage }
-  }
+  return new NextResponse(html, {
+    headers: { 'Content-Type': 'text/html' },
+  })
 }

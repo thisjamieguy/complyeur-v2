@@ -60,22 +60,34 @@ function runAlertDetectionBackground(employeeId: string): void {
   })
 }
 
+/**
+ * Revalidate all paths that display trip/employee data.
+ * IMPORTANT: Always use this helper instead of individual revalidatePath calls
+ * to ensure calendar, dashboard, and other views stay in sync.
+ */
+function revalidateTripData(employeeId?: string): void {
+  revalidatePath('/dashboard')
+  revalidatePath('/calendar')
+  if (employeeId) {
+    revalidatePath(`/employee/${employeeId}`)
+  }
+}
+
 export async function addEmployeeAction(formData: { name: string }) {
   const validated = employeeSchema.parse(formData)
   await createEmployee(validated)
-  revalidatePath('/dashboard')
+  revalidateTripData()
 }
 
 export async function updateEmployeeAction(id: string, formData: { name: string }) {
   const validated = employeeSchema.parse(formData)
   await updateEmployee(id, validated)
-  revalidatePath('/dashboard')
-  revalidatePath(`/employee/${id}`)
+  revalidateTripData(id)
 }
 
 export async function deleteEmployeeAction(id: string) {
   await deleteEmployee(id)
-  revalidatePath('/dashboard')
+  revalidateTripData(id)
 }
 
 // Trip actions
@@ -106,8 +118,7 @@ export async function addTripAction(formData: {
   // Run alert detection after trip creation (fire-and-forget)
   runAlertDetectionBackground(validated.employee_id)
 
-  revalidatePath(`/employee/${validated.employee_id}`)
-  revalidatePath('/dashboard')
+  revalidateTripData(validated.employee_id)
   return trip
 }
 
@@ -140,8 +151,7 @@ export async function updateTripAction(
   // Run alert detection after trip update (fire-and-forget)
   runAlertDetectionBackground(employeeId)
 
-  revalidatePath(`/employee/${employeeId}`)
-  revalidatePath('/dashboard')
+  revalidateTripData(employeeId)
   return trip
 }
 
@@ -151,8 +161,7 @@ export async function deleteTripAction(tripId: string, employeeId: string) {
   // Run alert detection after trip deletion (may resolve alerts)
   runAlertDetectionBackground(employeeId)
 
-  revalidatePath(`/employee/${employeeId}`)
-  revalidatePath('/dashboard')
+  revalidateTripData(employeeId)
 }
 
 // Bulk trip creation
@@ -246,8 +255,7 @@ export async function bulkAddTripsAction(
   // Run alert detection after bulk trip creation (fire-and-forget)
   runAlertDetectionBackground(employeeId)
 
-  revalidatePath(`/employee/${employeeId}`)
-  revalidatePath('/dashboard')
+  revalidateTripData(employeeId)
 
   return { success: true, ...result }
 }
@@ -264,9 +272,8 @@ export async function reassignTripAction(
   runAlertDetectionBackground(currentEmployeeId)
   runAlertDetectionBackground(newEmployeeId)
 
-  revalidatePath(`/employee/${currentEmployeeId}`)
+  revalidateTripData(currentEmployeeId)
   revalidatePath(`/employee/${newEmployeeId}`)
-  revalidatePath('/dashboard')
 }
 
 // ============================================================================

@@ -385,6 +385,7 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
 
     // Revalidate relevant paths
     revalidatePath('/dashboard')
+    revalidatePath('/calendar')
     revalidatePath('/settings')
     revalidatePath('/settings/mappings')
     revalidatePath('/settings/import-history')

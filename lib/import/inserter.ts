@@ -295,12 +295,25 @@ async function insertTrips(
   let employeesCreated = 0;
 
   // Get all active employees for this company to match by email
-  // Filter out soft-deleted employees so trips link to active employees only
   const { data: employees } = await supabase
     .from('employees')
     .select('id, email, name')
     .eq('company_id', companyId)
     .is('deleted_at', null);
+
+  // Also get soft-deleted employees to restore them if needed during import
+  const { data: deletedEmployees } = await supabase
+    .from('employees')
+    .select('id, email, name')
+    .eq('company_id', companyId)
+    .not('deleted_at', 'is', null);
+
+  // Build a map of soft-deleted employees by email for restoration
+  const deletedEmployeesByEmail = new Map(
+    (deletedEmployees ?? [])
+      .filter((e) => e.email)
+      .map((e) => [e.email!.toLowerCase().trim(), e])
+  );
 
   const normalizeName = (name: string): string =>
     name.trim().replace(/\s+/g, ' ').toLowerCase();
@@ -375,13 +388,24 @@ async function insertTrips(
   }
 
   const employeesToInsert: { name: string; email?: string | null; company_id: string }[] = [];
+  const employeesToRestore: { id: string; email: string; name: string }[] = [];
 
   for (const entry of missingEmailEmployees.values()) {
-    employeesToInsert.push({
-      name: entry.name,
-      email: entry.email,
-      company_id: companyId,
-    });
+    // Check if this employee was soft-deleted - if so, restore instead of creating new
+    const deletedEmployee = deletedEmployeesByEmail.get(entry.email);
+    if (deletedEmployee) {
+      employeesToRestore.push({
+        id: deletedEmployee.id,
+        email: entry.email,
+        name: entry.name,
+      });
+    } else {
+      employeesToInsert.push({
+        name: entry.name,
+        email: entry.email,
+        company_id: companyId,
+      });
+    }
   }
 
   for (const entry of missingNameEmployees.values()) {
@@ -392,14 +416,51 @@ async function insertTrips(
     });
   }
 
+  // Restore soft-deleted employees
+  if (employeesToRestore.length > 0) {
+    console.log('[TripImport] Restoring soft-deleted employees:', employeesToRestore.length);
+    for (const emp of employeesToRestore) {
+      const { error: restoreError } = await supabase
+        .from('employees')
+        .update({ deleted_at: null, name: emp.name })
+        .eq('id', emp.id);
+
+      if (restoreError) {
+        console.error('[TripImport] Failed to restore employee:', restoreError);
+        errors.push({
+          row: 0,
+          column: '',
+          value: emp.email,
+          message: `Failed to restore employee ${emp.email}: ${restoreError.message}`,
+          severity: 'error',
+        });
+      } else {
+        employeesCreated++;
+        employeeEmailMap.set(emp.email.toLowerCase().trim(), emp.id);
+        if (emp.name) {
+          employeeNameMap.set(normalizeName(emp.name), emp.id);
+        }
+        warnings.push({
+          row: 0,
+          column: 'employee_email',
+          value: emp.email,
+          message: `Restored previously deleted employee: ${emp.email}`,
+          severity: 'warning',
+        });
+      }
+    }
+  }
+
+  // Insert new employees
   if (employeesToInsert.length > 0) {
+    console.log('[TripImport] Creating new employees:', employeesToInsert.length);
     const { data: insertedEmployees, error: insertEmployeesError } = await supabase
       .from('employees')
       .insert(employeesToInsert)
       .select('id, email, name');
 
     if (insertEmployeesError) {
-      console.error('Failed to create employees for trip import:', insertEmployeesError);
+      console.error('[TripImport] Failed to create employees:', insertEmployeesError);
       errors.push({
         row: 0,
         column: '',
@@ -533,13 +594,19 @@ async function insertTrips(
 
   // Batch insert trips
   if (tripsToInsert.length > 0) {
+    console.log('[TripImport] Inserting trips:', {
+      count: tripsToInsert.length,
+      companyId,
+      firstTrip: tripsToInsert[0],
+    });
+
     const { data: insertedTrips, error: insertError } = await supabase
       .from('trips')
       .insert(tripsToInsert)
       .select();
 
     if (insertError) {
-      console.error('Failed to insert trips:', insertError);
+      console.error('[TripImport] Failed to insert trips:', insertError);
       errors.push({
         row: 0,
         column: '',
@@ -549,7 +616,13 @@ async function insertTrips(
       });
     } else {
       tripsCreated = insertedTrips?.length ?? 0;
+      console.log('[TripImport] Successfully inserted trips:', {
+        count: tripsCreated,
+        tripIds: insertedTrips?.map((t) => t.id),
+      });
     }
+  } else {
+    console.log('[TripImport] No trips to insert - all skipped or no valid rows');
   }
 
   // Log the import to audit log

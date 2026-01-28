@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { CheckCircle2, Users, Plane, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,7 +13,26 @@ interface ImportSummaryProps {
 }
 
 export function ImportSummary({ result, format }: ImportSummaryProps) {
+  const router = useRouter();
   const isSuccess = result.success;
+
+  /**
+   * Navigate to a page with a hard refresh to ensure fresh data.
+   * This is necessary because Next.js Router Cache may have stale data
+   * from before the import. Using window.location bypasses the Router
+   * Cache entirely, ensuring the server is hit for fresh data.
+   *
+   * We also set a sessionStorage flag so that if the user navigates
+   * via sidebar instead, those pages can detect and refresh.
+   */
+  const navigateWithRefresh = (path: string) => {
+    // Set flag for pages to detect they need fresh data
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('complyeur_data_updated', Date.now().toString());
+    }
+    // Hard navigation bypasses Router Cache completely
+    window.location.href = path;
+  };
 
   return (
     <div className="space-y-8">
@@ -113,11 +133,9 @@ export function ImportSummary({ result, format }: ImportSummaryProps) {
         <Button variant="outline" asChild>
           <Link href="/import">Import More Data</Link>
         </Button>
-        <Button asChild>
-          <Link href="/dashboard">
-            Go to Dashboard
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Link>
+        <Button onClick={() => navigateWithRefresh('/dashboard')}>
+          Go to Dashboard
+          <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>
     </div>

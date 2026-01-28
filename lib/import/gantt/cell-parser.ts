@@ -11,7 +11,7 @@ import type { GanttCell } from './types';
  * - "Axc-BE-GSD & Purion" → BE
  * - "ST-FR-Crolles-6x Implanters" → FR
  * - "tr-DE" → DE (travel day)
- * - "n/w-BE" → BE (night/weekend)
+ * - "n/w-BE" → BE (non-working day, still abroad)
  *
  * Everything after the second hyphen is client info - ignored.
  */
@@ -21,9 +21,9 @@ function extractCountryFromText(text: string): { code: string | null; isTravelDa
   // Check for travel day prefix (tr-XX)
   const isTravelDay = /^tr[\-\/\s]/i.test(trimmed);
 
-  // Check for n/w (not working but still abroad) prefix - e.g., "n/w-DE" or "n/w-DE-client"
+  // Check for n/w (non-working day, but still abroad) prefix - e.g., "n/w-DE" or "n/w-DE-client"
   // This is NOT a non-counting value - person is still in that country
-  // Requires hyphen and exactly 2 letters followed by end, hyphen, or space
+  // Format: n/w-XX (n/w first, then country code)
   const nwMatch = trimmed.match(/^n\/w-([A-Z]{2})(?:$|[-\s])/i);
   if (nwMatch) {
     const code = nwMatch[1].toUpperCase();

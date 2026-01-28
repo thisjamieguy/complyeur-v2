@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useMemo } from 'react'
-import { format, isToday, subDays, startOfDay, isSameDay } from 'date-fns'
+import { format, isToday, subDays, startOfDay, isSameDay, isWeekend } from 'date-fns'
 import { cn } from '@/lib/utils'
 
 interface DateHeaderProps {
@@ -119,11 +119,13 @@ export const DateHeader = memo(function DateHeader({
           {dates.map((date, index) => {
             const isCurrentDay = isToday(date)
             const isWindowStart = index === windowStartIndex
+            const isWeekendDay = isWeekend(date)
             return (
               <div
                 key={index}
                 className={cn(
-                  'flex-shrink-0 flex items-center justify-center py-1.5 relative',
+                  'shrink-0 flex items-center justify-center py-1.5 relative',
+                  isWeekendDay && !isCurrentDay && 'bg-slate-100/60',
                   isCurrentDay && 'bg-blue-100',
                   isWindowStart && 'border-l-2 border-amber-500'
                 )}

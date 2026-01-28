@@ -628,6 +628,7 @@ export async function executeImport(
     });
 
     revalidatePath('/dashboard');
+    revalidatePath('/calendar');
     revalidatePath('/import');
 
     return result;

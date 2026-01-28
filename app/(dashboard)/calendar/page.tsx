@@ -57,6 +57,12 @@ const getEmployeesWithTrips = cache(async (): Promise<EmployeeWithTrips[]> => {
     throw new Error('Failed to fetch employees')
   }
 
+  console.log('[Calendar] Fetched employees:', {
+    count: employees?.length ?? 0,
+    employeesWithTrips: employees?.filter((e) => e.trips && e.trips.length > 0).length ?? 0,
+    totalTrips: employees?.reduce((sum, e) => sum + (e.trips?.length ?? 0), 0) ?? 0,
+  });
+
   return (employees || []) as EmployeeWithTrips[]
 })
 

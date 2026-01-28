@@ -37,7 +37,6 @@ export async function joinWaitlist(
     const supabase = await createClient()
 
     // Insert into waitlist table
-    // Note: Cast needed until database types are regenerated after migration
     const { error: insertError } = await (supabase as any)
       .from('waitlist')
       .insert({
