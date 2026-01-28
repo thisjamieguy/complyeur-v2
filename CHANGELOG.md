@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: add danger zone, bulk delete, and preview landing page [`d6e2b50`](https://github.com/thisjamieguy/complyeur-v2/commit/d6e2b50fe72be50db01f6b7414af8d78dd71b95b)
 - docs: add delete data feature design [`084f44b`](https://github.com/thisjamieguy/complyeur-v2/commit/084f44b404d5de67949bb930557ac949d8aea154)
 - docs: update changelog [`882cdfc`](https://github.com/thisjamieguy/complyeur-v2/commit/882cdfc3dcca72fb5641036d80581e2dd025d2a3)
 - chore: test infrastructure and config updates [`e05e008`](https://github.com/thisjamieguy/complyeur-v2/commit/e05e008977cb1939da1f6b8dc8524b19ecd9434f)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: add Google Analytics 4 integration [`a5d009f`](https://github.com/thisjamieguy/complyeur-v2/commit/a5d009f9599c514bebcde3fb41c41319695e6eb9)
 - docs: update changelog [`8e37648`](https://github.com/thisjamieguy/complyeur-v2/commit/8e37648912b5804c820c04a38998df3e84b88850)
 - fix: auto-create employees for trip imports [`05498e7`](https://github.com/thisjamieguy/complyeur-v2/commit/05498e75a7f2dc709230b0822caa931702421b84)
-- fix: accept undefined in validateRedirectUrl type signature [`deb5cad`](https://github.com/thisjamieguy/complyeur-v2/commit/deb5cade5c4002ef64b06b082822bec969be1e94)
 
 ## v1.0.0 - 2026-01-22
 

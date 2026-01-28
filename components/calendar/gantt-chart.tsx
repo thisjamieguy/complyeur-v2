@@ -1,6 +1,7 @@
 'use client'
 
-import { memo, useRef, useEffect } from 'react'
+import { memo, useRef, useEffect, useCallback } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { isToday, differenceInDays } from 'date-fns'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { DateHeader } from './date-header'
@@ -33,17 +34,38 @@ interface GanttChartProps {
   employees: ProcessedEmployee[]
   dates: Date[]
   startDate: Date
+  rowHeights: number[]
 }
+
+/** Number of extra rows to render above/below viewport */
+const OVERSCAN = 5
 
 /**
  * The horizontal Gantt chart showing all employees and their trips
+ * Uses virtualization to only render visible employee rows
  */
 export const GanttChart = memo(function GanttChart({
   employees,
   dates,
   startDate,
+  rowHeights,
 }: GanttChartProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const parentRef = useRef<HTMLDivElement>(null)
+
+  // Memoize the size getter to avoid unnecessary re-renders
+  const estimateSize = useCallback(
+    (index: number) => rowHeights[index] ?? 40,
+    [rowHeights]
+  )
+
+  // Set up virtualizer for employee rows
+  const virtualizer = useVirtualizer({
+    count: employees.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize,
+    overscan: OVERSCAN,
+  })
 
   // Scroll to today on mount
   useEffect(() => {
@@ -69,6 +91,7 @@ export const GanttChart = memo(function GanttChart({
   }, [dates])
 
   const totalWidth = dates.length * DAY_WIDTH
+  const totalHeight = virtualizer.getTotalSize()
 
   return (
     <div ref={scrollRef} className="relative">
@@ -77,18 +100,39 @@ export const GanttChart = memo(function GanttChart({
           {/* Date header */}
           <DateHeader dates={dates} dayWidth={DAY_WIDTH} />
 
-          {/* Employee rows */}
-          <div className="divide-y divide-slate-100">
-            {employees.map((employee) => (
-              <EmployeeRow
-                key={employee.id}
-                employee={employee}
-                trips={employee.trips}
-                startDate={startDate}
-                dates={dates}
-                dayWidth={DAY_WIDTH}
-              />
-            ))}
+          {/* Virtualized employee rows container */}
+          <div
+            ref={parentRef}
+            className="overflow-y-auto"
+            style={{ maxHeight: '600px' }}
+          >
+            <div
+              className="relative w-full"
+              style={{ height: `${totalHeight}px` }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
+                const employee = employees[virtualRow.index]
+                return (
+                  <div
+                    key={employee.id}
+                    className="absolute left-0 w-full"
+                    style={{
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <EmployeeRow
+                      employee={employee}
+                      trips={employee.trips}
+                      startDate={startDate}
+                      dates={dates}
+                      dayWidth={DAY_WIDTH}
+                      fixedHeight={virtualRow.size}
+                    />
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
         <ScrollBar orientation="horizontal" />

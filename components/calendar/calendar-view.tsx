@@ -18,6 +18,7 @@ import {
   type Trip as ComplianceTrip,
   type RiskLevel,
 } from '@/lib/compliance'
+import { calculateAllRowHeights } from '@/lib/calendar/row-height'
 import { RangeSelector } from './range-selector'
 import { GanttChart } from './gantt-chart'
 import { MobileCalendarView } from './mobile-calendar-view'
@@ -215,6 +216,12 @@ export function CalendarView({ employees }: CalendarViewProps) {
     })
   }, [employees, startDate, endDate, complianceCalculator])
 
+  // Pre-calculate row heights for virtualization
+  const rowHeights = useMemo(
+    () => calculateAllRowHeights(processedEmployees),
+    [processedEmployees]
+  )
+
   return (
     <>
       {/* Desktop view - Gantt chart */}
@@ -231,6 +238,7 @@ export function CalendarView({ employees }: CalendarViewProps) {
               employees={processedEmployees}
               dates={dates}
               startDate={startDate}
+              rowHeights={rowHeights}
             />
           </CardContent>
         </Card>

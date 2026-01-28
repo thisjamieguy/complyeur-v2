@@ -28,6 +28,8 @@ interface EmployeeRowProps {
   startDate: Date
   dates: Date[]
   dayWidth: number
+  /** Fixed height from virtualizer (pre-calculated) */
+  fixedHeight?: number
 }
 
 /**
@@ -77,6 +79,7 @@ export const EmployeeRow = memo(function EmployeeRow({
   startDate,
   dates,
   dayWidth,
+  fixedHeight,
 }: EmployeeRowProps) {
   // Calculate trip positions
   const tripPositions = useMemo(() => {
@@ -116,7 +119,9 @@ export const EmployeeRow = memo(function EmployeeRow({
     )
   }, [tripPositions])
 
-  const rowHeight = Math.max(40, (maxStackIndex + 1) * 28 + 8) // 28px per stacked row + padding
+  // Use pre-calculated height if provided (from virtualizer), otherwise calculate
+  const calculatedHeight = Math.max(40, (maxStackIndex + 1) * 28 + 8) // 28px per stacked row + padding
+  const rowHeight = fixedHeight ?? calculatedHeight
 
   const visibleTrips = tripPositions.filter((pos) => pos.isVisible)
 
