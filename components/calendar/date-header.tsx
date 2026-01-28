@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useMemo } from 'react'
-import { format, isSameMonth, isToday, startOfMonth } from 'date-fns'
+import { format, isToday, subDays, startOfDay, isSameDay } from 'date-fns'
 import { cn } from '@/lib/utils'
 
 interface DateHeaderProps {
@@ -63,17 +63,22 @@ export const DateHeader = memo(function DateHeader({
     return spans
   }, [dates])
 
+  // Calculate 180-day window start
+  const today = startOfDay(new Date())
+  const windowStart = subDays(today, 180)
+  const windowStartIndex = dates.findIndex((date) => isSameDay(date, windowStart))
+
   return (
     <div className="sticky top-0 z-20 bg-white border-b border-slate-200">
       {/* Month row */}
-      <div className="flex">
+      <div className="flex relative">
         {/* Empty cell for employee column */}
         {showEmployeeColumn && (
           <div className="w-40 shrink-0 border-r border-slate-200" />
         )}
 
         {/* Month labels */}
-        <div className="flex">
+        <div className="flex relative">
           {monthSpans.map((span) => (
             <div
               key={`${span.month}-${span.startIndex}`}
@@ -85,11 +90,23 @@ export const DateHeader = memo(function DateHeader({
               </span>
             </div>
           ))}
+
+          {/* 180-day window start marker label */}
+          {windowStartIndex >= 0 && (
+            <div
+              className="absolute top-0 bottom-0 flex items-center pointer-events-none"
+              style={{ left: windowStartIndex * dayWidth }}
+            >
+              <div className="bg-amber-500 text-white text-[10px] font-medium px-1.5 py-0.5 rounded-r whitespace-nowrap">
+                180-day window
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Day number row */}
-      <div className="flex">
+      <div className="flex relative">
         {/* Employee column header */}
         {showEmployeeColumn && (
           <div className="w-40 shrink-0 px-3 py-2 border-r border-slate-200 bg-slate-50">
@@ -98,15 +115,17 @@ export const DateHeader = memo(function DateHeader({
         )}
 
         {/* Day numbers */}
-        <div className="flex">
+        <div className="flex relative">
           {dates.map((date, index) => {
             const isCurrentDay = isToday(date)
+            const isWindowStart = index === windowStartIndex
             return (
               <div
                 key={index}
                 className={cn(
-                  'flex-shrink-0 flex items-center justify-center py-1.5',
-                  isCurrentDay && 'bg-blue-50'
+                  'flex-shrink-0 flex items-center justify-center py-1.5 relative',
+                  isCurrentDay && 'bg-blue-100',
+                  isWindowStart && 'border-l-2 border-amber-500'
                 )}
                 style={{ width: dayWidth }}
               >

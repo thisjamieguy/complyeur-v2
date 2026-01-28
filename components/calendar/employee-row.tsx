@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useMemo } from 'react'
-import { isToday, differenceInDays, parseISO } from 'date-fns'
+import { isToday, differenceInDays, subDays, startOfDay, isWithinInterval, isSameDay } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { TripBar } from './trip-bar'
 import type { RiskLevel } from '@/lib/compliance'
@@ -129,7 +129,7 @@ export const EmployeeRow = memo(function EmployeeRow({
   const visibleTrips = tripPositions.filter((pos) => pos.isVisible)
 
   return (
-    <div className="flex border-b border-slate-100 last:border-b-0">
+    <div className="flex h-full">
       {/* Employee name - only shown when not hidden */}
       {!hideNameColumn && (
         <div className="w-40 shrink-0 px-3 py-2 border-r border-slate-100 bg-white sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
@@ -141,32 +141,50 @@ export const EmployeeRow = memo(function EmployeeRow({
 
       {/* Trip bars area */}
       <div className="flex-1 relative" style={{ height: `${rowHeight}px` }}>
-        {/* Day column backgrounds with today highlight */}
+        {/* Day column backgrounds with 180-day window tint and today highlight */}
         <div className="absolute inset-0 flex pointer-events-none">
-          {dates.map((date, index) => (
-            <div
-              key={index}
-              className={cn(
-                'flex-shrink-0 h-full',
-                isToday(date) && 'bg-blue-50'
-              )}
-              style={{ width: dayWidth }}
-            />
-          ))}
+          {dates.map((date, index) => {
+            const today = startOfDay(new Date())
+            const windowStart = subDays(today, 180)
+            const isIn180Window = isWithinInterval(date, { start: windowStart, end: today })
+            const isTodayDate = isToday(date)
+            const isWindowStart = isSameDay(date, windowStart)
+
+            return (
+              <div
+                key={index}
+                className={cn(
+                  'shrink-0 h-full',
+                  isIn180Window && !isTodayDate && 'bg-amber-50/40',
+                  isTodayDate && 'bg-blue-100',
+                  isWindowStart && 'border-l-2 border-amber-500'
+                )}
+                style={{ width: dayWidth }}
+              />
+            )
+          })}
         </div>
 
-        {/* Trip bars */}
-        <div className="absolute inset-0 py-2">
+        {/* Trip bars - centered vertically */}
+        <div className="absolute inset-0">
           {visibleTrips.length > 0 ? (
-            visibleTrips.map(({ trip, leftOffset, width, stackIndex }) => (
-              <TripBar
-                key={trip.id}
-                trip={trip}
-                leftOffset={leftOffset}
-                width={width}
-                stackIndex={stackIndex}
-              />
-            ))
+            (() => {
+              // Calculate total height of stacked bars: (count * 24px bar) + ((count-1) * 4px gap)
+              const barCount = maxStackIndex + 1
+              const totalBarsHeight = barCount * 24 + (barCount - 1) * 4
+              const centerOffset = (rowHeight - totalBarsHeight) / 2
+
+              return visibleTrips.map(({ trip, leftOffset, width, stackIndex }) => (
+                <TripBar
+                  key={trip.id}
+                  trip={trip}
+                  leftOffset={leftOffset}
+                  width={width}
+                  stackIndex={stackIndex}
+                  centerOffset={centerOffset}
+                />
+              ))
+            })()
           ) : (
             <span className="text-xs text-slate-400 px-2 py-2 block">
               (no trips in range)

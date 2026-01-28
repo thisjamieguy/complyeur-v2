@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: align employee name column with timeline rows [`9fd1318`](https://github.com/thisjamieguy/complyeur-v2/commit/9fd1318469f0de29a1fc7fad30f4b2524bbdbf23)
 - fix: lock employee name column during horizontal scroll [`03b9abd`](https://github.com/thisjamieguy/complyeur-v2/commit/03b9abd01c0a35bd0244fc04026e3ae96deed586)
 - perf: virtualize calendar employee rows with TanStack Virtual [`672959a`](https://github.com/thisjamieguy/complyeur-v2/commit/672959afe4715a1d4af465284577985778a93078)
 - feat: add danger zone, bulk delete, and preview landing page [`d6e2b50`](https://github.com/thisjamieguy/complyeur-v2/commit/d6e2b50fe72be50db01f6b7414af8d78dd71b95b)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: seo, accessibility, and marketing pages [`7a0c0d9`](https://github.com/thisjamieguy/complyeur-v2/commit/7a0c0d9963e9bc5fc95591eba7eb66ad610f0bed)
 - chore(db): migrations cleanup and RLS optimization [`f66de21`](https://github.com/thisjamieguy/complyeur-v2/commit/f66de21bdc4feb0ad46b8af8b6da15269f2c76f6)
 - refactor: compliance engine and import parser improvements [`18f35fd`](https://github.com/thisjamieguy/complyeur-v2/commit/18f35fd82fa05accfe1598c7b2e8dead090a6560)
-- feat: add Google Analytics 4 integration [`a5d009f`](https://github.com/thisjamieguy/complyeur-v2/commit/a5d009f9599c514bebcde3fb41c41319695e6eb9)
 
 ## v1.0.0 - 2026-01-22
 

@@ -26,6 +26,8 @@ interface TripBarProps {
   width: number
   /** Vertical offset for stacked trips (0, 1, 2...) */
   stackIndex?: number
+  /** Offset to center bars vertically within the row */
+  centerOffset?: number
 }
 
 const riskStyles = {
@@ -43,18 +45,19 @@ export const TripBar = memo(function TripBar({
   leftOffset,
   width,
   stackIndex = 0,
+  centerOffset = 0,
 }: TripBarProps) {
   // Non-Schengen trips get a neutral gray color
   const barColor = trip.isSchengen ? riskStyles[trip.riskLevel] : 'bg-slate-300'
 
-  // Calculate vertical position for stacked trips
-  const topOffset = stackIndex * 28 // 24px bar + 4px gap
+  // Calculate vertical position for stacked trips, centered in row
+  const topOffset = centerOffset + stackIndex * 28 // centerOffset + (24px bar + 4px gap)
 
   return (
     <div
       className={cn(
-        'absolute h-6 rounded-sm flex items-center justify-end pr-1',
-        'transition-opacity hover:opacity-90',
+        'absolute h-6 rounded-md flex items-center justify-end pr-1.5',
+        'shadow-sm transition-all hover:shadow-md hover:brightness-105',
         barColor
       )}
       style={{

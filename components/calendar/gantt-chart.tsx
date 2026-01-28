@@ -129,7 +129,7 @@ export const GanttChart = memo(function GanttChart({
         {/* Header cell - heights must match DateHeader exactly */}
         <div className="sticky top-0 z-30 bg-white border-b border-slate-200">
           {/* Month row placeholder - matches DateHeader month row (py-1 + text-xs) */}
-          <div className="px-2 py-1 border-b border-slate-100">
+          <div className="px-2 py-1">
             <span className="text-xs font-medium text-slate-600 invisible">Month</span>
           </div>
           {/* Employee label - matches DateHeader day row (py-1.5 + text-xs) */}
@@ -150,7 +150,7 @@ export const GanttChart = memo(function GanttChart({
               return (
                 <div
                   key={employee.id}
-                  className="absolute left-0 w-full px-3 border-b border-slate-100 bg-white flex items-center"
+                  className="absolute left-0 w-full px-3 border-b border-slate-300 bg-white flex items-center"
                   style={{
                     height: virtualRow.size,
                     transform: `translateY(${virtualRow.start}px)`,
@@ -185,7 +185,7 @@ export const GanttChart = memo(function GanttChart({
                   return (
                     <div
                       key={employee.id}
-                      className="absolute left-0 w-full"
+                      className="absolute left-0 w-full border-b border-slate-300"
                       style={{
                         height: virtualRow.size,
                         transform: `translateY(${virtualRow.start}px)`,
