@@ -21,9 +21,10 @@ function extractCountryFromText(text: string): { code: string | null; isTravelDa
   // Check for travel day prefix (tr-XX)
   const isTravelDay = /^tr[\-\/\s]/i.test(trimmed);
 
-  // Check for n/w (not working but still abroad) prefix - e.g., "n/w-DE"
+  // Check for n/w (not working but still abroad) prefix - e.g., "n/w-DE" or "n/w-DE-client"
   // This is NOT a non-counting value - person is still in that country
-  const nwMatch = trimmed.match(/^n\/w[\-]?([A-Z]{2})\b/i);
+  // Requires hyphen and exactly 2 letters followed by end, hyphen, or space
+  const nwMatch = trimmed.match(/^n\/w-([A-Z]{2})(?:$|[-\s])/i);
   if (nwMatch) {
     const code = nwMatch[1].toUpperCase();
     if (KNOWN_COUNTRY_CODES.has(code)) {
@@ -39,6 +40,7 @@ function extractCountryFromText(text: string): { code: string | null; isTravelDa
     const potentialCode = parts[1].trim().toUpperCase();
 
     // Check if it's a valid 2-letter country code
+    // IMPORTANT: Only accept EXACTLY 2 letters to avoid false matches like "IES" → "IE"
     if (potentialCode.length === 2 && KNOWN_COUNTRY_CODES.has(potentialCode)) {
       return {
         code: potentialCode === 'UK' ? 'GB' : potentialCode,
@@ -46,15 +48,8 @@ function extractCountryFromText(text: string): { code: string | null; isTravelDa
       };
     }
 
-    // Sometimes the code might have extra text, try to extract just 2 letters
-    const twoLetterMatch = potentialCode.match(/^([A-Z]{2})/);
-    if (twoLetterMatch && KNOWN_COUNTRY_CODES.has(twoLetterMatch[1])) {
-      const code = twoLetterMatch[1];
-      return {
-        code: code === 'UK' ? 'GB' : code,
-        isTravelDay,
-      };
-    }
+    // Do NOT try to extract 2 letters from longer strings like "IES"
+    // This caused false positives: "PAC-IES-Client" was incorrectly parsed as Ireland (IE)
   }
 
   // Fallback: Just a 2-letter code by itself (e.g., "FR", "DE")
