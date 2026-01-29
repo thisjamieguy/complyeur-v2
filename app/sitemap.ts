@@ -28,30 +28,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const legalPagesDate = new Date('2025-01-01')
 
   return [
+    // Landing page - main entry point during waitlist mode
     {
-      url: baseUrl,
+      url: `${baseUrl}/landing`,
       lastModified: now,
       changeFrequency: 'weekly',
       priority: 1.0,
     },
-    {
-      url: `${baseUrl}/login`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/signup`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/forgot-password`,
-      lastModified: now,
-      changeFrequency: 'yearly',
-      priority: 0.3,
-    },
+    // Note: /login, /signup, /forgot-password redirect to /landing during waitlist mode
+    // They will be added back when registration opens
+    // Legal and informational pages
     {
       url: `${baseUrl}/privacy`,
       lastModified: legalPagesDate,

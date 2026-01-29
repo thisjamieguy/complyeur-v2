@@ -158,7 +158,8 @@ export default function LandingPage() {
       <SkipLink />
 
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100">
+      <header>
+        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-100">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
             <Image
@@ -170,17 +171,28 @@ export default function LandingPage() {
               priority
             />
           </Link>
-          <Link
-            href="#waitlist"
-            className="text-sm font-medium px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-          >
-            Join Waitlist
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="#waitlist"
+              className="text-sm font-medium px-4 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+            >
+              Join Waitlist
+            </Link>
+          </div>
         </div>
-      </nav>
+        </nav>
+      </header>
 
-      {/* Hero Section */}
-      <section id="main-content" className="relative overflow-hidden">
+      {/* Main Content */}
+      <main id="main-content">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden">
         {/* Background */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-50" />
 
@@ -296,7 +308,8 @@ export default function LandingPage() {
             <WaitlistForm variant="minimal" />
           </div>
         </div>
-      </section>
+        </section>
+      </main>
 
       {/* Footer */}
       <footer className="py-12 border-t border-slate-200 bg-white">

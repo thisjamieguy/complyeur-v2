@@ -40,10 +40,11 @@ export async function login(formData: FormData) {
   // Validate input
   const result = loginSchema.safeParse(rawData)
   if (!result.success) {
-    throw new ValidationError(result.error.issues[0].message)
+    const errorMessage = result.error?.issues[0]?.message ?? 'Invalid input'
+    throw new ValidationError(errorMessage)
   }
 
-  const { email, password } = result.data
+  const { email, password } = result.data!
 
   // Normalize email for consistency
   const normalizedEmail = normalizeEmailForAuth(email)
@@ -73,6 +74,10 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
+  // WAITLIST MODE: Block all new signups
+  // Remove this check when ready to accept new users
+  throw new AuthError('New signups are currently disabled. Please join the waitlist.')
+
   const supabase = await createClient()
 
   const rawData = {
@@ -86,10 +91,13 @@ export async function signup(formData: FormData) {
   // Validate input
   const result = signupSchema.safeParse(rawData)
   if (!result.success) {
-    throw new ValidationError(result.error.issues[0].message)
+    const errorMessage = result.error?.issues[0]?.message ?? 'Invalid input'
+    throw new ValidationError(errorMessage)
   }
 
-  const { email, password, companyName, termsAccepted } = result.data
+  // TypeScript narrowing: after the throw above, result.success is true
+  // so result.data is guaranteed to exist
+  const { email, password, companyName, termsAccepted } = result.data!
 
   // Ensure terms are accepted (double check on server side)
   if (!termsAccepted) {
@@ -106,24 +114,30 @@ export async function signup(formData: FormData) {
   })
 
   if (authError) {
+    // TypeScript doesn't narrow correctly here, so use non-null assertion
+    const err = authError!
+    const errorMessage = err.message ?? ''
     // Check for specific email validation errors that might need special handling
-    if (authError.message.includes('Email address') && authError.message.includes('is invalid') && normalizedEmail.includes('+')) {
+    if (errorMessage.includes('Email address') && errorMessage.includes('is invalid') && normalizedEmail.includes('+')) {
       throw new AuthError('Email addresses with special characters like "+" may not be supported. Please try using a different email address or contact support.')
     }
 
-    throw new AuthError(getAuthErrorMessage(authError))
+    throw new AuthError(getAuthErrorMessage(err))
   }
 
   if (!authData.user) {
     throw new AuthError('Failed to create user account')
   }
 
+  // TypeScript narrowing workaround
+  const user = authData.user!
+
   // Create the company and profile using the database function
   // This bypasses RLS during signup since the user isn't fully authenticated yet
   // Store the terms acceptance timestamp
   const termsAcceptedAt = new Date().toISOString()
   const fullSignature = await supabase.rpc('create_company_and_profile', {
-    user_id: authData.user.id,
+    user_id: user.id,
     user_email: normalizedEmail,
     company_name: companyName,
     user_terms_accepted_at: termsAcceptedAt,
@@ -138,7 +152,7 @@ export async function signup(formData: FormData) {
   // Backward compatibility for environments that only support the legacy signature
   if (signupError?.code === 'PGRST202') {
     const legacySignature = await supabase.rpc('create_company_and_profile', {
-      user_id: authData.user.id,
+      user_id: user.id,
       user_email: normalizedEmail,
       company_name: companyName,
       user_terms_accepted_at: termsAcceptedAt,
@@ -149,7 +163,7 @@ export async function signup(formData: FormData) {
 
   if (signupError) {
     console.error('Signup RPC error:', signupError)
-    throw new DatabaseError(getDatabaseErrorMessage(signupError))
+    throw new DatabaseError(getDatabaseErrorMessage(signupError!))
   }
 
   if (!companyId) {
@@ -159,11 +173,11 @@ export async function signup(formData: FormData) {
   const { error: activityError } = await supabase
     .from('profiles')
     .update({ last_activity_at: new Date().toISOString() })
-    .eq('id', authData.user.id)
+    .eq('id', user.id)
 
   if (activityError) {
     await supabase.auth.signOut()
-    throw new DatabaseError(getDatabaseErrorMessage(activityError))
+    throw new DatabaseError(getDatabaseErrorMessage(activityError!))
   }
 
   revalidatePath('/', 'layout')
@@ -182,10 +196,11 @@ export async function forgotPassword(formData: FormData) {
   // Validate input
   const result = forgotPasswordSchema.safeParse(rawData)
   if (!result.success) {
-    throw new ValidationError(result.error.issues[0].message)
+    const errorMessage = result.error?.issues[0]?.message ?? 'Invalid input'
+    throw new ValidationError(errorMessage)
   }
 
-  const { email } = result.data
+  const { email } = result.data!
 
   // Redirect through auth callback to exchange token for session,
   // then redirect to reset-password page
@@ -212,10 +227,11 @@ export async function resetPassword(formData: FormData) {
   // Validate input
   const result = resetPasswordSchema.safeParse(rawData)
   if (!result.success) {
-    throw new ValidationError(result.error.issues[0].message)
+    const errorMessage = result.error?.issues[0]?.message ?? 'Invalid input'
+    throw new ValidationError(errorMessage)
   }
 
-  const { password } = result.data
+  const { password } = result.data!
 
   const { error } = await supabase.auth.updateUser({
     password,

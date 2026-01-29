@@ -4,21 +4,36 @@ export default function ContactPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
       <h1 className="text-3xl font-bold text-slate-900 mb-4">Contact Us</h1>
-      <p className="text-base text-slate-600 mb-12">
+      <p className="text-base text-slate-600 mb-6">
         Have questions about ComplyEUR or need help with your account? We&apos;re here to help.
+        Whether you&apos;re exploring Schengen compliance solutions for your UK business,
+        need technical support with the platform, or want to discuss partnership opportunities,
+        our team is ready to assist.
+      </p>
+      <p className="text-base text-slate-600 mb-12">
+        ComplyEUR helps UK businesses track the 90/180-day Schengen visa rule for employees
+        travelling to the EU. Since Brexit, non-EU nationals working for UK companies must
+        carefully monitor their travel to avoid overstaying and facing penalties including
+        fines, entry bans, and employees being refused at the border.
       </p>
 
       <div className="prose prose-slate max-w-none">
         {/* Contact Options */}
         <section>
           <h2 className="text-2xl font-semibold text-slate-900 mb-6">Get in Touch</h2>
+          <p className="text-base text-slate-600 mb-6">
+            Choose the most appropriate contact channel below based on your enquiry type.
+            Our team monitors all inboxes during UK business hours and aims to respond
+            within one to two working days.
+          </p>
 
           <div className="grid gap-6 sm:grid-cols-2">
             {/* General Enquiries */}
             <div className="bg-slate-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-2">General Enquiries</h3>
               <p className="text-sm text-slate-600 mb-4">
-                Questions about ComplyEUR, pricing, or getting started.
+                Questions about ComplyEUR features, pricing plans, implementation timelines,
+                or how the platform can work for your organisation.
               </p>
               <a
                 href="mailto:hello@complyeur.com"
@@ -32,7 +47,8 @@ export default function ContactPage() {
             <div className="bg-slate-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-2">Customer Support</h3>
               <p className="text-sm text-slate-600 mb-4">
-                Technical issues, account help, or feature questions.
+                Technical issues with the platform, account access problems, data import
+                assistance, or questions about specific compliance features.
               </p>
               <a
                 href="mailto:support@complyeur.com"
@@ -46,7 +62,8 @@ export default function ContactPage() {
             <div className="bg-slate-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-2">Privacy Requests</h3>
               <p className="text-sm text-slate-600 mb-4">
-                Data access, deletion, or privacy-related enquiries.
+                GDPR data subject requests including data access, correction, deletion,
+                or portability. We handle all privacy matters promptly and securely.
               </p>
               <a
                 href="mailto:privacy@complyeur.com"
@@ -60,7 +77,8 @@ export default function ContactPage() {
             <div className="bg-slate-50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-2">Partnerships</h3>
               <p className="text-sm text-slate-600 mb-4">
-                Business development, integrations, or collaboration opportunities.
+                Business development opportunities, HR software integrations, reseller
+                programmes, or strategic collaboration discussions.
               </p>
               <a
                 href="mailto:partnerships@complyeur.com"
@@ -75,10 +93,14 @@ export default function ContactPage() {
         {/* Response Times */}
         <section>
           <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">Response Times</h2>
-          <p className="text-base text-slate-700 leading-relaxed">
+          <p className="text-base text-slate-700 leading-relaxed mb-4">
             We aim to respond to all enquiries within 1-2 business days. For urgent support
             issues affecting your ability to use the platform, please include
-            &quot;URGENT&quot; in your email subject line.
+            &quot;URGENT&quot; in your email subject line and we will prioritise your request.
+          </p>
+          <p className="text-base text-slate-700 leading-relaxed">
+            Our support hours are Monday to Friday, 9am to 5pm GMT, excluding UK bank holidays.
+            Enquiries received outside of these hours will be addressed on the next business day.
           </p>
         </section>
 
