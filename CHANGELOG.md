@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: add missing entry for aligning employee name column with timeline rows in changelog [`b137040`](https://github.com/thisjamieguy/complyeur-v2/commit/b137040adf24798dfbff60cbb14f647db65debb2)
 - fix: add missing entry for locking employee name column during horizontal scroll in changelog [`1445bff`](https://github.com/thisjamieguy/complyeur-v2/commit/1445bff0b8a62095a8280442835fd69a5a8540e1)
 - fix: add missing entry for SEO and accessibility improvements in changelog [`7f89015`](https://github.com/thisjamieguy/complyeur-v2/commit/7f890154aa733c7c0f2c4f01ba607525d22394f0)
 - fix: improve SEO and accessibility from website audit [`6c9d67f`](https://github.com/thisjamieguy/complyeur-v2/commit/6c9d67f67e55f810a98adba17390d6535107b344)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: remove preview mode banner for live landing page [`8b547fa`](https://github.com/thisjamieguy/complyeur-v2/commit/8b547fa90b100526b7d3e6e702ef184faf339040)
 - feat: launch landing page in waitlist-only mode [`c1636e2`](https://github.com/thisjamieguy/complyeur-v2/commit/c1636e2bfa5444d64eef785db57a3e8b4387a0a0)
 - fix: prevent false country matches from 3+ letter codes in gantt parser [`679240c`](https://github.com/thisjamieguy/complyeur-v2/commit/679240cd8c258f02c26cbc38fad1f645774bc300)
-- feat: improve calendar UI with row separators and 180-day window [`c50278b`](https://github.com/thisjamieguy/complyeur-v2/commit/c50278bddaa0b28c75916f753794c3296fd1913c)
 
 ## v1.0.0 - 2026-01-22
 
