@@ -1,0 +1,10 @@
+name,email,passport,nationality
+Valid User One,valid.user1@test.example.com,AA111111,GB
+,missing.name@test.example.com,BB222222,US
+No Email User,,CC333333,CA
+Invalid Email User,not-an-email,DD444444,AU
+Valid User Two,valid.user2@test.example.com,EE555555,NZ
+Duplicate Email,james.smith0@test.example.com,FF666666,GB
+Very Long Name That Exceeds Reasonable Length For A Person Name And Should Be Flagged As Invalid,longname@test.example.com,GG777777,US
+Special Chars <script>,special@test.example.com,HH888888,CA
+Valid User Three,valid.user3@test.example.com,II999999,AU

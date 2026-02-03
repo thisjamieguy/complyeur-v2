@@ -3,6 +3,9 @@
  *
  * CookieYes is a cookie consent management platform that helps with GDPR,
  * UK GDPR, and CCPA compliance.
+ *
+ * This file provides global type declarations for the window.cookieyes object
+ * which is loaded via script tag in app/layout.tsx.
  */
 
 declare global {
@@ -27,41 +30,6 @@ declare global {
       getConsent?: () => Record<string, boolean>
     }
   }
-}
-
-/**
- * Cookie categories used in ComplyEUR
- */
-export type CookieCategory = 'necessary' | 'analytics' | 'marketing'
-
-/**
- * Helper function to safely check if CookieYes is available
- */
-export function isCookieYesAvailable(): boolean {
-  return typeof window !== 'undefined' && !!window.cookieyes
-}
-
-/**
- * Helper function to safely show the CookieYes settings popup
- */
-export function showCookieSettings(): void {
-  if (isCookieYesAvailable()) {
-    window.cookieyes!.showSettingsPopup()
-  }
-}
-
-/**
- * Helper function to safely check consent for a category
- */
-export function hasConsentFor(category: CookieCategory): boolean {
-  if (isCookieYesAvailable()) {
-    const cookieyes = window.cookieyes!
-    if (typeof cookieyes.hasConsent === 'function') {
-      return cookieyes.hasConsent(category)
-    }
-  }
-  // If CookieYes is not available, only allow necessary cookies
-  return category === 'necessary'
 }
 
 export {}

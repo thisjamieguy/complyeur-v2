@@ -76,7 +76,31 @@
       "Bash(git stash drop)",
       "Bash(git restore:*)",
       "Bash(npm run lint -- --quiet)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(code --install-extension:*)",
+      "Bash(source .env.local)",
+      "Bash(wc:*)",
+      "Bash(npm run test:coverage)",
+      "Bash(npx playwright test --list)",
+      "Bash(cd /Users/jameswalsh/Dev/Web\\\\ Projects/ComplyEur-v2/complyeur && npm run test:*)",
+      "Bash(npm run test -- lib/compliance/__tests__/cached.test.ts lib/compliance/__tests__/compliance-vector.test.ts --reporter=verbose)",
+      "Bash(npm run test -- lib/compliance/__tests__/cached.test.ts lib/compliance/__tests__/compliance-vector.test.ts)",
+      "Bash(npm run test -- lib/compliance/__tests__/risk-calculator.test.ts --reporter=verbose)",
+      "Bash(npm run test -- lib/compliance/__tests__/safe-entry.test.ts --reporter=verbose)",
+      "Bash(npm run test:coverage -- --reporter=verbose)",
+      "Bash(npm run test -- __tests__/integration/import-pipeline.test.ts)",
+      "Bash(npm run test -- __tests__/integration/import-insertion.test.ts)",
+      "Bash(npx vitest run __tests__/integration/import-api.test.ts)",
+      "Bash(npx vitest:*)",
+      "Bash(npx playwright test --list e2e/import-workflow.spec.ts e2e/dashboard-verification.spec.ts)",
+      "Bash(npm run test:e2e:import -- --reporter=list)",
+      "Bash(npm run test:e2e:dashboard -- --reporter=list)",
+      "Bash(npx tsx scripts/create-test-user.ts)",
+      "Bash(NEXT_PUBLIC_SUPABASE_URL=https://ympwgavzlvyklkucskcj.supabase.co SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcHdnYXZ6bHZ5a2xrdWNza2NqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODUxMTMwNSwiZXhwIjoyMDg0MDg3MzA1fQ.hs-unhYdFdSXFznqewAe_TNLUymlN3jaUKlHVrmA3DA npx tsx:*)",
+      "Bash(xargs:*)",
+      "Bash(for pkg in \"react-dropzone\" \"react-day-picker\" \"class-variance-authority\")",
+      "Bash(do echo \"=== $pkg ===\")",
+      "Bash(npm run lint -- app/actions/exports.ts)"
     ]
   }
 }

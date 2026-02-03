@@ -1,0 +1,5 @@
+name,index,index_size,index_scans
+public.admin_audit_log,idx_admin_audit_action,16 kB,0
+public.admin_audit_log,idx_admin_audit_company,16 kB,4
+public.admin_audit_log,idx_admin_audit_admin,16 kB,7
+public.admin_audit_log,idx_admin_audit_created,16 kB,29

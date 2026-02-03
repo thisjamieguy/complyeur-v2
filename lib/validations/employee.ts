@@ -49,18 +49,3 @@ export const employeeUpdateSchema = z.object({
 })
 
 export type EmployeeUpdateData = z.infer<typeof employeeUpdateSchema>
-
-/**
- * Extended employee schema (for future use when database is updated)
- * These fields would require a database migration to add:
- * - email: optional email field
- * - department: optional department field
- * - nationality: optional 2-letter country code
- */
-// import { COUNTRY_NAMES } from '@/lib/constants/schengen-countries'
-// export const employeeExtendedSchema = z.object({
-//   name: employeeSchema.shape.name,
-//   email: z.string().email().max(254).optional().nullable(),
-//   department: z.string().max(50).optional().nullable(),
-//   nationality: z.string().length(2).optional().nullable(),
-// })

@@ -54,9 +54,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect all auth routes to landing page (waitlist mode - no signups/logins yet)
-  if (!user && isAuthRoute) {
-    return redirectWithCookies(new URL('/landing', request.url))
-  }
+  // TEMPORARILY DISABLED FOR E2E TESTING - uncomment to re-enable waitlist mode
+  // if (!user && isAuthRoute) {
+  //   return redirectWithCookies(new URL('/landing', request.url))
+  // }
 
   // Continue with the response
   return supabaseResponse

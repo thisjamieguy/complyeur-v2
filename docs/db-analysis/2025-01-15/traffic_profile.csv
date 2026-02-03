@@ -1,0 +1,27 @@
+schemaname,table_name,blocks_read,write_tuples,blocks_write,activity_ratio
+auth,users,10,185,92.5,9.3:1 (Write-Heavy)
+public,profiles,8,20,20,2.5:1 (Write-Heavy)
+public,companies,2,17,17,8.5:1 (Write-Heavy)
+public,import_sessions,5,85,12.75,2.6:1 (Write-Heavy)
+public,admin_audit_log,5,88,7.8974358974359,1.6:1 (Write-Heavy)
+public,employees,8,107,4.75555555555556,0.6:1 (Write-Heavy)
+public,trips,8,118,2.31372549019608,0.3:1 (Write-Heavy)
+auth,flow_state,4,92,5.75,1.4:1 (Write-Heavy)
+public,column_mappings,6,2,2,0.3:1 (Write-Heavy)
+auth,identities,7,50,-0,Read-Only
+public,audit_log,7,25,0,Read-Only
+auth,refresh_tokens,7,50,-0,Read-Only
+public,alerts,7,4,0,Read-Only
+public,company_entitlements,6,18,-0,Read-Only
+public,notification_log,6,2,-0,Read-Only
+public,notification_preferences,5,1,-0,Read-Only
+auth,sessions,5,65,0,Read-Only
+auth,schema_migrations,3,65,0.902777777777778,0.3:1 (Write-Heavy)
+auth,one_time_tokens,2,40,-0,Read-Only
+storage,migrations,2,50,-0,Read-Only
+auth,mfa_amr_claims,2,17,-0,Read-Only
+realtime,schema_migrations,1,65,1,1.0:1 (Write-Heavy)
+public,tiers,1,4,-0,Read-Only
+public,company_settings,1,1,-0,Read-Only
+public,schengen_countries,1,39,-0,Read-Only
+supabase_migrations,schema_migrations,1,33,-0,Read-Only

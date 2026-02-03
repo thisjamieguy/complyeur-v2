@@ -1,0 +1,11 @@
+email,entry_date,exit_date,country
+james.smith0@test.example.com,2025-11-01,2025-11-10,FR
+james.smith0@test.example.com,2025-11-05,2025-11-15,DE
+james.smith0@test.example.com,2025-11-10,2025-11-20,IT
+mary.johnson1@test.example.com,2025-11-01,2025-11-30,FR
+mary.johnson1@test.example.com,2025-11-15,2025-12-15,DE
+john.williams2@test.example.com,2025-11-01,2025-11-05,FR
+john.williams2@test.example.com,2025-11-01,2025-11-05,DE
+patricia.brown3@test.example.com,2025-11-01,2025-11-15,FR
+patricia.brown3@test.example.com,2025-11-14,2025-11-16,DE
+patricia.brown3@test.example.com,2025-11-15,2025-11-20,IT

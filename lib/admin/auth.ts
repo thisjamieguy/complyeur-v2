@@ -2,11 +2,6 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 
-interface AdminProfile {
-  is_superadmin: boolean | null
-  full_name: string | null
-}
-
 /**
  * Checks if the current user is a super admin.
  * If not authenticated, redirects to login.
@@ -42,64 +37,4 @@ export async function requireSuperAdmin() {
   }
 
   return { user, profile }
-}
-
-/**
- * Checks if the current user is a super admin.
- * Returns true/false, does not redirect.
- *
- * Use this for conditional rendering or checks.
- */
-export async function isSuperAdmin(): Promise<boolean> {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) return false
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_superadmin')
-    .eq('id', user.id)
-    .single()
-
-    if (profile?.is_superadmin !== true) return false
-
-    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
-    return mfa.ok
-  } catch {
-    return false
-  }
-}
-
-/**
- * Gets the current admin user info.
- * Returns null if not authenticated or not a superadmin.
- */
-export async function getAdminUser() {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) return null
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, full_name, is_superadmin')
-    .eq('id', user.id)
-    .single()
-
-    if (!profile?.is_superadmin) return null
-
-    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
-    if (!mfa.ok) return null
-
-    return {
-      id: user.id,
-      email: user.email,
-      fullName: profile.full_name,
-    }
-  } catch {
-    return null
-  }
 }

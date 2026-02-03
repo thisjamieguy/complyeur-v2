@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, Plus } from 'lucide-react'
@@ -58,9 +58,10 @@ function calculateStats(employees: EmployeeCompliance[]): ComplianceStats {
 }
 
 /**
- * Mobile card view for a single employee
+ * Mobile card view for a single employee.
+ * Memoized to prevent re-renders when parent state changes.
  */
-function EmployeeCard({
+const EmployeeCard = memo(function EmployeeCard({
   employee,
   onAddTrip,
 }: {
@@ -121,7 +122,7 @@ function EmployeeCard({
       </Link>
     </div>
   )
-}
+})
 
 /**
  * Main compliance table component with filtering and sorting.
@@ -147,40 +148,50 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
     employeeName: string
   }>({ open: false, employeeId: '', employeeName: '' })
 
-  const openAddTripModal = (employeeId: string, employeeName: string) => {
-    setAddTripModal({ open: true, employeeId, employeeName })
-  }
+  // Memoized callbacks to prevent child re-renders
+  const openAddTripModal = useCallback(
+    (employeeId: string, employeeName: string) => {
+      setAddTripModal({ open: true, employeeId, employeeName })
+    },
+    []
+  )
 
-  const closeAddTripModal = () => {
+  const closeAddTripModal = useCallback(() => {
     setAddTripModal({ open: false, employeeId: '', employeeName: '' })
-  }
+  }, [])
 
   // Calculate stats from all employees (unfiltered)
   const stats = useMemo(() => calculateStats(employees), [employees])
 
   // Handle filter change and update URL
-  const handleFilterChange = (filter: StatusFilter) => {
-    setStatusFilter(filter)
-    const params = new URLSearchParams(searchParams.toString())
-    if (filter === 'all') {
-      params.delete('status')
-    } else {
-      params.set('status', filter)
-    }
-    router.push(`?${params.toString()}`, { scroll: false })
-  }
+  const handleFilterChange = useCallback(
+    (filter: StatusFilter) => {
+      setStatusFilter(filter)
+      const params = new URLSearchParams(searchParams.toString())
+      if (filter === 'all') {
+        params.delete('status')
+      } else {
+        params.set('status', filter)
+      }
+      router.push(`?${params.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
 
   // Handle search change and update URL
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query)
-    const params = new URLSearchParams(searchParams.toString())
-    if (query.trim()) {
-      params.set('search', query.trim())
-    } else {
-      params.delete('search')
-    }
-    router.push(`?${params.toString()}`, { scroll: false })
-  }
+  const handleSearchChange = useCallback(
+    (query: string) => {
+      setSearchQuery(query)
+      const params = new URLSearchParams(searchParams.toString())
+      if (query.trim()) {
+        params.set('search', query.trim())
+      } else {
+        params.delete('search')
+      }
+      router.push(`?${params.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
 
   // Apply filtering and sorting
   const filteredAndSorted = useMemo(() => {

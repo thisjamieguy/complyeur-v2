@@ -1,0 +1,19 @@
+name,last_vacuum,last_autovacuum,last_analyze,last_autoanalyze,rowcount,dead_rowcount,autovacuum_threshold,expect_autovacuum,autoanalyze_threshold,expect_autoanalyze
+public.admin_audit_log,"","","",2026-01-13 00:06,            78,             0,            66,no,            58,no
+public.alerts,"","",2026-01-12 18:27,"",             0,             3,            50,no,            50,no
+public.audit_log,"","",2026-01-12 18:27,"",             0,             0,            50,no,            50,no
+public.background_jobs,"","",2026-01-12 18:27,"",             0,             0,            50,no,            50,no
+public.column_mappings,"","","","",             1,             0,            50,no,            50,no
+public.companies,"","","","",             1,             9,            50,no,            50,no
+public.employee_compliance_snapshots,"","",2026-01-12 18:27,"",             0,             0,            50,no,            50,no
+public.employees,"","",2026-01-12 18:27,2026-01-14 00:18,            45,            32,            59,no,            54,no
+public.import_sessions,"","","",2026-01-13 23:22,            20,            50,            54,no,            52,no
+public.profiles,"","",2026-01-12 18:27,"",             1,            11,            50,no,            50,no
+public.trips,"","",2026-01-12 18:27,2026-01-14 00:18,           102,             9,            70,no,            60,no
+public.company_entitlements,"","","","",            -1,            10,            50,no,            50,no
+public.company_notes,"","","","",            -1,             0,            50,no,            50,no
+public.company_settings,"","","","",            -1,             0,            50,no,            50,no
+public.notification_log,"","","","",            -1,             1,            50,no,            50,no
+public.notification_preferences,"","","","",            -1,             0,            50,no,            50,no
+public.schengen_countries,"","","","",            -1,             6,            50,no,            50,no
+public.tiers,"","","","",            -1,             0,            50,no,            50,no

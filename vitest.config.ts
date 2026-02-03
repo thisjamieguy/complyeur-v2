@@ -22,16 +22,27 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      reportsDirectory: './.test-output/coverage',
       include: [
         'lib/compliance/**/*.ts',
         'lib/validations/**/*.ts',
+        'lib/import/**/*.ts',
         'app/(auth)/actions.ts',
       ],
       exclude: [
         'lib/compliance/__tests__/**',
         'lib/compliance/index.ts',
+        'lib/import/**/__tests__/**',
         '**/__tests__/**',
       ],
+      thresholds: {
+        'lib/compliance/**/*.ts': {
+          lines: 80,
+          branches: 80,
+          functions: 80,
+          statements: 80,
+        },
+      },
     },
   },
   resolve: {

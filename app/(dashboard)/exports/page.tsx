@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { ExportForm } from '@/components/exports'
+import { ExportForm } from '@/components/exports/export-form'
 import { getEmployeesForExport } from '@/app/actions/exports'
 import { Skeleton } from '@/components/ui/skeleton'
 

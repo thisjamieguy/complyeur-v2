@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   getRiskLevel,
+  getStatusFromDaysUsed,
   getRiskDescription,
   getRiskAction,
   getSeverityScore,
@@ -88,6 +89,139 @@ describe('getRiskLevel', () => {
   });
 });
 
+describe('getStatusFromDaysUsed', () => {
+  describe('default thresholds', () => {
+    // Default: greenMax: 60, amberMax: 75, redMax: 89
+    it('returns green for 0-60 days used', () => {
+      expect(getStatusFromDaysUsed(0)).toBe('green');
+      expect(getStatusFromDaysUsed(30)).toBe('green');
+      expect(getStatusFromDaysUsed(60)).toBe('green');
+    });
+
+    it('returns amber for 61-75 days used', () => {
+      expect(getStatusFromDaysUsed(61)).toBe('amber');
+      expect(getStatusFromDaysUsed(70)).toBe('amber');
+      expect(getStatusFromDaysUsed(75)).toBe('amber');
+    });
+
+    it('returns red for 76-89 days used', () => {
+      expect(getStatusFromDaysUsed(76)).toBe('red');
+      expect(getStatusFromDaysUsed(80)).toBe('red');
+      expect(getStatusFromDaysUsed(89)).toBe('red');
+    });
+
+    it('returns breach for 90+ days used (always)', () => {
+      expect(getStatusFromDaysUsed(90)).toBe('breach');
+      expect(getStatusFromDaysUsed(95)).toBe('breach');
+      expect(getStatusFromDaysUsed(100)).toBe('breach');
+      expect(getStatusFromDaysUsed(150)).toBe('breach');
+    });
+  });
+
+  describe('threshold boundaries', () => {
+    it('green/amber boundary at 60/61', () => {
+      expect(getStatusFromDaysUsed(60)).toBe('green');
+      expect(getStatusFromDaysUsed(61)).toBe('amber');
+    });
+
+    it('amber/red boundary at 75/76', () => {
+      expect(getStatusFromDaysUsed(75)).toBe('amber');
+      expect(getStatusFromDaysUsed(76)).toBe('red');
+    });
+
+    it('red/breach boundary at 89/90 (non-configurable)', () => {
+      expect(getStatusFromDaysUsed(89)).toBe('red');
+      expect(getStatusFromDaysUsed(90)).toBe('breach');
+    });
+  });
+
+  describe('custom thresholds', () => {
+    it('uses custom greenMax threshold', () => {
+      const thresholds = { greenMax: 50, amberMax: 70, redMax: 85 };
+
+      expect(getStatusFromDaysUsed(50, thresholds)).toBe('green');
+      expect(getStatusFromDaysUsed(51, thresholds)).toBe('amber');
+    });
+
+    it('uses custom amberMax threshold', () => {
+      const thresholds = { greenMax: 50, amberMax: 70, redMax: 85 };
+
+      expect(getStatusFromDaysUsed(70, thresholds)).toBe('amber');
+      expect(getStatusFromDaysUsed(71, thresholds)).toBe('red');
+    });
+
+    it('breach is always 90+ regardless of custom thresholds', () => {
+      const thresholds = { greenMax: 80, amberMax: 85, redMax: 88 };
+
+      expect(getStatusFromDaysUsed(89, thresholds)).toBe('red');
+      expect(getStatusFromDaysUsed(90, thresholds)).toBe('breach');
+    });
+
+    it('throws InvalidConfigError for non-numeric greenMax', () => {
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: NaN, amberMax: 75, redMax: 89 })
+      ).toThrow(InvalidConfigError);
+    });
+
+    it('throws InvalidConfigError for non-numeric amberMax', () => {
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: NaN, redMax: 89 })
+      ).toThrow(InvalidConfigError);
+    });
+
+    it('throws InvalidConfigError for non-numeric redMax', () => {
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 75, redMax: NaN })
+      ).toThrow(InvalidConfigError);
+    });
+
+    it('throws InvalidConfigError for greenMax out of range', () => {
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 0, amberMax: 75, redMax: 89 })
+      ).toThrow(InvalidConfigError);
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 90, amberMax: 91, redMax: 92 })
+      ).toThrow(InvalidConfigError);
+    });
+
+    it('throws InvalidConfigError for amberMax out of range', () => {
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 0, redMax: 89 })
+      ).toThrow(InvalidConfigError);
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 90, redMax: 91 })
+      ).toThrow(InvalidConfigError);
+    });
+
+    it('throws InvalidConfigError for redMax out of range', () => {
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 75, redMax: 0 })
+      ).toThrow(InvalidConfigError);
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 75, redMax: 90 })
+      ).toThrow(InvalidConfigError);
+    });
+
+    it('throws InvalidConfigError for greenMax >= amberMax', () => {
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 75, amberMax: 75, redMax: 89 })
+      ).toThrow(InvalidConfigError);
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 80, amberMax: 75, redMax: 89 })
+      ).toThrow(InvalidConfigError);
+    });
+
+    it('throws InvalidConfigError for amberMax >= redMax', () => {
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 89, redMax: 89 })
+      ).toThrow(InvalidConfigError);
+      expect(() =>
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 89, redMax: 85 })
+      ).toThrow(InvalidConfigError);
+    });
+  });
+});
+
 describe('getRiskDescription', () => {
   it('returns appropriate description for green', () => {
     const description = getRiskDescription('green');
@@ -102,6 +236,12 @@ describe('getRiskDescription', () => {
   it('returns appropriate description for red', () => {
     const description = getRiskDescription('red');
     expect(description).toContain('High risk');
+  });
+
+  it('returns appropriate description for breach', () => {
+    const description = getRiskDescription('breach');
+    expect(description).toContain('Breach');
+    expect(description).toContain('90-day limit');
   });
 });
 
@@ -137,6 +277,19 @@ describe('getRiskAction', () => {
   it('handles plural days for over limit', () => {
     const action = getRiskAction('red', -2);
     expect(action).toContain('2 days');
+  });
+
+  it('returns breach message for breach status', () => {
+    const action = getRiskAction('breach', -5);
+    expect(action).toContain('Over limit');
+    expect(action).toContain('5 days');
+    expect(action).toContain('outside Schengen');
+  });
+
+  it('handles singular day for breach status', () => {
+    const action = getRiskAction('breach', -1);
+    expect(action).toContain('1 day');
+    expect(action).not.toContain('1 days');
   });
 });
 

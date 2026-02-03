@@ -11,6 +11,7 @@
  * - Runtime input validation
  */
 
+import { cache } from 'react'
 import { format, parseISO, subDays } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -97,8 +98,8 @@ export async function exportComplianceData(
   }
 
   try {
-    // Fetch employees with trips
-    let query = supabase
+    // Build employee query
+    let employeeQuery = supabase
       .from('employees')
       .select(
         `
@@ -119,10 +120,17 @@ export async function exportComplianceData(
       .order('name')
 
     if (validatedOptions.scope === 'single' && validatedOptions.employeeId) {
-      query = query.eq('id', validatedOptions.employeeId)
+      employeeQuery = employeeQuery.eq('id', validatedOptions.employeeId)
     }
 
-    const { data: employees, error: fetchError } = await query
+    // Fetch employees and company name in parallel
+    const [employeesResult, companyResult] = await Promise.all([
+      employeeQuery,
+      supabase.from('companies').select('name').eq('id', companyId).single(),
+    ])
+
+    const { data: employees, error: fetchError } = employeesResult
+    const company = companyResult.data
 
     if (fetchError) {
       console.error('[Export] Database error:', fetchError)
@@ -219,12 +227,7 @@ export async function exportComplianceData(
       .slice(0, 6)
       .toUpperCase()}`
 
-    // Get company name for PDF
-    const { data: company } = await supabase
-      .from('companies')
-      .select('name')
-      .eq('id', companyId)
-      .single()
+    // Note: company was fetched in parallel with employees above
 
     // Generate export
     let fileContent: string
@@ -369,29 +372,30 @@ async function logExport(
 
 /**
  * Get list of employees for export form dropdown.
+ * Wrapped with cache() for per-request deduplication.
  */
-export async function getEmployeesForExport(): Promise<
-  { id: string; name: string }[]
-> {
-  const supabase = await createClient()
+export const getEmployeesForExport = cache(
+  async (): Promise<{ id: string; name: string }[]> => {
+    const supabase = await createClient()
 
-  const auth = await requireExportPermission(supabase, 'csv')
-  if (!auth.allowed) {
-    return []
+    const auth = await requireExportPermission(supabase, 'csv')
+    if (!auth.allowed) {
+      return []
+    }
+
+    if (!auth.profile.company_id) {
+      return []
+    }
+
+    const { data: employees } = await supabase
+      .from('employees')
+      .select('id, name')
+      .eq('company_id', auth.profile.company_id)
+      .order('name')
+
+    return employees || []
   }
-
-  if (!auth.profile.company_id) {
-    return []
-  }
-
-  const { data: employees } = await supabase
-    .from('employees')
-    .select('id, name')
-    .eq('company_id', auth.profile.company_id)
-    .order('name')
-
-  return employees || []
-}
+)
 
 /**
  * Export future job alerts data.

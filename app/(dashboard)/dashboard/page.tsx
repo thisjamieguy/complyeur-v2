@@ -6,10 +6,19 @@ import { getCompanySettings } from '@/lib/actions/settings'
 import { ComplianceTable } from '@/components/dashboard/compliance-table'
 import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
-import { AlertBanner } from '@/components/alerts'
+import { AlertBanner } from '@/components/alerts/alert-banner'
 import { getUnacknowledgedAlertsAction } from '../actions'
 
 export const dynamic = 'force-dynamic'
+
+/**
+ * Skeleton for the alert banner while loading.
+ */
+function AlertSkeleton() {
+  return (
+    <div className="h-14 w-full bg-slate-100 dark:bg-slate-800 rounded-lg animate-pulse" />
+  )
+}
 
 /**
  * Server component that fetches and displays employee compliance data.
@@ -60,7 +69,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Alert banner - shows unacknowledged alerts */}
-      <Suspense fallback={null}>
+      <Suspense fallback={<AlertSkeleton />}>
         <AlertSection />
       </Suspense>
 

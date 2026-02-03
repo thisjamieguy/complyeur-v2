@@ -2,14 +2,13 @@ import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { ChevronRight, FileSpreadsheet, History } from 'lucide-react'
-import { SettingsForm } from '@/components/settings'
+import { SettingsForm } from '@/components/settings/settings-form'
+import { SecuritySettings } from '@/components/settings/security-settings'
+import { DangerZone } from '@/components/settings/danger-zone'
 import { UserPreferencesForm } from './user-preferences-form'
 import { getCompanySettings, canViewSettings, canUpdateSettings } from '@/lib/actions/settings'
 import { getNotificationPreferencesAction } from '../actions'
 import type { NotificationPreferences } from '@/types/database-helpers'
-
-import { SecuritySettings } from '@/components/settings'
-import { DangerZone } from '@/components/settings/danger-zone'
 
 export const metadata = {
   title: 'Settings | ComplyEUR',

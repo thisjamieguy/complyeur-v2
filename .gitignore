@@ -11,7 +11,7 @@
 !.yarn/versions
 
 # testing
-/coverage
+/.test-output/
 
 # next.js
 /.next/
@@ -40,8 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Database diagnostic exports
-20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
 
 # Local Claude settings
 .claude/settings.local.json
@@ -54,8 +52,7 @@ next-env.d.ts
 .playwright-mcp/
 .pnpm-store/
 
-# Generated output
-output/
 
 # Local tool configs
 squirrel.toml
+.auth/
