@@ -17,7 +17,6 @@ import { showSuccess, showError } from '@/lib/toast'
 interface QuickAddTripModalProps {
   employeeId: string
   employeeName: string
-  daysRemaining: number
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -25,7 +24,6 @@ interface QuickAddTripModalProps {
 export function QuickAddTripModal({
   employeeId,
   employeeName,
-  daysRemaining,
   open,
   onOpenChange,
 }: QuickAddTripModalProps) {
@@ -104,8 +102,6 @@ export function QuickAddTripModal({
           isLoading={isLoading}
           submitLabel="Add Trip"
           error={error}
-          daysRemaining={daysRemaining}
-          showAdvancedCollapsed={true}
         />
       </DialogContent>
     </Dialog>

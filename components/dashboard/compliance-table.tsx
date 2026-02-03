@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Eye } from 'lucide-react'
+import { Eye, Plus } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -19,6 +19,7 @@ import { SortSelect } from './sort-select'
 import { EmptyState } from './empty-state'
 import { DashboardStats } from './dashboard-stats'
 import { EmployeeSearch } from './employee-search'
+import { QuickAddTripModal } from './quick-add-trip-modal'
 import type {
   EmployeeCompliance,
   StatusFilter,
@@ -58,17 +59,36 @@ function calculateStats(employees: EmployeeCompliance[]): ComplianceStats {
 /**
  * Mobile card view for a single employee
  */
-function EmployeeCard({ employee }: { employee: EmployeeCompliance }) {
+function EmployeeCard({
+  employee,
+  onAddTrip,
+}: {
+  employee: EmployeeCompliance
+  onAddTrip: () => void
+}) {
   return (
-    <Link
-      href={`/employee/${employee.id}`}
-      className="block bg-white border border-slate-200 rounded-lg p-4 space-y-3 active:bg-slate-50 transition-colors"
-    >
+    <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="font-medium text-slate-900">
+        <Link
+          href={`/employee/${employee.id}`}
+          className="font-medium text-slate-900 hover:underline"
+        >
           {employee.name}
-        </span>
-        <StatusBadge status={employee.risk_level} />
+        </Link>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation()
+              onAddTrip()
+            }}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          <StatusBadge status={employee.risk_level} />
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div>
@@ -91,11 +111,14 @@ function EmployeeCard({ employee }: { employee: EmployeeCompliance }) {
           <span className="ml-2">{formatDate(employee.last_trip_date)}</span>
         </div>
       </div>
-      <div className="pt-2 border-t border-slate-100 flex items-center justify-center gap-2 text-sm text-slate-600">
+      <Link
+        href={`/employee/${employee.id}`}
+        className="pt-2 border-t border-slate-100 flex items-center justify-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+      >
         <Eye className="h-4 w-4" />
         <span>View Details</span>
-      </div>
-    </Link>
+      </Link>
+    </div>
   )
 }
 
@@ -115,6 +138,21 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilter)
   const [sortBy, setSortBy] = useState<SortOption>('days_remaining_asc')
   const [searchQuery, setSearchQuery] = useState(initialSearch)
+
+  // Quick add trip modal state
+  const [addTripModal, setAddTripModal] = useState<{
+    open: boolean
+    employeeId: string
+    employeeName: string
+  }>({ open: false, employeeId: '', employeeName: '' })
+
+  const openAddTripModal = (employeeId: string, employeeName: string) => {
+    setAddTripModal({ open: true, employeeId, employeeName })
+  }
+
+  const closeAddTripModal = () => {
+    setAddTripModal({ open: false, employeeId: '', employeeName: '' })
+  }
 
   // Calculate stats from all employees (unfiltered)
   const stats = useMemo(() => calculateStats(employees), [employees])
@@ -224,7 +262,7 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
               <TableHead className="font-semibold w-[100px]">Days Used</TableHead>
               <TableHead className="font-semibold w-[130px]">Days Remaining</TableHead>
               <TableHead className="font-semibold w-[120px]">Last Trip</TableHead>
-              <TableHead className="font-semibold w-[90px]">Actions</TableHead>
+              <TableHead className="font-semibold w-[140px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -277,14 +315,27 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
                     {formatDate(employee.last_trip_date)}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Link href={`/employee/${employee.id}`}>View</Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openAddTripModal(employee.id, employee.name)
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Link href={`/employee/${employee.id}`}>View</Link>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -301,10 +352,24 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
           </div>
         ) : (
           filteredAndSorted.map((employee) => (
-            <EmployeeCard key={employee.id} employee={employee} />
+            <EmployeeCard
+              key={employee.id}
+              employee={employee}
+              onAddTrip={() => openAddTripModal(employee.id, employee.name)}
+            />
           ))
         )}
       </div>
+
+      {/* Quick add trip modal */}
+      <QuickAddTripModal
+        employeeId={addTripModal.employeeId}
+        employeeName={addTripModal.employeeName}
+        open={addTripModal.open}
+        onOpenChange={(open) => {
+          if (!open) closeAddTripModal()
+        }}
+      />
     </div>
   )
 }
