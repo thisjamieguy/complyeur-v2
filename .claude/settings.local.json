@@ -69,7 +69,12 @@
       "Bash(npm run build:*)",
       "Bash(vercel whoami:*)",
       "Bash(vercel login)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(git pull origin main --no-rebase)",
+      "Bash(git stash pop)",
+      "Bash(git push origin main)",
+      "Bash(git stash drop)",
+      "Bash(git restore:*)"
     ]
   }
 }

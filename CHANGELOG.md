@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: update changelog [`48ad090`](https://github.com/thisjamieguy/complyeur-v2/commit/48ad09014383ddeefd8cc7e10f3d2fa31475104d)
 - chore: add suspicious trips diagnostic query [`79d3de6`](https://github.com/thisjamieguy/complyeur-v2/commit/79d3de6df6c2bd026159af59bfe7c969d972fcb8)
 - docs: add admin guide and heuristic evaluation [`98ca243`](https://github.com/thisjamieguy/complyeur-v2/commit/98ca243a7ccff4257bb27e25a6dca6630c607b8e)
 - feat(ui): add quick-add trip modal and collapsible component [`e3be410`](https://github.com/thisjamieguy/complyeur-v2/commit/e3be4102f8a7acbfab44889d7dadc3669192aa2c)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: add missing entry for aligning employee name column with timeline rows in changelog [`7a5f851`](https://github.com/thisjamieguy/complyeur-v2/commit/7a5f851fd8e92ee6a6018065d5b958742c7ad2af)
 - fix: add missing entry for aligning employee name column with timeline rows in changelog [`b137040`](https://github.com/thisjamieguy/complyeur-v2/commit/b137040adf24798dfbff60cbb14f647db65debb2)
 - fix: add missing entry for locking employee name column during horizontal scroll in changelog [`1445bff`](https://github.com/thisjamieguy/complyeur-v2/commit/1445bff0b8a62095a8280442835fd69a5a8540e1)
-- fix: add missing entry for SEO and accessibility improvements in changelog [`7f89015`](https://github.com/thisjamieguy/complyeur-v2/commit/7f890154aa733c7c0f2c4f01ba607525d22394f0)
 
 ## v1.0.0 - 2026-01-22
 
