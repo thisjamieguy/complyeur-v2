@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: update gitignore with tooling and cache directories [`a922d29`](https://github.com/thisjamieguy/complyeur-v2/commit/a922d296b077b2f5d0cb3e5ded017646aff88d53)
+- docs: add quick-add trip modal design document [`b469287`](https://github.com/thisjamieguy/complyeur-v2/commit/b469287fb11c4db38d96cdb07eafaf177f43267e)
 - fix: add missing entry for aligning employee name column with timeline rows in changelog [`7a5f851`](https://github.com/thisjamieguy/complyeur-v2/commit/7a5f851fd8e92ee6a6018065d5b958742c7ad2af)
 - fix: add missing entry for aligning employee name column with timeline rows in changelog [`b137040`](https://github.com/thisjamieguy/complyeur-v2/commit/b137040adf24798dfbff60cbb14f647db65debb2)
 - fix: add missing entry for locking employee name column during horizontal scroll in changelog [`1445bff`](https://github.com/thisjamieguy/complyeur-v2/commit/1445bff0b8a62095a8280442835fd69a5a8540e1)
 - fix: add missing entry for SEO and accessibility improvements in changelog [`7f89015`](https://github.com/thisjamieguy/complyeur-v2/commit/7f890154aa733c7c0f2c4f01ba607525d22394f0)
+- Merge pull request #7 from thisjamieguy/claude/supabase-security-audit-OIz8Y [`9a7a537`](https://github.com/thisjamieguy/complyeur-v2/commit/9a7a5376dcb46dc3b2b9d5ba003afc53b3686163)
+- docs: add comprehensive Supabase security baseline audit report [`d9499ea`](https://github.com/thisjamieguy/complyeur-v2/commit/d9499eab88e51a8d64ab09ae696710680f71e410)
 - fix: improve SEO and accessibility from website audit [`6c9d67f`](https://github.com/thisjamieguy/complyeur-v2/commit/6c9d67f67e55f810a98adba17390d6535107b344)
 - fix: improve landing page mobile responsiveness [`44d793d`](https://github.com/thisjamieguy/complyeur-v2/commit/44d793d96697d02b2d34cf70bd9d7968f38f4b20)
-- feat: improve import system, calendar, and data refresh [`1aec5fa`](https://github.com/thisjamieguy/complyeur-v2/commit/1aec5fa5d680356b7cd9b5bc73e09e30eb177855)
-- fix: update landing page headline to emphasize consequences [`bcb3dc2`](https://github.com/thisjamieguy/complyeur-v2/commit/bcb3dc2c01f78c57dff50ebbd1159e1d6c5b1338)
-- fix: remove preview mode banner for live landing page [`8b547fa`](https://github.com/thisjamieguy/complyeur-v2/commit/8b547fa90b100526b7d3e6e702ef184faf339040)
-- feat: launch landing page in waitlist-only mode [`c1636e2`](https://github.com/thisjamieguy/complyeur-v2/commit/c1636e2bfa5444d64eef785db57a3e8b4387a0a0)
 
 ## v1.0.0 - 2026-01-22
 
