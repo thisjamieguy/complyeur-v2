@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix(changelog): reorder entries for clarity and remove outdated feat entry [`e5d3b2f`](https://github.com/thisjamieguy/complyeur-v2/commit/e5d3b2fe2bb64916e798522aca8dcdea9fd9600d)
 - fix(changelog): reorder entries for clarity and remove outdated feat entry [`977e643`](https://github.com/thisjamieguy/complyeur-v2/commit/977e6433527d9656ef213d7cda41eb2d7b42924f)
 - feat(dashboard): add quick trip button to employee table [`26af52a`](https://github.com/thisjamieguy/complyeur-v2/commit/26af52aee505fff0d96b165fdfe332076625ee4b)
 - fix: add missing duplicate entry for aligning employee name column in changelog [`2312eb5`](https://github.com/thisjamieguy/complyeur-v2/commit/2312eb5db397a99d921b15df8feb606ae632d677)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: update changelog to include recent git command additions [`d2f8bf5`](https://github.com/thisjamieguy/complyeur-v2/commit/d2f8bf555709243f4b4802bef8e558d3b086951e)
 - feat(git): add git commands for pull, push, stash, and restore [`ebf1357`](https://github.com/thisjamieguy/complyeur-v2/commit/ebf1357ae1cac634412764e87769175ac55d81c5)
 - chore: update changelog [`48ad090`](https://github.com/thisjamieguy/complyeur-v2/commit/48ad09014383ddeefd8cc7e10f3d2fa31475104d)
-- chore: add suspicious trips diagnostic query [`79d3de6`](https://github.com/thisjamieguy/complyeur-v2/commit/79d3de6df6c2bd026159af59bfe7c969d972fcb8)
 
 ## v1.0.0 - 2026-01-22
 
