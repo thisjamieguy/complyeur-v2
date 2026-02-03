@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: add comprehensive test suite and reorganize documentation [`567ba57`](https://github.com/thisjamieguy/complyeur-v2/commit/567ba5707cf2a0f7a9cdf60a19b4d777197940f7)
 - fix(changelog): add missing feat entry for status thresholds implementation [`7e49099`](https://github.com/thisjamieguy/complyeur-v2/commit/7e490993a0e85ea8b321edff5c174863a6bf1067)
 - feat: implement status thresholds feature and update dashboard components [`37bba46`](https://github.com/thisjamieguy/complyeur-v2/commit/37bba46ffc767235e4aa6268f1cd826387696498)
 - fix(changelog): add missing entry for clarity and remove outdated chore entry [`6a5aa2b`](https://github.com/thisjamieguy/complyeur-v2/commit/6a5aa2bbe816a7322f5af360febf803a52906b1e)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix(changelog): reorder entries for clarity and remove outdated feat entry [`977e643`](https://github.com/thisjamieguy/complyeur-v2/commit/977e6433527d9656ef213d7cda41eb2d7b42924f)
 - feat(dashboard): add quick trip button to employee table [`26af52a`](https://github.com/thisjamieguy/complyeur-v2/commit/26af52aee505fff0d96b165fdfe332076625ee4b)
 - fix: add missing duplicate entry for aligning employee name column in changelog [`2312eb5`](https://github.com/thisjamieguy/complyeur-v2/commit/2312eb5db397a99d921b15df8feb606ae632d677)
-- fix: add missing duplicate entry for aligning employee name column in changelog [`a9cb4a0`](https://github.com/thisjamieguy/complyeur-v2/commit/a9cb4a009e83295c795f119d2e05f6fbb235cd24)
 
 ## v1.0.0 - 2026-01-22
 

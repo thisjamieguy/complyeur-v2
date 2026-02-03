@@ -22,6 +22,12 @@ export function Footer() {
               About
             </Link>
             <Link
+              href="/faq"
+              className="hover:text-slate-700 transition-colors"
+            >
+              FAQ
+            </Link>
+            <Link
               href="/contact"
               className="hover:text-slate-700 transition-colors"
             >
