@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat(dashboard): add quick trip button to employee table [`26af52a`](https://github.com/thisjamieguy/complyeur-v2/commit/26af52aee505fff0d96b165fdfe332076625ee4b)
 - fix: add missing duplicate entry for aligning employee name column in changelog [`2312eb5`](https://github.com/thisjamieguy/complyeur-v2/commit/2312eb5db397a99d921b15df8feb606ae632d677)
 - fix: add missing duplicate entry for aligning employee name column in changelog [`a9cb4a0`](https://github.com/thisjamieguy/complyeur-v2/commit/a9cb4a009e83295c795f119d2e05f6fbb235cd24)
 - fix: remove duplicate entry for aligning employee name column in changelog [`588de7d`](https://github.com/thisjamieguy/complyeur-v2/commit/588de7dfb7d947b7109d886226c7448356218127)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: update changelog [`48ad090`](https://github.com/thisjamieguy/complyeur-v2/commit/48ad09014383ddeefd8cc7e10f3d2fa31475104d)
 - chore: add suspicious trips diagnostic query [`79d3de6`](https://github.com/thisjamieguy/complyeur-v2/commit/79d3de6df6c2bd026159af59bfe7c969d972fcb8)
 - docs: add admin guide and heuristic evaluation [`98ca243`](https://github.com/thisjamieguy/complyeur-v2/commit/98ca243a7ccff4257bb27e25a6dca6630c607b8e)
-- feat(ui): add quick-add trip modal and collapsible component [`e3be410`](https://github.com/thisjamieguy/complyeur-v2/commit/e3be4102f8a7acbfab44889d7dadc3669192aa2c)
 
 ## v1.0.0 - 2026-01-22
 
