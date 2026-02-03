@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat(security): add database security hardening migrations [`e294d65`](https://github.com/thisjamieguy/complyeur-v2/commit/e294d65745350f6f20d6adcb775abec7da122d28)
 - chore: update gitignore with tooling and cache directories [`a922d29`](https://github.com/thisjamieguy/complyeur-v2/commit/a922d296b077b2f5d0cb3e5ded017646aff88d53)
 - docs: add quick-add trip modal design document [`b469287`](https://github.com/thisjamieguy/complyeur-v2/commit/b469287fb11c4db38d96cdb07eafaf177f43267e)
 - fix: add missing entry for aligning employee name column with timeline rows in changelog [`7a5f851`](https://github.com/thisjamieguy/complyeur-v2/commit/7a5f851fd8e92ee6a6018065d5b958742c7ad2af)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge pull request #7 from thisjamieguy/claude/supabase-security-audit-OIz8Y [`9a7a537`](https://github.com/thisjamieguy/complyeur-v2/commit/9a7a5376dcb46dc3b2b9d5ba003afc53b3686163)
 - docs: add comprehensive Supabase security baseline audit report [`d9499ea`](https://github.com/thisjamieguy/complyeur-v2/commit/d9499eab88e51a8d64ab09ae696710680f71e410)
 - fix: improve SEO and accessibility from website audit [`6c9d67f`](https://github.com/thisjamieguy/complyeur-v2/commit/6c9d67f67e55f810a98adba17390d6535107b344)
-- fix: improve landing page mobile responsiveness [`44d793d`](https://github.com/thisjamieguy/complyeur-v2/commit/44d793d96697d02b2d34cf70bd9d7968f38f4b20)
 
 ## v1.0.0 - 2026-01-22
 
