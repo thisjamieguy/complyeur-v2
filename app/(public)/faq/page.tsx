@@ -19,6 +19,27 @@ interface FAQSection {
   items: FAQItem[]
 }
 
+// Generate FAQ schema for SEO (only includes string answers)
+function generateFAQSchema() {
+  const questions = faqData
+    .flatMap((section) => section.items)
+    .filter((item): item is FAQItem & { answer: string } => typeof item.answer === 'string')
+    .map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    }))
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: questions,
+  }
+}
+
 const faqData: FAQSection[] = [
   {
     title: 'The 90/180-Day Rule',
@@ -380,6 +401,14 @@ export default function FAQPage() {
           </li>
         </ul>
       </section>
+
+      {/* FAQ Schema for SEO - content is from static faqData, not user input */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(generateFAQSchema()),
+        }}
+      />
     </div>
   )
 }

@@ -30,6 +30,7 @@ export default function robots(): MetadataRoute.Robots {
           '/forgot-password',
           '/about',
           '/contact',
+          '/faq',
         ],
         disallow: [
           '/dashboard',

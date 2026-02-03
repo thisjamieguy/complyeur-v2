@@ -1,0 +1,57 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Decorative elements -->
+  <circle cx="100" cy="530" r="200" fill="#3b82f6" opacity="0.1"/>
+  <circle cx="1100" cy="100" r="250" fill="#8b5cf6" opacity="0.1"/>
+
+  <!-- EU stars decoration (subtle) -->
+  <g opacity="0.15" transform="translate(950, 400)">
+    <circle cx="50" cy="0" r="8" fill="#fbbf24"/>
+    <circle cx="93" cy="18" r="8" fill="#fbbf24"/>
+    <circle cx="100" cy="65" r="8" fill="#fbbf24"/>
+    <circle cx="68" cy="100" r="8" fill="#fbbf24"/>
+    <circle cx="32" cy="100" r="8" fill="#fbbf24"/>
+    <circle cx="0" cy="65" r="8" fill="#fbbf24"/>
+    <circle cx="7" cy="18" r="8" fill="#fbbf24"/>
+  </g>
+
+  <!-- Logo/Brand -->
+  <text x="100" y="180" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="700" fill="#ffffff">
+    ComplyEUR
+  </text>
+
+  <!-- Tagline -->
+  <text x="100" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="400" fill="#94a3b8">
+    Schengen Compliance Made Simple
+  </text>
+
+  <!-- Description -->
+  <text x="100" y="380" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#64748b">
+    Track EU 90/180-day visa compliance for your employees.
+  </text>
+  <text x="100" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#64748b">
+    Automated tracking. Real-time alerts. Peace of mind.
+  </text>
+
+  <!-- Accent bar -->
+  <rect x="100" y="500" width="300" height="6" rx="3" fill="url(#accent)"/>
+
+  <!-- Domain -->
+  <text x="100" y="570" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#475569">
+    complyeur.com
+  </text>
+</svg>

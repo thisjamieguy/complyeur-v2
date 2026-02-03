@@ -68,5 +68,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.7,
     },
+    // FAQ page - high-value content for user questions
+    {
+      url: `${baseUrl}/faq`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
   ]
 }

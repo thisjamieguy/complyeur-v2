@@ -8,8 +8,9 @@ export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://complyeur.co
 
 /**
  * Default Open Graph image for social sharing
+ * Next.js auto-generates this from /app/opengraph-image.tsx
  */
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/opengraph-image`
 
 /**
  * Shared metadata configuration for SEO

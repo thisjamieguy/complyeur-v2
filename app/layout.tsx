@@ -5,7 +5,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
-import { defaultMetadata } from "@/lib/metadata";
+import { defaultMetadata, SITE_URL } from "@/lib/metadata";
 import "./globals.css";
 
 // Import CookieYes types for global window augmentation
@@ -52,6 +52,33 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        {/* JSON-LD Structured Data for SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "ComplyEUR",
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              url: SITE_URL,
+              description:
+                "Track and manage EU Schengen 90/180-day visa compliance for your employees. Automated tracking, real-time alerts, and compliance reporting for UK businesses.",
+              offers: {
+                "@type": "Offer",
+                availability: "https://schema.org/PreOrder",
+                price: "0",
+                priceCurrency: "GBP",
+              },
+              publisher: {
+                "@type": "Organization",
+                name: "ComplyEUR",
+                url: SITE_URL,
+              },
+            }),
+          }}
+        />
         <MaintenanceBanner />
         {children}
         <Toaster />

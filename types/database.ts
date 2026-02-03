@@ -592,6 +592,9 @@ export type Database = {
           risk_threshold_amber: number | null
           risk_threshold_green: number | null
           session_timeout_minutes: number | null
+          status_amber_max: number | null
+          status_green_max: number | null
+          status_red_max: number | null
           updated_at: string
           urgent_email_enabled: boolean | null
           warning_email_enabled: boolean | null
@@ -613,6 +616,9 @@ export type Database = {
           risk_threshold_amber?: number | null
           risk_threshold_green?: number | null
           session_timeout_minutes?: number | null
+          status_amber_max?: number | null
+          status_green_max?: number | null
+          status_red_max?: number | null
           updated_at?: string
           urgent_email_enabled?: boolean | null
           warning_email_enabled?: boolean | null
@@ -634,6 +640,9 @@ export type Database = {
           risk_threshold_amber?: number | null
           risk_threshold_green?: number | null
           session_timeout_minutes?: number | null
+          status_amber_max?: number | null
+          status_green_max?: number | null
+          status_red_max?: number | null
           updated_at?: string
           urgent_email_enabled?: boolean | null
           warning_email_enabled?: boolean | null
