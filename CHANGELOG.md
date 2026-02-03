@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: add missing duplicate entry for aligning employee name column in changelog [`a9cb4a0`](https://github.com/thisjamieguy/complyeur-v2/commit/a9cb4a009e83295c795f119d2e05f6fbb235cd24)
 - fix: remove duplicate entry for aligning employee name column in changelog [`588de7d`](https://github.com/thisjamieguy/complyeur-v2/commit/588de7dfb7d947b7109d886226c7448356218127)
 - fix: remove duplicate entry for aligning employee name column in changelog [`3d76f53`](https://github.com/thisjamieguy/complyeur-v2/commit/3d76f5360d24bdf37ae940569634309f7f019ed2)
 - chore: update changelog to include recent git command additions [`d2f8bf5`](https://github.com/thisjamieguy/complyeur-v2/commit/d2f8bf555709243f4b4802bef8e558d3b086951e)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs: add admin guide and heuristic evaluation [`98ca243`](https://github.com/thisjamieguy/complyeur-v2/commit/98ca243a7ccff4257bb27e25a6dca6630c607b8e)
 - feat(ui): add quick-add trip modal and collapsible component [`e3be410`](https://github.com/thisjamieguy/complyeur-v2/commit/e3be4102f8a7acbfab44889d7dadc3669192aa2c)
 - feat(security): add database security hardening migrations [`e294d65`](https://github.com/thisjamieguy/complyeur-v2/commit/e294d65745350f6f20d6adcb775abec7da122d28)
-- chore: update gitignore with tooling and cache directories [`a922d29`](https://github.com/thisjamieguy/complyeur-v2/commit/a922d296b077b2f5d0cb3e5ded017646aff88d53)
 
 ## v1.0.0 - 2026-01-22
 
