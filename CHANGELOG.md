@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: add missing entry for aligning employee name column with timeline rows in changelog [`7a5f851`](https://github.com/thisjamieguy/complyeur-v2/commit/7a5f851fd8e92ee6a6018065d5b958742c7ad2af)
 - fix: add missing entry for aligning employee name column with timeline rows in changelog [`b137040`](https://github.com/thisjamieguy/complyeur-v2/commit/b137040adf24798dfbff60cbb14f647db65debb2)
 - fix: add missing entry for locking employee name column during horizontal scroll in changelog [`1445bff`](https://github.com/thisjamieguy/complyeur-v2/commit/1445bff0b8a62095a8280442835fd69a5a8540e1)
 - fix: add missing entry for SEO and accessibility improvements in changelog [`7f89015`](https://github.com/thisjamieguy/complyeur-v2/commit/7f890154aa733c7c0f2c4f01ba607525d22394f0)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: update landing page headline to emphasize consequences [`bcb3dc2`](https://github.com/thisjamieguy/complyeur-v2/commit/bcb3dc2c01f78c57dff50ebbd1159e1d6c5b1338)
 - fix: remove preview mode banner for live landing page [`8b547fa`](https://github.com/thisjamieguy/complyeur-v2/commit/8b547fa90b100526b7d3e6e702ef184faf339040)
 - feat: launch landing page in waitlist-only mode [`c1636e2`](https://github.com/thisjamieguy/complyeur-v2/commit/c1636e2bfa5444d64eef785db57a3e8b4387a0a0)
-- fix: prevent false country matches from 3+ letter codes in gantt parser [`679240c`](https://github.com/thisjamieguy/complyeur-v2/commit/679240cd8c258f02c26cbc38fad1f645774bc300)
 
 ## v1.0.0 - 2026-01-22
 
