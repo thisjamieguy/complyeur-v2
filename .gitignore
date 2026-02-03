@@ -45,3 +45,17 @@ next-env.d.ts
 
 # Local Claude settings
 .claude/settings.local.json
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# Tool caches
+.playwright-mcp/
+.pnpm-store/
+
+# Generated output
+output/
+
+# Local tool configs
+squirrel.toml
