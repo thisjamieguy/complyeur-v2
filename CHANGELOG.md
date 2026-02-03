@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: update changelog to include recent git command additions [`d2f8bf5`](https://github.com/thisjamieguy/complyeur-v2/commit/d2f8bf555709243f4b4802bef8e558d3b086951e)
 - feat(git): add git commands for pull, push, stash, and restore [`ebf1357`](https://github.com/thisjamieguy/complyeur-v2/commit/ebf1357ae1cac634412764e87769175ac55d81c5)
 - chore: update changelog [`48ad090`](https://github.com/thisjamieguy/complyeur-v2/commit/48ad09014383ddeefd8cc7e10f3d2fa31475104d)
 - chore: add suspicious trips diagnostic query [`79d3de6`](https://github.com/thisjamieguy/complyeur-v2/commit/79d3de6df6c2bd026159af59bfe7c969d972fcb8)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: update gitignore with tooling and cache directories [`a922d29`](https://github.com/thisjamieguy/complyeur-v2/commit/a922d296b077b2f5d0cb3e5ded017646aff88d53)
 - docs: add quick-add trip modal design document [`b469287`](https://github.com/thisjamieguy/complyeur-v2/commit/b469287fb11c4db38d96cdb07eafaf177f43267e)
 - fix: add missing entry for aligning employee name column with timeline rows in changelog [`7a5f851`](https://github.com/thisjamieguy/complyeur-v2/commit/7a5f851fd8e92ee6a6018065d5b958742c7ad2af)
-- fix: add missing entry for aligning employee name column with timeline rows in changelog [`b137040`](https://github.com/thisjamieguy/complyeur-v2/commit/b137040adf24798dfbff60cbb14f647db65debb2)
 
 ## v1.0.0 - 2026-01-22
 
