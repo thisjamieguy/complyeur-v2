@@ -11,9 +11,14 @@ export interface CompanySettings {
   retention_months: number
   session_timeout_minutes: number
 
-  // Risk Thresholds (days remaining)
+  // Risk Thresholds (days remaining) - used for alert notifications
   risk_threshold_green: number   // Days remaining >= this = green status
   risk_threshold_amber: number   // Days remaining >= this = amber, below = red
+
+  // Status Thresholds (days used) - used for dashboard badge display
+  status_green_max: number   // Days used <= this = green (Compliant)
+  status_amber_max: number   // Days used <= this = amber (At Risk)
+  status_red_max: number     // Days used <= this = red (Non-Compliant). 90+ = breach
 
   // Forecasting
   future_job_warning_threshold: number
@@ -43,6 +48,9 @@ export interface UpdateSettingsInput {
   session_timeout_minutes?: number
   risk_threshold_green?: number
   risk_threshold_amber?: number
+  status_green_max?: number
+  status_amber_max?: number
+  status_red_max?: number
   future_job_warning_threshold?: number
   notify_70_days?: boolean
   notify_85_days?: boolean
@@ -57,6 +65,9 @@ export const DEFAULT_SETTINGS: Omit<CompanySettings, 'company_id' | 'created_at'
   session_timeout_minutes: 30,
   risk_threshold_green: 30,
   risk_threshold_amber: 10,
+  status_green_max: 60,
+  status_amber_max: 75,
+  status_red_max: 89,
   future_job_warning_threshold: 80,
   notify_70_days: true,
   notify_85_days: true,

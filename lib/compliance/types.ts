@@ -18,11 +18,12 @@ export type CountryCode = string;
 
 /**
  * Risk level for compliance status.
- * - green: 30+ days remaining (safe)
- * - amber: 10-29 days remaining (caution)
- * - red: <10 days remaining or over limit (danger)
+ * - green: Safe zone (days used within green threshold)
+ * - amber: Caution zone (days used within amber threshold)
+ * - red: Danger zone (days used within red threshold)
+ * - breach: Violation (90+ days used, regardless of settings)
  */
-export type RiskLevel = 'green' | 'amber' | 'red';
+export type RiskLevel = 'green' | 'amber' | 'red' | 'breach';
 
 /**
  * Calculation mode for compliance engine.
@@ -32,14 +33,29 @@ export type RiskLevel = 'green' | 'amber' | 'red';
 export type CalculationMode = 'audit' | 'planning';
 
 /**
- * Risk level thresholds configuration.
+ * Risk level thresholds configuration (days remaining paradigm).
  * Defines the boundaries between green, amber, and red zones.
+ * @deprecated Use StatusThresholds for the days-used paradigm
  */
 export interface RiskThresholds {
   /** Days remaining for green status (default: 30) */
   readonly green: number;
   /** Days remaining for amber status (default: 10) */
   readonly amber: number;
+}
+
+/**
+ * Status threshold configuration (days used paradigm).
+ * Defines the boundaries between green, amber, red, and breach zones.
+ * Used for dashboard status badge display.
+ */
+export interface StatusThresholds {
+  /** Max days used for green status (default: 60) */
+  readonly greenMax: number;
+  /** Max days used for amber status (default: 75) */
+  readonly amberMax: number;
+  /** Max days used for red status (default: 89). 90+ is always breach. */
+  readonly redMax: number;
 }
 
 /**

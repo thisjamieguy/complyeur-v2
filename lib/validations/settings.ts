@@ -17,7 +17,7 @@ export const settingsSchema = z.object({
     .min(5, 'Minimum timeout is 5 minutes')
     .max(120, 'Maximum timeout is 120 minutes'),
 
-  // Risk thresholds must maintain hierarchy: green > amber > 0
+  // Risk thresholds (days remaining) - for alert notifications
   risk_threshold_green: z
     .number()
     .min(1, 'Green threshold must be at least 1')
@@ -27,6 +27,22 @@ export const settingsSchema = z.object({
     .number()
     .min(1, 'Amber threshold must be at least 1')
     .max(88, 'Amber threshold cannot exceed 88'),
+
+  // Status thresholds (days used) - for dashboard badge display
+  status_green_max: z
+    .number()
+    .min(1, 'Green threshold must be at least 1 day')
+    .max(89, 'Green threshold cannot exceed 89 days'),
+
+  status_amber_max: z
+    .number()
+    .min(1, 'Amber threshold must be at least 1 day')
+    .max(89, 'Amber threshold cannot exceed 89 days'),
+
+  status_red_max: z
+    .number()
+    .min(1, 'Red threshold must be at least 1 day')
+    .max(89, 'Red threshold cannot exceed 89 days'),
 
   // Future job warning: 50-89 days
   future_job_warning_threshold: z
@@ -52,6 +68,18 @@ export const settingsSchema = z.object({
     message: 'Green threshold must be greater than amber threshold',
     path: ['risk_threshold_green'],
   }
+).refine(
+  (data) => data.status_green_max < data.status_amber_max,
+  {
+    message: 'Green threshold must be less than amber threshold',
+    path: ['status_green_max'],
+  }
+).refine(
+  (data) => data.status_amber_max < data.status_red_max,
+  {
+    message: 'Amber threshold must be less than red threshold',
+    path: ['status_amber_max'],
+  }
 )
 
 export type SettingsFormData = z.infer<typeof settingsSchema>
@@ -72,6 +100,24 @@ export const riskThresholdsSchema = z.object({
   {
     message: 'Green threshold must be greater than amber threshold',
     path: ['risk_threshold_green'],
+  }
+)
+
+export const statusThresholdsSchema = z.object({
+  status_green_max: settingsSchema.shape.status_green_max,
+  status_amber_max: settingsSchema.shape.status_amber_max,
+  status_red_max: settingsSchema.shape.status_red_max,
+}).refine(
+  (data) => data.status_green_max < data.status_amber_max,
+  {
+    message: 'Green threshold must be less than amber threshold',
+    path: ['status_green_max'],
+  }
+).refine(
+  (data) => data.status_amber_max < data.status_red_max,
+  {
+    message: 'Amber threshold must be less than red threshold',
+    path: ['status_amber_max'],
   }
 )
 

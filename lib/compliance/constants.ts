@@ -9,7 +9,7 @@
  * @nextReview 2025-04-01 (quarterly)
  */
 
-import type { SchengenMembershipData, RiskThresholds } from './types';
+import type { SchengenMembershipData, RiskThresholds, StatusThresholds } from './types';
 
 /**
  * Default date when compliance tracking starts.
@@ -41,6 +41,23 @@ export const WINDOW_SIZE_DAYS = 180;
 export const DEFAULT_RISK_THRESHOLDS: Readonly<RiskThresholds> = {
   green: 16,
   amber: 1,
+} as const;
+
+/**
+ * Default status thresholds (days used paradigm).
+ * Used for dashboard status badge display.
+ *
+ * - green: 0-60 days used (Compliant)
+ * - amber: 61-75 days used (At Risk)
+ * - red: 76-89 days used (Non-Compliant)
+ * - breach: 90+ days used (always, regardless of settings)
+ *
+ * These thresholds are user-configurable via company settings.
+ */
+export const DEFAULT_STATUS_THRESHOLDS: Readonly<StatusThresholds> = {
+  greenMax: 60,
+  amberMax: 75,
+  redMax: 89,
 } as const;
 
 /**

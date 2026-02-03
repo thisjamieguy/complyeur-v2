@@ -9,9 +9,9 @@
  * @version 2025-01-07
  */
 
-import { DEFAULT_RISK_THRESHOLDS } from './constants';
+import { DEFAULT_RISK_THRESHOLDS, DEFAULT_STATUS_THRESHOLDS } from './constants';
 import { InvalidConfigError } from './errors';
-import type { RiskLevel, RiskThresholds } from './types';
+import type { RiskLevel, RiskThresholds, StatusThresholds } from './types';
 
 /**
  * Validates risk thresholds configuration.
@@ -81,6 +81,90 @@ export function getRiskLevel(
 }
 
 /**
+ * Validates status thresholds configuration.
+ *
+ * @param thresholds - Thresholds to validate
+ * @throws InvalidConfigError if thresholds are invalid
+ */
+function validateStatusThresholds(thresholds: StatusThresholds): void {
+  if (typeof thresholds.greenMax !== 'number' || isNaN(thresholds.greenMax)) {
+    throw new InvalidConfigError('thresholds.greenMax', 'Green threshold must be a number');
+  }
+  if (typeof thresholds.amberMax !== 'number' || isNaN(thresholds.amberMax)) {
+    throw new InvalidConfigError('thresholds.amberMax', 'Amber threshold must be a number');
+  }
+  if (typeof thresholds.redMax !== 'number' || isNaN(thresholds.redMax)) {
+    throw new InvalidConfigError('thresholds.redMax', 'Red threshold must be a number');
+  }
+  if (thresholds.greenMax < 1 || thresholds.greenMax > 89) {
+    throw new InvalidConfigError('thresholds.greenMax', 'Green threshold must be between 1 and 89');
+  }
+  if (thresholds.amberMax < 1 || thresholds.amberMax > 89) {
+    throw new InvalidConfigError('thresholds.amberMax', 'Amber threshold must be between 1 and 89');
+  }
+  if (thresholds.redMax < 1 || thresholds.redMax > 89) {
+    throw new InvalidConfigError('thresholds.redMax', 'Red threshold must be between 1 and 89');
+  }
+  if (thresholds.greenMax >= thresholds.amberMax) {
+    throw new InvalidConfigError(
+      'thresholds.greenMax',
+      `Green threshold (${thresholds.greenMax}) must be less than amber threshold (${thresholds.amberMax})`
+    );
+  }
+  if (thresholds.amberMax >= thresholds.redMax) {
+    throw new InvalidConfigError(
+      'thresholds.amberMax',
+      `Amber threshold (${thresholds.amberMax}) must be less than red threshold (${thresholds.redMax})`
+    );
+  }
+}
+
+/**
+ * Determines the status level based on days used (days used paradigm).
+ *
+ * Status levels:
+ * - green: daysUsed <= greenMax (default 60)
+ * - amber: daysUsed <= amberMax (default 75)
+ * - red: daysUsed <= redMax (default 89)
+ * - breach: daysUsed >= 90 (always, regardless of settings)
+ *
+ * @param daysUsed - Number of days used in the 180-day window
+ * @param thresholds - Optional custom thresholds
+ * @returns Status level: 'green', 'amber', 'red', or 'breach'
+ *
+ * @throws InvalidConfigError if thresholds are invalid
+ *
+ * @example
+ * getStatusFromDaysUsed(45)  // 'green'
+ * getStatusFromDaysUsed(65)  // 'amber'
+ * getStatusFromDaysUsed(80)  // 'red'
+ * getStatusFromDaysUsed(92)  // 'breach'
+ */
+export function getStatusFromDaysUsed(
+  daysUsed: number,
+  thresholds: StatusThresholds = DEFAULT_STATUS_THRESHOLDS
+): RiskLevel {
+  // 90+ is ALWAYS breach regardless of settings
+  if (daysUsed >= 90) {
+    return 'breach';
+  }
+
+  validateStatusThresholds(thresholds);
+
+  // Check against thresholds (from lowest to highest)
+  if (daysUsed <= thresholds.greenMax) {
+    return 'green';
+  }
+
+  if (daysUsed <= thresholds.amberMax) {
+    return 'amber';
+  }
+
+  // Between amberMax and 89 is red
+  return 'red';
+}
+
+/**
  * Gets a human-readable description of the risk level.
  *
  * @param riskLevel - The risk level
@@ -99,6 +183,8 @@ export function getRiskDescription(riskLevel: RiskLevel): string {
       return 'Moderate risk - approaching limit';
     case 'red':
       return 'High risk - at or over limit';
+    case 'breach':
+      return 'Breach - exceeded 90-day limit';
   }
 }
 
@@ -121,6 +207,9 @@ export function getRiskAction(riskLevel: RiskLevel, daysRemaining: number): stri
         return `Over limit by ${overBy} day${overBy === 1 ? '' : 's'}. Employee must remain outside Schengen until compliant.`;
       }
       return 'Limit nearly reached. Avoid new Schengen travel unless absolutely necessary.';
+    case 'breach':
+      const overBy = Math.abs(daysRemaining);
+      return `Over limit by ${overBy} day${overBy === 1 ? '' : 's'}. Employee must remain outside Schengen until compliant.`;
   }
 }
 

@@ -53,6 +53,7 @@ function calculateStats(employees: EmployeeCompliance[]): ComplianceStats {
     compliant: employees.filter((e) => e.risk_level === 'green').length,
     at_risk: employees.filter((e) => e.risk_level === 'amber').length,
     non_compliant: employees.filter((e) => e.risk_level === 'red').length,
+    breach: employees.filter((e) => e.risk_level === 'breach').length,
   }
 }
 

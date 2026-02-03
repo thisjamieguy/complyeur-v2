@@ -13,7 +13,10 @@ import { parseISO } from 'date-fns'
 import {
   calculateCompliance,
   isSchengenCountry,
+  getStatusFromDaysUsed,
+  DEFAULT_STATUS_THRESHOLDS,
   type Trip as ComplianceTrip,
+  type StatusThresholds,
 } from '@/lib/compliance'
 import { withDbTiming } from '@/lib/performance'
 import type { EmployeeCompliance } from '@/types/dashboard'
@@ -91,8 +94,13 @@ export const getEmployeesWithTrips = cache(async (): Promise<DbEmployee[]> => {
 /**
  * Fetch and calculate compliance data for all employees.
  * Uses React cache() for request-level deduplication.
+ *
+ * @param statusThresholds - Optional custom status thresholds (days used paradigm)
+ *                          If not provided, uses defaults: green ≤60, amber ≤75, red ≤89, breach 90+
  */
-export const getEmployeeComplianceData = cache(async (): Promise<EmployeeCompliance[]> => {
+export const getEmployeeComplianceData = cache(async (
+  statusThresholds?: StatusThresholds
+): Promise<EmployeeCompliance[]> => {
   const employees = await getEmployeesWithTrips()
 
   if (employees.length === 0) {
@@ -100,6 +108,7 @@ export const getEmployeeComplianceData = cache(async (): Promise<EmployeeComplia
   }
 
   const today = new Date()
+  const thresholds = statusThresholds ?? DEFAULT_STATUS_THRESHOLDS
 
   return employees.map((employee) => {
     // Filter out ghosted trips and non-Schengen countries
@@ -113,6 +122,9 @@ export const getEmployeeComplianceData = cache(async (): Promise<EmployeeComplia
       referenceDate: today,
     })
 
+    // Use days-used based status calculation with configurable thresholds
+    const riskLevel = getStatusFromDaysUsed(compliance.daysUsed, thresholds)
+
     // Find most recent trip (by exit date)
     const lastTrip = (employee.trips || [])
       .filter((trip) => !trip.ghosted)
@@ -123,7 +135,7 @@ export const getEmployeeComplianceData = cache(async (): Promise<EmployeeComplia
       name: employee.name,
       days_used: compliance.daysUsed,
       days_remaining: compliance.daysRemaining,
-      risk_level: compliance.riskLevel,
+      risk_level: riskLevel,
       last_trip_date: lastTrip?.exit_date || null,
       total_trips: (employee.trips || []).filter((t) => !t.ghosted).length,
       is_compliant: compliance.isCompliant,

@@ -11,7 +11,7 @@ import type { ForecastRiskLevel } from '@/types/forecast'
 /**
  * Employee compliance status for export display.
  */
-export type ComplianceStatus = 'Compliant' | 'At Risk' | 'Non-Compliant'
+export type ComplianceStatus = 'Compliant' | 'At Risk' | 'Non-Compliant' | 'Breach'
 
 /**
  * Future alert status for export display.
@@ -283,6 +283,15 @@ export const STATUS_COLORS = {
       text: '#DC2626',
     },
   },
+  breach: {
+    bg: 'bg-slate-900',
+    text: 'text-white',
+    border: 'border-slate-900',
+    pdf: {
+      bg: '#0F172A',
+      text: '#FFFFFF',
+    },
+  },
 } as const
 
 /**
@@ -296,6 +305,8 @@ export function riskLevelToStatus(riskLevel: RiskLevel): ComplianceStatus {
       return 'At Risk'
     case 'red':
       return 'Non-Compliant'
+    case 'breach':
+      return 'Breach'
   }
 }
 
@@ -304,7 +315,7 @@ export function riskLevelToStatus(riskLevel: RiskLevel): ComplianceStatus {
  */
 export function statusToKey(
   status: ComplianceStatus
-): 'compliant' | 'at-risk' | 'non-compliant' {
+): 'compliant' | 'at-risk' | 'non-compliant' | 'breach' {
   switch (status) {
     case 'Compliant':
       return 'compliant'
@@ -312,6 +323,8 @@ export function statusToKey(
       return 'at-risk'
     case 'Non-Compliant':
       return 'non-compliant'
+    case 'Breach':
+      return 'breach'
   }
 }
 

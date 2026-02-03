@@ -42,7 +42,7 @@ function FilterButton({ label, count, isActive, onClick }: Omit<FilterButtonProp
 
 /**
  * Status filter buttons for the dashboard.
- * Allows filtering employees by compliance status: All, Compliant, At Risk, Non-Compliant.
+ * Allows filtering employees by compliance status: All, Compliant, At Risk, Non-Compliant, Breach.
  */
 export function StatusFilters({
   activeFilter,
@@ -54,6 +54,7 @@ export function StatusFilters({
     { filter: 'green', label: 'Compliant', count: stats.compliant },
     { filter: 'amber', label: 'At Risk', count: stats.at_risk },
     { filter: 'red', label: 'Non-Compliant', count: stats.non_compliant },
+    { filter: 'breach', label: 'Breach', count: stats.breach },
   ]
 
   return (

@@ -178,77 +178,77 @@ export function BulkAddTripsForm({
         {rows.map((row, index) => (
           <div
             key={row.id}
-            className="grid grid-cols-12 gap-3 items-start p-4 border rounded-lg bg-muted/30"
+            className="p-4 border rounded-lg bg-muted/30"
           >
-            <div className="col-span-12 sm:col-span-3">
-              <Label className="text-xs text-muted-foreground">
-                Country *
-              </Label>
-              <CountrySelect
-                value={row.country}
-                onValueChange={(value) => updateRow(row.id, 'country', value)}
-                disabled={isSubmitting}
-                placeholder="Select..."
-              />
-            </div>
+            <div className="flex flex-wrap gap-3 items-end">
+              <div className="w-full sm:w-36">
+                <Label className="text-xs text-muted-foreground mb-1 block">
+                  Country *
+                </Label>
+                <CountrySelect
+                  value={row.country}
+                  onValueChange={(value) => updateRow(row.id, 'country', value)}
+                  disabled={isSubmitting}
+                  placeholder="Select..."
+                />
+              </div>
 
-            <div className="col-span-6 sm:col-span-2">
-              <Label className="text-xs text-muted-foreground">Entry *</Label>
-              <Input
-                type="date"
-                value={row.entryDate}
-                onChange={(e) => updateRow(row.id, 'entryDate', e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
+              <div className="w-[calc(50%-6px)] sm:w-32">
+                <Label className="text-xs text-muted-foreground mb-1 block">Entry *</Label>
+                <Input
+                  type="date"
+                  value={row.entryDate}
+                  onChange={(e) => updateRow(row.id, 'entryDate', e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full"
+                />
+              </div>
 
-            <div className="col-span-6 sm:col-span-2">
-              <Label className="text-xs text-muted-foreground">Exit *</Label>
-              <Input
-                type="date"
-                value={row.exitDate}
-                onChange={(e) => updateRow(row.id, 'exitDate', e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
+              <div className="w-[calc(50%-6px)] sm:w-32">
+                <Label className="text-xs text-muted-foreground mb-1 block">Exit *</Label>
+                <Input
+                  type="date"
+                  value={row.exitDate}
+                  onChange={(e) => updateRow(row.id, 'exitDate', e.target.value)}
+                  disabled={isSubmitting}
+                  className="w-full"
+                />
+              </div>
 
-            <div className="col-span-6 sm:col-span-2">
-              <Label className="text-xs text-muted-foreground">Purpose</Label>
-              <Input
-                placeholder="Optional"
-                value={row.purpose}
-                onChange={(e) => updateRow(row.id, 'purpose', e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
+              <div className="w-[calc(50%-6px)] sm:w-28 sm:flex-1">
+                <Label className="text-xs text-muted-foreground mb-1 block">Purpose</Label>
+                <Input
+                  placeholder="Optional"
+                  value={row.purpose}
+                  onChange={(e) => updateRow(row.id, 'purpose', e.target.value)}
+                  disabled={isSubmitting}
+                />
+              </div>
 
-            <div className="col-span-5 sm:col-span-2">
-              <Label className="text-xs text-muted-foreground">Job Ref</Label>
-              <Input
-                placeholder="Optional"
-                value={row.jobRef}
-                onChange={(e) => updateRow(row.id, 'jobRef', e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
+              <div className="w-[calc(50%-6px)] sm:w-28 sm:flex-1">
+                <Label className="text-xs text-muted-foreground mb-1 block">Job Ref</Label>
+                <Input
+                  placeholder="Optional"
+                  value={row.jobRef}
+                  onChange={(e) => updateRow(row.id, 'jobRef', e.target.value)}
+                  disabled={isSubmitting}
+                />
+              </div>
 
-            <div className="col-span-1 flex items-end justify-end">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={() => removeRow(row.id)}
                 disabled={rows.length === 1 || isSubmitting}
-                className="text-muted-foreground hover:text-destructive"
+                className="text-muted-foreground hover:text-destructive shrink-0"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
 
             {row.error && (
-              <div className="col-span-12">
-                <p className="text-sm text-destructive">{row.error}</p>
-              </div>
+              <p className="text-sm text-destructive mt-2">{row.error}</p>
             )}
           </div>
         ))}

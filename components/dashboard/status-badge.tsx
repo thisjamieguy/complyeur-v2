@@ -15,25 +15,35 @@ const statusConfig = {
     bg: 'bg-green-50',
     text: 'text-green-700',
     border: 'border-green-200',
+    dot: 'bg-green-500',
     label: 'Compliant',
   },
   amber: {
     bg: 'bg-amber-50',
     text: 'text-amber-700',
     border: 'border-amber-200',
+    dot: 'bg-amber-500',
     label: 'At Risk',
   },
   red: {
     bg: 'bg-red-50',
     text: 'text-red-700',
     border: 'border-red-200',
+    dot: 'bg-red-500',
     label: 'Non-Compliant',
+  },
+  breach: {
+    bg: 'bg-slate-900',
+    text: 'text-white',
+    border: 'border-slate-900',
+    dot: 'bg-white',
+    label: 'Breach',
   },
 } as const
 
 /**
  * Status badge component displaying compliance risk level.
- * Uses color coding: green (safe), amber (at-risk), red (critical).
+ * Uses color coding: green (compliant), amber (at-risk), red (non-compliant), breach (90+ days, black).
  */
 export function StatusBadge({
   status,
@@ -57,9 +67,7 @@ export function StatusBadge({
       <span
         className={cn(
           'h-1.5 w-1.5 rounded-full',
-          status === 'green' && 'bg-green-500',
-          status === 'amber' && 'bg-amber-500',
-          status === 'red' && 'bg-red-500'
+          config.dot
         )}
         aria-hidden="true"
       />

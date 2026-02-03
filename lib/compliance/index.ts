@@ -45,6 +45,7 @@ export type {
   RiskLevel,
   CalculationMode,
   RiskThresholds,
+  StatusThresholds,
   Trip,
   ComplianceConfig,
   ComplianceResult,
@@ -79,6 +80,7 @@ export {
   SCHENGEN_DAY_LIMIT,
   WINDOW_SIZE_DAYS,
   DEFAULT_RISK_THRESHOLDS,
+  DEFAULT_STATUS_THRESHOLDS,
   SCHENGEN_MEMBERSHIP,
   SCHENGEN_COUNTRY_CODES,
   EXCLUDED_COUNTRY_CODES,
@@ -130,6 +132,7 @@ export {
 
 export {
   getRiskLevel,
+  getStatusFromDaysUsed,
   getRiskDescription,
   getRiskAction,
   getSeverityScore,

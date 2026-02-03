@@ -1,4 +1,4 @@
-import { Users, CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
+import { Users, CheckCircle, AlertTriangle, XCircle, Ban } from 'lucide-react'
 import type { ComplianceStats } from '@/types/dashboard'
 import { cn } from '@/lib/utils'
 
@@ -32,11 +32,11 @@ function StatCard({ title, value, icon: Icon, iconBgColor, iconColor }: StatCard
 
 /**
  * Dashboard summary statistics cards showing employee compliance breakdown.
- * Displays: Total employees, Compliant (green), At Risk (amber), Non-Compliant (red)
+ * Displays: Total employees, Compliant (green), At Risk (amber), Non-Compliant (red), Breach (black)
  */
 export function DashboardStats({ stats }: DashboardStatsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       <StatCard
         title="Total Employees"
         value={stats.total}
@@ -64,6 +64,13 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
         icon={XCircle}
         iconBgColor="bg-red-50"
         iconColor="text-red-600"
+      />
+      <StatCard
+        title="Breach"
+        value={stats.breach}
+        icon={Ban}
+        iconBgColor="bg-slate-900"
+        iconColor="text-white"
       />
     </div>
   )

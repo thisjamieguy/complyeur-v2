@@ -46,6 +46,9 @@ export async function getCompanySettings(): Promise<CompanySettings | null> {
         session_timeout_minutes: 30,
         risk_threshold_green: 30,
         risk_threshold_amber: 10,
+        status_green_max: 60,
+        status_amber_max: 75,
+        status_red_max: 89,
         future_job_warning_threshold: 80,
         notify_70_days: true,
         notify_85_days: true,
@@ -72,6 +75,9 @@ export async function getCompanySettings(): Promise<CompanySettings | null> {
     session_timeout_minutes: data.session_timeout_minutes ?? 30,
     risk_threshold_green: data.risk_threshold_green ?? 30,
     risk_threshold_amber: data.risk_threshold_amber ?? 10,
+    status_green_max: data.status_green_max ?? 60,
+    status_amber_max: data.status_amber_max ?? 75,
+    status_red_max: data.status_red_max ?? 89,
     future_job_warning_threshold: data.future_job_warning_threshold ?? 80,
     notify_70_days: data.notify_70_days ?? true,
     notify_85_days: data.notify_85_days ?? true,
@@ -124,6 +130,9 @@ export async function updateCompanySettings(
     session_timeout_minutes: input.session_timeout_minutes ?? currentSettings.session_timeout_minutes,
     risk_threshold_green: input.risk_threshold_green ?? currentSettings.risk_threshold_green,
     risk_threshold_amber: input.risk_threshold_amber ?? currentSettings.risk_threshold_amber,
+    status_green_max: input.status_green_max ?? currentSettings.status_green_max,
+    status_amber_max: input.status_amber_max ?? currentSettings.status_amber_max,
+    status_red_max: input.status_red_max ?? currentSettings.status_red_max,
     future_job_warning_threshold: input.future_job_warning_threshold ?? currentSettings.future_job_warning_threshold,
     notify_70_days: input.notify_70_days ?? currentSettings.notify_70_days,
     notify_85_days: input.notify_85_days ?? currentSettings.notify_85_days,
@@ -158,6 +167,7 @@ export async function updateCompanySettings(
   }
 
   revalidatePath('/settings')
+  revalidatePath('/dashboard')  // Revalidate dashboard to reflect new status thresholds
   return { success: true }
 }
 

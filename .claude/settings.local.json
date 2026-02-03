@@ -74,7 +74,9 @@
       "Bash(git stash pop)",
       "Bash(git push origin main)",
       "Bash(git stash drop)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm run lint -- --quiet)",
+      "Bash(cat:*)"
     ]
   }
 }

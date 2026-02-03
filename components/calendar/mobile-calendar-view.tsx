@@ -37,6 +37,12 @@ const riskConfig = {
     textColor: 'text-red-600',
     bgColor: 'bg-red-50',
   },
+  breach: {
+    label: 'Breach',
+    dotColor: 'bg-slate-900',
+    textColor: 'text-slate-900',
+    bgColor: 'bg-slate-100',
+  },
 } satisfies Record<
   RiskLevel,
   { label: string; dotColor: string; textColor: string; bgColor: string }

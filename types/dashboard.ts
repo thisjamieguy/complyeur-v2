@@ -34,18 +34,20 @@ export interface EmployeeCompliance {
 export interface ComplianceStats {
   /** Total number of employees */
   total: number
-  /** Number of employees with green status (>=30 days remaining) */
+  /** Number of employees with green status (within green threshold) */
   compliant: number
-  /** Number of employees with amber status (10-29 days remaining) */
+  /** Number of employees with amber status (within amber threshold) */
   at_risk: number
-  /** Number of employees with red status (<10 days remaining) */
+  /** Number of employees with red status (within red threshold) */
   non_compliant: number
+  /** Number of employees with breach status (90+ days used) */
+  breach: number
 }
 
 /**
  * Status filter options for the dashboard
  */
-export type StatusFilter = 'all' | 'green' | 'amber' | 'red'
+export type StatusFilter = 'all' | 'green' | 'amber' | 'red' | 'breach'
 
 /**
  * Sort options for the compliance table

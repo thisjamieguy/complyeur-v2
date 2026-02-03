@@ -50,18 +50,17 @@ export function CountrySelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between overflow-hidden"
           disabled={disabled}
         >
           {selectedCountry ? (
-            <span className="flex items-center gap-2">
-              <span>{selectedCountry.name}</span>
-              <CountryBadge code={selectedCountry.code} />
+            <span className="flex items-center gap-1 min-w-0 flex-1 overflow-hidden">
+              <span className="truncate">{selectedCountry.name}</span>
             </span>
           ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className="text-muted-foreground truncate">{placeholder}</span>
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">

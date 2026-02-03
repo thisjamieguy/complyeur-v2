@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getEmployeeComplianceData } from '@/lib/data'
+import { getCompanySettings } from '@/lib/actions/settings'
 import { ComplianceTable } from '@/components/dashboard/compliance-table'
 import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
@@ -12,9 +13,20 @@ export const dynamic = 'force-dynamic'
 
 /**
  * Server component that fetches and displays employee compliance data.
+ * Uses company-specific status thresholds for badge colors.
  */
 async function EmployeeComplianceList() {
-  const employees = await getEmployeeComplianceData()
+  // Fetch company settings to get status thresholds
+  const settings = await getCompanySettings()
+
+  // Build thresholds from settings (with defaults)
+  const thresholds = {
+    greenMax: settings?.status_green_max ?? 60,
+    amberMax: settings?.status_amber_max ?? 75,
+    redMax: settings?.status_red_max ?? 89,
+  }
+
+  const employees = await getEmployeeComplianceData(thresholds)
   return <ComplianceTable employees={employees} />
 }
 

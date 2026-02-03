@@ -34,6 +34,7 @@ const riskStyles = {
   green: 'bg-green-500',
   amber: 'bg-amber-500',
   red: 'bg-red-500',
+  breach: 'bg-slate-900',
 } satisfies Record<RiskLevel, string>
 
 /**

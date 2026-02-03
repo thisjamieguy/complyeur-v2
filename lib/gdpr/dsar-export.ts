@@ -24,6 +24,7 @@ import {
   calculateCompliance,
   isSchengenCountry,
   type Trip as ComplianceTrip,
+  type RiskLevel,
 } from '@/lib/compliance'
 import { getCountryName } from '@/lib/constants/schengen-countries'
 
@@ -65,7 +66,7 @@ interface ComplianceSnapshot {
   reference_date: string
   days_used: number
   days_remaining: number
-  risk_level: 'green' | 'amber' | 'red'
+  risk_level: RiskLevel
   window_start: string
   window_end: string
 }

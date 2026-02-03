@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix(changelog): add missing entry for clarity and remove outdated chore entry [`6a5aa2b`](https://github.com/thisjamieguy/complyeur-v2/commit/6a5aa2bbe816a7322f5af360febf803a52906b1e)
 - fix(changelog): add missing entry for clarity and remove outdated chore entry [`7fb7934`](https://github.com/thisjamieguy/complyeur-v2/commit/7fb793491042e9688482c3e6bfa1b70e854a57ea)
 - fix(changelog): add missing entry for clarity and remove outdated feat entry [`ae1f50d`](https://github.com/thisjamieguy/complyeur-v2/commit/ae1f50d8a6b2224fec20a6344d946334c5709f1f)
 - fix(changelog): reorder entries for clarity and remove outdated feat entry [`e5d3b2f`](https://github.com/thisjamieguy/complyeur-v2/commit/e5d3b2fe2bb64916e798522aca8dcdea9fd9600d)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: add missing duplicate entry for aligning employee name column in changelog [`a9cb4a0`](https://github.com/thisjamieguy/complyeur-v2/commit/a9cb4a009e83295c795f119d2e05f6fbb235cd24)
 - fix: remove duplicate entry for aligning employee name column in changelog [`588de7d`](https://github.com/thisjamieguy/complyeur-v2/commit/588de7dfb7d947b7109d886226c7448356218127)
 - fix: remove duplicate entry for aligning employee name column in changelog [`3d76f53`](https://github.com/thisjamieguy/complyeur-v2/commit/3d76f5360d24bdf37ae940569634309f7f019ed2)
-- chore: update changelog to include recent git command additions [`d2f8bf5`](https://github.com/thisjamieguy/complyeur-v2/commit/d2f8bf555709243f4b4802bef8e558d3b086951e)
 
 ## v1.0.0 - 2026-01-22
 
