@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- docs: add admin guide and heuristic evaluation [`98ca243`](https://github.com/thisjamieguy/complyeur-v2/commit/98ca243a7ccff4257bb27e25a6dca6630c607b8e)
 - feat(ui): add quick-add trip modal and collapsible component [`e3be410`](https://github.com/thisjamieguy/complyeur-v2/commit/e3be4102f8a7acbfab44889d7dadc3669192aa2c)
 - feat(security): add database security hardening migrations [`e294d65`](https://github.com/thisjamieguy/complyeur-v2/commit/e294d65745350f6f20d6adcb775abec7da122d28)
 - chore: update gitignore with tooling and cache directories [`a922d29`](https://github.com/thisjamieguy/complyeur-v2/commit/a922d296b077b2f5d0cb3e5ded017646aff88d53)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: add missing entry for locking employee name column during horizontal scroll in changelog [`1445bff`](https://github.com/thisjamieguy/complyeur-v2/commit/1445bff0b8a62095a8280442835fd69a5a8540e1)
 - fix: add missing entry for SEO and accessibility improvements in changelog [`7f89015`](https://github.com/thisjamieguy/complyeur-v2/commit/7f890154aa733c7c0f2c4f01ba607525d22394f0)
 - Merge pull request #7 from thisjamieguy/claude/supabase-security-audit-OIz8Y [`9a7a537`](https://github.com/thisjamieguy/complyeur-v2/commit/9a7a5376dcb46dc3b2b9d5ba003afc53b3686163)
-- docs: add comprehensive Supabase security baseline audit report [`d9499ea`](https://github.com/thisjamieguy/complyeur-v2/commit/d9499eab88e51a8d64ab09ae696710680f71e410)
 
 ## v1.0.0 - 2026-01-22
 
