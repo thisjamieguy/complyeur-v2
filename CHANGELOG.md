@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- docs: improve CLAUDE.md with environment setup and complete testing workflows [`c437119`](https://github.com/thisjamieguy/complyeur-v2/commit/c4371194211e1e31aa3c37a4d18bdba487faafa5)
 - chore: update CHANGELOG.md [`1814213`](https://github.com/thisjamieguy/complyeur-v2/commit/1814213e52d3fca72420f2a3de3051e77e0f9dbb)
 - feat: add production load test results (20-100 concurrent users) [`0849cfe`](https://github.com/thisjamieguy/complyeur-v2/commit/0849cfee6d7edd95872eef73c79d8839f87f36d2)
 - chore: update CHANGELOG.md [`400021f`](https://github.com/thisjamieguy/complyeur-v2/commit/400021f5294c62af79a7efe82f77fd08e529539e)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: update CHANGELOG.md [`f885664`](https://github.com/thisjamieguy/complyeur-v2/commit/f8856642386bf45fcecb9bc131dc3178609d1144)
 - feat: add comprehensive load testing suite with k6 [`d53dc90`](https://github.com/thisjamieguy/complyeur-v2/commit/d53dc903992651442801b6bca18a32509fed3c3e)
 - chore: update CHANGELOG.md [`28b63a4`](https://github.com/thisjamieguy/complyeur-v2/commit/28b63a42387ca2d9d6047369105a9c095786bcf2)
-- chore: update Claude Code Bash command permissions [`660e332`](https://github.com/thisjamieguy/complyeur-v2/commit/660e3325bbab0d2f66ba92e34e55209717360e5c)
 
 ## v1.0.0 - 2026-01-22
 
