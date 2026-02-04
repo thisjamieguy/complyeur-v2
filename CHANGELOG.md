@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: update Claude Code Bash command permissions [`660e332`](https://github.com/thisjamieguy/complyeur-v2/commit/660e3325bbab0d2f66ba92e34e55209717360e5c)
+- chore: update CHANGELOG.md [`455bf14`](https://github.com/thisjamieguy/complyeur-v2/commit/455bf144230b1f74fb0f9dd852dbc10c1dddfda9)
 - chore: update CHANGELOG.md [`058afef`](https://github.com/thisjamieguy/complyeur-v2/commit/058afefeee40e5d98854e28f6a3b1e976ca59718)
 - chore: sync CHANGELOG.md [`03c8550`](https://github.com/thisjamieguy/complyeur-v2/commit/03c85504a216452c769241ebef9197ad21be1e13)
 - chore: auto-update CHANGELOG.md [`6a84e67`](https://github.com/thisjamieguy/complyeur-v2/commit/6a84e67dfdf4aab936530115e4b89447acc80f90)
@@ -17,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(branding): add ComplyEUR logos throughout the app [`9f1cd61`](https://github.com/thisjamieguy/complyeur-v2/commit/9f1cd61f35f8dda64830b58ebcdca109c51f3fd9)
 - chore: update CHANGELOG.md [`0b5b6bf`](https://github.com/thisjamieguy/complyeur-v2/commit/0b5b6bf8d85002dd2bd80876bb8ad18ec72f607f)
 - feat(import): redesign import flow UX with step indicator and feedback [`99fbd56`](https://github.com/thisjamieguy/complyeur-v2/commit/99fbd561dd113dda25e6721a2ed529e11f08b21d)
-- chore: update CHANGELOG.md [`6571bf1`](https://github.com/thisjamieguy/complyeur-v2/commit/6571bf14eee82b1893cf7042e76d412ebe32d24d)
-- feat(seo): add comprehensive SEO improvements and fix build errors [`ea769e7`](https://github.com/thisjamieguy/complyeur-v2/commit/ea769e741bd684b60a506c21e717b3b2245599e0)
 
 ## v1.0.0 - 2026-01-22
 
