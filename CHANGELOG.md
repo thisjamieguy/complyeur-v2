@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: update CHANGELOG.md [`b2cbd21`](https://github.com/thisjamieguy/complyeur-v2/commit/b2cbd2101a3b7d07c6931143259804fcb2ccf79b)
 - chore: final CHANGELOG sync [`1a561d3`](https://github.com/thisjamieguy/complyeur-v2/commit/1a561d3ff39b4bdfec626ba0df919057fb0c9c42)
 - chore: sync CHANGELOG.md [`86abbb0`](https://github.com/thisjamieguy/complyeur-v2/commit/86abbb084310c0930c7add79cfd7d0b0e85702b0)
 - chore: update CHANGELOG.md [`f885664`](https://github.com/thisjamieguy/complyeur-v2/commit/f8856642386bf45fcecb9bc131dc3178609d1144)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: update CHANGELOG.md [`455bf14`](https://github.com/thisjamieguy/complyeur-v2/commit/455bf144230b1f74fb0f9dd852dbc10c1dddfda9)
 - chore: update CHANGELOG.md [`058afef`](https://github.com/thisjamieguy/complyeur-v2/commit/058afefeee40e5d98854e28f6a3b1e976ca59718)
 - chore: sync CHANGELOG.md [`03c8550`](https://github.com/thisjamieguy/complyeur-v2/commit/03c85504a216452c769241ebef9197ad21be1e13)
-- chore: auto-update CHANGELOG.md [`6a84e67`](https://github.com/thisjamieguy/complyeur-v2/commit/6a84e67dfdf4aab936530115e4b89447acc80f90)
 
 ## v1.0.0 - 2026-01-22
 
