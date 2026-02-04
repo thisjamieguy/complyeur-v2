@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: sync CHANGELOG.md [`03c8550`](https://github.com/thisjamieguy/complyeur-v2/commit/03c85504a216452c769241ebef9197ad21be1e13)
 - chore: auto-update CHANGELOG.md [`6a84e67`](https://github.com/thisjamieguy/complyeur-v2/commit/6a84e67dfdf4aab936530115e4b89447acc80f90)
 - chore: update CHANGELOG.md with latest commit [`53b03ce`](https://github.com/thisjamieguy/complyeur-v2/commit/53b03cef331b777775759b9b9d60685b131b4150)
 - chore: add brand assets to repository [`075ea9f`](https://github.com/thisjamieguy/complyeur-v2/commit/075ea9ff944cab647c3f6a766b81dc1147d9fdd2)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: update CHANGELOG.md [`6571bf1`](https://github.com/thisjamieguy/complyeur-v2/commit/6571bf14eee82b1893cf7042e76d412ebe32d24d)
 - feat(seo): add comprehensive SEO improvements and fix build errors [`ea769e7`](https://github.com/thisjamieguy/complyeur-v2/commit/ea769e741bd684b60a506c21e717b3b2245599e0)
 - docs: add import flow UX redesign plan [`63a7d56`](https://github.com/thisjamieguy/complyeur-v2/commit/63a7d5663f1a76a74d40d64c245de7c7c043ad4e)
-- feat: add FAQ page with comprehensive user documentation [`4811d93`](https://github.com/thisjamieguy/complyeur-v2/commit/4811d93c56cc3ffec66d526bf1719549095e36c6)
 
 ## v1.0.0 - 2026-01-22
 
