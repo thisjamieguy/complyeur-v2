@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: add brand assets to repository [`075ea9f`](https://github.com/thisjamieguy/complyeur-v2/commit/075ea9ff944cab647c3f6a766b81dc1147d9fdd2)
 - feat(branding): add ComplyEUR logos throughout the app [`9f1cd61`](https://github.com/thisjamieguy/complyeur-v2/commit/9f1cd61f35f8dda64830b58ebcdca109c51f3fd9)
 - chore: update CHANGELOG.md [`0b5b6bf`](https://github.com/thisjamieguy/complyeur-v2/commit/0b5b6bf8d85002dd2bd80876bb8ad18ec72f607f)
 - feat(import): redesign import flow UX with step indicator and feedback [`99fbd56`](https://github.com/thisjamieguy/complyeur-v2/commit/99fbd561dd113dda25e6721a2ed529e11f08b21d)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: add FAQ page with comprehensive user documentation [`4811d93`](https://github.com/thisjamieguy/complyeur-v2/commit/4811d93c56cc3ffec66d526bf1719549095e36c6)
 - feat: add comprehensive test suite and reorganize documentation [`567ba57`](https://github.com/thisjamieguy/complyeur-v2/commit/567ba5707cf2a0f7a9cdf60a19b4d777197940f7)
 - fix(changelog): add missing feat entry for status thresholds implementation [`7e49099`](https://github.com/thisjamieguy/complyeur-v2/commit/7e490993a0e85ea8b321edff5c174863a6bf1067)
-- feat: implement status thresholds feature and update dashboard components [`37bba46`](https://github.com/thisjamieguy/complyeur-v2/commit/37bba46ffc767235e4aa6268f1cd826387696498)
 
 ## v1.0.0 - 2026-01-22
 
