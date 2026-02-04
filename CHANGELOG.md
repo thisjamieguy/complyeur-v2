@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: final CHANGELOG sync [`1a561d3`](https://github.com/thisjamieguy/complyeur-v2/commit/1a561d3ff39b4bdfec626ba0df919057fb0c9c42)
 - chore: sync CHANGELOG.md [`86abbb0`](https://github.com/thisjamieguy/complyeur-v2/commit/86abbb084310c0930c7add79cfd7d0b0e85702b0)
 - chore: update CHANGELOG.md [`f885664`](https://github.com/thisjamieguy/complyeur-v2/commit/f8856642386bf45fcecb9bc131dc3178609d1144)
 - feat: add comprehensive load testing suite with k6 [`d53dc90`](https://github.com/thisjamieguy/complyeur-v2/commit/d53dc903992651442801b6bca18a32509fed3c3e)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: update CHANGELOG.md [`058afef`](https://github.com/thisjamieguy/complyeur-v2/commit/058afefeee40e5d98854e28f6a3b1e976ca59718)
 - chore: sync CHANGELOG.md [`03c8550`](https://github.com/thisjamieguy/complyeur-v2/commit/03c85504a216452c769241ebef9197ad21be1e13)
 - chore: auto-update CHANGELOG.md [`6a84e67`](https://github.com/thisjamieguy/complyeur-v2/commit/6a84e67dfdf4aab936530115e4b89447acc80f90)
-- chore: update CHANGELOG.md with latest commit [`53b03ce`](https://github.com/thisjamieguy/complyeur-v2/commit/53b03cef331b777775759b9b9d60685b131b4150)
 
 ## v1.0.0 - 2026-01-22
 
