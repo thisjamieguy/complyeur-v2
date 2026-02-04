@@ -163,11 +163,11 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/">
             <Image
-              src="/logo.svg"
+              src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
               alt="ComplyEUR"
               width={172}
-              height={80}
-              className="h-12 w-auto"
+              height={46}
+              className="h-10 w-auto"
               priority
             />
           </Link>

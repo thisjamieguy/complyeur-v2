@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function Footer() {
   const handleCookieSettings = () => {
@@ -13,6 +14,16 @@ export function Footer() {
     <footer className="border-t border-slate-200 bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center text-sm text-slate-500">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Image
+              src="/images/Icons/03_Icon_Only/ComplyEur_Icon.svg"
+              alt=""
+              width={20}
+              height={20}
+              aria-hidden="true"
+            />
+            <span className="font-medium text-slate-700">ComplyEUR</span>
+          </div>
           <p>&copy; {new Date().getFullYear()} ComplyEUR. All rights reserved.</p>
           <div className="flex flex-wrap justify-center gap-4 mt-4">
             <Link

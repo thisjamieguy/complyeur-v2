@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Footer } from '@/components/layout/footer'
 import { SkipLink } from '@/components/ui/skip-link'
 
@@ -13,8 +14,15 @@ export default function PublicLayout({
       {/* Simple header with logo */}
       <header className="border-b border-slate-200 px-4 py-4">
         <div className="max-w-3xl mx-auto">
-          <Link href="/" className="text-xl font-semibold text-slate-900 hover:text-slate-700 transition-colors">
-            ComplyEUR
+          <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
+            <Image
+              src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
+              alt="ComplyEUR"
+              width={150}
+              height={40}
+              className="h-8 w-auto"
+              priority
+            />
           </Link>
         </div>
       </header>

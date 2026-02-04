@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { PanelLeftClose, PanelLeft } from 'lucide-react'
 import { navSections } from '@/components/navigation/nav-items'
@@ -32,13 +33,21 @@ export function Sidebar({ user }: SidebarProps) {
             !isOpen && 'justify-center w-full'
           )}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
-            CE
-          </div>
+          <Image
+            src="/images/Icons/03_Icon_Only/ComplyEur_Icon.svg"
+            alt="ComplyEUR"
+            width={32}
+            height={32}
+            className="shrink-0 brightness-0 invert"
+          />
           {isOpen && (
-            <span className="text-lg font-semibold text-white whitespace-nowrap">
-              ComplyEUR
-            </span>
+            <Image
+              src="/images/Icons/04_Wordmark_Only/ComplyEur_Wordmark.svg"
+              alt="ComplyEUR"
+              width={120}
+              height={24}
+              className="h-6 w-auto brightness-0 invert"
+            />
           )}
         </Link>
       </div>

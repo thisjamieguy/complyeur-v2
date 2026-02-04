@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Menu } from 'lucide-react'
 import {
   Sheet,
@@ -36,8 +37,21 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent side="left" className="w-[280px] p-0 pt-14 pb-[env(safe-area-inset-bottom)]">
         <SheetHeader className="px-4 pb-4 border-b border-slate-200">
-          <SheetTitle className="text-left text-lg font-semibold text-slate-900">
-            ComplyEUR
+          <SheetTitle className="flex items-center gap-2">
+            <Image
+              src="/images/Icons/03_Icon_Only/ComplyEur_Icon.svg"
+              alt=""
+              width={28}
+              height={28}
+              aria-hidden="true"
+            />
+            <Image
+              src="/images/Icons/04_Wordmark_Only/ComplyEur_Wordmark.svg"
+              alt="ComplyEUR"
+              width={100}
+              height={20}
+              className="h-5 w-auto"
+            />
           </SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col p-2">

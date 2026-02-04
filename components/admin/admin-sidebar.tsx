@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
@@ -27,11 +28,22 @@ export function AdminSidebar() {
     <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
       <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-slate-200 bg-white px-6 pb-4">
         {/* Logo */}
-        <div className="flex h-16 shrink-0 items-center">
-          <span className="text-xl font-semibold text-slate-900">
-            ComplyEUR
-          </span>
-          <span className="ml-2 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+        <div className="flex h-16 shrink-0 items-center gap-2">
+          <Image
+            src="/images/Icons/03_Icon_Only/ComplyEur_Icon.svg"
+            alt=""
+            width={28}
+            height={28}
+            aria-hidden="true"
+          />
+          <Image
+            src="/images/Icons/04_Wordmark_Only/ComplyEur_Wordmark.svg"
+            alt="ComplyEUR"
+            width={100}
+            height={20}
+            className="h-5 w-auto"
+          />
+          <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
             Admin
           </span>
         </div>

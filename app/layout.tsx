@@ -38,7 +38,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Preload LCP image for landing page performance */}
-        <link rel="preload" href="/logo.svg" as="image" type="image/svg+xml" />
+        <link rel="preload" href="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg" as="image" type="image/svg+xml" />
         {/* CookieYes Consent Management Script - GDPR compliance */}
         {process.env.NODE_ENV === 'production' && (
           <Script

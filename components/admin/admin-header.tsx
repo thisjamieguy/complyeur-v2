@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Menu, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -55,11 +56,22 @@ export function AdminHeader({ user, adminName }: AdminHeaderProps) {
           </Button>
         </SheetTrigger>
         <SheetContent side="left" className="w-72 p-0">
-          <div className="flex h-16 shrink-0 items-center px-6 border-b border-slate-200">
-            <span className="text-xl font-semibold text-slate-900">
-              ComplyEUR
-            </span>
-            <span className="ml-2 rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+          <div className="flex h-16 shrink-0 items-center gap-2 px-6 border-b border-slate-200">
+            <Image
+              src="/images/Icons/03_Icon_Only/ComplyEur_Icon.svg"
+              alt=""
+              width={28}
+              height={28}
+              aria-hidden="true"
+            />
+            <Image
+              src="/images/Icons/04_Wordmark_Only/ComplyEur_Wordmark.svg"
+              alt="ComplyEUR"
+              width={100}
+              height={20}
+              className="h-5 w-auto"
+            />
+            <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
               Admin
             </span>
           </div>

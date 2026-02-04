@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Footer } from '@/components/layout/footer'
 import { SkipLink } from '@/components/ui/skip-link'
 
@@ -15,8 +16,15 @@ export default function AuthLayout({
       >
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">ComplyEUR</h1>
-            <p className="text-gray-600 mt-2">Schengen Compliance Management</p>
+            <Image
+              src="/images/Icons/02_Logo_Stacked/ComplyEur_Logo_Stacked.svg"
+              alt="ComplyEUR"
+              width={180}
+              height={100}
+              className="mx-auto mb-4"
+              priority
+            />
+            <p className="text-gray-600">Schengen Compliance Management</p>
           </div>
           {children}
         </div>
