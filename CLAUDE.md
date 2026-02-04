@@ -8,6 +8,64 @@
 
 ---
 
+## Environment Setup
+
+**Required for local development:**
+
+Create `.env.local` in project root:
+
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # Server-side only
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Optional: Rate limiting (Upstash Redis)
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+```
+
+**Get Supabase keys:**
+- Dashboard → Settings → API
+- Use Project URL and anon key for frontend
+- Service role key for server-side only (NEVER in frontend)
+
+**Environment files in this project:**
+- `.env.local` — Local development (gitignored)
+- `.env.development` — Development defaults
+- `.env.staging` — Staging environment
+- `.env.production` — Production environment
+- `.env.example` — Template with variable names
+
+---
+
+## Supabase Local Development
+
+**Start local Supabase stack:**
+```bash
+supabase start        # Starts Docker containers (Postgres, Auth, Storage, etc.)
+supabase status       # Show running services and URLs
+supabase stop         # Stop all services
+supabase db reset     # Reset local database to migrations
+```
+
+**Local Supabase URLs** (after `supabase start`):
+- API: `http://localhost:54321`
+- Database: `postgresql://postgres:postgres@localhost:54322/postgres`
+- Studio: `http://localhost:54323`
+
+**Generate types after schema changes:**
+```bash
+npm run db:types      # Uses project ID from package.json script
+```
+
+---
+
 ## Tech Stack
 - **Frontend:** Next.js (App Router) + React + TypeScript
 - **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)
@@ -216,40 +274,76 @@ When adding new third-party services, update CSP headers:
 
 ## File Structure
 ```
-/src
-  /app              → Next.js App Router pages
-    /dashboard      → Protected dashboard routes
-    /auth           → Auth pages (login, signup)
-    /(marketing)    → Public pages
-  /components       → Reusable UI components
-    /ui             → Base components (Button, Input, Card)
-    /forms          → Form components
-    /layout         → Layout components (Header, Sidebar)
-  /hooks            → Custom React hooks
-  /lib              → Utilities
-    /supabase       → Supabase client and queries
-    /utils          → Helper functions
-  /types            → TypeScript interfaces
+/app                 → Next.js App Router pages
+  /dashboard         → Protected dashboard routes
+  /auth              → Auth pages (login, signup)
+  /(public)          → Public marketing pages
+  /actions           → Server actions
+  /api               → API routes
+/components          → Reusable UI components
+  /ui                → Base components (Button, Input, Card)
+  /forms             → Form components
+  /layout            → Layout components (Header, Sidebar)
+/hooks               → Custom React hooks
+/lib                 → Utilities
+  /supabase          → Supabase client and queries
+  /utils             → Helper functions
+/types               → TypeScript interfaces and generated Supabase types
 /supabase
-  /migrations       → Database migrations
+  /migrations        → Database migrations
+  config.toml        → Local Supabase configuration
 ```
 
 ---
 
 ## Quick Commands
 ```bash
-# Start dev server
-npm run dev
+# Development
+npm run dev          # Start dev server (with Turbopack)
+npm run build        # Production build
+npm run start        # Start production server
 
-# Type check
+# Testing
+npm run test         # Run unit tests
+npm run test:unit    # Run unit tests only
+npm run test:integration  # Run integration tests
+npm run test:e2e     # Run all Playwright e2e tests
+npm run test:coverage     # Run tests with coverage report
+npm run stress-test  # Run load/stress tests (requires setup)
+
+# Type checking & linting
 npm run typecheck
-
-# Generate Supabase types
-npx supabase gen types typescript --project-id YOUR_PROJECT_ID > src/types/supabase.ts
-
-# Lint
 npm run lint
+
+# Database
+npm run db:types     # Generate TypeScript types from Supabase schema
 ```
+
+---
+
+## Testing Workflow
+
+**When to run which tests:**
+
+| Scenario | Command | Why |
+|----------|---------|-----|
+| Before every commit | `npm run test:unit` | Fast, catches logic errors |
+| After UI changes | `npm run test:e2e` | Verifies user flows work |
+| Before PR/merge | `npm run test:coverage` | Ensure adequate test coverage |
+| Major feature work | `npm run test:all` | Full regression check |
+| Performance changes | `npm run stress-test` | Load testing validation |
+
+**Test structure:**
+- `lib/compliance/__tests__/` — Unit tests for compliance calculations
+- `__tests__/unit/` — Other unit tests
+- `__tests__/integration/` — Integration tests
+- `e2e/` — Playwright end-to-end tests
+
+**E2E test patterns:**
+- Tests run against local dev server (`npm run dev`)
+- Use `npm run test:e2e` for all tests
+- Use `npm run test:e2e:dashboard` for specific suites
+- Playwright UI mode: add `--ui` flag for debugging
 
 ---
 
