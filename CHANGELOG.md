@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
-- chore: update CHANGELOG.md [`0ff2243`](https://github.com/thisjamieguy/complyeur-v2/commit/0ff22437fd3289ebe821911746a5c33553e22dfb)
+- feat(import): redesign import flow UX with step indicator and feedback [`99fbd56`](https://github.com/thisjamieguy/complyeur-v2/commit/99fbd561dd113dda25e6721a2ed529e11f08b21d)
+- chore: update CHANGELOG.md [`6571bf1`](https://github.com/thisjamieguy/complyeur-v2/commit/6571bf14eee82b1893cf7042e76d412ebe32d24d)
 - feat(seo): add comprehensive SEO improvements and fix build errors [`ea769e7`](https://github.com/thisjamieguy/complyeur-v2/commit/ea769e741bd684b60a506c21e717b3b2245599e0)
 - docs: add import flow UX redesign plan [`63a7d56`](https://github.com/thisjamieguy/complyeur-v2/commit/63a7d5663f1a76a74d40d64c245de7c7c043ad4e)
 - feat: add FAQ page with comprehensive user documentation [`4811d93`](https://github.com/thisjamieguy/complyeur-v2/commit/4811d93c56cc3ffec66d526bf1719549095e36c6)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: implement status thresholds feature and update dashboard components [`37bba46`](https://github.com/thisjamieguy/complyeur-v2/commit/37bba46ffc767235e4aa6268f1cd826387696498)
 - fix(changelog): add missing entry for clarity and remove outdated chore entry [`6a5aa2b`](https://github.com/thisjamieguy/complyeur-v2/commit/6a5aa2bbe816a7322f5af360febf803a52906b1e)
 - fix(changelog): add missing entry for clarity and remove outdated chore entry [`7fb7934`](https://github.com/thisjamieguy/complyeur-v2/commit/7fb793491042e9688482c3e6bfa1b70e854a57ea)
-- fix(changelog): add missing entry for clarity and remove outdated feat entry [`ae1f50d`](https://github.com/thisjamieguy/complyeur-v2/commit/ae1f50d8a6b2224fec20a6344d946334c5709f1f)
 
 ## v1.0.0 - 2026-01-22
 
