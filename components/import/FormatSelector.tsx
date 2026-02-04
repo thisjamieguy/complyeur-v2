@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Users, Plane, Calendar, Download, ArrowRight, Loader2 } from 'lucide-react';
 import { FORMAT_OPTIONS, ImportFormat } from '@/types/import';
+import { StepIndicator } from './StepIndicator';
+import { FirstTimeGuide } from './FirstTimeGuide';
 
 const ICONS = {
   users: Users,
@@ -35,6 +37,8 @@ export function FormatSelector() {
 
   return (
     <div className="space-y-8">
+      <StepIndicator currentStep={1} />
+
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Import Data</h1>
         <p className="mt-2 text-slate-500">
@@ -42,11 +46,12 @@ export function FormatSelector() {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <FirstTimeGuide />
+
+      <div className="grid gap-8 md:grid-cols-3">
         {FORMAT_OPTIONS.map((format) => {
           const Icon = ICONS[format.icon];
           const isSelected = selectedFormat === format.id;
-          const isDisabled = false; // All formats now enabled
 
           return (
             <Card
@@ -56,57 +61,37 @@ export function FormatSelector() {
                 ${
                   isSelected
                     ? 'border-blue-600 ring-2 ring-blue-600/20'
-                    : 'border-slate-200 hover:border-slate-300'
+                    : 'border-slate-200 hover:bg-slate-50'
                 }
-                ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
               `}
               onClick={() => handleSelect(format.id)}
             >
-              {isDisabled && (
-                <div className="absolute top-3 right-3">
-                  <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                    Coming Soon
-                  </span>
-                </div>
-              )}
-
               <CardHeader className="pb-4">
                 <div
                   className={`
-                  w-12 h-12 rounded-xl flex items-center justify-center mb-4
+                  w-10 h-10 rounded-xl flex items-center justify-center mb-4
                   ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}
                 `}
                 >
-                  <Icon className="h-6 w-6" />
+                  <Icon className="h-5 w-5" />
                 </div>
                 <CardTitle className="text-xl">{format.title}</CardTitle>
                 <CardDescription className="text-slate-500">{format.description}</CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-700 mb-2">Required columns:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {format.columns.map((col) => (
-                      <span
-                        key={col}
-                        className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded"
-                      >
-                        {col}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                <p className="text-xs text-slate-400">
+                  Columns: {format.columns.join(', ')}
+                </p>
 
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="w-full"
+                  className="w-full text-slate-600 hover:text-slate-900"
                   onClick={(e) => handleDownloadTemplate(e, format.templateUrl)}
-                  disabled={isDisabled}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Download Template
+                  Template
                 </Button>
               </CardContent>
             </Card>

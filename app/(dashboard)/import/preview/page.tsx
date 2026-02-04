@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, Upload, Download, AlertTriangle } from 'lucide-react';
 import { ValidationSummary } from '@/components/import/ValidationSummary';
 import { WarningSummaryBanners } from '@/components/import/WarningSummaryBanners';
-import { DuplicateHandlingOptions } from '@/components/import/DuplicateHandlingOptions';
+import { StepIndicator } from '@/components/import/StepIndicator';
 import { generateErrorCsv, getErrorCsvFilename, downloadCsv } from '@/lib/import/error-export';
 import {
   ImportSession,
@@ -14,8 +14,6 @@ import {
   ValidatedRow,
   ParsedRow,
   ValidationSummary as ValidationSummaryType,
-  DuplicateOptions,
-  DEFAULT_DUPLICATE_OPTIONS,
 } from '@/types/import';
 import { validateRows, getValidationSummary } from '@/lib/import/validator';
 import { getImportSession, executeImport } from '../actions';
@@ -32,7 +30,12 @@ export default function PreviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [importStage, setImportStage] = useState<'idle' | 'preparing' | 'saving' | 'finalizing'>('idle');
-  const [duplicateOptions, setDuplicateOptions] = useState<DuplicateOptions>(DEFAULT_DUPLICATE_OPTIONS);
+
+  // Smart defaults: update existing employees, skip duplicate trips
+  const duplicateOptions = {
+    employees: 'update' as const,
+    trips: 'skip' as const,
+  };
 
   useEffect(() => {
     async function loadSession() {
@@ -137,6 +140,7 @@ export default function PreviewPage() {
   if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
+        <StepIndicator currentStep={3} />
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
         </div>
@@ -152,6 +156,8 @@ export default function PreviewPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <StepIndicator currentStep={3} />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Validation Preview</h1>
@@ -180,13 +186,10 @@ export default function PreviewPage() {
       {/* Grouped Warning Banners */}
       <WarningSummaryBanners rows={validatedRows} />
 
-      {/* Duplicate Handling Options */}
-      <DuplicateHandlingOptions
-        format={session.format as ImportFormat}
-        value={duplicateOptions}
-        onChange={setDuplicateOptions}
-        disabled={isImporting}
-      />
+      {/* Duplicate handling info */}
+      <p className="text-sm text-slate-500">
+        Existing employees will be updated. Duplicate trips will be skipped.
+      </p>
 
       {/* Warning Callout for Partial Import */}
       {summary.errors > 0 && (

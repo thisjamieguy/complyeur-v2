@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { CheckCircle2, Users, Plane, AlertTriangle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +12,6 @@ interface ImportSummaryProps {
 }
 
 export function ImportSummary({ result, format }: ImportSummaryProps) {
-  const router = useRouter();
   const isSuccess = result.success;
 
   /**
@@ -34,6 +32,87 @@ export function ImportSummary({ result, format }: ImportSummaryProps) {
     window.location.href = path;
   };
 
+  // Generate contextual subheadline
+  const getSubheadline = () => {
+    if (!isSuccess) {
+      return 'There were errors during the import process.';
+    }
+    if (format === 'employees') {
+      const total = result.employees_created + result.employees_updated;
+      if (total === 1) {
+        return '1 employee is now ready to track';
+      }
+      return `${total} employees are now ready to track`;
+    }
+    // trips or gantt
+    if (result.trips_created === 1) {
+      return '1 trip has been added to your records';
+    }
+    return `${result.trips_created} trips have been added to your records`;
+  };
+
+  // Build stats array, filtering out zero values
+  const stats: Array<{
+    icon: React.ElementType;
+    value: number;
+    label: string;
+    color: 'green' | 'blue' | 'amber' | 'red';
+  }> = [];
+
+  if (format === 'employees') {
+    if (result.employees_created > 0) {
+      stats.push({
+        icon: Users,
+        value: result.employees_created,
+        label: 'Employees Created',
+        color: 'green',
+      });
+    }
+    if (result.employees_updated > 0) {
+      stats.push({
+        icon: Users,
+        value: result.employees_updated,
+        label: 'Employees Updated',
+        color: 'blue',
+      });
+    }
+  } else {
+    if (result.trips_created > 0) {
+      stats.push({
+        icon: Plane,
+        value: result.trips_created,
+        label: 'Trips Created',
+        color: 'green',
+      });
+    }
+    if (result.trips_skipped > 0) {
+      stats.push({
+        icon: Plane,
+        value: result.trips_skipped,
+        label: 'Trips Skipped',
+        color: 'amber',
+      });
+    }
+  }
+
+  if (result.warnings.length > 0) {
+    stats.push({
+      icon: AlertTriangle,
+      value: result.warnings.length,
+      label: 'Warnings',
+      color: 'amber',
+    });
+  }
+
+  if (result.errors.length > 0) {
+    stats.push({
+      icon: AlertTriangle,
+      value: result.errors.length,
+      label: 'Errors',
+      color: 'red',
+    });
+  }
+
   return (
     <div className="space-y-8">
       {/* Success/Failure Header */}
@@ -41,75 +120,37 @@ export function ImportSummary({ result, format }: ImportSummaryProps) {
         <div
           className={`
           w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center
+          animate-scale-in
           ${isSuccess ? 'bg-green-100' : 'bg-red-100'}
         `}
         >
           {isSuccess ? (
-            <CheckCircle2 className="h-10 w-10 text-green-600" />
+            <CheckCircle2 className="h-8 w-8 text-green-600" />
           ) : (
-            <AlertTriangle className="h-10 w-10 text-red-600" />
+            <AlertTriangle className="h-8 w-8 text-red-600" />
           )}
         </div>
         <h1 className="text-3xl font-bold text-slate-900">
-          {isSuccess ? 'Import Successful' : 'Import Failed'}
+          {isSuccess ? "You're all set!" : 'Import Failed'}
         </h1>
-        <p className="mt-2 text-slate-500">
-          {isSuccess
-            ? 'Your data has been imported successfully.'
-            : 'There were errors during the import process.'}
-        </p>
+        <p className="mt-2 text-slate-500">{getSubheadline()}</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {format === 'employees' ? (
-          <>
+      {/* Stats Cards with staggered animation */}
+      {stats.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {stats.map((stat, index) => (
             <StatCard
-              icon={Users}
-              value={result.employees_created}
-              label="Employees Created"
-              color="green"
+              key={stat.label}
+              icon={stat.icon}
+              value={stat.value}
+              label={stat.label}
+              color={stat.color}
+              delay={index * 100}
             />
-            <StatCard
-              icon={Users}
-              value={result.employees_updated}
-              label="Employees Updated"
-              color="blue"
-            />
-          </>
-        ) : (
-          <>
-            <StatCard
-              icon={Plane}
-              value={result.trips_created}
-              label="Trips Created"
-              color="green"
-            />
-            <StatCard
-              icon={Plane}
-              value={result.trips_skipped}
-              label="Trips Skipped"
-              color="amber"
-            />
-          </>
-        )}
-        {result.warnings.length > 0 && (
-          <StatCard
-            icon={AlertTriangle}
-            value={result.warnings.length}
-            label="Warnings"
-            color="amber"
-          />
-        )}
-        {result.errors.length > 0 && (
-          <StatCard
-            icon={AlertTriangle}
-            value={result.errors.length}
-            label="Errors"
-            color="red"
-          />
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Warnings/Errors List */}
       {(result.warnings.length > 0 || result.errors.length > 0) && (
@@ -129,14 +170,17 @@ export function ImportSummary({ result, format }: ImportSummaryProps) {
       )}
 
       {/* Actions */}
-      <div className="flex justify-center gap-4">
-        <Button variant="outline" asChild>
-          <Link href="/import">Import More Data</Link>
-        </Button>
-        <Button onClick={() => navigateWithRefresh('/dashboard')}>
+      <div className="flex flex-col items-center gap-4">
+        <Button size="lg" onClick={() => navigateWithRefresh('/dashboard')}>
           Go to Dashboard
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
+        <Button variant="ghost" asChild>
+          <Link href="/import">Import More Data</Link>
+        </Button>
+        <p className="text-sm text-slate-400">
+          View your updated dashboard →
+        </p>
       </div>
     </div>
   );
@@ -147,9 +191,10 @@ interface StatCardProps {
   value: number;
   label: string;
   color: 'green' | 'blue' | 'amber' | 'red';
+  delay?: number;
 }
 
-function StatCard({ icon: Icon, value, label, color }: StatCardProps) {
+function StatCard({ icon: Icon, value, label, color, delay = 0 }: StatCardProps) {
   const colors = {
     green: 'bg-green-50 text-green-600',
     blue: 'bg-blue-50 text-blue-600',
@@ -158,7 +203,10 @@ function StatCard({ icon: Icon, value, label, color }: StatCardProps) {
   };
 
   return (
-    <div className={`${colors[color]} rounded-xl p-4 flex items-center gap-3`}>
+    <div
+      className={`${colors[color]} rounded-xl p-4 flex items-center gap-3 animate-fade-in`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
       <Icon className="h-6 w-6" />
       <div>
         <p className="text-2xl font-bold">{value}</p>

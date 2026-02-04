@@ -166,7 +166,7 @@ export interface DuplicateOptions {
 }
 
 export const DEFAULT_DUPLICATE_OPTIONS: DuplicateOptions = {
-  employees: 'skip',
+  employees: 'update',
   trips: 'skip',
 };
 

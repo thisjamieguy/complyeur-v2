@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import { FileDropzone } from '@/components/import/FileDropzone';
 import { ColumnMappingUI } from '@/components/import/ColumnMappingUI';
 import { DateFormatConfirmation } from '@/components/import/DateFormatConfirmation';
+import { StepIndicator } from '@/components/import/StepIndicator';
 import type { ImportFormat, MappingState, ParsedRow } from '@/types/import';
 import { IMPORT_FORMATS } from '@/types/import';
 import { parseFileRaw, parseGanttFromData } from '@/lib/import/parser';
@@ -26,6 +28,20 @@ import {
 import { showError, showSuccess } from '@/lib/toast';
 
 // ============================================================
+// PROCESSING STAGES
+// ============================================================
+
+type ProcessingStage = 'idle' | 'uploading' | 'parsing' | 'validating' | 'preparing';
+
+const STAGE_MESSAGES: Record<ProcessingStage, string> = {
+  idle: '',
+  uploading: 'Uploading file...',
+  parsing: 'Reading spreadsheet...',
+  validating: 'Validating data...',
+  preparing: 'Preparing preview...',
+};
+
+// ============================================================
 // UPLOAD PAGE COMPONENT
 // ============================================================
 
@@ -37,6 +53,7 @@ export default function UploadPage() {
   // Basic state
   const [format, setFormat] = useState<ImportFormat | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStage, setProcessingStage] = useState<ProcessingStage>('idle');
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   // Raw parsed data (before mapping)
@@ -71,6 +88,7 @@ export default function UploadPage() {
     if (!format) return;
 
     setIsProcessing(true);
+    setProcessingStage('uploading');
 
     try {
       // Step 1: Create import session
@@ -83,10 +101,12 @@ export default function UploadPage() {
       if (!sessionResult.success || !sessionResult.session) {
         showError('Upload Failed', sessionResult.error ?? 'Failed to create import session');
         setIsProcessing(false);
+        setProcessingStage('idle');
         return;
       }
 
       setSessionId(sessionResult.session.id);
+      setProcessingStage('parsing');
 
       // Special handling for Gantt/Schedule format
       if (format === 'gantt') {
@@ -96,13 +116,16 @@ export default function UploadPage() {
         if (!ganttResult.success || !ganttResult.data) {
           showError('Parse Error', ganttResult.error ?? 'Failed to parse schedule file');
           setIsProcessing(false);
+          setProcessingStage('idle');
           return;
         }
 
+        setProcessingStage('validating');
         const validatedRows = await validateRows(ganttResult.data, 'gantt');
         const summary = getValidationSummary(validatedRows);
         const allErrors = validatedRows.flatMap((r) => [...r.errors, ...r.warnings]);
 
+        setProcessingStage('preparing');
         await saveParsedData(
           sessionResult.session.id,
           ganttResult.data,
@@ -121,9 +144,11 @@ export default function UploadPage() {
       if (!parseResult.success || !parseResult.rawData || !parseResult.rawHeaders) {
         showError('Parse Error', parseResult.error ?? 'Failed to parse file');
         setIsProcessing(false);
+        setProcessingStage('idle');
         return;
       }
 
+      setProcessingStage('validating');
       setRawData(parseResult.rawData);
       setRawHeaders(parseResult.rawHeaders);
 
@@ -155,8 +180,11 @@ export default function UploadPage() {
       if (needsManualMapping(initialMappingState)) {
         setShowMappingUI(true);
         setIsProcessing(false);
+        setProcessingStage('idle');
         return;
       }
+
+      setProcessingStage('preparing');
 
       // Step 5: No mapping needed - check date format for trips/gantt
       await proceedAfterMapping(
@@ -168,6 +196,7 @@ export default function UploadPage() {
       console.error('File processing error:', error);
       showError('Processing Error', 'An unexpected error occurred while processing the file');
       setIsProcessing(false);
+      setProcessingStage('idle');
     }
   };
 
@@ -213,6 +242,7 @@ export default function UploadPage() {
             }
             setShowDateConfirmation(true);
             setIsProcessing(false);
+            setProcessingStage('idle');
             return;
           }
         }
@@ -224,6 +254,7 @@ export default function UploadPage() {
       console.error('Processing error:', error);
       showError('Processing Error', 'An unexpected error occurred');
       setIsProcessing(false);
+      setProcessingStage('idle');
     }
   };
 
@@ -269,6 +300,7 @@ export default function UploadPage() {
       console.error('Complete processing error:', error);
       showError('Processing Error', 'An unexpected error occurred');
       setIsProcessing(false);
+      setProcessingStage('idle');
     }
   };
 
@@ -298,6 +330,7 @@ export default function UploadPage() {
       }
 
       setShowMappingUI(false);
+      setProcessingStage('preparing');
 
       // Continue to date check and processing
       await proceedAfterMapping(rawData, mappingState, sessionId);
@@ -305,6 +338,7 @@ export default function UploadPage() {
       console.error('Mapping confirm error:', error);
       showError('Error', 'Failed to save mapping');
       setIsProcessing(false);
+      setProcessingStage('idle');
     }
   };
 
@@ -348,6 +382,7 @@ export default function UploadPage() {
   if (showDateConfirmation && dateReport) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        <StepIndicator currentStep={2} />
         <div>
           <h2 className="text-xl font-semibold text-slate-900 mb-2">Confirm Date Format</h2>
           <p className="text-slate-500">
@@ -380,6 +415,7 @@ export default function UploadPage() {
   if (showMappingUI && mappingState) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
+        <StepIndicator currentStep={2} />
         <ColumnMappingUI
           mappingState={mappingState}
           onMappingChange={setMappingState}
@@ -391,9 +427,25 @@ export default function UploadPage() {
     );
   }
 
+  // Show processing state
+  if (isProcessing && processingStage !== 'idle') {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <StepIndicator currentStep={2} />
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-600 mb-4" />
+          <p className="text-lg font-medium text-slate-900">
+            {STAGE_MESSAGES[processingStage]}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Default: show file dropzone
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
+      <StepIndicator currentStep={2} />
       <FileDropzone format={format} onFileSelect={handleFileSelect} isProcessing={isProcessing} />
     </div>
   );
