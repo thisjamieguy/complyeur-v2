@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: update CHANGELOG.md [`f885664`](https://github.com/thisjamieguy/complyeur-v2/commit/f8856642386bf45fcecb9bc131dc3178609d1144)
 - feat: add comprehensive load testing suite with k6 [`d53dc90`](https://github.com/thisjamieguy/complyeur-v2/commit/d53dc903992651442801b6bca18a32509fed3c3e)
 - chore: update CHANGELOG.md [`28b63a4`](https://github.com/thisjamieguy/complyeur-v2/commit/28b63a42387ca2d9d6047369105a9c095786bcf2)
 - chore: update Claude Code Bash command permissions [`660e332`](https://github.com/thisjamieguy/complyeur-v2/commit/660e3325bbab0d2f66ba92e34e55209717360e5c)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: auto-update CHANGELOG.md [`6a84e67`](https://github.com/thisjamieguy/complyeur-v2/commit/6a84e67dfdf4aab936530115e4b89447acc80f90)
 - chore: update CHANGELOG.md with latest commit [`53b03ce`](https://github.com/thisjamieguy/complyeur-v2/commit/53b03cef331b777775759b9b9d60685b131b4150)
 - chore: add brand assets to repository [`075ea9f`](https://github.com/thisjamieguy/complyeur-v2/commit/075ea9ff944cab647c3f6a766b81dc1147d9fdd2)
-- feat(branding): add ComplyEUR logos throughout the app [`9f1cd61`](https://github.com/thisjamieguy/complyeur-v2/commit/9f1cd61f35f8dda64830b58ebcdca109c51f3fd9)
 
 ## v1.0.0 - 2026-01-22
 
