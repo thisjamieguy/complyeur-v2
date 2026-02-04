@@ -100,7 +100,11 @@
       "Bash(xargs:*)",
       "Bash(for pkg in \"react-dropzone\" \"react-day-picker\" \"class-variance-authority\")",
       "Bash(do echo \"=== $pkg ===\")",
-      "Bash(npm run lint -- app/actions/exports.ts)"
+      "Bash(npm run lint -- app/actions/exports.ts)",
+      "Bash(git pull origin main)",
+      "Bash(npx skills:*)",
+      "Bash(head:*)",
+      "Bash(git check-ignore:*)"
     ]
   }
 }
