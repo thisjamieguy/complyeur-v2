@@ -25,7 +25,7 @@ export interface PageMetadataOptions {
   path: string
   /** Optional custom OG image URL */
   ogImage?: string
-  /** Whether to append site name to title (default: true) */
+  /** Whether to append site name to title (default: false, root layout template handles it) */
   appendSiteName?: boolean
 }
 
@@ -41,7 +41,7 @@ export function createPageMetadata({
   description,
   path,
   ogImage = DEFAULT_OG_IMAGE,
-  appendSiteName = true,
+  appendSiteName = false, // Root layout template already adds " | ComplyEUR"
 }: PageMetadataOptions): Metadata {
   const canonicalUrl = `${SITE_URL}${path}`
   const fullTitle = appendSiteName ? `${title} | ComplyEUR` : title

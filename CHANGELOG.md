@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: enhance JSON-LD structured data with WebSite and Organization schemas [`37274ea`](https://github.com/thisjamieguy/complyeur-v2/commit/37274ea2ed7cab890046be5c49343173977532f9)
 - fix: improve SEO, accessibility, and security for landing page [`4719a18`](https://github.com/thisjamieguy/complyeur-v2/commit/4719a18ac83f853f722d8bfb00c2cf283054da3a)
 - test: add comprehensive integration tests for trips API [`3a36d59`](https://github.com/thisjamieguy/complyeur-v2/commit/3a36d59d4d7441320eea6c7bc721be1b881623e4)
 - docs: improve CLAUDE.md with environment setup and complete testing workflows [`c437119`](https://github.com/thisjamieguy/complyeur-v2/commit/c4371194211e1e31aa3c37a4d18bdba487faafa5)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: update CHANGELOG.md [`b2cbd21`](https://github.com/thisjamieguy/complyeur-v2/commit/b2cbd2101a3b7d07c6931143259804fcb2ccf79b)
 - chore: final CHANGELOG sync [`1a561d3`](https://github.com/thisjamieguy/complyeur-v2/commit/1a561d3ff39b4bdfec626ba0df919057fb0c9c42)
 - chore: sync CHANGELOG.md [`86abbb0`](https://github.com/thisjamieguy/complyeur-v2/commit/86abbb084310c0930c7add79cfd7d0b0e85702b0)
-- chore: update CHANGELOG.md [`f885664`](https://github.com/thisjamieguy/complyeur-v2/commit/f8856642386bf45fcecb9bc131dc3178609d1144)
 
 ## v1.0.0 - 2026-01-22
 

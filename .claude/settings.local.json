@@ -104,7 +104,20 @@
       "Bash(git pull origin main)",
       "Bash(npx skills:*)",
       "Bash(head:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(pip3 install:*)",
+      "Bash(brew install:*)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then echo \"✓ .env.local exists\")",
+      "Bash(else echo \"✗ .env.local not found\")",
+      "Bash(k6 run:*)",
+      "Bash(SUPABASE_URL=\"https://ympwgavzlvyklkucskcj.supabase.co\" SUPABASE_ANON_KEY=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltcHdnYXZ6bHZ5a2xrdWNza2NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg1MTEzMDUsImV4cCI6MjA4NDA4NzMwNX0.dpAqkOa3VnLK7hSTeMV-t4WCazaUOfG4a5ahShZmXcA\" k6 run:*)",
+      "Bash(npm run test:unit:*)",
+      "Bash(squirrel audit:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:validator.schema.org)",
+      "WebFetch(domain:schema.org)",
+      "Bash(ComplyEUR\" suffix via title.template.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }
