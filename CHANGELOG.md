@@ -5,40 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/thisjamieguy/complyeur-v2/compare/v1.0.0...HEAD)
+## Unreleased
 
 ### Commits
 
-- fix: enhance JSON-LD structured data with WebSite and Organization schemas [`37274ea`](https://github.com/thisjamieguy/complyeur-v2/commit/37274ea2ed7cab890046be5c49343173977532f9)
-- fix: improve SEO, accessibility, and security for landing page [`4719a18`](https://github.com/thisjamieguy/complyeur-v2/commit/4719a18ac83f853f722d8bfb00c2cf283054da3a)
-- test: add comprehensive integration tests for trips API [`3a36d59`](https://github.com/thisjamieguy/complyeur-v2/commit/3a36d59d4d7441320eea6c7bc721be1b881623e4)
-- docs: improve CLAUDE.md with environment setup and complete testing workflows [`c437119`](https://github.com/thisjamieguy/complyeur-v2/commit/c4371194211e1e31aa3c37a4d18bdba487faafa5)
-- chore: update CHANGELOG.md [`1814213`](https://github.com/thisjamieguy/complyeur-v2/commit/1814213e52d3fca72420f2a3de3051e77e0f9dbb)
-- feat: add production load test results (20-100 concurrent users) [`0849cfe`](https://github.com/thisjamieguy/complyeur-v2/commit/0849cfee6d7edd95872eef73c79d8839f87f36d2)
-- chore: update CHANGELOG.md [`400021f`](https://github.com/thisjamieguy/complyeur-v2/commit/400021f5294c62af79a7efe82f77fd08e529539e)
-- chore: update CHANGELOG.md [`b2cbd21`](https://github.com/thisjamieguy/complyeur-v2/commit/b2cbd2101a3b7d07c6931143259804fcb2ccf79b)
-- chore: final CHANGELOG sync [`1a561d3`](https://github.com/thisjamieguy/complyeur-v2/commit/1a561d3ff39b4bdfec626ba0df919057fb0c9c42)
-- chore: sync CHANGELOG.md [`86abbb0`](https://github.com/thisjamieguy/complyeur-v2/commit/86abbb084310c0930c7add79cfd7d0b0e85702b0)
-
-## v1.0.0 - 2026-01-22
-
-### Merged
-
-- Add Vercel Speed Insights to Next.js [`#6`](https://github.com/thisjamieguy/complyeur-v2/pull/6)
-- claude/audit-maintainability-scale-EOLmL [`#4`](https://github.com/thisjamieguy/complyeur-v2/pull/4)
-- claude/audit-maintainability-scale-EOLmL [`#4`](https://github.com/thisjamieguy/complyeur-v2/pull/4)
-- Soc 2 readiness audit [`#2`](https://github.com/thisjamieguy/complyeur-v2/pull/2)
-- Soc 2 readiness audit [`#2`](https://github.com/thisjamieguy/complyeur-v2/pull/2)
-
-### Commits
-
-- docs: add CHANGELOG.md with Keep a Changelog format [`a915c4f`](https://github.com/thisjamieguy/complyeur-v2/commit/a915c4fc8109c828ee9c92d25d99e828029fa154)
-- refactor: consolidate redirect validation logic [`a9d6c6c`](https://github.com/thisjamieguy/complyeur-v2/commit/a9d6c6cf1f0d3827f1108c9115e77e39c76cf580)
-- feat: make redirect validation more flexible [`169f537`](https://github.com/thisjamieguy/complyeur-v2/commit/169f537270d86098a9451922675dcc06a688986a)
-- fix: disable session timeout check until last_activity_at column is deployed [`39bb121`](https://github.com/thisjamieguy/complyeur-v2/commit/39bb1215a9acc2f0c49e10ec8aeed89c3e640ce9)
-- fix: make last_activity_at update non-blocking in auth callback [`c21a94d`](https://github.com/thisjamieguy/complyeur-v2/commit/c21a94d930e553c5604fb0e1af44c90cd2d78ce1)
-- fix: only rate limit POST requests to auth pages, not page views [`949aadd`](https://github.com/thisjamieguy/complyeur-v2/commit/949aadd2ec984f2df3ebe2d54cb81d04e631ce1f)
-- fix: add CookieYes domains to Content Security Policy [`fb1d72c`](https://github.com/thisjamieguy/complyeur-v2/commit/fb1d72c18df2d1e613da0f09cacbc91e68ca14d7)
-- fix: exclude auth callback from rate limiting [`028d90d`](https://github.com/thisjamieguy/complyeur-v2/commit/028d90dffb9a59bf736e32ccb66593f6b97cd5f4)
-- fix: resolve Google OAuth login loop by preventing middleware race condition [`3270b9b`](https://github.com/thisjamieguy/complyeur-v2/commit/3270b9b8354aac6a6782fe169fa30d491e257c04)
-- feat: integrate CookieYes GDPR consent banner [`5c503b4`](https://github.com/thisjamieguy/complyeur-v2/commit/5c503b42ed2c5b7818d461e9fb6e1bbac32d6eb1)
+- test: add comprehensive security pentest suite (342 tests) [`a361146`](http://127.0.0.1/git/thisjamieguy/commit/a361146689ff84d8ef3f5a0f9a98194c87a09c7e)
+- fix: prevent duplicate ComplyEUR in page titles [`372f056`](http://127.0.0.1/git/thisjamieguy/commit/372f05632130d7d8fe5f63bf44739ef0dfb77855)
+- fix: enhance JSON-LD structured data with WebSite and Organization schemas [`37274ea`](http://127.0.0.1/git/thisjamieguy/commit/37274ea2ed7cab890046be5c49343173977532f9)
+- fix: improve SEO, accessibility, and security for landing page [`4719a18`](http://127.0.0.1/git/thisjamieguy/commit/4719a18ac83f853f722d8bfb00c2cf283054da3a)
+- test: add comprehensive integration tests for trips API [`3a36d59`](http://127.0.0.1/git/thisjamieguy/commit/3a36d59d4d7441320eea6c7bc721be1b881623e4)
+- docs: improve CLAUDE.md with environment setup and complete testing workflows [`c437119`](http://127.0.0.1/git/thisjamieguy/commit/c4371194211e1e31aa3c37a4d18bdba487faafa5)
+- chore: update CHANGELOG.md [`1814213`](http://127.0.0.1/git/thisjamieguy/commit/1814213e52d3fca72420f2a3de3051e77e0f9dbb)
+- feat: add production load test results (20-100 concurrent users) [`0849cfe`](http://127.0.0.1/git/thisjamieguy/commit/0849cfee6d7edd95872eef73c79d8839f87f36d2)
+- chore: update CHANGELOG.md [`400021f`](http://127.0.0.1/git/thisjamieguy/commit/400021f5294c62af79a7efe82f77fd08e529539e)
+- chore: update CHANGELOG.md [`b2cbd21`](http://127.0.0.1/git/thisjamieguy/commit/b2cbd2101a3b7d07c6931143259804fcb2ccf79b)
