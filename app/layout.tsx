@@ -53,31 +53,62 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        {/* JSON-LD Structured Data for SEO */}
+        {/* JSON-LD Structured Data for SEO - safe static content */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "SoftwareApplication",
-              name: "ComplyEUR",
-              applicationCategory: "BusinessApplication",
-              operatingSystem: "Web",
-              url: SITE_URL,
-              description:
-                "Track and manage EU Schengen 90/180-day visa compliance for your employees. Automated tracking, real-time alerts, and compliance reporting for UK businesses.",
-              offers: {
-                "@type": "Offer",
-                availability: "https://schema.org/PreOrder",
-                price: "0",
-                priceCurrency: "GBP",
-              },
-              publisher: {
-                "@type": "Organization",
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "@id": `${SITE_URL}/#website`,
                 name: "ComplyEUR",
                 url: SITE_URL,
+                description: "Schengen compliance management for UK businesses",
+                publisher: {
+                  "@id": `${SITE_URL}/#organization`,
+                },
               },
-            }),
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "@id": `${SITE_URL}/#organization`,
+                name: "ComplyEUR",
+                url: SITE_URL,
+                logo: `${SITE_URL}/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg`,
+                description: "Helping UK businesses track EU Schengen 90/180-day visa compliance for their employees.",
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "@id": `${SITE_URL}/#software`,
+                name: "ComplyEUR",
+                applicationCategory: "BusinessApplication",
+                applicationSubCategory: "Compliance Management",
+                operatingSystem: "Web browser",
+                url: SITE_URL,
+                description:
+                  "Track and manage EU Schengen 90/180-day visa compliance for your employees. Automated tracking, real-time alerts, and compliance reporting for UK businesses.",
+                featureList: [
+                  "Real-time compliance tracking",
+                  "90/180-day rule calculator",
+                  "Employee travel management",
+                  "Automated alerts and warnings",
+                  "Trip planning tools",
+                  "GDPR compliant data handling",
+                ],
+                offers: {
+                  "@type": "Offer",
+                  availability: "https://schema.org/PreOrder",
+                  price: "0",
+                  priceCurrency: "GBP",
+                  priceValidUntil: "2026-12-31",
+                },
+                publisher: {
+                  "@id": `${SITE_URL}/#organization`,
+                },
+              },
+            ]),
           }}
         />
         <MaintenanceBanner />

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: improve SEO, accessibility, and security for landing page [`4719a18`](https://github.com/thisjamieguy/complyeur-v2/commit/4719a18ac83f853f722d8bfb00c2cf283054da3a)
 - test: add comprehensive integration tests for trips API [`3a36d59`](https://github.com/thisjamieguy/complyeur-v2/commit/3a36d59d4d7441320eea6c7bc721be1b881623e4)
 - docs: improve CLAUDE.md with environment setup and complete testing workflows [`c437119`](https://github.com/thisjamieguy/complyeur-v2/commit/c4371194211e1e31aa3c37a4d18bdba487faafa5)
 - chore: update CHANGELOG.md [`1814213`](https://github.com/thisjamieguy/complyeur-v2/commit/1814213e52d3fca72420f2a3de3051e77e0f9dbb)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: final CHANGELOG sync [`1a561d3`](https://github.com/thisjamieguy/complyeur-v2/commit/1a561d3ff39b4bdfec626ba0df919057fb0c9c42)
 - chore: sync CHANGELOG.md [`86abbb0`](https://github.com/thisjamieguy/complyeur-v2/commit/86abbb084310c0930c7add79cfd7d0b0e85702b0)
 - chore: update CHANGELOG.md [`f885664`](https://github.com/thisjamieguy/complyeur-v2/commit/f8856642386bf45fcecb9bc131dc3178609d1144)
-- feat: add comprehensive load testing suite with k6 [`d53dc90`](https://github.com/thisjamieguy/complyeur-v2/commit/d53dc903992651442801b6bca18a32509fed3c3e)
 
 ## v1.0.0 - 2026-01-22
 
