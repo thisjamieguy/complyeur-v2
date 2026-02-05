@@ -29,11 +29,20 @@ export async function middleware(request: NextRequest) {
   const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
   const isAuthRoute = authRoutes.includes(pathname)
 
-  // Protected routes (everything under /dashboard, /test-endpoints, and /admin)
-  // Note: Route groups like (dashboard) don't appear in the actual URL pathname
-  const isProtectedRoute = pathname.startsWith('/dashboard') ||
-                           pathname.startsWith('/test-endpoints') ||
-                           pathname.startsWith('/admin')
+  // Public routes that don't require authentication
+  const publicRoutes = [
+    '/', '/landing', '/about', '/contact', '/faq',
+    '/privacy', '/terms', '/accessibility',
+    '/sitemap.xml', '/robots.txt', '/icon.svg',
+  ]
+  const isPublicRoute = publicRoutes.includes(pathname) ||
+                        pathname.startsWith('/api/') ||
+                        pathname.startsWith('/auth/')
+
+  // Protected routes: everything that isn't public or auth
+  // This covers all (dashboard) route group pages: /calendar, /import, /settings,
+  // /employee, /exports, /gdpr, /trip-forecast, /future-job-alerts, etc.
+  const isProtectedRoute = !isPublicRoute && !isAuthRoute
 
   const redirectWithCookies = (url: URL) => {
     const response = NextResponse.redirect(url)

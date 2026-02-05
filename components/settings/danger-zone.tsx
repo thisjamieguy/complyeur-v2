@@ -583,11 +583,12 @@ function CategorySection({
 
   return (
     <div className="border rounded-lg overflow-hidden">
-      <button
-        type="button"
-        className="w-full flex items-center justify-between p-3 hover:bg-slate-50 transition-colors text-left"
+      <div
+        role="button"
+        tabIndex={hasItems ? 0 : undefined}
+        className={`w-full flex items-center justify-between p-3 transition-colors text-left ${hasItems ? 'hover:bg-slate-50 cursor-pointer' : 'opacity-60'}`}
         onClick={onToggleExpand}
-        disabled={!hasItems}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleExpand(); } }}
       >
         <div className="flex items-center gap-3">
           <Checkbox
@@ -625,7 +626,7 @@ function CategorySection({
             )
           )}
         </div>
-      </button>
+      </div>
 
       {expanded && hasItems && (
         <div className="border-t bg-slate-50/50">
@@ -636,14 +637,16 @@ function CategorySection({
           ) : (
             <div className="max-h-48 overflow-y-auto">
               <div className="p-2 border-b bg-slate-100/50">
-                <button
-                  type="button"
-                  className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 cursor-pointer"
                   onClick={onSelectAll}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectAll(); } }}
                 >
                   <Checkbox checked={isAllSelected} />
                   <span>Select All</span>
-                </button>
+                </div>
               </div>
               <div className="divide-y">{children}</div>
             </div>
@@ -663,14 +666,16 @@ interface ItemRowProps {
 
 function ItemRow({ selected, onToggle, children }: ItemRowProps) {
   return (
-    <button
-      type="button"
-      className="w-full flex items-center gap-3 p-2 pl-4 hover:bg-slate-100 transition-colors text-left text-sm"
+    <div
+      role="button"
+      tabIndex={0}
+      className="w-full flex items-center gap-3 p-2 pl-4 hover:bg-slate-100 transition-colors text-left text-sm cursor-pointer"
       onClick={onToggle}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
     >
       <Checkbox checked={selected} />
       <span className="text-slate-700 truncate">{children}</span>
-    </button>
+    </div>
   )
 }
 

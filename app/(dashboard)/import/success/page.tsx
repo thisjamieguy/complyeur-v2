@@ -19,6 +19,7 @@ export default function SuccessPage() {
   useEffect(() => {
     async function loadSession() {
       if (!sessionId) {
+        setIsLoading(false);
         router.push('/import');
         return;
       }

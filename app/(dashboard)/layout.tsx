@@ -13,8 +13,8 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    // This should be handled by middleware, but just in case
-    return null
+    // This should be handled by middleware, but redirect as a safety net
+    redirect('/login')
   }
 
   // Check if user is privileged (admin or superadmin) and enforce MFA
