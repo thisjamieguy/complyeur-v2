@@ -11,6 +11,7 @@ import { AddTripModal } from '@/components/trips/add-trip-modal'
 import { BulkAddTripsModal } from '@/components/trips/bulk-add-trips-modal'
 import { TripList } from '@/components/trips/trip-list'
 import { isSchengenCountry } from '@/lib/constants/schengen-countries'
+import { isExemptFromTracking, NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
 import { calculateCompliance, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'
 
 interface EmployeeDetailPageProps {
@@ -85,6 +86,9 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
   // Simplified employee list for reassignment (just id and name)
   const employeesForReassign = allEmployees.map(e => ({ id: e.id, name: e.name }))
 
+  const nationalityType = (employee.nationality_type ?? 'uk_citizen') as NationalityType
+  const exempt = isExemptFromTracking(nationalityType)
+
   // Calculate Schengen days used (only non-ghosted Schengen trips)
   const schengenTrips = trips.filter(
     (trip) => !trip.ghosted && isSchengenCountry(trip.country)
@@ -95,8 +99,9 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
   )
 
   // Calculate compliance using the compliance engine (rolling 180-day window)
+  // Skip for exempt employees
   const complianceTrips = schengenTrips.map(toComplianceTrip)
-  const complianceResult = schengenTrips.length > 0
+  const complianceResult = !exempt && schengenTrips.length > 0
     ? calculateCompliance(complianceTrips, {
         mode: 'audit',
         referenceDate: new Date(),
@@ -135,53 +140,72 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Compliance Status</CardTitle>
-            <CardDescription>Current Schengen visa status (rolling 180-day window)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+        {!exempt && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Compliance Status</CardTitle>
+              <CardDescription>Current Schengen visa status (rolling 180-day window)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Status</span>
+                  {complianceResult ? (
+                    <Badge
+                      variant="outline"
+                      className={getStatusBadgeProps(complianceResult.riskLevel, complianceResult.isCompliant).className}
+                    >
+                      {getStatusBadgeProps(complianceResult.riskLevel, complianceResult.isCompliant).label}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200">
+                      No trips
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Days Used</span>
+                  <span className="font-medium">
+                    {complianceResult ? `${complianceResult.daysUsed} / 90` : '0 / 90'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">Days Remaining</span>
+                  <span className={`font-medium ${
+                    complianceResult && complianceResult.daysRemaining < 0
+                      ? 'text-red-600'
+                      : complianceResult && complianceResult.daysRemaining < 10
+                        ? 'text-amber-600'
+                        : ''
+                  }`}>
+                    {complianceResult
+                      ? complianceResult.daysRemaining >= 0
+                        ? complianceResult.daysRemaining
+                        : `${Math.abs(complianceResult.daysRemaining)} over limit`
+                      : '90'}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {exempt && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Compliance Status</CardTitle>
+              <CardDescription>EU/Schengen citizens are exempt from the 90/180-day rule</CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Status</span>
-                {complianceResult ? (
-                  <Badge
-                    variant="outline"
-                    className={getStatusBadgeProps(complianceResult.riskLevel, complianceResult.isCompliant).className}
-                  >
-                    {getStatusBadgeProps(complianceResult.riskLevel, complianceResult.isCompliant).label}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200">
-                    No trips
-                  </Badge>
-                )}
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  Exempt
+                </Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Days Used</span>
-                <span className="font-medium">
-                  {complianceResult ? `${complianceResult.daysUsed} / 90` : '0 / 90'}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">Days Remaining</span>
-                <span className={`font-medium ${
-                  complianceResult && complianceResult.daysRemaining < 0
-                    ? 'text-red-600'
-                    : complianceResult && complianceResult.daysRemaining < 10
-                      ? 'text-amber-600'
-                      : ''
-                }`}>
-                  {complianceResult
-                    ? complianceResult.daysRemaining >= 0
-                      ? complianceResult.daysRemaining
-                      : `${Math.abs(complianceResult.daysRemaining)} over limit`
-                    : '90'}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
@@ -216,6 +240,10 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
               <div>
                 <span className="text-sm text-gray-500">Name</span>
                 <p className="font-medium">{employee.name}</p>
+              </div>
+              <div>
+                <span className="text-sm text-gray-500">Nationality Type</span>
+                <p className="font-medium">{NATIONALITY_TYPE_LABELS[nationalityType]}</p>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Created</span>

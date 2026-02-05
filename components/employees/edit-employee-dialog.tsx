@@ -7,9 +7,12 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { updateEmployeeAction } from '@/app/(dashboard)/actions'
 import { employeeSchema, type EmployeeFormData } from '@/lib/validations/employee'
+import { NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
 import type { Employee } from '@/types/database-helpers'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Dialog,
   DialogContent,
@@ -44,17 +47,21 @@ export function EditEmployeeDialog({ employee, open, onOpenChange }: EditEmploye
     resolver: zodResolver(employeeSchema),
     defaultValues: {
       name: employee.name,
+      nationality_type: (employee.nationality_type as NationalityType) || 'uk_citizen',
     },
-    mode: 'onBlur', // Validate on blur for immediate feedback
+    mode: 'onBlur',
   })
 
   // Reset form when employee changes or dialog opens
   useEffect(() => {
     if (open) {
-      form.reset({ name: employee.name })
+      form.reset({
+        name: employee.name,
+        nationality_type: (employee.nationality_type as NationalityType) || 'uk_citizen',
+      })
       setFormError(null)
     }
-  }, [open, employee.name, form])
+  }, [open, employee.name, employee.nationality_type, form])
 
   async function onSubmit(data: EmployeeFormData) {
     setIsLoading(true)
@@ -111,6 +118,40 @@ export function EditEmployeeDialog({ employee, open, onOpenChange }: EditEmploye
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="nationality_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nationality Type</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={isLoading}
+                      className="gap-2"
+                    >
+                      {(Object.entries(NATIONALITY_TYPE_LABELS) as [NationalityType, string][]).map(
+                        ([value, label]) => (
+                          <div key={value} className="flex items-center gap-2">
+                            <RadioGroupItem value={value} id={`edit-${value}`} />
+                            <Label htmlFor={`edit-${value}`} className="font-normal cursor-pointer">
+                              {label}
+                            </Label>
+                          </div>
+                        )
+                      )}
+                    </RadioGroup>
+                  </FormControl>
+                  {field.value === 'eu_schengen_citizen' && (
+                    <p className="text-xs text-blue-600">
+                      This employee will be exempt from 90/180-day tracking.
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

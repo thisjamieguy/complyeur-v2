@@ -20,6 +20,7 @@ import { EmptyState } from './empty-state'
 import { DashboardStats } from './dashboard-stats'
 import { EmployeeSearch } from './employee-search'
 import { QuickAddTripModal } from './quick-add-trip-modal'
+import { Pagination } from '@/components/ui/pagination'
 import type {
   EmployeeCompliance,
   StatusFilter,
@@ -28,8 +29,21 @@ import type {
 } from '@/types/dashboard'
 import { cn } from '@/lib/utils'
 
+interface PaginationInfo {
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+}
+
 interface ComplianceTableProps {
   employees: EmployeeCompliance[]
+  /** Pre-calculated stats from all employees (not just current page) */
+  stats?: ComplianceStats
+  /** Pagination info from server */
+  pagination?: PaginationInfo
+  /** Current search query (for controlled input) */
+  initialSearch?: string
 }
 
 /**
@@ -54,6 +68,7 @@ function calculateStats(employees: EmployeeCompliance[]): ComplianceStats {
     at_risk: employees.filter((e) => e.risk_level === 'amber').length,
     non_compliant: employees.filter((e) => e.risk_level === 'red').length,
     breach: employees.filter((e) => e.risk_level === 'breach').length,
+    exempt: employees.filter((e) => e.risk_level === 'exempt').length,
   }
 }
 
@@ -68,6 +83,8 @@ const EmployeeCard = memo(function EmployeeCard({
   employee: EmployeeCompliance
   onAddTrip: () => void
 }) {
+  const isExempt = employee.risk_level === 'exempt'
+
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
@@ -93,21 +110,29 @@ const EmployeeCard = memo(function EmployeeCard({
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 text-sm">
-        <div>
-          <span className="text-slate-500">Days Used:</span>
-          <span className="ml-2 font-medium">{employee.days_used} / 90</span>
-        </div>
-        <div>
-          <span className="text-slate-500">Remaining:</span>
-          <span
-            className={cn(
-              'ml-2 font-medium',
-              employee.days_remaining < 0 && 'text-red-600'
-            )}
-          >
-            {employee.days_remaining}
-          </span>
-        </div>
+        {isExempt ? (
+          <div className="col-span-2">
+            <span className="text-slate-500">EU/Schengen citizen — exempt from 90/180-day tracking</span>
+          </div>
+        ) : (
+          <>
+            <div>
+              <span className="text-slate-500">Days Used:</span>
+              <span className="ml-2 font-medium">{employee.days_used} / 90</span>
+            </div>
+            <div>
+              <span className="text-slate-500">Remaining:</span>
+              <span
+                className={cn(
+                  'ml-2 font-medium',
+                  employee.days_remaining < 0 && 'text-red-600'
+                )}
+              >
+                {employee.days_remaining}
+              </span>
+            </div>
+          </>
+        )}
         <div className="col-span-2">
           <span className="text-slate-500">Last Trip:</span>
           <span className="ml-2">{formatDate(employee.last_trip_date)}</span>
@@ -128,15 +153,22 @@ const EmployeeCard = memo(function EmployeeCard({
  * Main compliance table component with filtering and sorting.
  * Displays employee compliance data with status badges and days remaining.
  * Responsive: converts to card layout on mobile.
+ *
+ * Supports server-side pagination when pagination prop is provided.
  */
-export function ComplianceTable({ employees }: ComplianceTableProps) {
+export function ComplianceTable({
+  employees,
+  stats: serverStats,
+  pagination,
+  initialSearch: initialSearchProp,
+}: ComplianceTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   // Initialize filter from URL or default to 'all'
   const initialFilter =
     (searchParams.get('status') as StatusFilter) || 'all'
-  const initialSearch = searchParams.get('search') || ''
+  const initialSearch = initialSearchProp ?? searchParams.get('search') ?? ''
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilter)
   const [sortBy, setSortBy] = useState<SortOption>('days_remaining_asc')
   const [searchQuery, setSearchQuery] = useState(initialSearch)
@@ -160,8 +192,12 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
     setAddTripModal({ open: false, employeeId: '', employeeName: '' })
   }, [])
 
-  // Calculate stats from all employees (unfiltered)
-  const stats = useMemo(() => calculateStats(employees), [employees])
+  // Use server stats if provided (for accurate totals with pagination),
+  // otherwise calculate from current employees (backward compatible)
+  const stats = useMemo(
+    () => serverStats ?? calculateStats(employees),
+    [serverStats, employees]
+  )
 
   // Handle filter change and update URL
   const handleFilterChange = useCallback(
@@ -178,7 +214,7 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
     [router, searchParams]
   )
 
-  // Handle search change and update URL
+  // Handle search change and update URL (resets to page 1)
   const handleSearchChange = useCallback(
     (query: string) => {
       setSearchQuery(query)
@@ -187,6 +223,22 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
         params.set('search', query.trim())
       } else {
         params.delete('search')
+      }
+      // Reset to page 1 when search changes
+      params.delete('page')
+      router.push(`?${params.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
+
+  // Handle page change
+  const handlePageChange = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (page === 1) {
+        params.delete('page')
+      } else {
+        params.set('page', page.toString())
       }
       router.push(`?${params.toString()}`, { scroll: false })
     },
@@ -209,6 +261,9 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
     if (statusFilter !== 'all') {
       result = result.filter((e) => e.risk_level === statusFilter)
     }
+
+    // Note: exempt employees sort to end when sorting by days_remaining_asc
+    // since they have days_remaining=90
 
     // Apply sort
     switch (sortBy) {
@@ -235,8 +290,9 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
     return result
   }, [employees, searchQuery, statusFilter, sortBy])
 
-  // Show empty state if no employees at all
-  if (employees.length === 0) {
+  // Show empty state if no employees at all (check stats.total for accurate count with pagination)
+  const totalEmployees = serverStats?.total ?? employees.length
+  if (totalEmployees === 0 && employees.length === 0) {
     return <EmptyState />
   }
 
@@ -288,69 +344,76 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAndSorted.map((employee) => (
-                <TableRow
-                  key={employee.id}
-                  className="hover:bg-slate-50 cursor-pointer"
-                  onClick={() => router.push(`/employee/${employee.id}`)}
-                >
-                  <TableCell className="font-medium">
-                    <Link
-                      href={`/employee/${employee.id}`}
-                      className="hover:underline text-slate-900"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {employee.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={employee.risk_level} />
-                  </TableCell>
-                  <TableCell className="text-slate-600">
-                    {employee.days_used} / 90
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={cn(
-                        'font-medium',
-                        employee.days_remaining >= 30 && 'text-green-600',
-                        employee.days_remaining >= 10 &&
-                          employee.days_remaining < 30 &&
-                          'text-amber-600',
-                        employee.days_remaining < 10 && 'text-red-600'
-                      )}
-                    >
-                      {employee.days_remaining} days
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-slate-500">
-                    {formatDate(employee.last_trip_date)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          openAddTripModal(employee.id, employee.name)
-                        }}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
+              filteredAndSorted.map((employee) => {
+                const isExempt = employee.risk_level === 'exempt'
+                return (
+                  <TableRow
+                    key={employee.id}
+                    className="hover:bg-slate-50 cursor-pointer"
+                    onClick={() => router.push(`/employee/${employee.id}`)}
+                  >
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/employee/${employee.id}`}
+                        className="hover:underline text-slate-900"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <Link href={`/employee/${employee.id}`}>View</Link>
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                        {employee.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={employee.risk_level} />
+                    </TableCell>
+                    <TableCell className="text-slate-600">
+                      {isExempt ? '-' : `${employee.days_used} / 90`}
+                    </TableCell>
+                    <TableCell>
+                      {isExempt ? (
+                        <span className="text-slate-400">-</span>
+                      ) : (
+                        <span
+                          className={cn(
+                            'font-medium',
+                            employee.days_remaining >= 30 && 'text-green-600',
+                            employee.days_remaining >= 10 &&
+                              employee.days_remaining < 30 &&
+                              'text-amber-600',
+                            employee.days_remaining < 10 && 'text-red-600'
+                          )}
+                        >
+                          {employee.days_remaining} days
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-slate-500">
+                      {formatDate(employee.last_trip_date)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openAddTripModal(employee.id, employee.name)
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Link href={`/employee/${employee.id}`}>View</Link>
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>
@@ -372,6 +435,16 @@ export function ComplianceTable({ employees }: ComplianceTableProps) {
           ))
         )}
       </div>
+
+      {/* Pagination (only shown when pagination prop is provided) */}
+      {pagination && pagination.totalPages > 1 && (
+        <Pagination
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalCount}
+          onPageChange={handlePageChange}
+        />
+      )}
 
       {/* Quick add trip modal */}
       <QuickAddTripModal

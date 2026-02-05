@@ -4,6 +4,12 @@
  */
 
 import type { RiskLevel } from '@/lib/compliance'
+import type { NationalityType } from '@/lib/constants/nationality-types'
+
+/**
+ * Extended risk level that includes 'exempt' for EU/Schengen citizens
+ */
+export type EmployeeRiskLevel = RiskLevel | 'exempt'
 
 /**
  * Employee compliance data for dashboard display.
@@ -14,12 +20,14 @@ export interface EmployeeCompliance {
   id: string
   /** Employee name */
   name: string
+  /** Employee nationality type */
+  nationality_type: NationalityType
   /** Days used in current 180-day window */
   days_used: number
   /** Days remaining (90 - days_used, can be negative if over limit) */
   days_remaining: number
-  /** Risk level based on days remaining */
-  risk_level: RiskLevel
+  /** Risk level based on days remaining, or 'exempt' for EU/Schengen citizens */
+  risk_level: EmployeeRiskLevel
   /** Date of most recent trip exit (ISO string) or null if no trips */
   last_trip_date: string | null
   /** Total number of trips for this employee */
@@ -42,12 +50,14 @@ export interface ComplianceStats {
   non_compliant: number
   /** Number of employees with breach status (90+ days used) */
   breach: number
+  /** Number of employees exempt from tracking (EU/Schengen citizens) */
+  exempt: number
 }
 
 /**
  * Status filter options for the dashboard
  */
-export type StatusFilter = 'all' | 'green' | 'amber' | 'red' | 'breach'
+export type StatusFilter = 'all' | 'green' | 'amber' | 'red' | 'breach' | 'exempt'
 
 /**
  * Sort options for the compliance table

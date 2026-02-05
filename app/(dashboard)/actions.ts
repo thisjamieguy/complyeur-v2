@@ -73,13 +73,13 @@ function revalidateTripData(employeeId?: string): void {
   }
 }
 
-export async function addEmployeeAction(formData: { name: string }) {
+export async function addEmployeeAction(formData: { name: string; nationality_type?: string }) {
   const validated = employeeSchema.parse(formData)
   await createEmployee(validated)
   revalidateTripData()
 }
 
-export async function updateEmployeeAction(id: string, formData: { name: string }) {
+export async function updateEmployeeAction(id: string, formData: { name: string; nationality_type?: string }) {
   const validated = employeeSchema.parse(formData)
   await updateEmployee(id, validated)
   revalidateTripData(id)

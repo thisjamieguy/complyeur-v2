@@ -55,6 +55,9 @@ export function StatusFilters({
     { filter: 'amber', label: 'At Risk', count: stats.at_risk },
     { filter: 'red', label: 'Non-Compliant', count: stats.non_compliant },
     { filter: 'breach', label: 'Breach', count: stats.breach },
+    ...(stats.exempt > 0
+      ? [{ filter: 'exempt' as StatusFilter, label: 'Exempt', count: stats.exempt }]
+      : []),
   ]
 
   return (

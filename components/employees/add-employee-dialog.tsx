@@ -5,10 +5,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { Plus, Loader2 } from 'lucide-react'
-import { z } from 'zod'
 import { addEmployeeAction } from '@/app/(dashboard)/actions'
+import { employeeSchema, type EmployeeFormData } from '@/lib/validations/employee'
+import { NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Dialog,
   DialogContent,
@@ -29,24 +32,7 @@ import {
 import { showSuccess, showError } from '@/lib/toast'
 import { FormError } from '@/components/forms'
 
-// Name pattern: allows letters (including accented), spaces, hyphens, apostrophes
-const namePattern = /^[\p{L}\s\-']+$/u
-
-// Schema for the add employee form (matches database structure)
-const addEmployeeSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Name is required')
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name must be less than 100 characters')
-    .trim()
-    .refine(
-      (val) => namePattern.test(val),
-      'Name can only contain letters, spaces, hyphens, and apostrophes'
-    ),
-})
-
-type AddEmployeeFormData = z.infer<typeof addEmployeeSchema>
+type AddEmployeeFormData = EmployeeFormData
 
 export function AddEmployeeDialog() {
   const [open, setOpen] = useState(false)
@@ -55,11 +41,12 @@ export function AddEmployeeDialog() {
   const router = useRouter()
 
   const form = useForm<AddEmployeeFormData>({
-    resolver: zodResolver(addEmployeeSchema),
+    resolver: zodResolver(employeeSchema),
     defaultValues: {
       name: '',
+      nationality_type: 'uk_citizen',
     },
-    mode: 'onBlur', // Validate on blur for immediate feedback
+    mode: 'onBlur',
   })
 
   async function onSubmit(data: AddEmployeeFormData) {
@@ -125,6 +112,38 @@ export function AddEmployeeDialog() {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="nationality_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nationality Type</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={isLoading}
+                      className="gap-2"
+                    >
+                      {(Object.entries(NATIONALITY_TYPE_LABELS) as [NationalityType, string][]).map(
+                        ([value, label]) => (
+                          <div key={value} className="flex items-center gap-2">
+                            <RadioGroupItem value={value} id={`add-${value}`} />
+                            <Label htmlFor={`add-${value}`} className="font-normal cursor-pointer">
+                              {label}
+                            </Label>
+                          </div>
+                        )
+                      )}
+                    </RadioGroup>
+                  </FormControl>
+                  <p className="text-xs text-slate-500">
+                    EU/Schengen citizens are exempt from 90/180-day compliance tracking.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}

@@ -13,18 +13,20 @@ import {
   employeeUpdateSchema,
 } from '@/lib/validations/employee';
 
+/** Valid base input for employeeSchema tests */
+const validBase = { name: 'John Doe', nationality_type: 'uk_citizen' as const };
+
 describe('employeeSchema', () => {
   describe('valid inputs', () => {
     it('accepts valid name', () => {
-      const result = employeeSchema.safeParse({
-        name: 'John Doe',
-      });
+      const result = employeeSchema.safeParse(validBase);
 
       expect(result.success).toBe(true);
     });
 
     it('accepts name with hyphens', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: 'Mary-Jane Watson',
       });
 
@@ -33,6 +35,7 @@ describe('employeeSchema', () => {
 
     it('accepts name with apostrophes', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: "Patrick O'Brien",
       });
 
@@ -41,6 +44,7 @@ describe('employeeSchema', () => {
 
     it('accepts accented characters', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: 'José García',
       });
 
@@ -59,13 +63,14 @@ describe('employeeSchema', () => {
       ];
 
       internationalNames.forEach(name => {
-        const result = employeeSchema.safeParse({ name });
+        const result = employeeSchema.safeParse({ ...validBase, name });
         expect(result.success).toBe(true);
       });
     });
 
     it('trims whitespace', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: '  John Doe  ',
       });
 
@@ -74,11 +79,29 @@ describe('employeeSchema', () => {
         expect(result.data.name).toBe('John Doe');
       }
     });
+
+    it('accepts all nationality types', () => {
+      const types = ['uk_citizen', 'eu_schengen_citizen', 'rest_of_world'] as const;
+      types.forEach(nationality_type => {
+        const result = employeeSchema.safeParse({ ...validBase, nationality_type });
+        expect(result.success).toBe(true);
+      });
+    });
+
+    it('rejects invalid nationality type', () => {
+      const result = employeeSchema.safeParse({
+        ...validBase,
+        nationality_type: 'invalid',
+      });
+
+      expect(result.success).toBe(false);
+    });
   });
 
   describe('invalid inputs', () => {
     it('rejects empty name', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: '',
       });
 
@@ -90,6 +113,7 @@ describe('employeeSchema', () => {
 
     it('rejects name under 2 characters', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: 'J',
       });
 
@@ -101,6 +125,7 @@ describe('employeeSchema', () => {
 
     it('rejects name over 100 characters', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: 'A'.repeat(101),
       });
 
@@ -112,6 +137,7 @@ describe('employeeSchema', () => {
 
     it('rejects name with numbers', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: 'John Doe 3rd',
       });
 
@@ -125,6 +151,7 @@ describe('employeeSchema', () => {
 
     it('rejects numeric-only names', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: '12345',
       });
 
@@ -143,13 +170,14 @@ describe('employeeSchema', () => {
       ];
 
       invalidNames.forEach(name => {
-        const result = employeeSchema.safeParse({ name });
+        const result = employeeSchema.safeParse({ ...validBase, name });
         expect(result.success).toBe(false);
       });
     });
 
     it('rejects whitespace-only input', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: '   ',
       });
 
@@ -160,6 +188,7 @@ describe('employeeSchema', () => {
   describe('edge cases', () => {
     it('accepts exactly 2 characters', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: 'Jo',
       });
 
@@ -168,6 +197,7 @@ describe('employeeSchema', () => {
 
     it('accepts exactly 100 characters', () => {
       const result = employeeSchema.safeParse({
+        ...validBase,
         name: 'A'.repeat(100),
       });
 

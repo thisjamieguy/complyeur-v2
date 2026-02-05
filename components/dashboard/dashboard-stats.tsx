@@ -1,4 +1,4 @@
-import { Users, CheckCircle, AlertTriangle, XCircle, Ban } from 'lucide-react'
+import { Users, CheckCircle, AlertTriangle, XCircle, Ban, ShieldCheck } from 'lucide-react'
 import type { ComplianceStats } from '@/types/dashboard'
 import { cn } from '@/lib/utils'
 
@@ -35,8 +35,13 @@ function StatCard({ title, value, icon: Icon, iconBgColor, iconColor }: StatCard
  * Displays: Total employees, Compliant (green), At Risk (amber), Non-Compliant (red), Breach (black)
  */
 export function DashboardStats({ stats }: DashboardStatsProps) {
+  const hasExempt = stats.exempt > 0
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className={cn(
+      'grid grid-cols-1 sm:grid-cols-2 gap-4',
+      hasExempt ? 'lg:grid-cols-6' : 'lg:grid-cols-5'
+    )}>
       <StatCard
         title="Total Employees"
         value={stats.total}
@@ -72,6 +77,15 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
         iconBgColor="bg-slate-900"
         iconColor="text-white"
       />
+      {hasExempt && (
+        <StatCard
+          title="Exempt"
+          value={stats.exempt}
+          icon={ShieldCheck}
+          iconBgColor="bg-blue-50"
+          iconColor="text-blue-600"
+        />
+      )}
     </div>
   )
 }

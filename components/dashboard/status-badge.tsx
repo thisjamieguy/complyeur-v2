@@ -1,9 +1,9 @@
-import type { RiskLevel } from '@/lib/compliance'
+import type { EmployeeRiskLevel } from '@/types/dashboard'
 import { cn } from '@/lib/utils'
 
 interface StatusBadgeProps {
   /** Risk level determining badge color */
-  status: RiskLevel
+  status: EmployeeRiskLevel
   /** Whether to show the text label (default: true) */
   showLabel?: boolean
   /** Additional CSS classes */
@@ -38,6 +38,13 @@ const statusConfig = {
     border: 'border-slate-900',
     dot: 'bg-white',
     label: 'Breach',
+  },
+  exempt: {
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+    dot: 'bg-blue-500',
+    label: 'Exempt',
   },
 } as const
 
@@ -80,6 +87,6 @@ export function StatusBadge({
  * Get the status configuration for a given risk level.
  * Useful for custom badge implementations.
  */
-export function getStatusConfig(status: RiskLevel) {
+export function getStatusConfig(status: EmployeeRiskLevel) {
   return statusConfig[status]
 }
