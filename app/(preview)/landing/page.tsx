@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { joinWaitlist, type WaitlistState } from './actions'
@@ -11,6 +11,10 @@ import { DemoEmployeeList } from '@/components/marketing/demo-employee-list'
 import { FeatureTicker } from '@/components/marketing/feature-ticker'
 import { FeatureCards } from '@/components/marketing/feature-cards'
 import { SkipLink } from '@/components/ui/skip-link'
+import { Turnstile } from '@/components/ui/turnstile'
+
+// Turnstile site key from environment
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
 
 // Waitlist form component
 function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'minimal' }) {
@@ -19,6 +23,7 @@ function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'minimal'
     { success: false, message: '' }
   )
   const formRef = useRef<HTMLFormElement>(null)
+  const [turnstileError, setTurnstileError] = useState(false)
 
   useEffect(() => {
     if (state.success && formRef.current) {
@@ -113,8 +118,28 @@ function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'minimal'
         </button>
       </div>
 
+      {/* Cloudflare Turnstile - invisible CAPTCHA */}
+      {TURNSTILE_SITE_KEY && (
+        <Turnstile
+          siteKey={TURNSTILE_SITE_KEY}
+          onError={() => setTurnstileError(true)}
+          theme="auto"
+          size="normal"
+          appearance="interaction-only"
+          action="waitlist"
+          responseFieldName="cf-turnstile-response"
+          className="mt-4"
+        />
+      )}
+
       {state.message && !state.success && (
         <p className="text-sm text-red-600 mt-2">{state.message}</p>
+      )}
+
+      {turnstileError && !state.message && (
+        <p className="text-xs text-amber-600 mt-2">
+          Security verification unavailable. Form will still submit.
+        </p>
       )}
 
       <p className="text-xs text-slate-500 mt-3">

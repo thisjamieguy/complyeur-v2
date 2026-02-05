@@ -93,7 +93,9 @@ function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sign in to your account</CardTitle>
+        <CardTitle asChild>
+          <h1>Sign in to your account</h1>
+        </CardTitle>
         <CardDescription>
           Enter your email and password to access your dashboard
         </CardDescription>
@@ -142,6 +144,7 @@ function LoginForm() {
                     <Input
                       type="email"
                       placeholder="Enter your email"
+                      autoComplete="email"
                       disabled={isAnyLoading}
                       {...field}
                     />
@@ -160,6 +163,7 @@ function LoginForm() {
                     <Input
                       type="password"
                       placeholder="Enter your password"
+                      autoComplete="current-password"
                       disabled={isAnyLoading}
                       {...field}
                     />
@@ -199,7 +203,9 @@ export default function LoginPage() {
     <Suspense fallback={
       <Card>
         <CardHeader>
-          <CardTitle>Sign in to your account</CardTitle>
+          <CardTitle asChild>
+            <h1>Sign in to your account</h1>
+          </CardTitle>
           <CardDescription>Loading...</CardDescription>
         </CardHeader>
       </Card>
