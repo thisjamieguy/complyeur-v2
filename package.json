@@ -24,6 +24,8 @@
     "test:regression:ui": "playwright test e2e/phase-regression.spec.ts --ui",
     "test:all": "npm run test:coverage && npm run test:e2e",
     "test:report": "node scripts/generate-test-report.js",
+    "test:security": "vitest run __tests__/security",
+    "test:pentest": "vitest run __tests__/security/pentest",
     "security:check": "pnpm audit",
     "stress-test": "tsx scripts/stress-test/index.ts",
     "stress-test:dry": "tsx scripts/stress-test/index.ts --dry-run"
