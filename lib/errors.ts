@@ -100,6 +100,9 @@ export function getAuthErrorMessage(supabaseError: { message: string; status?: n
   if (message.includes('Email rate limit exceeded')) {
     return 'Too many email requests. Please try again later.'
   }
+  if (message.includes('Unsupported provider') && message.includes('provider is not enabled')) {
+    return 'Google sign-in is not configured yet. Enable the Google provider in Supabase Auth settings.'
+  }
   // Catch Supabase rate limit messages like "For security purposes, you can only request this after X seconds"
   if (message.includes('For security purposes') && message.includes('only request this after')) {
     return 'Too many signup attempts. Please wait a moment before trying again.'

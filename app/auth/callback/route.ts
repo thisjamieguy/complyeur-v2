@@ -115,61 +115,87 @@ export async function GET(request: Request) {
   const provider = user.app_metadata?.provider
   const isOAuthUser = provider && provider !== 'email'
 
-  if (isOAuthUser) {
-    // Check if user already has a profile (returning OAuth user)
-    const { data: existingProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, company_id')
-      .eq('id', user.id)
-      .maybeSingle()
+  // Check if user already has a profile (returning user)
+  const profileResult = await supabase
+    .from('profiles')
+    .select('id, company_id')
+    .eq('id', user.id)
+    .maybeSingle()
 
-    if (profileError) {
-      console.error('Profile lookup error:', profileError)
-      // Continue anyway - we'll try to create if needed
-    }
+  if (profileResult.error) {
+    console.error('Profile lookup error:', profileResult.error)
+  }
 
-    // If no profile exists, this is a new OAuth user - create company/profile
-    if (!existingProfile) {
-      const email = user.email || ''
-      const companyName = inferCompanyNameFromEmail(email)
+  let existingProfile = profileResult.data
 
-      console.log('Creating company/profile for new OAuth user:', {
-        userId: user.id,
-        email,
-        provider,
-        inferredCompany: companyName
-      })
-
-      // Extract name from OAuth metadata if available
-      const firstName = user.user_metadata?.given_name || user.user_metadata?.full_name?.split(' ')[0] || null
-      const lastName = user.user_metadata?.family_name || null
-
-      const { data: companyId, error: createError } = await supabase.rpc(
-        'create_company_and_profile',
-        {
-          user_id: user.id,
-          user_email: email,
-          company_name: companyName,
-          user_terms_accepted_at: new Date().toISOString(),
-          user_auth_provider: provider,
-          user_first_name: firstName,
-          user_last_name: lastName
-        }
-      )
-
-      if (createError) {
-        console.error('Failed to create company/profile for OAuth user:', createError)
-
-        // Sign out the user to prevent orphaned auth account
-        await supabase.auth.signOut()
-
-        return NextResponse.redirect(
-          `${origin}/login?error=${encodeURIComponent('Failed to set up your account. Please try again or contact support.')}`
-        )
+  // If profile is missing, first attempt to accept a pending invite by email.
+  // This handles existing auth users who were invited later.
+  if (!existingProfile && user.email) {
+    const { data: invitedCompanyId, error: inviteAcceptError } = await supabase.rpc(
+      'accept_pending_invite_for_auth_user',
+      {
+        p_user_id: user.id,
+        p_user_email: user.email,
       }
+    )
 
-      console.log('Successfully created company for OAuth user:', { companyId })
+    if (inviteAcceptError) {
+      console.error('Invite acceptance error during callback:', inviteAcceptError)
+    } else if (invitedCompanyId) {
+      const refreshedProfile = await supabase
+        .from('profiles')
+        .select('id, company_id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (refreshedProfile.error) {
+        console.error('Profile refresh after invite acceptance failed:', refreshedProfile.error)
+      } else {
+        existingProfile = refreshedProfile.data
+      }
     }
+  }
+
+  if (isOAuthUser && !existingProfile) {
+    const email = user.email || ''
+    const companyName = inferCompanyNameFromEmail(email)
+
+    console.log('Creating company/profile for new OAuth user:', {
+      userId: user.id,
+      email,
+      provider,
+      inferredCompany: companyName
+    })
+
+    // Extract name from OAuth metadata if available
+    const firstName = user.user_metadata?.given_name || user.user_metadata?.full_name?.split(' ')[0] || null
+    const lastName = user.user_metadata?.family_name || null
+
+    const { data: companyId, error: createError } = await supabase.rpc(
+      'create_company_and_profile',
+      {
+        user_id: user.id,
+        user_email: email,
+        company_name: companyName,
+        user_terms_accepted_at: new Date().toISOString(),
+        user_auth_provider: provider,
+        user_first_name: firstName,
+        user_last_name: lastName
+      }
+    )
+
+    if (createError) {
+      console.error('Failed to create company/profile for OAuth user:', createError)
+
+      // Sign out the user to prevent orphaned auth account
+      await supabase.auth.signOut()
+
+      return NextResponse.redirect(
+        `${origin}/login?error=${encodeURIComponent('Failed to set up your account. Please try again or contact support.')}`
+      )
+    }
+
+    console.log('Successfully created company for OAuth user:', { companyId })
   }
 
   // Update last activity (non-blocking - don't fail auth if this fails)

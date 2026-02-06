@@ -81,6 +81,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 # App URL (CRITICAL for OAuth redirects)
 NEXT_PUBLIC_APP_URL=http://localhost:3000  # Local
 # NEXT_PUBLIC_APP_URL=https://app.complyeur.com  # Production
+
+# Local Supabase Google OAuth credentials (when using `supabase start`)
+# Redirect URI in Google Cloud Console must be:
+#   http://127.0.0.1:54321/auth/v1/callback
+SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID=your-google-client-id
+SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=your-google-client-secret
 ```
 
 ### Supabase Dashboard Configuration

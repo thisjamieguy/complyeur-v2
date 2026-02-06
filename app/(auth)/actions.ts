@@ -65,8 +65,8 @@ export async function login(formData: FormData) {
       .eq('id', data.user.id)
 
     if (activityError) {
-      await supabase.auth.signOut()
-      throw new DatabaseError(getDatabaseErrorMessage(activityError))
+      // Don't block login if activity tracking columns/migrations are not deployed yet.
+      console.warn('Failed to update last activity during login:', activityError.message)
     }
   }
   revalidatePath('/', 'layout')
@@ -176,8 +176,11 @@ export async function signup(formData: FormData) {
     .eq('id', user.id)
 
   if (activityError) {
-    await supabase.auth.signOut()
-    throw new DatabaseError(getDatabaseErrorMessage(activityError!))
+    // Don't block signup completion if activity tracking columns/migrations are not deployed yet.
+    console.warn(
+      'Failed to update last activity during signup:',
+      activityError?.message ?? 'Unknown error'
+    )
   }
 
   revalidatePath('/', 'layout')
