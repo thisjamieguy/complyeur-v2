@@ -288,26 +288,39 @@ export function calculateCompliantFromDate(
     return isSchengenCountry(trip.country);
   });
 
-  // Convert to compliance trips
-  const complianceTrips: ComplianceTrip[] = relevantTrips.map(toComplianceTrip);
+  // Convert and sort once so we can incrementally add eligible trips per check date.
+  // This avoids filtering the full list on every single day in the loop below.
+  const complianceTrips: ComplianceTrip[] = relevantTrips
+    .map(toComplianceTrip)
+    .sort((a, b) => a.entryDate.getTime() - b.entryDate.getTime());
 
   // Check each day for up to 180 days
   const maxCheckDays = WINDOW_SIZE_DAYS;
   let checkDate = tripEntryDate;
+  const complianceConfigBase: Omit<ComplianceConfig, 'referenceDate'> = {
+    mode: 'planning',
+    complianceStartDate: DEFAULT_COMPLIANCE_START_DATE,
+    limit,
+  };
+
+  const tripsBeforeCheck: ComplianceTrip[] = [];
+  let nextTripIndex = 0;
 
   for (let i = 0; i <= maxCheckDays; i++) {
     checkDate = addDays(tripEntryDate, i);
 
-    // Calculate presence for trips BEFORE this check date
-    const tripsBeforeCheck = complianceTrips.filter((trip) =>
-      isBefore(trip.entryDate, checkDate)
-    );
+    // Include newly eligible trips for this check date.
+    while (
+      nextTripIndex < complianceTrips.length &&
+      isBefore(complianceTrips[nextTripIndex].entryDate, checkDate)
+    ) {
+      tripsBeforeCheck.push(complianceTrips[nextTripIndex]);
+      nextTripIndex++;
+    }
 
     const complianceConfig: ComplianceConfig = {
-      mode: 'planning',
+      ...complianceConfigBase,
       referenceDate: checkDate,
-      complianceStartDate: DEFAULT_COMPLIANCE_START_DATE,
-      limit,
     };
 
     const presence = presenceDays(tripsBeforeCheck, complianceConfig);
