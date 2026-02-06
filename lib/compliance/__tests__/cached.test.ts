@@ -193,7 +193,7 @@ describe('batchCalculateCompliance', () => {
     });
 
     it('correctly identifies non-compliant employees', () => {
-      // Note: batchCalculateCompliance uses default compliance start (Oct 12, 2025)
+      // Note: batchCalculateCompliance uses default compliance start (epoch)
       // Trip must be after that date. Use Mar 1, 2026 ref to fit 90 days in window.
       const employees = [
         {
@@ -381,10 +381,10 @@ describe('createComplianceCalculator', () => {
 
       const result = calculator(trips, config);
 
-      // Window is [ref - 180, ref - 1] = [Jul 5, Dec 31]
+      // Window is [ref - 179, ref] = [Jul 6, Jan 1]
       // Active trip with null exit counts through ref date in audit mode
-      // Dec 25 - Dec 31 = 7 days in window (ref date not included)
-      expect(result.daysUsed).toBe(7);
+      // Dec 25 - Jan 1 = 8 days in window (ref date included)
+      expect(result.daysUsed).toBe(8);
     });
   });
 });
@@ -466,8 +466,7 @@ describe('calculateComplianceRange', () => {
     });
 
     it('calculates correct risk levels', () => {
-      // Create 64 days of presence (amber zone with default thresholds)
-      // Default compliance start is Oct 12, so Oct 12 - Dec 14 = 64 days
+      // Oct 1 - Dec 14 = 75 days of presence (amber zone with default thresholds)
       const trips = [createTrip('2025-10-01', '2025-12-14')];
       const startDate = new Date('2026-01-01T00:00:00.000Z');
       const endDate = new Date('2026-01-01T00:00:00.000Z');
@@ -475,10 +474,10 @@ describe('calculateComplianceRange', () => {
       const results = calculateComplianceRange(trips, startDate, endDate);
       const result = results.get('2026-01-01');
 
-      // Only Oct 12 - Dec 14 counts (64 days) due to default compliance start
-      expect(result?.daysUsed).toBe(64);
-      expect(result?.daysRemaining).toBe(26);
-      expect(result?.riskLevel).toBe('green'); // 26 days remaining >= 16 (green threshold)
+      // Full trip counts: Oct 1 - Dec 14 = 75 days
+      expect(result?.daysUsed).toBe(75);
+      expect(result?.daysRemaining).toBe(15);
+      expect(result?.riskLevel).toBe('amber'); // 15 days remaining, amber threshold
     });
   });
 
@@ -656,11 +655,11 @@ describe('getComplianceAtDates', () => {
 
       const results = getComplianceAtDates(trips, dates);
 
-      // Nov 5: Window is [May 8, Nov 4], so Nov 1-4 = 4 days in window
+      // Nov 5: Window is [May 9, Nov 5], so Nov 1-5 = 5 days in window (refDate included)
       const nov5 = results.get('2025-11-05');
-      expect(nov5?.daysUsed).toBe(4);
+      expect(nov5?.daysUsed).toBe(5);
 
-      // Dec 1: Window is [Jun 4, Nov 30], Nov 1-10 = 10 days in window
+      // Dec 1: Window is [Jun 5, Dec 1], Nov 1-10 = 10 days in window
       const dec1 = results.get('2025-12-01');
       expect(dec1?.daysUsed).toBe(10);
     });
@@ -716,10 +715,10 @@ describe('integration scenarios', () => {
 
       const results = getComplianceAtDates(trips, dates);
 
-      // Nov 30: Window is [Jun 3, Nov 29], so Nov 25-29 = 5 days
-      expect(results.get('2025-11-30')?.daysUsed).toBe(5);
-      // Dec 5: Window is [Jun 8, Dec 4], so Nov 25 - Dec 4 = 10 days
-      expect(results.get('2025-12-05')?.daysUsed).toBe(10);
+      // Nov 30: Window is [Jun 4, Nov 30], so Nov 25-30 = 6 days
+      expect(results.get('2025-11-30')?.daysUsed).toBe(6);
+      // Dec 5: Window is [Jun 9, Dec 5], so Nov 25 - Dec 5 = 11 days
+      expect(results.get('2025-12-05')?.daysUsed).toBe(11);
       // Dec 15: Window is [Jun 18, Dec 14], so Nov 25 - Dec 10 but only up to Dec 14 in window = 16 days
       expect(results.get('2025-12-15')?.daysUsed).toBe(16);
     });
@@ -727,7 +726,7 @@ describe('integration scenarios', () => {
 
   describe('compliance threshold scenarios', () => {
     it('batch processes employees with different risk levels', () => {
-      // Note: batchCalculateCompliance uses default compliance start (Oct 12, 2025)
+      // Note: batchCalculateCompliance uses default compliance start (epoch)
       // Default risk thresholds: green >= 16, amber >= 1, red < 1
       // Use reference date Mar 1, 2026 to allow 90 days in window
       const employees = [

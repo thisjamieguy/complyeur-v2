@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getEmployeeComplianceData } from '@/lib/data'
+import { getEmployeeComplianceDataPaginated } from '@/lib/data'
 import { getCompanySettings } from '@/lib/actions/settings'
 import { ComplianceTable } from '@/components/dashboard/compliance-table'
 import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
@@ -10,6 +10,9 @@ import { AlertBanner } from '@/components/alerts/alert-banner'
 import { getUnacknowledgedAlertsAction } from '../actions'
 
 export const dynamic = 'force-dynamic'
+
+/** Default page size for employee list */
+const PAGE_SIZE = 25
 
 /**
  * Skeleton for the alert banner while loading.
@@ -23,8 +26,15 @@ function AlertSkeleton() {
 /**
  * Server component that fetches and displays employee compliance data.
  * Uses company-specific status thresholds for badge colors.
+ * Supports pagination via URL params.
  */
-async function EmployeeComplianceList() {
+async function EmployeeComplianceList({
+  page,
+  search,
+}: {
+  page: number
+  search: string
+}) {
   // Fetch company settings to get status thresholds
   const settings = await getCompanySettings()
 
@@ -35,8 +45,20 @@ async function EmployeeComplianceList() {
     redMax: settings?.status_red_max ?? 89,
   }
 
-  const employees = await getEmployeeComplianceData(thresholds)
-  return <ComplianceTable employees={employees} />
+  // Fetch paginated employee data
+  const result = await getEmployeeComplianceDataPaginated(
+    { page, pageSize: PAGE_SIZE, search: search || undefined },
+    thresholds
+  )
+
+  return (
+    <ComplianceTable
+      employees={result.employees}
+      stats={result.stats}
+      pagination={result.pagination}
+      initialSearch={search}
+    />
+  )
 }
 
 /**
@@ -52,11 +74,16 @@ async function AlertSection() {
   }
 }
 
+interface DashboardPageProps {
+  searchParams: Promise<{ page?: string; search?: string }>
+}
+
 /**
  * Main dashboard page for Phase 8.
  * Displays employee compliance status with filtering and sorting.
+ * Supports server-side pagination via URL params.
  */
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -65,6 +92,11 @@ export default async function DashboardPage() {
   if (!user) {
     redirect('/login')
   }
+
+  // Parse pagination params from URL
+  const params = await searchParams
+  const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
+  const search = params.search ?? ''
 
   return (
     <div className="space-y-8">
@@ -76,10 +108,10 @@ export default async function DashboardPage() {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900">
+          <h1 className="text-xl sm:text-2xl font-semibold text-brand-900">
             Employee Compliance
           </h1>
-          <p className="text-sm sm:text-base text-slate-500 mt-1">
+          <p className="text-sm sm:text-base text-brand-400 mt-1">
             Track Schengen 90/180-day compliance status
           </p>
         </div>
@@ -87,8 +119,8 @@ export default async function DashboardPage() {
       </div>
 
       {/* Main content with suspense for streaming */}
-      <Suspense fallback={<DashboardSkeleton />}>
-        <EmployeeComplianceList />
+      <Suspense key={`${page}-${search}`} fallback={<DashboardSkeleton />}>
+        <EmployeeComplianceList page={page} search={search} />
       </Suspense>
     </div>
   )

@@ -55,7 +55,7 @@ export function EmployeeSearch({
   return (
     <div className="relative">
       <Search
-        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none"
+        className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-brand-300 pointer-events-none"
         aria-hidden="true"
       />
       <Input
@@ -63,7 +63,7 @@ export function EmployeeSearch({
         value={localValue}
         onChange={handleChange}
         placeholder={placeholder}
-        className="pl-10 pr-10 w-full sm:w-72 border-slate-200 focus:border-blue-500 focus-visible:ring-blue-500/20"
+        className="pl-10 pr-10 w-full sm:w-72 bg-white border-slate-200 shadow-sm focus:border-brand-400 focus-visible:ring-brand-400/20"
         aria-label="Search employees by name"
       />
       {localValue && (
@@ -72,7 +72,7 @@ export function EmployeeSearch({
           variant="ghost"
           size="sm"
           onClick={handleClear}
-          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-slate-400 hover:text-slate-600"
+          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 text-brand-300 hover:text-brand-600"
           aria-label="Clear search"
         >
           <X className="h-4 w-4" />

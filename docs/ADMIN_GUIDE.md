@@ -75,7 +75,7 @@ The dashboard shows at-a-glance business metrics:
 
 **Search & Filters:**
 - Search by company name or slug
-- Filter by tier: Free, Starter, Professional, Enterprise
+- Filter by tier: Basic, Pro, Pro+
 - Filter by status: All, Active, Trial, Suspended
 
 **Status Badges:**
@@ -109,8 +109,8 @@ The dashboard shows at-a-glance business metrics:
 
 ### Tier Comparison
 
-| Feature | Free | Starter | Professional | Enterprise |
-|---------|------|---------|--------------|------------|
+| Feature | Basic (`free`) | Pro (`starter`) | Pro+ (`professional`) | Enterprise (Legacy) (`enterprise`) |
+|---------|------------------|-----------------|------------------------|------------------------------------|
 | Max Employees | 10 | 50 | 200 | Unlimited |
 | Max Users | 2 | 5 | 15 | Unlimited |
 | CSV Export | ✅ | ✅ | ✅ | ✅ |
@@ -124,10 +124,20 @@ The dashboard shows at-a-glance business metrics:
 
 ### How Entitlements Work
 
-1. Company is assigned a **tier** (free, starter, professional, enterprise)
+1. Company is assigned a **tier slug** (`free`, `starter`, `professional`, `enterprise`)
 2. Tier defines default features and limits
 3. **Manual overrides** can enable specific features regardless of tier
 4. Overrides are tracked with `manual_override = true` and `override_notes`
+
+### Legacy Enterprise Migration Note
+
+`enterprise` is a legacy tier and is hidden from new self-serve sales surfaces.
+
+Manual migration path for legacy accounts:
+1. Review company usage against Pro+ limits (employees/users and required features).
+2. Confirm customer acceptance of Pro+ commercial terms.
+3. Change tier slug from `enterprise` to `professional` in Admin > Company > Entitlements.
+4. Add a note in **Notes** tab under category `custom_deal` documenting migration date and rationale.
 
 ---
 

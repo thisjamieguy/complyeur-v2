@@ -86,11 +86,11 @@ const EmployeeCard = memo(function EmployeeCard({
   const isExempt = employee.risk_level === 'exempt'
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+    <div className="bg-white border border-slate-200/80 rounded-lg p-4 space-y-3">
       <div className="flex items-center justify-between">
         <Link
           href={`/employee/${employee.id}`}
-          className="font-medium text-slate-900 hover:underline"
+          className="font-medium text-brand-900 hover:underline"
         >
           {employee.name}
         </Link>
@@ -112,20 +112,20 @@ const EmployeeCard = memo(function EmployeeCard({
       <div className="grid grid-cols-2 gap-2 text-sm">
         {isExempt ? (
           <div className="col-span-2">
-            <span className="text-slate-500">EU/Schengen citizen — exempt from 90/180-day tracking</span>
+            <span className="text-brand-400">EU/Schengen citizen — exempt from 90/180-day tracking</span>
           </div>
         ) : (
           <>
             <div>
-              <span className="text-slate-500">Days Used:</span>
+              <span className="text-brand-400">Days Used:</span>
               <span className="ml-2 font-medium">{employee.days_used} / 90</span>
             </div>
             <div>
-              <span className="text-slate-500">Remaining:</span>
+              <span className="text-brand-400">Remaining:</span>
               <span
                 className={cn(
                   'ml-2 font-medium',
-                  employee.days_remaining < 0 && 'text-red-600'
+                  employee.days_remaining < 0 && 'text-rose-600'
                 )}
               >
                 {employee.days_remaining}
@@ -134,13 +134,13 @@ const EmployeeCard = memo(function EmployeeCard({
           </>
         )}
         <div className="col-span-2">
-          <span className="text-slate-500">Last Trip:</span>
+          <span className="text-brand-400">Last Trip:</span>
           <span className="ml-2">{formatDate(employee.last_trip_date)}</span>
         </div>
       </div>
       <Link
         href={`/employee/${employee.id}`}
-        className="pt-2 border-t border-slate-100 flex items-center justify-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+        className="pt-2 border-t border-slate-100 flex items-center justify-center gap-2 text-sm text-brand-500 hover:text-brand-800"
       >
         <Eye className="h-4 w-4" />
         <span>View Details</span>
@@ -321,16 +321,16 @@ export function ComplianceTable({
       </div>
 
       {/* Desktop table view */}
-      <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-md overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead className="font-semibold">Employee</TableHead>
-              <TableHead className="font-semibold w-[130px]">Status</TableHead>
-              <TableHead className="font-semibold w-[100px]">Days Used</TableHead>
-              <TableHead className="font-semibold w-[130px]">Days Remaining</TableHead>
-              <TableHead className="font-semibold w-[120px]">Last Trip</TableHead>
-              <TableHead className="font-semibold w-[140px]">Actions</TableHead>
+            <TableRow className="bg-brand-50">
+              <TableHead className="font-semibold text-brand-700">Employee</TableHead>
+              <TableHead className="font-semibold text-brand-700 w-[130px]">Status</TableHead>
+              <TableHead className="font-semibold text-brand-700 w-[100px]">Days Used</TableHead>
+              <TableHead className="font-semibold text-brand-700 w-[130px]">Days Remaining</TableHead>
+              <TableHead className="font-semibold text-brand-700 w-[120px]">Last Trip</TableHead>
+              <TableHead className="font-semibold text-brand-700 w-[140px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -338,7 +338,7 @@ export function ComplianceTable({
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="text-center py-8 text-slate-500"
+                  className="text-center py-8 text-brand-400"
                 >
                   No employees match the selected filter.
                 </TableCell>
@@ -349,13 +349,13 @@ export function ComplianceTable({
                 return (
                   <TableRow
                     key={employee.id}
-                    className="hover:bg-slate-50 cursor-pointer"
+                    className="hover:bg-brand-50/60 cursor-pointer transition-colors"
                     onClick={() => router.push(`/employee/${employee.id}`)}
                   >
                     <TableCell className="font-medium">
                       <Link
                         href={`/employee/${employee.id}`}
-                        className="hover:underline text-slate-900"
+                        className="hover:underline text-brand-900"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {employee.name}
@@ -364,28 +364,28 @@ export function ComplianceTable({
                     <TableCell>
                       <StatusBadge status={employee.risk_level} />
                     </TableCell>
-                    <TableCell className="text-slate-600">
+                    <TableCell className="text-brand-500">
                       {isExempt ? '-' : `${employee.days_used} / 90`}
                     </TableCell>
                     <TableCell>
                       {isExempt ? (
-                        <span className="text-slate-400">-</span>
+                        <span className="text-brand-300">-</span>
                       ) : (
                         <span
                           className={cn(
                             'font-medium',
-                            employee.days_remaining >= 30 && 'text-green-600',
+                            employee.days_remaining >= 30 && 'text-emerald-600',
                             employee.days_remaining >= 10 &&
                               employee.days_remaining < 30 &&
                               'text-amber-600',
-                            employee.days_remaining < 10 && 'text-red-600'
+                            employee.days_remaining < 10 && 'text-rose-600'
                           )}
                         >
                           {employee.days_remaining} days
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="text-brand-400">
                       {formatDate(employee.last_trip_date)}
                     </TableCell>
                     <TableCell>
@@ -422,7 +422,7 @@ export function ComplianceTable({
       {/* Mobile card view */}
       <div className="md:hidden space-y-4">
         {filteredAndSorted.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-brand-400">
             No employees match the selected filter.
           </div>
         ) : (

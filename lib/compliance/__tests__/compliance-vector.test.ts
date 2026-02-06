@@ -65,14 +65,13 @@ function oracleCalculateDaysUsed(
   const refDate = new Date(referenceDate);
   refDate.setUTCHours(0, 0, 0, 0);
   const windowStart = new Date(refDate);
-  windowStart.setUTCDate(windowStart.getUTCDate() - 180);
+  windowStart.setUTCDate(windowStart.getUTCDate() - 179);
 
   // Respect compliance start date
   const effectiveWindowStart = windowStart < complianceStartDate ? complianceStartDate : windowStart;
 
-  // Window is [refDate - 180, refDate - 1] (the day before the reference date)
+  // Window is [refDate - 179, refDate] (reference date included)
   const windowEnd = new Date(refDate);
-  windowEnd.setUTCDate(windowEnd.getUTCDate() - 1);
 
   for (const trip of trips) {
     if (!schengenCountries.has(trip.country.toUpperCase())) continue;
@@ -375,15 +374,15 @@ describe('computeComplianceVectorOptimized', () => {
 
       const results = computeComplianceVectorOptimized(trips, startDate, endDate, config);
 
-      // Apr 12: window [Oct 14, Apr 11] - all 10 days in window
+      // Apr 12: window [Oct 15, Apr 12] - all 10 days in window
       const apr12 = findByDate(results, '2026-04-12');
       expect(apr12?.daysUsed).toBe(10);
 
-      // Apr 15: window [Oct 17, Apr 14] - Oct 15-16 fall out, 8 remain
+      // Apr 15: window [Oct 18, Apr 15] - Oct 15-17 fall out, 7 remain
       const apr15 = findByDate(results, '2026-04-15');
-      expect(apr15?.daysUsed).toBe(8);
+      expect(apr15?.daysUsed).toBe(7);
 
-      // Apr 25: window [Oct 27, Apr 24] - all trip days fall out
+      // Apr 25: window [Oct 28, Apr 25] - all trip days fall out
       const apr25 = findByDate(results, '2026-04-25');
       expect(apr25?.daysUsed).toBe(0);
     });
@@ -401,9 +400,9 @@ describe('computeComplianceVectorOptimized', () => {
       const dec1 = findByDate(results, '2025-12-01');
       expect(dec1?.daysUsed).toBe(0);
 
-      // Dec 6: Dec 5 now in window (yesterday)
+      // Dec 6: Dec 5-6 now in window (ref date included)
       const dec6 = findByDate(results, '2025-12-06');
-      expect(dec6?.daysUsed).toBe(1);
+      expect(dec6?.daysUsed).toBe(2);
 
       // Dec 11: Dec 5-10 all in window (6 days)
       const dec11 = findByDate(results, '2025-12-11');
@@ -551,10 +550,9 @@ describe('computeMonthCompliance', () => {
 
       const results = computeMonthCompliance(trips, 2025, 12, config);
 
-      // Dec 1: Should show days from Nov 25 - Nov 30 (6 days in window)
-      // Actually window is [ref - 180, ref - 1], so Dec 1 sees Nov 25-30
+      // Dec 1: Window is [ref - 179, ref], so Dec 1 sees Nov 25-Dec 1 = 7 days
       const dec1 = results[0];
-      expect(dec1.daysUsed).toBe(6);
+      expect(dec1.daysUsed).toBe(7);
 
       // Dec 11: Shows Nov 25 - Dec 10 (16 days)
       const dec11 = results[10];

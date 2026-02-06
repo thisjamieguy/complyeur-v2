@@ -10,6 +10,10 @@
 export {
   getEmployeesWithTrips,
   getEmployeeComplianceData,
+  getEmployeeComplianceDataPaginated,
+  getEmployeeStats,
   getEmployeeById,
   getEmployeeCount,
+  type PaginationParams,
+  type PaginatedEmployeeResult,
 } from './employees'

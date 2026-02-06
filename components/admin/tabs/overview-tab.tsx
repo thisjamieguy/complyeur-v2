@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getTierBadgeClassName, getTierDisplayName } from '@/lib/billing/plans'
 
 interface OverviewTabProps {
   company: {
@@ -55,6 +56,8 @@ export function OverviewTab({ company, tier }: OverviewTabProps) {
   const entitlement = company.company_entitlements
   const employeeCount = company.employees?.[0]?.count || 0
   const userCount = company.profiles?.length || 0
+  const tierSlug = tier?.slug || entitlement?.tier_slug || 'free'
+  const tierDisplayName = getTierDisplayName(tierSlug, tier?.display_name)
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -67,15 +70,9 @@ export function OverviewTab({ company, tier }: OverviewTabProps) {
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-600">Current Tier</span>
             <Badge
-              className={cn(
-                'hover:opacity-90',
-                tier?.slug === 'enterprise' && 'bg-amber-100 text-amber-700',
-                tier?.slug === 'professional' && 'bg-purple-100 text-purple-700',
-                tier?.slug === 'starter' && 'bg-blue-100 text-blue-700',
-                tier?.slug === 'free' && 'bg-slate-100 text-slate-700'
-              )}
+              className={cn(getTierBadgeClassName(tierSlug), 'hover:opacity-90')}
             >
-              {tier?.display_name || 'Free'}
+              {tierDisplayName}
             </Badge>
           </div>
 

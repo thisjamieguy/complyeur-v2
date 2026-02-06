@@ -36,19 +36,19 @@ const EARLY_COMPLIANCE_START = new Date('2024-01-01');
 describe('isInWindow', () => {
   describe('window boundary definitions', () => {
     // Reference date: 2025-07-01
-    // Window should be: [2025-01-02 (inclusive), 2025-06-30 (inclusive)]
-    // That's exactly 180 days
+    // Window should be: [2025-01-03 (inclusive), 2025-07-01 (inclusive)]
+    // That's exactly 180 days (refDate - 179 through refDate)
 
-    it('includes day exactly 180 days ago', () => {
+    it('includes day exactly 179 days ago (window start)', () => {
       const refDate = new Date('2025-07-01');
-      const dayAtBoundary = new Date('2025-01-02'); // 180 days before July 1
+      const dayAtBoundary = new Date('2025-01-03'); // 179 days before July 1
 
       expect(isInWindow(dayAtBoundary, refDate)).toBe(true);
     });
 
-    it('excludes day 181 days ago', () => {
+    it('excludes day 180 days ago (just outside window)', () => {
       const refDate = new Date('2025-07-01');
-      const dayOutside = new Date('2025-01-01'); // 181 days before July 1
+      const dayOutside = new Date('2025-01-02'); // 180 days before July 1
 
       expect(isInWindow(dayOutside, refDate)).toBe(false);
     });
@@ -60,16 +60,16 @@ describe('isInWindow', () => {
       expect(isInWindow(yesterday, refDate)).toBe(true);
     });
 
-    it('excludes the reference date itself', () => {
+    it('includes the reference date itself', () => {
       const refDate = new Date('2025-07-01');
 
-      expect(isInWindow(refDate, refDate)).toBe(false);
+      expect(isInWindow(refDate, refDate)).toBe(true);
     });
 
     it('window contains exactly 180 days', () => {
       const refDate = new Date('2025-07-01');
-      const windowStart = subDays(refDate, 180);
-      const windowEnd = subDays(refDate, 1);
+      const windowStart = subDays(refDate, 179);
+      const windowEnd = refDate;
 
       // Count days inclusive
       const windowSize = differenceInDays(windowEnd, windowStart) + 1;
@@ -129,15 +129,15 @@ describe('daysUsedInWindow', () => {
 
     it('excludes days outside window', () => {
       const presence = createPresence([
-        '2025-01-01', // 181 days before July 1 - outside window
+        '2025-01-02', // 180 days before July 1 - outside window (window starts Jan 3)
         '2025-06-30', // yesterday - inside window
-        '2025-07-01', // reference date - outside window
+        '2025-07-01', // reference date - inside window (now included)
       ]);
       const refDate = new Date('2025-07-01');
 
       const used = daysUsedInWindow(presence, refDate, { complianceStartDate: EARLY_COMPLIANCE_START });
 
-      expect(used).toBe(1); // Only June 30 counts
+      expect(used).toBe(2); // June 30 and July 1 count
     });
   });
 
@@ -353,8 +353,9 @@ describe('getWindowBounds', () => {
     const refDate = new Date('2025-07-01');
     const bounds = getWindowBounds(refDate, { complianceStartDate: EARLY_COMPLIANCE_START });
 
-    expect(bounds.windowStart.toISOString()).toContain('2025-01-02');
-    expect(bounds.windowEnd.toISOString()).toContain('2025-06-30');
+    // Window: [refDate - 179, refDate] = [Jan 3, Jul 1]
+    expect(bounds.windowStart.toISOString()).toContain('2025-01-03');
+    expect(bounds.windowEnd.toISOString()).toContain('2025-07-01');
   });
 
   it('respects compliance start date', () => {
@@ -363,8 +364,9 @@ describe('getWindowBounds', () => {
       complianceStartDate: new Date('2025-10-12'),
     });
 
-    // Window start would be May 5, but compliance starts Oct 12
+    // Window start would be May 6, but compliance starts Oct 12
     expect(bounds.windowStart.toISOString()).toContain('2025-10-12');
-    expect(bounds.windowEnd.toISOString()).toContain('2025-10-31');
+    // Window end is now the reference date itself
+    expect(bounds.windowEnd.toISOString()).toContain('2025-11-01');
   });
 });

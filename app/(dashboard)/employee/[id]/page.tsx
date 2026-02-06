@@ -89,8 +89,13 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
   const nationalityType = (employee.nationality_type ?? 'uk_citizen') as NationalityType
   const exempt = isExemptFromTracking(nationalityType)
 
+  // UK citizens don't need domestic UK trips displayed
+  const displayTrips = nationalityType === 'uk_citizen'
+    ? trips.filter((trip) => trip.country !== 'GB')
+    : trips
+
   // Calculate Schengen days used (only non-ghosted Schengen trips)
-  const schengenTrips = trips.filter(
+  const schengenTrips = displayTrips.filter(
     (trip) => !trip.ghosted && isSchengenCountry(trip.country)
   )
   const totalSchengenDays = schengenTrips.reduce(
@@ -109,7 +114,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
     : null
 
   // Recent trips for the summary card (last 5)
-  const recentTrips = trips.slice(0, 5)
+  const recentTrips = displayTrips.slice(0, 5)
 
   return (
     <div className="space-y-6">
@@ -216,7 +221,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Total Trips</span>
-                <span className="font-medium">{trips.length}</span>
+                <span className="font-medium">{displayTrips.length}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Schengen Trips</span>
@@ -262,12 +267,12 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
         <CardHeader>
           <CardTitle>Travel History</CardTitle>
           <CardDescription>
-            All recorded trips for {employee.name}
+            Recorded trips for {employee.name}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <TripList
-            trips={trips}
+            trips={displayTrips}
             employeeId={employee.id}
             employeeName={employee.name}
             employees={employeesForReassign}

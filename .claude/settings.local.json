@@ -117,7 +117,15 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:validator.schema.org)",
       "WebFetch(domain:schema.org)",
-      "Bash(ComplyEUR\" suffix via title.template.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(ComplyEUR\" suffix via title.template.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(lsof:*)",
+      "Bash(pgrep:*)",
+      "Bash(kill:*)",
+      "Bash(supabase status:*)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_install",
+      "mcp__plugin_playwright_playwright__browser_close"
     ]
   }
 }

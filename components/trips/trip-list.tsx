@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { MoreHorizontal, Pencil, Trash2, ArrowUpDown, UserMinus } from 'lucide-react'
 import {
   Table,
@@ -38,6 +38,7 @@ interface TripListProps {
 
 type SortField = 'entry_date' | 'travel_days'
 type SortDirection = 'asc' | 'desc'
+type TripFilter = '180' | 'all'
 
 export function TripList({ trips, employeeId, employeeName, employees = [] }: TripListProps) {
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null)
@@ -45,6 +46,17 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
   const [reassigningTrip, setReassigningTrip] = useState<Trip | null>(null)
   const [sortField, setSortField] = useState<SortField>('entry_date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [tripFilter, setTripFilter] = useState<TripFilter>('180')
+
+  const filteredTrips = useMemo(() => {
+    if (tripFilter === 'all') return trips
+    const today = new Date()
+    const cutoff = new Date(today)
+    cutoff.setDate(cutoff.getDate() - 180)
+    return trips.filter(
+      (trip) => new Date(trip.exit_date) >= cutoff && new Date(trip.entry_date) <= today
+    )
+  }, [trips, tripFilter])
 
   if (trips.length === 0) {
     return (
@@ -57,7 +69,7 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
     )
   }
 
-  const sortedTrips = [...trips].sort((a, b) => {
+  const sortedTrips = [...filteredTrips].sort((a, b) => {
     let comparison = 0
     if (sortField === 'entry_date') {
       comparison =
@@ -120,8 +132,48 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
 
   return (
     <>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-gray-500">
+          Showing {sortedTrips.length} of {trips.length} trips
+        </p>
+        <div className="inline-flex rounded-lg border border-gray-200 p-0.5">
+          <button
+            onClick={() => setTripFilter('180')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              tripFilter === '180'
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Last 180 days
+          </button>
+          <button
+            onClick={() => setTripFilter('all')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              tripFilter === 'all'
+                ? 'bg-gray-900 text-white'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            All time
+          </button>
+        </div>
+      </div>
+
+      {sortedTrips.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-slate-50">
+          <p className="text-sm text-gray-500">No trips in the last 180 days</p>
+          <button
+            onClick={() => setTripFilter('all')}
+            className="text-xs text-blue-600 hover:text-blue-700 mt-1"
+          >
+            View all trips
+          </button>
+        </div>
+      )}
+
       {/* Desktop table view */}
-      <div className="hidden md:block rounded-lg border">
+      {sortedTrips.length > 0 && <div className="hidden md:block rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -222,10 +274,10 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
             ))}
           </TableBody>
         </Table>
-      </div>
+      </div>}
 
       {/* Mobile card view */}
-      <div className="md:hidden space-y-3">
+      {sortedTrips.length > 0 && <div className="md:hidden space-y-3">
         {sortedTrips.map((trip) => (
           <TripCardMobile
             key={trip.id}
@@ -236,7 +288,7 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
             showReassign={employees.length > 1}
           />
         ))}
-      </div>
+      </div>}
 
       {editingTrip && (
         <EditTripModal

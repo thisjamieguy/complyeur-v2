@@ -2,8 +2,9 @@ import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Building2, Users, UserCheck, Calendar } from 'lucide-react'
+import { ArrowLeft, Users, UserCheck, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getTierBadgeClassName, getTierDisplayName } from '@/lib/billing/plans'
 
 interface CompanyEntitlement {
   tier_slug: string | null
@@ -70,6 +71,8 @@ export function CompanyHeader({ company, tier }: CompanyHeaderProps) {
   const entitlement = company.company_entitlements
   const userCount = Array.isArray(company.profiles) ? company.profiles.length : 0
   const employeeCount = Array.isArray(company.employees) ? company.employees.length : 0
+  const tierSlug = tier?.slug || entitlement?.tier_slug || 'free'
+  const tierDisplayName = getTierDisplayName(tierSlug, tier?.display_name)
 
   return (
     <div className="space-y-4">
@@ -91,17 +94,11 @@ export function CompanyHeader({ company, tier }: CompanyHeaderProps) {
                 {company.name}
               </h1>
               {getStatusBadge(entitlement)}
-              {tier && (
+              {(tier || entitlement?.tier_slug) && (
                 <Badge
-                  className={cn(
-                    'hover:opacity-90',
-                    tier.slug === 'enterprise' && 'bg-amber-100 text-amber-700',
-                    tier.slug === 'professional' && 'bg-purple-100 text-purple-700',
-                    tier.slug === 'starter' && 'bg-blue-100 text-blue-700',
-                    tier.slug === 'free' && 'bg-slate-100 text-slate-700'
-                  )}
+                  className={cn(getTierBadgeClassName(tierSlug), 'hover:opacity-90')}
                 >
-                  {tier.display_name}
+                  {tierDisplayName}
                 </Badge>
               )}
             </div>

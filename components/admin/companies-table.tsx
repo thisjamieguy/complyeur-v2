@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/table'
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getTierBadgeClassName, getTierDisplayName } from '@/lib/billing/plans'
 
 interface CompanyEntitlement {
   tier_slug: string | null
@@ -37,6 +38,10 @@ interface CompaniesTableProps {
   companies: Company[]
   currentPage: number
   totalPages: number
+  tiers: Array<{
+    slug: string
+    display_name: string
+  }>
 }
 
 function getStatusBadge(entitlement: CompanyEntitlement | null) {
@@ -72,26 +77,12 @@ function getStatusBadge(entitlement: CompanyEntitlement | null) {
   )
 }
 
-function getTierBadge(tierSlug: string | null) {
-  const tierColors: Record<string, string> = {
-    free: 'bg-slate-100 text-slate-700',
-    starter: 'bg-blue-100 text-blue-700',
-    professional: 'bg-purple-100 text-purple-700',
-    enterprise: 'bg-amber-100 text-amber-700',
-  }
-
-  const tierLabels: Record<string, string> = {
-    free: 'Free',
-    starter: 'Starter',
-    professional: 'Professional',
-    enterprise: 'Enterprise',
-  }
-
+function getTierBadge(tierSlug: string | null, displayName: string | null | undefined) {
   const slug = tierSlug || 'free'
 
   return (
-    <Badge className={cn(tierColors[slug] || tierColors.free, 'hover:opacity-90')}>
-      {tierLabels[slug] || slug}
+    <Badge className={cn(getTierBadgeClassName(slug), 'hover:opacity-90')}>
+      {getTierDisplayName(slug, displayName)}
     </Badge>
   )
 }
@@ -100,9 +91,13 @@ export function CompaniesTable({
   companies,
   currentPage,
   totalPages,
+  tiers,
 }: CompaniesTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const tierDisplayNameBySlug = new Map(
+    tiers.map((tier) => [tier.slug, tier.display_name] as const)
+  )
 
   const navigateToPage = (page: number) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -154,7 +149,10 @@ export function CompaniesTable({
                     <p className="text-xs text-slate-500">{company.slug}</p>
                   </TableCell>
                   <TableCell>
-                    {getTierBadge(company.company_entitlements?.tier_slug || null)}
+                    {getTierBadge(
+                      company.company_entitlements?.tier_slug || null,
+                      tierDisplayNameBySlug.get(company.company_entitlements?.tier_slug || 'free')
+                    )}
                   </TableCell>
                   <TableCell>
                     {getStatusBadge(company.company_entitlements)}

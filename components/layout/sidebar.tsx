@@ -20,12 +20,12 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'hidden lg:flex flex-col h-screen bg-slate-900 transition-[width] duration-200 ease-out',
+        'hidden lg:flex flex-col h-screen bg-brand-900 transition-[width] duration-200 ease-out',
         isOpen ? 'w-64' : 'w-[72px]'
       )}
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-slate-800">
+      <div className="flex items-center h-16 px-4 border-b border-brand-800">
         <Link
           href="/dashboard"
           className={cn(
@@ -57,7 +57,7 @@ export function Sidebar({ user }: SidebarProps) {
         {navSections.map((section) => (
           <div key={section.title} className="mb-6">
             {isOpen && (
-              <h3 className="px-3 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-brand-400 uppercase tracking-wider">
                 {section.title}
               </h3>
             )}
@@ -74,8 +74,8 @@ export function Sidebar({ user }: SidebarProps) {
                       className={cn(
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[44px] transition-colors duration-150',
                         isActive
-                          ? 'bg-blue-600 text-white'
-                          : 'text-slate-300 hover:bg-slate-800 hover:text-white',
+                          ? 'bg-brand-600 text-white'
+                          : 'text-brand-200 hover:bg-brand-800 hover:text-white',
                         !isOpen && 'justify-center px-0'
                       )}
                       title={!isOpen ? item.label : undefined}
@@ -96,13 +96,13 @@ export function Sidebar({ user }: SidebarProps) {
       </nav>
 
       {/* Toggle Button */}
-      <div className="px-3 py-2 border-t border-slate-800">
+      <div className="px-3 py-2 border-t border-brand-800">
         <button
           onClick={toggle}
           className={cn(
             'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg min-h-[44px]',
-            'text-slate-400 hover:bg-slate-800 hover:text-white transition-colors duration-150',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+            'text-brand-300 hover:bg-brand-800 hover:text-white transition-colors duration-150',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
             !isOpen && 'justify-center px-0'
           )}
           aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
@@ -119,7 +119,7 @@ export function Sidebar({ user }: SidebarProps) {
       </div>
 
       {/* User Menu */}
-      <div className="px-3 py-3 border-t border-slate-800">
+      <div className="px-3 py-3 border-t border-brand-800">
         <UserMenu user={user} collapsed={!isOpen} />
       </div>
     </aside>

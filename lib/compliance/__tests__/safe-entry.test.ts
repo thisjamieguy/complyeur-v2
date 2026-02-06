@@ -65,30 +65,27 @@ describe('earliestSafeEntry', () => {
 
   describe('waiting required', () => {
     it('returns correct date when at exactly 90 days', () => {
-      // 90 days: Jan 2 - Apr 1 (within 180-day window for July 1)
-      // Window for July 1 is [Jan 2, Jun 30]
-      // For Jan 2 to fall out, we need window start > Jan 2
-      // refDate - 180 > Jan 2 → refDate > July 1
-      // On July 2: window is [Jan 3, Jul 1], Jan 2 falls out
-      const dates = generateDates('2025-01-02', 90); // Jan 2 - Apr 1 (90 days)
+      // 90 days: Jan 3 - Apr 2 (within 180-day window for July 1)
+      // New window for July 1 is [Jan 3, Jul 1]
+      // On Jul 1: all 90 in window. Not safe.
+      // On Jul 2: window [Jan 4, Jul 2], Jan 3 falls out → 89 days → safe
+      const dates = generateDates('2025-01-03', 90); // Jan 3 - Apr 2 (90 days)
       const presence = createPresence(dates);
       const today = new Date('2025-07-01');
 
       const result = earliestSafeEntry(presence, today, { complianceStartDate: EARLY_COMPLIANCE_START });
 
       expect(result).not.toBeNull();
-      // Should be July 2 (when Jan 2 falls out of window)
+      // Should be July 2 (when Jan 3 falls out of window)
       expect(result!.toISOString()).toContain('2025-07-02');
     });
 
     it('calculates correct wait time for over limit', () => {
-      // 95 days starting Jan 2: Jan 2 - Apr 6
-      // For 6 days to expire, we need window start > Jan 6
-      // refDate - 180 > Jan 6 → refDate > July 5
-      // On July 6: window is [Jan 7, Jul 5], Jan 2-6 fall out (5 days out, 90 remain)
-      // Wait, we need 89 or fewer. So we need 6 days out → refDate > July 6
-      // On July 7: window is [Jan 8, Jul 6], Jan 2-7 fall out (6 days out, 89 remain)
-      const dates = generateDates('2025-01-02', 95); // Jan 2 - Apr 6 (95 days)
+      // 95 days starting Jan 3: Jan 3 - Apr 7
+      // New window for Jul 1: [Jan 3, Jul 1]. All 95 in window.
+      // Need 6 days to expire (95 - 89 = 6)
+      // On Jul 7: window [Jan 9, Jul 7], Jan 3-8 fall out (6 days out, 89 remain) → safe
+      const dates = generateDates('2025-01-03', 95); // Jan 3 - Apr 7 (95 days)
       const presence = createPresence(dates);
       const today = new Date('2025-07-01');
 
@@ -96,14 +93,14 @@ describe('earliestSafeEntry', () => {
 
       expect(result).not.toBeNull();
       // Need to wait for 6 days to expire (95 - 89 = 6)
-      // Jan 2-7 expire by July 7
+      // Jan 3-8 expire by July 7
       expect(result!.toISOString()).toContain('2025-07-07');
     });
 
     it('finds date even with scattered presence', () => {
       // Create 90 scattered days within the 180-day window
       const dates: string[] = [];
-      let d = new Date('2025-01-02'); // Start of window for July 1
+      let d = new Date('2025-01-03'); // Start of window for July 1 (refDate - 179)
       let count = 0;
       while (count < 90) {
         dates.push(d.toISOString().split('T')[0]);
@@ -150,9 +147,10 @@ describe('daysUntilCompliant', () => {
   });
 
   it('returns 1 when one day away from compliance', () => {
-    // 90 days: Jan 2 - Apr 1, at window boundary
-    // Tomorrow (July 2) Jan 2 falls out → compliant
-    const dates = generateDates('2025-01-02', 90);
+    // 90 days: Jan 3 - Apr 2, at window boundary
+    // New window for Jul 1: [Jan 3, Jul 1]. All 90 in.
+    // Jul 2: window [Jan 4, Jul 2]. Jan 3 falls out → 89 → compliant
+    const dates = generateDates('2025-01-03', 90);
     const presence = createPresence(dates);
     const today = new Date('2025-07-01');
 
@@ -162,9 +160,10 @@ describe('daysUntilCompliant', () => {
   });
 
   it('returns correct days for larger overage', () => {
-    // 95 days: Jan 2 - Apr 6
+    // 95 days: Jan 3 - Apr 7
+    // New window for Jul 1: [Jan 3, Jul 1]. All 95 in.
     // Need 6 days to expire → compliant on July 7
-    const dates = generateDates('2025-01-02', 95);
+    const dates = generateDates('2025-01-03', 95);
     const presence = createPresence(dates);
     const today = new Date('2025-07-01');
 
@@ -188,8 +187,8 @@ describe('getSafeEntryInfo', () => {
   });
 
   it('returns full info when waiting required', () => {
-    // 95 days: Jan 2 - Apr 6, need 6 days to expire
-    const dates = generateDates('2025-01-02', 95);
+    // 95 days: Jan 3 - Apr 7, need 6 days to expire
+    const dates = generateDates('2025-01-03', 95);
     const presence = createPresence(dates);
     const today = new Date('2025-07-01');
 
@@ -322,10 +321,10 @@ describe('projectExpiringDays', () => {
 
   describe('with presence days', () => {
     it('tracks expiring days as window moves', () => {
-      // Create presence at the start of the window (180 days back)
-      // For July 1: window is [Jan 2, Jun 30]
-      // Jan 2 will expire on July 2 (window becomes [Jan 3, Jul 1])
-      const dates = generateDates('2025-01-02', 5); // Jan 2-6
+      // Create presence at the start of the window (179 days back)
+      // For July 1: new window is [Jan 3, Jul 1]
+      // Jan 3 will expire on July 2 (window becomes [Jan 4, Jul 2])
+      const dates = generateDates('2025-01-03', 5); // Jan 3-7
       const presence = createPresence(dates);
       const fromDate = new Date('2025-07-01');
 
@@ -333,15 +332,15 @@ describe('projectExpiringDays', () => {
         complianceStartDate: EARLY_COMPLIANCE_START,
       });
 
-      // Day 0 (Jul 1): window [Jan 2, Jun 30], 5 days used
+      // Day 0 (Jul 1): window [Jan 3, Jul 1], 5 days used
       expect(result[0].daysUsed).toBe(5);
       expect(result[0].expiringDays).toBe(0); // First day always 0
 
-      // Day 1 (Jul 2): window [Jan 3, Jul 1], Jan 2 expires
+      // Day 1 (Jul 2): window [Jan 4, Jul 2], Jan 3 expires
       expect(result[1].daysUsed).toBe(4);
       expect(result[1].expiringDays).toBe(1);
 
-      // Day 2 (Jul 3): window [Jan 4, Jul 2], Jan 3 expires
+      // Day 2 (Jul 3): window [Jan 5, Jul 3], Jan 4 expires
       expect(result[2].daysUsed).toBe(3);
       expect(result[2].expiringDays).toBe(1);
     });
@@ -360,26 +359,26 @@ describe('projectExpiringDays', () => {
     });
 
     it('handles non-consecutive presence days', () => {
-      // Scattered days: Jan 2, Jan 4, Jan 6
-      const presence = createPresence(['2025-01-02', '2025-01-04', '2025-01-06']);
+      // Scattered days: Jan 3, Jan 5, Jan 7
+      const presence = createPresence(['2025-01-03', '2025-01-05', '2025-01-07']);
       const fromDate = new Date('2025-07-01');
 
       const result = projectExpiringDays(presence, fromDate, 5, {
         complianceStartDate: EARLY_COMPLIANCE_START,
       });
 
-      // Jul 1: window [Jan 2, Jun 30], all 3 days in window
+      // Jul 1: window [Jan 3, Jul 1], all 3 days in window
       expect(result[0].daysUsed).toBe(3);
 
-      // Jul 2: window [Jan 3, Jul 1], Jan 2 expires (but Jan 3 not present)
+      // Jul 2: window [Jan 4, Jul 2], Jan 3 expires
       expect(result[1].daysUsed).toBe(2);
       expect(result[1].expiringDays).toBe(1);
 
-      // Jul 3: window [Jan 4, Jul 2], Jan 3 not present, nothing expires
+      // Jul 3: window [Jan 5, Jul 3], Jan 4 not present, nothing expires
       expect(result[2].daysUsed).toBe(2);
       expect(result[2].expiringDays).toBe(0);
 
-      // Jul 4: window [Jan 5, Jul 3], Jan 4 expires
+      // Jul 4: window [Jan 6, Jul 4], Jan 5 expires
       expect(result[3].daysUsed).toBe(1);
       expect(result[3].expiringDays).toBe(1);
     });
@@ -414,7 +413,7 @@ describe('projectExpiringDays', () => {
     });
 
     it('handles large projection range', () => {
-      const presence = createPresence(['2025-01-02']);
+      const presence = createPresence(['2025-01-03']);
       const fromDate = new Date('2025-07-01');
 
       // Project for 200 days (past window size)

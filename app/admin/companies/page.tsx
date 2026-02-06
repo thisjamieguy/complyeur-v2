@@ -98,6 +98,7 @@ export default async function CompaniesPage({
         companies={filteredCompanies}
         currentPage={page}
         totalPages={totalPages}
+        tiers={tiers || []}
       />
     </div>
   )

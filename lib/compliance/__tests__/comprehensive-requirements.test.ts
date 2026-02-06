@@ -110,10 +110,10 @@ describe('Requirement 1: Entry and Exit Dates Both Count', () => {
 // ============================================================================
 
 describe('Requirement 2: 180-Day Rolling Window', () => {
-  it('trip exactly 180 days ago is INCLUDED', () => {
-    // Reference: Jul 1, 2026
-    // 180 days ago = Jan 3, 2026
-    const trips = [createTrip('2026-01-03', '2026-01-03')];
+  it('trip at window start (179 days before ref) is INCLUDED', () => {
+    // Reference: Jul 2, 2026
+    // Window: [Jan 4, Jul 2] (refDate - 179 to refDate, 180 days inclusive)
+    const trips = [createTrip('2026-01-04', '2026-01-04')];
     const config = createConfig({
       referenceDate: new Date('2026-07-02T00:00:00.000Z'),
       complianceStartDate: new Date('2025-01-01T00:00:00.000Z'),
@@ -124,12 +124,12 @@ describe('Requirement 2: 180-Day Rolling Window', () => {
     expect(result.daysUsed).toBe(1);
   });
 
-  it('trip 181 days ago is EXCLUDED', () => {
-    // Reference: Jul 3, 2026
-    // 181 days ago = Jan 3, 2026
+  it('trip 180 days before ref is EXCLUDED', () => {
+    // Reference: Jul 2, 2026
+    // Window: [Jan 4, Jul 2]. Jan 3 is 180 days before = outside window.
     const trips = [createTrip('2026-01-03', '2026-01-03')];
     const config = createConfig({
-      referenceDate: new Date('2026-07-04T00:00:00.000Z'),
+      referenceDate: new Date('2026-07-02T00:00:00.000Z'),
       complianceStartDate: new Date('2025-01-01T00:00:00.000Z'),
     });
 
@@ -140,23 +140,22 @@ describe('Requirement 2: 180-Day Rolling Window', () => {
 
   it('days expire as they fall out of the 180-day window', () => {
     // Trip from Oct 12-21 (10 days)
-    // Window is [refDate - 180, refDate - 1]
-    // For Apr 11: window is [Oct 13, Apr 10] - Oct 12 is 181 days ago, falls out
+    // Window is [refDate - 179, refDate] (includes refDate)
     const trips = [createTrip('2025-10-12', '2025-10-21')];
 
-    // On Apr 10 - window is [Oct 12, Apr 9], all 10 days in window
-    const configApril10 = createConfig({
-      referenceDate: new Date('2026-04-10T00:00:00.000Z'),
+    // On Apr 9 - window is [Oct 12, Apr 9], all 10 days in window
+    const configApril9 = createConfig({
+      referenceDate: new Date('2026-04-09T00:00:00.000Z'),
     });
-    expect(calculateCompliance(trips, configApril10).daysUsed).toBe(10);
+    expect(calculateCompliance(trips, configApril9).daysUsed).toBe(10);
 
-    // On Apr 12 - window is [Oct 14, Apr 11], Oct 12-13 fall out, 8 days remain
+    // On Apr 12 - window is [Oct 15, Apr 12], Oct 12-14 fall out, 7 days remain
     const configApril12 = createConfig({
       referenceDate: new Date('2026-04-12T00:00:00.000Z'),
     });
-    expect(calculateCompliance(trips, configApril12).daysUsed).toBe(8);
+    expect(calculateCompliance(trips, configApril12).daysUsed).toBe(7);
 
-    // On Apr 21 - window is [Oct 23, Apr 20], all 10 days have fallen out
+    // On Apr 21 - window is [Oct 24, Apr 21], all 10 days have fallen out
     const configApril21 = createConfig({
       referenceDate: new Date('2026-04-21T00:00:00.000Z'),
     });
@@ -175,9 +174,8 @@ describe('Requirement 2: 180-Day Rolling Window', () => {
 
     const result = calculateCompliance(trips, config);
 
-    // Only 8 days of the 20-day trip fall within the 180-day window
-    // (the earlier days have fallen out of the window)
-    expect(result.daysUsed).toBe(8);
+    // Window: [Jan 14, Jul 12]. Only Jan 14-20 = 7 days in window
+    expect(result.daysUsed).toBe(7);
     expect(result.daysUsed).toBeLessThan(20); // Confirms partial counting
   });
 });
@@ -292,14 +290,14 @@ describe('Requirement 4: Warning Thresholds (75+ days used)', () => {
 // ============================================================================
 
 describe('Requirement 5: Active Trips (Currently Traveling)', () => {
-  // Note: The 180-day window is [refDate - 180, refDate - 1], excluding the reference date.
-  // This is per EU regulation - we count "preceding" 180 days.
-  // Active trips count up to (but not including) the reference date in the window.
+  // Note: The 180-day window is [refDate - 179, refDate], including the reference date.
+  // Per EU regulation, the 180-day period includes the day of intended stay.
+  // Active trips count through the reference date.
 
-  it('active trip with null exit date counts through day before reference date', () => {
+  it('active trip with null exit date counts through reference date', () => {
     // Trip started Nov 1, reference date is Nov 10
-    // Window for Nov 10 is [May 14, Nov 9]
-    // Days counted: Nov 1-9 = 9 days (Nov 10 is the reference date, not in window)
+    // Window for Nov 10 is [May 15, Nov 10]
+    // Days counted: Nov 1-10 = 10 days (Nov 10 included)
     const trips = [createTrip('2025-11-01', null)];
     const config = createConfig({
       referenceDate: new Date('2025-11-10T00:00:00.000Z'),
@@ -307,14 +305,14 @@ describe('Requirement 5: Active Trips (Currently Traveling)', () => {
 
     const result = calculateCompliance(trips, config);
 
-    // Nov 1-9 = 9 days in the window (Nov 10 is excluded as it's the reference date)
-    expect(result.daysUsed).toBe(9);
+    // Nov 1-10 = 10 days in the window (Nov 10 included)
+    expect(result.daysUsed).toBe(10);
   });
 
-  it('active trip in planning mode extends to day before future reference date', () => {
+  it('active trip in planning mode extends to future reference date', () => {
     // Trip started Nov 1, projecting to Nov 20
-    // Window for Nov 20 is [May 24, Nov 19]
-    // Days counted: Nov 1-19 = 19 days
+    // Window for Nov 20 is [May 25, Nov 20]
+    // Days counted: Nov 1-20 = 20 days
     const trips = [createTrip('2025-11-01', null)];
     const config = createConfig({
       mode: 'planning',
@@ -323,8 +321,8 @@ describe('Requirement 5: Active Trips (Currently Traveling)', () => {
 
     const result = calculateCompliance(trips, config);
 
-    // Nov 1-19 = 19 days in the window
-    expect(result.daysUsed).toBe(19);
+    // Nov 1-20 = 20 days in the window
+    expect(result.daysUsed).toBe(20);
   });
 
   it('multiple trips with one active', () => {
@@ -338,14 +336,14 @@ describe('Requirement 5: Active Trips (Currently Traveling)', () => {
 
     const result = calculateCompliance(trips, config);
 
-    // Oct 15-20 (6 days) + Nov 1-4 (4 days, Nov 5 excluded) = 10 days
-    expect(result.daysUsed).toBe(10);
+    // Oct 15-20 (6 days) + Nov 1-5 (5 days, Nov 5 included) = 11 days
+    expect(result.daysUsed).toBe(11);
   });
 
   it('active trip overlapping with past trip deduplicates correctly', () => {
     // Past trip: Oct 25 - Nov 5 (12 days)
-    // Active trip: Nov 1 - (reference is Nov 10, so Nov 1-9 counted)
-    // Total unique days: Oct 25 - Nov 9 = 16 days (deduplicated)
+    // Active trip: Nov 1 - (reference is Nov 10, so Nov 1-10 counted)
+    // Total unique days: Oct 25 - Nov 10 = 17 days (deduplicated)
     const trips = [
       createTrip('2025-10-25', '2025-11-05'),
       createTrip('2025-11-01', null),
@@ -356,8 +354,8 @@ describe('Requirement 5: Active Trips (Currently Traveling)', () => {
 
     const result = calculateCompliance(trips, config);
 
-    // Oct 25 - Nov 9 = 16 unique days
-    expect(result.daysUsed).toBe(16);
+    // Oct 25 - Nov 10 = 17 unique days
+    expect(result.daysUsed).toBe(17);
   });
 });
 
@@ -573,23 +571,23 @@ describe('Requirement 7: Country Handling', () => {
 describe('Requirement 8: Day Expiry Forecasting', () => {
   it('can calculate when specific days will expire', () => {
     // Trip from Oct 12-21 (10 days)
-    // Window is [refDate - 180, refDate - 1]
-    // A day "expires" when refDate - 180 > day
+    // Window is [refDate - 179, refDate] (includes refDate)
+    // A day "expires" when refDate - 179 > day
     const trips = [createTrip('2025-10-12', '2025-10-21')];
 
-    // On Apr 10 - window is [Oct 12, Apr 9], all 10 days in window
+    // On Apr 9 - window is [Oct 12, Apr 9], all 10 days in window
     const configBefore = createConfig({
-      referenceDate: new Date('2026-04-10T00:00:00.000Z'),
+      referenceDate: new Date('2026-04-09T00:00:00.000Z'),
     });
     expect(calculateCompliance(trips, configBefore).daysUsed).toBe(10);
 
-    // On Apr 15 - window is [Oct 17, Apr 14], Oct 12-16 have expired (5 days), 5 remain
+    // On Apr 15 - window is [Oct 18, Apr 15], Oct 12-17 have expired (6 days), 4 remain
     const configMid = createConfig({
       referenceDate: new Date('2026-04-15T00:00:00.000Z'),
     });
-    expect(calculateCompliance(trips, configMid).daysUsed).toBe(5);
+    expect(calculateCompliance(trips, configMid).daysUsed).toBe(4);
 
-    // On Apr 21 - window is [Oct 23, Apr 20], all 10 days have expired
+    // On Apr 21 - window is [Oct 24, Apr 21], all 10 days have expired
     const configAfter = createConfig({
       referenceDate: new Date('2026-04-21T00:00:00.000Z'),
     });

@@ -27,10 +27,10 @@ function FilterButton({ label, count, isActive, onClick }: Omit<FilterButtonProp
       onClick={onClick}
       className={cn(
         'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2',
         isActive
-          ? 'bg-slate-900 text-white'
-          : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+          ? 'bg-brand-700 text-white shadow-sm'
+          : 'bg-white text-brand-600 border border-slate-200 hover:bg-brand-50 hover:border-brand-300 shadow-sm'
       )}
       aria-pressed={isActive}
       aria-label={`Filter by ${label}, ${count} employees`}

@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
 
   // Public routes that don't require authentication
   const publicRoutes = [
-    '/', '/landing', '/about', '/contact', '/faq',
+    '/', '/landing', '/about', '/contact', '/faq', '/pricing',
     '/privacy', '/terms', '/accessibility',
     '/sitemap.xml', '/robots.txt', '/icon.svg',
   ]

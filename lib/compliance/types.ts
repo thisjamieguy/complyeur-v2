@@ -85,7 +85,7 @@ export interface ComplianceConfig {
   readonly mode: CalculationMode;
   /** The reference date for calculations (usually "today") */
   readonly referenceDate: Date;
-  /** Date when compliance tracking started (default: Oct 12, 2025) */
+  /** Date when compliance tracking started (default: epoch — no cutoff) */
   readonly complianceStartDate?: Date;
   /** Risk level thresholds */
   readonly thresholds?: RiskThresholds;

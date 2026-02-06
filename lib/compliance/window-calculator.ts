@@ -30,11 +30,12 @@ function dateToKey(date: Date): string {
  * Checks if a date falls within the 180-day lookback window.
  *
  * The window is defined as:
- * - window_start = refDate - 180 days (INCLUSIVE)
- * - window_end = refDate - 1 day (INCLUSIVE)
+ * - window_start = refDate - 179 days (INCLUSIVE)
+ * - window_end = refDate (INCLUSIVE)
  *
  * This creates exactly 180 calendar dates in the window.
- * The reference date itself is NOT included in the lookback.
+ * The reference date itself IS included — per EU Regulation 610/2013,
+ * the 180-day period includes the day of intended stay.
  *
  * @param date - The date to check
  * @param refDate - The reference date (usually "today" or the entry date being evaluated)
@@ -42,17 +43,17 @@ function dateToKey(date: Date): string {
  *
  * @example
  * // Reference date: 2025-07-01
- * isInWindow(new Date('2025-01-02'), new Date('2025-07-01')) // true (exactly 180 days ago)
- * isInWindow(new Date('2025-01-01'), new Date('2025-07-01')) // false (181 days ago)
+ * isInWindow(new Date('2025-01-03'), new Date('2025-07-01')) // true (exactly 179 days ago = window start)
+ * isInWindow(new Date('2025-01-02'), new Date('2025-07-01')) // false (180 days ago, outside window)
  * isInWindow(new Date('2025-06-30'), new Date('2025-07-01')) // true (yesterday)
- * isInWindow(new Date('2025-07-01'), new Date('2025-07-01')) // false (reference date excluded)
+ * isInWindow(new Date('2025-07-01'), new Date('2025-07-01')) // true (reference date included)
  */
 export function isInWindow(date: Date, refDate: Date): boolean {
   // Normalize all dates to UTC midnight for consistent comparison
   const normalizedDate = normalizeToUTCDate(date);
   const normalizedRef = normalizeToUTCDate(refDate);
-  const windowStart = normalizeToUTCDate(subDays(normalizedRef, WINDOW_SIZE_DAYS)); // 180 days back
-  const windowEnd = normalizeToUTCDate(subDays(normalizedRef, 1)); // Yesterday
+  const windowStart = normalizeToUTCDate(subDays(normalizedRef, WINDOW_SIZE_DAYS - 1)); // 179 days back
+  const windowEnd = normalizeToUTCDate(normalizedRef); // Today (inclusive)
 
   return (
     (isEqual(normalizedDate, windowStart) || isAfter(normalizedDate, windowStart)) &&
@@ -64,9 +65,9 @@ export function isInWindow(date: Date, refDate: Date): boolean {
  * Counts the number of presence days within the 180-day window.
  *
  * This is the core calculation for Schengen compliance:
- * - Looks back 180 days from the reference date
+ * - The window is [refDate - 179, refDate] (180 days inclusive)
  * - Counts how many of those days are in the presence set
- * - Does NOT count the reference date itself
+ * - The reference date IS included per EU Regulation 610/2013
  *
  * The compliance start date is respected: days before that date
  * are not counted even if they fall within the 180-day window.
@@ -98,8 +99,9 @@ export function daysUsedInWindow(
   const normalizedComplianceStart = normalizeToUTCDate(complianceStartDate);
 
   // Calculate window boundaries (normalize to ensure consistent UTC midnight)
-  let windowStart = normalizeToUTCDate(subDays(normalizedRef, WINDOW_SIZE_DAYS));
-  const windowEnd = normalizeToUTCDate(subDays(normalizedRef, 1));
+  // Window: [refDate - 179, refDate] = 180 days inclusive of reference date
+  let windowStart = normalizeToUTCDate(subDays(normalizedRef, WINDOW_SIZE_DAYS - 1));
+  const windowEnd = normalizeToUTCDate(normalizedRef);
 
   // Don't count days before compliance tracking started
   if (isBefore(windowStart, normalizedComplianceStart)) {
@@ -222,8 +224,9 @@ export function getWindowBounds(
   const complianceStartDate = config.complianceStartDate ?? DEFAULT_COMPLIANCE_START_DATE;
   const normalizedComplianceStart = normalizeToUTCDate(complianceStartDate);
 
-  let windowStart = normalizeToUTCDate(subDays(normalizedRef, WINDOW_SIZE_DAYS));
-  const windowEnd = normalizeToUTCDate(subDays(normalizedRef, 1));
+  // Window: [refDate - 179, refDate] = 180 days inclusive of reference date
+  let windowStart = normalizeToUTCDate(subDays(normalizedRef, WINDOW_SIZE_DAYS - 1));
+  const windowEnd = normalizeToUTCDate(normalizedRef);
 
   // Respect compliance start date
   if (isBefore(windowStart, normalizedComplianceStart)) {

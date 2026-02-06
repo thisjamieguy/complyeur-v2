@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo } from 'react'
 import {
   parseISO,
   startOfDay,
@@ -9,6 +9,7 @@ import {
   eachDayOfInterval,
   differenceInDays,
   isWithinInterval,
+  format,
 } from 'date-fns'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
@@ -18,10 +19,10 @@ import {
   type Trip as ComplianceTrip,
   type RiskLevel,
 } from '@/lib/compliance'
-import { calculateAllRowHeights } from '@/lib/calendar/row-height'
 import { RangeSelector } from './range-selector'
 import { GanttChart } from './gantt-chart'
 import { MobileCalendarView } from './mobile-calendar-view'
+import type { ProcessedTrip, ProcessedEmployee } from './types'
 
 /** Days to look back from today */
 const DAYS_BACK = 200
@@ -48,28 +49,6 @@ interface EmployeeWithTrips {
 
 interface CalendarViewProps {
   employees: EmployeeWithTrips[]
-}
-
-interface ProcessedTrip {
-  id: string
-  country: string
-  entryDate: Date
-  exitDate: Date
-  duration: number
-  daysRemaining: number
-  riskLevel: RiskLevel
-  purpose: string | null
-  isPrivate: boolean
-  isSchengen: boolean
-}
-
-interface ProcessedEmployee {
-  id: string
-  name: string
-  trips: ProcessedTrip[]
-  currentDaysRemaining: number
-  currentRiskLevel: RiskLevel
-  tripsInRange: number
 }
 
 /**
@@ -205,22 +184,29 @@ export function CalendarView({ employees }: CalendarViewProps) {
         }
       })
 
+      // Build day map for spreadsheet grid — O(1) lookup per day cell
+      const dayMap = new Map<string, ProcessedTrip>()
+      for (const trip of processedTrips) {
+        const days = eachDayOfInterval({ start: trip.entryDate, end: trip.exitDate })
+        for (const day of days) {
+          const key = format(day, 'yyyy-MM-dd')
+          if (!dayMap.has(key)) {
+            dayMap.set(key, trip)
+          }
+        }
+      }
+
       return {
         id: employee.id,
         name: employee.name,
         trips: processedTrips,
+        dayMap,
         currentDaysRemaining: currentCompliance.daysRemaining,
         currentRiskLevel: currentCompliance.riskLevel,
         tripsInRange: tripsInRange.length,
       }
     })
   }, [employees, startDate, endDate, complianceCalculator])
-
-  // Pre-calculate row heights for virtualization
-  const rowHeights = useMemo(
-    () => calculateAllRowHeights(processedEmployees),
-    [processedEmployees]
-  )
 
   return (
     <>
@@ -237,8 +223,6 @@ export function CalendarView({ employees }: CalendarViewProps) {
             <GanttChart
               employees={processedEmployees}
               dates={dates}
-              startDate={startDate}
-              rowHeights={rowHeights}
             />
           </CardContent>
         </Card>

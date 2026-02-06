@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table'
 import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getTierBadgeClassName, getTierDisplayName } from '@/lib/billing/plans'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,13 +45,6 @@ export default async function TiersPage() {
     tierCounts[tier] = (tierCounts[tier] || 0) + 1
   })
 
-  const tierColors: Record<string, string> = {
-    free: 'bg-slate-100 text-slate-700',
-    starter: 'bg-blue-100 text-blue-700',
-    professional: 'bg-purple-100 text-purple-700',
-    enterprise: 'bg-amber-100 text-amber-700',
-  }
-
   return (
     <div className="space-y-6">
       <div>
@@ -66,8 +60,8 @@ export default async function TiersPage() {
           <Card key={tier.slug} className={!tier.is_active ? 'opacity-60' : ''}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <Badge className={cn(tierColors[tier.slug] || tierColors.free, 'hover:opacity-90')}>
-                  {tier.display_name}
+                <Badge className={cn(getTierBadgeClassName(tier.slug), 'hover:opacity-90')}>
+                  {getTierDisplayName(tier.slug, tier.display_name)}
                 </Badge>
                 {!tier.is_active && (
                   <Badge variant="secondary">Inactive</Badge>
@@ -99,8 +93,8 @@ export default async function TiersPage() {
                   <TableHead className="w-[200px]">Feature</TableHead>
                   {tiers?.map((tier) => (
                     <TableHead key={tier.slug} className="text-center">
-                      <Badge className={cn(tierColors[tier.slug] || tierColors.free, 'hover:opacity-90')}>
-                        {tier.display_name}
+                      <Badge className={cn(getTierBadgeClassName(tier.slug), 'hover:opacity-90')}>
+                        {getTierDisplayName(tier.slug, tier.display_name)}
                       </Badge>
                     </TableHead>
                   ))}
@@ -211,8 +205,8 @@ export default async function TiersPage() {
               {tiers?.map((tier) => (
                 <TableRow key={tier.slug}>
                   <TableCell>
-                    <Badge className={cn(tierColors[tier.slug] || tierColors.free, 'hover:opacity-90')}>
-                      {tier.display_name}
+                    <Badge className={cn(getTierBadgeClassName(tier.slug), 'hover:opacity-90')}>
+                      {getTierDisplayName(tier.slug, tier.display_name)}
                     </Badge>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-slate-500">

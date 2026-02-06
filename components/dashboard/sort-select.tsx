@@ -34,7 +34,7 @@ export function SortSelect({ value, onValueChange }: SortSelectProps) {
     <div className="flex items-center gap-2">
       <label
         htmlFor="sort-select"
-        className="text-sm font-medium text-slate-500 whitespace-nowrap"
+        className="text-sm font-medium text-brand-400 whitespace-nowrap"
       >
         Sort by:
       </label>

@@ -291,7 +291,7 @@ const faqData: FAQSection[] = [
       {
         question: 'How does billing work?',
         answer:
-          'ComplyEUR bills monthly based on your subscription tier. Each tier includes a set number of employees. You can upgrade or downgrade at any time, with changes taking effect on your next billing date.',
+          'ComplyEUR offers monthly and annual billing in GBP (excluding VAT). Each plan includes a set number of tracked employees, and you can change plans with updates taking effect on your next renewal date.',
       },
       {
         question: 'Can I cancel my subscription?',

@@ -256,11 +256,11 @@ describe('Required Test Scenarios', () => {
       expect(result.daysUsed).toBe(16); // 10 + 6
     });
 
-    // Scenario 15: 180-day boundary inclusion
-    it('15. Trip exactly 180 days ago is INCLUDED', () => {
-      // Reference: July 1, 2026
-      // 180 days ago: Jan 3, 2026
-      const trips = [createTrip('2026-01-03', '2026-01-03')];
+    // Scenario 15: Window start boundary inclusion (179 days back)
+    it('15. Trip at window start (179 days before ref) is INCLUDED', () => {
+      // Reference: July 2, 2026
+      // Window: [Jan 4, Jul 2] (refDate - 179 to refDate, 180 days inclusive)
+      const trips = [createTrip('2026-01-04', '2026-01-04')];
       const config = createConfig({
         referenceDate: new Date('2026-07-02T00:00:00.000Z'),
         complianceStartDate: new Date('2025-01-01T00:00:00.000Z'),
@@ -271,13 +271,13 @@ describe('Required Test Scenarios', () => {
       expect(result.daysUsed).toBe(1);
     });
 
-    // Scenario 16: 181-day boundary exclusion
-    it('16. Trip 181 days ago is EXCLUDED', () => {
+    // Scenario 16: Day before window start is excluded (180 days back)
+    it('16. Trip 180 days before ref is EXCLUDED', () => {
       // Reference: July 2, 2026
-      // 181 days ago: Jan 2, 2026
-      const trips = [createTrip('2026-01-02', '2026-01-02')];
+      // Window: [Jan 4, Jul 2]. Jan 3 is 180 days before = outside window.
+      const trips = [createTrip('2026-01-03', '2026-01-03')];
       const config = createConfig({
-        referenceDate: new Date('2026-07-03T00:00:00.000Z'),
+        referenceDate: new Date('2026-07-02T00:00:00.000Z'),
         complianceStartDate: new Date('2025-01-01T00:00:00.000Z'),
       });
 
@@ -337,11 +337,12 @@ describe('Required Test Scenarios', () => {
     // Scenario 22: One day away
     it('22. At 90 days, returns tomorrow', () => {
       // Use dates at beginning of window so they expire quickly
-      // For ref date Jan 10, window is [Jul 14, Jan 9]
-      // Use 90 days starting Jul 14 (Jul 14 - Oct 11)
-      // On Jan 10, all 90 days are at limit
-      // On Jan 11, Jul 14 falls out of window → 89 days → safe
-      const dates = generateDates('2025-07-14', 90); // Jul 14 - Oct 11
+      // For ref date Jan 10, window is [Jul 14, Jan 10] (subDays(Jan 10, 179) = Jul 14)
+      // Use 90 days starting Jul 15 (Jul 15 - Oct 12)
+      // On Jan 10, all 90 days in window → at limit
+      // On Jan 11, window is [Jul 15, Jan 11] → still 90 days (Jul 14 was not present)
+      // On Jan 12, window is [Jul 16, Jan 12] → Jul 15 falls out → 89 days → safe
+      const dates = generateDates('2025-07-15', 90); // Jul 15 - Oct 12
       const presence = new Set(dates);
       const today = new Date('2026-01-10T00:00:00.000Z');
 
@@ -350,17 +351,19 @@ describe('Required Test Scenarios', () => {
       });
 
       expect(result).not.toBeNull();
-      // On Jan 12, window is [Jul 16, Jan 11] → Jul 14-15 fall out → 88 days remain → safe
       expect(result!.toISOString()).toContain('2026-01-12');
     });
 
     // Scenario 23: Week away
     it('23. Returns exact date when compliant (multi-day wait)', () => {
-      // Use 95 days starting Jul 14 (Jul 14 - Oct 16)
-      // On Jan 10, all 95 days are in window, 95 used
-      // Need to get down to 89 days → need 6 days to expire
-      // On Jan 17, window is [Jul 21, Jan 16] → Jul 14-20 (7 days) fall out → 88 days remain → safe
-      const dates = generateDates('2025-07-14', 95); // Jul 14 - Oct 16
+      // Use 95 days starting Jul 15 (Jul 15 - Oct 17)
+      // On Jan 10, window is [Jul 14, Jan 10], all 95 days in window
+      // Need to get down to 89 days → need 6 presence days to expire
+      // Jan 11: [Jul 15, Jan 11] → Jul 14 not present, still 95
+      // Jan 12: [Jul 16, Jan 12] → Jul 15 out → 94
+      // ...each day one more falls out...
+      // Jan 17: [Jul 21, Jan 17] → Jul 15-20 out → 89 → safe
+      const dates = generateDates('2025-07-15', 95); // Jul 15 - Oct 17
       const presence = new Set(dates);
       const today = new Date('2026-01-10T00:00:00.000Z');
 
@@ -369,7 +372,7 @@ describe('Required Test Scenarios', () => {
       });
 
       expect(result).not.toBeNull();
-      // Need 6 days to expire → safe on Jan 17
+      // Need 6 presence days to expire → safe on Jan 17
       expect(result!.toISOString()).toContain('2026-01-17');
     });
 
@@ -559,9 +562,9 @@ describe('Production Edge Cases', () => {
 describe('Window Boundary Edge Cases', () => {
   it('trip starting before 180-day window and ending within counts partial days', () => {
     // Reference: Apr 10, 2026
-    // Window: [Oct 12, 2025, Apr 9, 2026] (ref - 180 to ref - 1, excludes ref date)
+    // Window: [Oct 13, 2025, Apr 10, 2026] (subDays(Apr 10, 179) = Oct 13, includes ref date)
     // Trip: Oct 1-20, 2025 (20 days)
-    // Only Oct 12-20 (9 days) are within the window
+    // Only Oct 13-20 (8 days) are within the window
     const trips = [createTrip('2025-10-01', '2025-10-20')];
     const config = createConfig({
       referenceDate: new Date('2026-04-10T00:00:00.000Z'),
@@ -570,8 +573,8 @@ describe('Window Boundary Edge Cases', () => {
 
     const result = calculateCompliance(trips, config);
 
-    // Oct 12-20 = 9 days within window
-    expect(result.daysUsed).toBe(9);
+    // Oct 13-20 = 8 days within window
+    expect(result.daysUsed).toBe(8);
   });
 
   it('trip entirely before 180-day window is excluded', () => {
@@ -593,8 +596,8 @@ describe('Window Boundary Edge Cases', () => {
     // Trip 1: Nov 1 onwards (no exit)
     // Trip 2: Nov 5 onwards (no exit) - overlaps with trip 1
     // Reference: Nov 15, 2025
-    // Window: [May 19, Nov 14] (ref - 180 to ref - 1, excludes ref date)
-    // Active trips clipped to Nov 15, but only Nov 1-14 counted in window
+    // Window: [May 20, Nov 15] (ref - 179 to ref, includes ref date)
+    // Active trips clipped to Nov 15, Nov 1-15 counted in window
     const trips: Trip[] = [
       {
         entryDate: new Date('2025-11-01T00:00:00.000Z'),
@@ -613,15 +616,15 @@ describe('Window Boundary Edge Cases', () => {
 
     const result = calculateCompliance(trips, config);
 
-    // Nov 1-14 = 14 unique days (deduplicated, window excludes ref date Nov 15)
-    expect(result.daysUsed).toBe(14);
+    // Nov 1-15 = 15 unique days (deduplicated, window includes ref date Nov 15)
+    expect(result.daysUsed).toBe(15);
   });
 
   it('active trip is clipped to reference date in audit mode', () => {
     // Trip: Nov 1 onwards (no exit)
     // Reference: Nov 10, 2025
-    // Window: [May 14, Nov 9] (ref - 180 to ref - 1, excludes ref date)
-    // Active trip clipped to Nov 10, but only Nov 1-9 counted in window
+    // Window: [May 15, Nov 10] (ref - 179 to ref, includes ref date)
+    // Active trip clipped to Nov 10, Nov 1-10 counted in window
     const trips: Trip[] = [
       {
         entryDate: new Date('2025-11-01T00:00:00.000Z'),
@@ -636,7 +639,7 @@ describe('Window Boundary Edge Cases', () => {
 
     const result = calculateCompliance(trips, config);
 
-    // Nov 1-9 = 9 days (window excludes reference date Nov 10)
-    expect(result.daysUsed).toBe(9);
+    // Nov 1-10 = 10 days (window includes reference date Nov 10)
+    expect(result.daysUsed).toBe(10);
   });
 });

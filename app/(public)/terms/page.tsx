@@ -4,7 +4,7 @@ export default function TermsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
       <h1 className="text-3xl font-bold text-slate-900 mb-2">Terms of Service</h1>
-      <p className="text-sm text-slate-500 mb-12">Last updated: January 9, 2025</p>
+      <p className="text-sm text-slate-500 mb-12">Last updated: February 6, 2026</p>
 
       <div className="prose prose-slate max-w-none">
         {/* 1. Acceptance of Terms */}
@@ -104,9 +104,11 @@ export default function TermsPage() {
           </p>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">
             <li>You agree to pay the subscription fees at the rates in effect at the time of purchase</li>
+            <li>You may choose either monthly or annual billing cycles</li>
+            <li>Annual subscriptions are billed upfront and renew annually unless cancelled before renewal</li>
             <li>Subscriptions automatically renew unless cancelled before the renewal date</li>
             <li>Payment is processed securely through Stripe, our payment processor</li>
-            <li>All fees are exclusive of applicable taxes, which you are responsible for paying</li>
+            <li>All prices are listed in GBP and are exclusive of applicable taxes, which you are responsible for paying</li>
             <li>We reserve the right to change pricing with 30 days&apos; notice before your next billing cycle</li>
           </ul>
         </section>
@@ -190,6 +192,7 @@ export default function TermsPage() {
           </p>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">
             <li>You will retain access until the end of your current billing period</li>
+            <li>For annual plans, cancellation stops renewal and access remains until the end of the paid annual term</li>
             <li>No refunds will be provided for partial billing periods</li>
             <li>You can export your data before your access ends</li>
             <li>After cancellation, your data will be subject to our data retention policy</li>

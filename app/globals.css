@@ -22,63 +22,78 @@
   --color-ring: hsl(var(--ring));
   --radius: var(--radius);
 
-  /* Brand colors derived from logo #385070 */
+  /* Brand colors derived from logo #385070 — refined palette */
   --color-brand-50: #f0f4f8;
-  --color-brand-100: #d9e2eb;
-  --color-brand-200: #b3c5d7;
+  --color-brand-100: #dce4ed;
+  --color-brand-200: #b8c9db;
   --color-brand-300: #8da8c3;
   --color-brand-400: #5c7fa3;
   --color-brand-500: #456285;
   --color-brand-600: #385070;
   --color-brand-700: #2d405a;
-  --color-brand-800: #223044;
-  --color-brand-900: #17202e;
-  --color-brand-950: #0d1319;
+  --color-brand-800: #1e2f45;
+  --color-brand-900: #152233;
+  --color-brand-950: #0c1520;
+
+  /* Refined semantic status colors */
+  --color-status-green: #16a34a;
+  --color-status-green-light: #f0fdf4;
+  --color-status-green-border: #bbf7d0;
+  --color-status-amber: #d97706;
+  --color-status-amber-light: #fffbeb;
+  --color-status-amber-border: #fde68a;
+  --color-status-red: #dc2626;
+  --color-status-red-light: #fef2f2;
+  --color-status-red-border: #fecaca;
+  --color-status-breach: #1e2f45;
+  --color-status-exempt: #456285;
+  --color-status-exempt-light: #f0f4f8;
+  --color-status-exempt-border: #b8c9db;
 }
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
+  --background: 214 20% 94%;
+  --foreground: 210 29% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.9%;
+  --card-foreground: 210 29% 15%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
-  --primary: 0 0% 9%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 96.1%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96.1%;
-  --muted-foreground: 0 0% 45.1%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
+  --popover-foreground: 210 29% 15%;
+  --primary: 210 34% 33%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 18% 90%;
+  --secondary-foreground: 210 29% 15%;
+  --muted: 210 18% 90%;
+  --muted-foreground: 210 12% 42%;
+  --accent: 210 18% 90%;
+  --accent-foreground: 210 29% 15%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
-  --ring: 0 0% 3.9%;
+  --border: 210 18% 85%;
+  --input: 210 18% 85%;
+  --ring: 210 34% 33%;
   --radius: 0.75rem;
 }
 
 .dark {
-  --background: 0 0% 3.9%;
-  --foreground: 0 0% 98%;
-  --card: 0 0% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 0 0% 3.9%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 9%;
-  --secondary: 0 0% 14.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 14.9%;
-  --muted-foreground: 0 0% 63.9%;
-  --accent: 0 0% 14.9%;
-  --accent-foreground: 0 0% 98%;
+  --background: 210 29% 7%;
+  --foreground: 210 20% 98%;
+  --card: 210 29% 10%;
+  --card-foreground: 210 20% 98%;
+  --popover: 210 29% 10%;
+  --popover-foreground: 210 20% 98%;
+  --primary: 210 20% 98%;
+  --primary-foreground: 210 29% 10%;
+  --secondary: 210 20% 16%;
+  --secondary-foreground: 210 20% 98%;
+  --muted: 210 20% 16%;
+  --muted-foreground: 210 12% 64%;
+  --accent: 210 20% 16%;
+  --accent-foreground: 210 20% 98%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 14.9%;
-  --input: 0 0% 14.9%;
-  --ring: 0 0% 83.1%;
+  --border: 210 20% 16%;
+  --input: 210 20% 16%;
+  --ring: 210 12% 64%;
 }
 
 * {

@@ -54,13 +54,13 @@ export function UserMenu({ user, collapsed = false }: UserMenuProps) {
         <button
           className={cn(
             'flex items-center gap-3 w-full rounded-lg p-2 min-h-[44px]',
-            'text-left text-slate-300 hover:bg-slate-800 transition-colors duration-150',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+            'text-left text-brand-200 hover:bg-brand-800 transition-colors duration-150',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
             collapsed && 'justify-center'
           )}
           aria-label="User menu"
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-sm font-medium text-white">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-700 text-sm font-medium text-white">
             {initials}
           </div>
 
@@ -71,20 +71,20 @@ export function UserMenu({ user, collapsed = false }: UserMenuProps) {
                   {displayName}
                 </p>
                 {user.full_name && (
-                  <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                  <p className="text-xs text-brand-300 truncate">{user.email}</p>
                 )}
               </div>
 
               {user.role && (
                 <Badge
                   variant="secondary"
-                  className="shrink-0 bg-slate-700 text-slate-300 border-slate-600 text-[10px] px-1.5"
+                  className="shrink-0 bg-brand-700 text-brand-200 border-brand-600 text-[10px] px-1.5"
                 >
                   {user.role}
                 </Badge>
               )}
 
-              <ChevronUp className="h-4 w-4 shrink-0 text-slate-400" />
+              <ChevronUp className="h-4 w-4 shrink-0 text-brand-300" />
             </>
           )}
         </button>

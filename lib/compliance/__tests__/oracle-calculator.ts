@@ -42,7 +42,7 @@ export interface OracleResult {
 // Constants (hardcoded for simplicity)
 // ============================================================================
 
-const DEFAULT_COMPLIANCE_START = new Date('2025-10-12');
+const DEFAULT_COMPLIANCE_START = new Date('1970-01-01');
 const DEFAULT_LIMIT = 90;
 const WINDOW_SIZE = 180;
 
@@ -168,7 +168,8 @@ export function oraclePresenceDays(
 /**
  * Oracle implementation of daysUsedInWindow.
  *
- * Counts presence days in [refDate - 180, refDate - 1].
+ * Counts presence days in [refDate - 179, refDate].
+ * The reference date IS included per EU Regulation 610/2013.
  */
 export function oracleDaysUsedInWindow(
   presence: ReadonlySet<string>,
@@ -179,9 +180,9 @@ export function oracleDaysUsedInWindow(
   const normalizedRef = normalizeDate(refDate);
   const normalizedComplianceStart = normalizeDate(complianceStart);
 
-  // Window boundaries
-  let windowStart = subDays(normalizedRef, WINDOW_SIZE);
-  const windowEnd = subDays(normalizedRef, 1);
+  // Window boundaries: [refDate - 179, refDate] = 180 days inclusive
+  let windowStart = subDays(normalizedRef, WINDOW_SIZE - 1);
+  const windowEnd = normalizedRef;
 
   // Respect compliance start
   if (isBefore(windowStart, normalizedComplianceStart)) {

@@ -15,9 +15,10 @@ import type { SchengenMembershipData, RiskThresholds, StatusThresholds } from '.
  * Default date when compliance tracking starts.
  * Trips before this date are excluded from calculations.
  *
- * Per business requirements: October 12, 2025
+ * Set to epoch — the 90/180 rule has been in effect since Schengen's
+ * inception, so no trips should be artificially excluded.
  */
-export const DEFAULT_COMPLIANCE_START_DATE = new Date('2025-10-12');
+export const DEFAULT_COMPLIANCE_START_DATE = new Date('1970-01-01');
 
 /**
  * Maximum days allowed in Schengen within any 180-day rolling window.

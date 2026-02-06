@@ -15,33 +15,37 @@ interface AlertBannerProps {
 
 const alertConfig: Record<AlertType, {
   icon: typeof AlertTriangle
-  bgColor: string
+  headerBg: string
+  headerText: string
   borderColor: string
-  textColor: string
+  itemTextColor: string
   badgeVariant: 'default' | 'secondary' | 'destructive' | 'outline'
   label: string
 }> = {
   warning: {
     icon: AlertTriangle,
-    bgColor: 'bg-amber-50 dark:bg-amber-950/30',
-    borderColor: 'border-amber-200 dark:border-amber-800',
-    textColor: 'text-amber-800 dark:text-amber-200',
+    headerBg: 'bg-amber-500 dark:bg-amber-700',
+    headerText: 'text-white',
+    borderColor: 'border-amber-500 dark:border-amber-700',
+    itemTextColor: 'text-amber-700 dark:text-amber-200',
     badgeVariant: 'outline',
     label: 'Warning',
   },
   urgent: {
     icon: AlertCircle,
-    bgColor: 'bg-orange-50 dark:bg-orange-950/30',
-    borderColor: 'border-orange-200 dark:border-orange-800',
-    textColor: 'text-orange-800 dark:text-orange-200',
+    headerBg: 'bg-orange-600 dark:bg-orange-700',
+    headerText: 'text-white',
+    borderColor: 'border-orange-600 dark:border-orange-700',
+    itemTextColor: 'text-orange-700 dark:text-orange-200',
     badgeVariant: 'secondary',
     label: 'Urgent',
   },
   breach: {
     icon: XCircle,
-    bgColor: 'bg-red-50 dark:bg-red-950/30',
-    borderColor: 'border-red-200 dark:border-red-800',
-    textColor: 'text-red-800 dark:text-red-200',
+    headerBg: 'bg-rose-600 dark:bg-rose-800',
+    headerText: 'text-white',
+    borderColor: 'border-rose-600 dark:border-rose-800',
+    itemTextColor: 'text-rose-700 dark:text-rose-200',
     badgeVariant: 'destructive',
     label: 'Breach',
   },
@@ -59,30 +63,27 @@ function AlertItem({
 
   return (
     <div
-      className={cn(
-        'flex items-center justify-between gap-4 px-4 py-3 border-b last:border-b-0',
-        config.borderColor
-      )}
+      className="flex items-center justify-between gap-4 px-4 py-3 border-b border-slate-100 last:border-b-0"
     >
       <div className="flex items-center gap-3 min-w-0">
-        <Icon className={cn('h-5 w-5 shrink-0', config.textColor)} />
+        <Icon className={cn('h-5 w-5 shrink-0', config.itemTextColor)} />
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Badge variant={config.badgeVariant} className="text-xs">
               {config.label}
             </Badge>
-            <span className={cn('font-medium truncate', config.textColor)}>
+            <span className={cn('font-medium truncate', config.itemTextColor)}>
               {alert.employee?.name ?? 'Unknown Employee'}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground truncate">
+          <p className="text-sm text-slate-600 truncate">
             {alert.message}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <Link href={`/employee/${alert.employee_id}`}>
-          <Button variant="ghost" size="sm" className="h-8">
+          <Button variant="ghost" size="sm" className="h-8 text-slate-700 hover:text-slate-900">
             View
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -92,6 +93,7 @@ function AlertItem({
           size="icon-sm"
           onClick={() => onAcknowledge(alert.id)}
           title="Mark as read"
+          className="text-slate-500 hover:text-slate-700"
         >
           <Eye className="h-4 w-4" />
         </Button>
@@ -149,20 +151,19 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
     return (
       <div
         className={cn(
-          'border rounded-lg cursor-pointer transition-colors',
-          config.bgColor,
-          config.borderColor
+          'rounded-lg cursor-pointer transition-colors shadow-md overflow-hidden',
+          config.headerBg
         )}
         onClick={() => setIsExpanded(true)}
       >
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <Icon className={cn('h-5 w-5', config.textColor)} />
-            <span className={cn('font-medium', config.textColor)}>
+            <Icon className={cn('h-5 w-5', config.headerText)} />
+            <span className={cn('font-medium', config.headerText)}>
               {localAlerts.length} active alert{localAlerts.length !== 1 ? 's' : ''} require attention
             </span>
           </div>
-          <Button variant="ghost" size="sm" className={config.textColor}>
+          <Button variant="ghost" size="sm" className={cn(config.headerText, 'hover:bg-white/20')}>
             Show
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -173,18 +174,12 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
 
   // Expanded view - show all alerts
   return (
-    <div
-      className={cn(
-        'border rounded-lg overflow-hidden',
-        config.bgColor,
-        config.borderColor
-      )}
-    >
-      {/* Header */}
-      <div className={cn('flex items-center justify-between px-4 py-3 border-b', config.borderColor)}>
+    <div className="rounded-lg overflow-hidden shadow-md">
+      {/* Header — vivid colored background with white text */}
+      <div className={cn('flex items-center justify-between px-4 py-3', config.headerBg)}>
         <div className="flex items-center gap-3">
-          <Icon className={cn('h-5 w-5', config.textColor)} />
-          <span className={cn('font-medium', config.textColor)}>
+          <Icon className={cn('h-5 w-5', config.headerText)} />
+          <span className={cn('font-semibold', config.headerText)}>
             {localAlerts.length} Active Alert{localAlerts.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -194,7 +189,7 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
             size="sm"
             onClick={handleAcknowledgeAll}
             disabled={isLoading}
-            className={config.textColor}
+            className={cn(config.headerText, 'hover:bg-white/20')}
           >
             <Eye className="h-4 w-4 mr-1" />
             Dismiss All
@@ -203,15 +198,15 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
             variant="ghost"
             size="icon-sm"
             onClick={() => setIsExpanded(false)}
-            className={config.textColor}
+            className={cn(config.headerText, 'hover:bg-white/20')}
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* Alert list */}
-      <div className="bg-background/50 max-h-64 overflow-y-auto">
+      {/* Alert list — white background for clear readability */}
+      <div className="bg-white max-h-64 overflow-y-auto border border-t-0 border-slate-200 rounded-b-lg">
         {localAlerts.map(alert => (
           <AlertItem
             key={alert.id}

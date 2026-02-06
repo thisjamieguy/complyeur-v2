@@ -86,13 +86,14 @@ export function computeComplianceVector(
   const complianceStartDate = config.complianceStartDate ?? DEFAULT_COMPLIANCE_START_DATE;
   const normalizedComplianceStart = normalizeToUTCDate(complianceStartDate);
 
-  // For each reference date, count days in window [refDate - 180, refDate - 1]
+  // For each reference date, count days in window [refDate - 179, refDate]
   let currentDate = normalizedStart;
 
   while (!isAfter(currentDate, normalizedEnd)) {
     // Calculate window boundaries for this reference date
-    let windowStart = subDays(currentDate, WINDOW_SIZE_DAYS);
-    const windowEnd = subDays(currentDate, 1);
+    // Window: [refDate - 179, refDate] = 180 days inclusive of reference date
+    let windowStart = subDays(currentDate, WINDOW_SIZE_DAYS - 1);
+    const windowEnd = currentDate;
 
     // Respect compliance start date
     if (isBefore(windowStart, normalizedComplianceStart)) {
@@ -174,8 +175,8 @@ export function computeComplianceVectorOptimized(
   const result: DailyCompliance[] = [];
 
   // Calculate initial count for first reference date
-  // Window: [startDate - 180, startDate - 1]
-  let windowStartBoundary = subDays(normalizedStart, WINDOW_SIZE_DAYS);
+  // Window: [startDate - 179, startDate] = 180 days inclusive of reference date
+  let windowStartBoundary = subDays(normalizedStart, WINDOW_SIZE_DAYS - 1);
   if (isBefore(windowStartBoundary, normalizedComplianceStart)) {
     windowStartBoundary = normalizedComplianceStart;
   }
@@ -187,9 +188,9 @@ export function computeComplianceVectorOptimized(
   // Helper to get date key
   const dateToKey = (d: Date): string => d.toISOString().split('T')[0];
 
-  // Count initial window
+  // Count initial window [startDate - 179, startDate]
   {
-    const windowEnd = subDays(normalizedStart, 1);
+    const windowEnd = normalizedStart;
     for (const dayKey of presenceSet) {
       const day = new Date(dayKey + 'T00:00:00.000Z');
       if (
@@ -213,19 +214,20 @@ export function computeComplianceVectorOptimized(
     });
 
     // Prepare for next iteration: slide the window forward by one day
-    // - Remove the day that falls out of the window (day at refDate - 181)
-    // - Add the day that enters the window (day at refDate - 1, which becomes
-    //   part of the window for the next reference date)
+    // Window for currentDate: [currentDate - 179, currentDate]
+    // Window for nextDate:    [currentDate - 178, nextDate]
+    // - Remove the day that falls out: currentDate - 179 (old window start)
+    // - Add the day that enters: nextDate (new window end)
 
     const nextDate = addDays(currentDate, 1);
     if (isAfter(nextDate, normalizedEnd)) {
       break;
     }
 
-    // Day falling out: the day that was 180 days before currentDate
-    // For next ref date (nextDate), the window starts at nextDate - 180
-    // which means currentDate - 180 falls out
-    const dayFallingOut = subDays(currentDate, WINDOW_SIZE_DAYS);
+    // Day falling out: the old window start (currentDate - 179)
+    // For nextDate, window starts at nextDate - 179 = currentDate - 178
+    // so currentDate - 179 falls out
+    const dayFallingOut = subDays(currentDate, WINDOW_SIZE_DAYS - 1);
     const dayFallingOutKey = dateToKey(dayFallingOut);
 
     // Only decrement if this day was actually in our count
@@ -237,9 +239,8 @@ export function computeComplianceVectorOptimized(
       currentCount--;
     }
 
-    // Day entering: the day that is now "yesterday" relative to nextDate
-    // which is currentDate
-    const dayEntering = currentDate;
+    // Day entering: nextDate (the new reference date, which is included in its own window)
+    const dayEntering = nextDate;
     const dayEnteringKey = dateToKey(dayEntering);
 
     // Only increment if this day is a presence day

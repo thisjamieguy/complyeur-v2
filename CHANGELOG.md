@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: add nationality type to employees with EU/Schengen exemption [`6049c61`](https://github.com/thisjamieguy/complyeur-v2/commit/6049c612ac0188a2d049b90db9397794fa22fbda)
 - fix: resolve hydration error, infinite spinner, and middleware auth gaps [`0c2c9db`](https://github.com/thisjamieguy/complyeur-v2/commit/0c2c9dbdfd4d3e00b03dd6f437d3dc6a9d9c7f1c)
 - fix: prevent duplicate ComplyEUR in page titles [`372f056`](https://github.com/thisjamieguy/complyeur-v2/commit/372f05632130d7d8fe5f63bf44739ef0dfb77855)
 - fix: enhance JSON-LD structured data with WebSite and Organization schemas [`37274ea`](https://github.com/thisjamieguy/complyeur-v2/commit/37274ea2ed7cab890046be5c49343173977532f9)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: update CHANGELOG.md [`1814213`](https://github.com/thisjamieguy/complyeur-v2/commit/1814213e52d3fca72420f2a3de3051e77e0f9dbb)
 - feat: add production load test results (20-100 concurrent users) [`0849cfe`](https://github.com/thisjamieguy/complyeur-v2/commit/0849cfee6d7edd95872eef73c79d8839f87f36d2)
 - chore: update CHANGELOG.md [`400021f`](https://github.com/thisjamieguy/complyeur-v2/commit/400021f5294c62af79a7efe82f77fd08e529539e)
-- chore: update CHANGELOG.md [`b2cbd21`](https://github.com/thisjamieguy/complyeur-v2/commit/b2cbd2101a3b7d07c6931143259804fcb2ccf79b)
 
 ## v1.0.0 - 2026-01-22
 

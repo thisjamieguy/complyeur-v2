@@ -1,12 +1,13 @@
 'use client'
 
-import { memo, useRef, useEffect, useCallback } from 'react'
+import { memo, useRef, useEffect } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { isToday } from 'date-fns'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { DateHeader } from './date-header'
 import { EmployeeRow } from './employee-row'
-import type { RiskLevel } from '@/lib/compliance'
+import { GRID_ROW_HEIGHT } from './day-cell'
+import type { ProcessedEmployee } from './types'
 
 /** Width of each day column in pixels */
 const DAY_WIDTH = 32
@@ -17,61 +18,32 @@ const NAME_COLUMN_WIDTH = 160
 /** Max height of the scrollable area */
 const MAX_HEIGHT = 600
 
-interface ProcessedTrip {
-  id: string
-  country: string
-  entryDate: Date
-  exitDate: Date
-  duration: number
-  daysRemaining: number
-  riskLevel: RiskLevel
-  purpose: string | null
-  isPrivate: boolean
-  isSchengen: boolean
-}
-
-interface ProcessedEmployee {
-  id: string
-  name: string
-  trips: ProcessedTrip[]
-}
+/** Number of extra rows to render above/below viewport */
+const OVERSCAN = 5
 
 interface GanttChartProps {
   employees: ProcessedEmployee[]
   dates: Date[]
-  startDate: Date
-  rowHeights: number[]
 }
 
-/** Number of extra rows to render above/below viewport */
-const OVERSCAN = 5
-
 /**
- * The horizontal Gantt chart showing all employees and their trips
- * Uses virtualization to only render visible employee rows
- * Employee names column is fixed and doesn't scroll horizontally
+ * Spreadsheet-style grid showing all employees and their trips.
+ * Uses virtualization to only render visible employee rows.
+ * Employee names column is fixed and doesn't scroll horizontally.
  */
 export const GanttChart = memo(function GanttChart({
   employees,
   dates,
-  startDate,
-  rowHeights,
 }: GanttChartProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const namesScrollRef = useRef<HTMLDivElement>(null)
   const timelineScrollRef = useRef<HTMLDivElement>(null)
 
-  // Memoize the size getter to avoid unnecessary re-renders
-  const estimateSize = useCallback(
-    (index: number) => rowHeights[index] ?? 40,
-    [rowHeights]
-  )
-
-  // Set up virtualizer for employee rows - attached to timeline scroll container
+  // Set up virtualizer for employee rows — fixed height, no per-row calculation
   const virtualizer = useVirtualizer({
     count: employees.length,
     getScrollElement: () => timelineScrollRef.current,
-    estimateSize,
+    estimateSize: () => GRID_ROW_HEIGHT,
     overscan: OVERSCAN,
   })
 
@@ -121,19 +93,19 @@ export const GanttChart = memo(function GanttChart({
 
   return (
     <div className="flex">
-      {/* Fixed left column - employee names (no horizontal scroll) */}
+      {/* Fixed left column — employee names (no horizontal scroll) */}
       <div
         className="shrink-0 bg-white border-r border-slate-200 z-20"
         style={{ width: NAME_COLUMN_WIDTH }}
       >
-        {/* Header cell - heights must match DateHeader exactly */}
+        {/* Header placeholder — must match 3-row DateHeader height */}
         <div className="sticky top-0 z-30 bg-white border-b border-slate-200">
-          {/* Month row placeholder - matches DateHeader month row (py-1 + text-xs) */}
-          <div className="px-2 py-1">
-            <span className="text-xs font-medium text-slate-600 invisible">Month</span>
-          </div>
-          {/* Employee label - matches DateHeader day row (py-1.5 + text-xs) */}
-          <div className="px-3 py-1.5 bg-slate-50 flex items-center">
+          {/* Week row placeholder */}
+          <div className="bg-slate-50 border-b border-slate-100" style={{ height: 20 }} />
+          {/* Day name row placeholder */}
+          <div className="bg-slate-50 border-b border-slate-100" style={{ height: 20 }} />
+          {/* Date number row with Employee label */}
+          <div className="px-3 flex items-center" style={{ height: 24 }}>
             <span className="text-xs font-medium text-slate-500">Employee</span>
           </div>
         </div>
@@ -150,9 +122,9 @@ export const GanttChart = memo(function GanttChart({
               return (
                 <div
                   key={employee.id}
-                  className="absolute left-0 w-full px-3 border-b border-slate-300 bg-white flex items-center"
+                  className="absolute left-0 w-full px-3 border-b border-slate-100 bg-white flex items-center"
                   style={{
-                    height: virtualRow.size,
+                    height: GRID_ROW_HEIGHT,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
@@ -166,14 +138,14 @@ export const GanttChart = memo(function GanttChart({
         </div>
       </div>
 
-      {/* Right column - horizontally scrollable timeline */}
+      {/* Right column — horizontally scrollable timeline grid */}
       <div ref={scrollContainerRef} className="flex-1 min-w-0">
         <ScrollArea className="w-full whitespace-nowrap rounded-br-xl">
           <div style={{ width: totalWidth }}>
-            {/* Date header (without employee column) */}
-            <DateHeader dates={dates} dayWidth={DAY_WIDTH} showEmployeeColumn={false} />
+            {/* 3-row date header */}
+            <DateHeader dates={dates} dayWidth={DAY_WIDTH} />
 
-            {/* Virtualized timeline rows */}
+            {/* Virtualized grid rows */}
             <div
               ref={timelineScrollRef}
               className="overflow-y-auto"
@@ -185,20 +157,16 @@ export const GanttChart = memo(function GanttChart({
                   return (
                     <div
                       key={employee.id}
-                      className="absolute left-0 w-full border-b border-slate-300"
+                      className="absolute left-0 w-full border-b border-slate-100"
                       style={{
-                        height: virtualRow.size,
+                        height: GRID_ROW_HEIGHT,
                         transform: `translateY(${virtualRow.start}px)`,
                       }}
                     >
                       <EmployeeRow
                         employee={employee}
-                        trips={employee.trips}
-                        startDate={startDate}
                         dates={dates}
                         dayWidth={DAY_WIDTH}
-                        fixedHeight={virtualRow.size}
-                        hideNameColumn
                       />
                     </div>
                   )
