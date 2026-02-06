@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(types): regenerate Supabase types for roles, invites, and feedback [`f5f748d`](https://github.com/thisjamieguy/complyeur-v2/commit/f5f748df94d922f79b7d4e3c3114bcd4927e107e)
+- perf(forecast): optimize compliant-date scan with characterization tests [`286354f`](https://github.com/thisjamieguy/complyeur-v2/commit/286354fa7ddca09d68379954100ccb1480a0a976)
+- feat(feedback): add in-app feedback capture flow and storage [`534deca`](https://github.com/thisjamieguy/complyeur-v2/commit/534decaf261ef156f6ccc1be769f3c495998f6ca)
+- feat(team): add owner role, invites, and ownership transfer workflow [`fb982f1`](https://github.com/thisjamieguy/complyeur-v2/commit/fb982f13e1af3f511438cc878d1b677e4ff62e30)
+- fix(auth): harden oauth callback and relax activity update failures [`0b05fdf`](https://github.com/thisjamieguy/complyeur-v2/commit/0b05fdffd2bca23f5ab38e5d2e9727a34239735e)
+- feat(settings): move GDPR into settings and add section tabs [`7f468cf`](https://github.com/thisjamieguy/complyeur-v2/commit/7f468cff1331402873c9fbff661c52a1e028e786)
+- feat: add paid tiers, pricing page, UI refresh, migration consolidation [`0034b5b`](https://github.com/thisjamieguy/complyeur-v2/commit/0034b5b736fa96cd7788f9301675fc14adfd2bd9)
 - feat: add nationality type to employees with EU/Schengen exemption [`6049c61`](https://github.com/thisjamieguy/complyeur-v2/commit/6049c612ac0188a2d049b90db9397794fa22fbda)
 - fix: resolve hydration error, infinite spinner, and middleware auth gaps [`0c2c9db`](https://github.com/thisjamieguy/complyeur-v2/commit/0c2c9dbdfd4d3e00b03dd6f437d3dc6a9d9c7f1c)
 - fix: prevent duplicate ComplyEUR in page titles [`372f056`](https://github.com/thisjamieguy/complyeur-v2/commit/372f05632130d7d8fe5f63bf44739ef0dfb77855)
-- fix: enhance JSON-LD structured data with WebSite and Organization schemas [`37274ea`](https://github.com/thisjamieguy/complyeur-v2/commit/37274ea2ed7cab890046be5c49343173977532f9)
-- fix: improve SEO, accessibility, and security for landing page [`4719a18`](https://github.com/thisjamieguy/complyeur-v2/commit/4719a18ac83f853f722d8bfb00c2cf283054da3a)
-- test: add comprehensive integration tests for trips API [`3a36d59`](https://github.com/thisjamieguy/complyeur-v2/commit/3a36d59d4d7441320eea6c7bc721be1b881623e4)
-- docs: improve CLAUDE.md with environment setup and complete testing workflows [`c437119`](https://github.com/thisjamieguy/complyeur-v2/commit/c4371194211e1e31aa3c37a4d18bdba487faafa5)
-- chore: update CHANGELOG.md [`1814213`](https://github.com/thisjamieguy/complyeur-v2/commit/1814213e52d3fca72420f2a3de3051e77e0f9dbb)
-- feat: add production load test results (20-100 concurrent users) [`0849cfe`](https://github.com/thisjamieguy/complyeur-v2/commit/0849cfee6d7edd95872eef73c79d8839f87f36d2)
-- chore: update CHANGELOG.md [`400021f`](https://github.com/thisjamieguy/complyeur-v2/commit/400021f5294c62af79a7efe82f77fd08e529539e)
 
 ## v1.0.0 - 2026-01-22
 
