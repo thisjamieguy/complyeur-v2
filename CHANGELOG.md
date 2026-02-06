@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(changelog): update unreleased commit history [`0aee3d8`](https://github.com/thisjamieguy/complyeur-v2/commit/0aee3d829dd61baa6050ab6ccb918db15e5d7766)
 - chore(types): regenerate Supabase types for roles, invites, and feedback [`f5f748d`](https://github.com/thisjamieguy/complyeur-v2/commit/f5f748df94d922f79b7d4e3c3114bcd4927e107e)
 - perf(forecast): optimize compliant-date scan with characterization tests [`286354f`](https://github.com/thisjamieguy/complyeur-v2/commit/286354fa7ddca09d68379954100ccb1480a0a976)
 - feat(feedback): add in-app feedback capture flow and storage [`534deca`](https://github.com/thisjamieguy/complyeur-v2/commit/534decaf261ef156f6ccc1be769f3c495998f6ca)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: add paid tiers, pricing page, UI refresh, migration consolidation [`0034b5b`](https://github.com/thisjamieguy/complyeur-v2/commit/0034b5b736fa96cd7788f9301675fc14adfd2bd9)
 - feat: add nationality type to employees with EU/Schengen exemption [`6049c61`](https://github.com/thisjamieguy/complyeur-v2/commit/6049c612ac0188a2d049b90db9397794fa22fbda)
 - fix: resolve hydration error, infinite spinner, and middleware auth gaps [`0c2c9db`](https://github.com/thisjamieguy/complyeur-v2/commit/0c2c9dbdfd4d3e00b03dd6f437d3dc6a9d9c7f1c)
-- fix: prevent duplicate ComplyEUR in page titles [`372f056`](https://github.com/thisjamieguy/complyeur-v2/commit/372f05632130d7d8fe5f63bf44739ef0dfb77855)
 
 ## v1.0.0 - 2026-01-22
 
