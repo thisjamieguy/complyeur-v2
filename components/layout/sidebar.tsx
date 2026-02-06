@@ -3,8 +3,9 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { PanelLeftClose, PanelLeft } from 'lucide-react'
+import { MessageSquarePlus, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { navSections } from '@/components/navigation/nav-items'
+import { FeedbackDialog } from '@/components/feedback/feedback-dialog'
 import { useSidebar } from '@/contexts/sidebar-context'
 import { UserMenu, type UserMenuUser } from './user-menu'
 import { cn } from '@/lib/utils'
@@ -94,6 +95,34 @@ export function Sidebar({ user }: SidebarProps) {
           </div>
         ))}
       </nav>
+
+      {/* Feedback (Beta) */}
+      <div className="px-3 py-3 border-t border-brand-800">
+        <FeedbackDialog
+          trigger={
+            <button
+              className={cn(
+                'flex items-center gap-3 w-full rounded-lg min-h-[44px]',
+                'bg-amber-400 text-amber-950 hover:bg-amber-300 transition-colors duration-150',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300',
+                isOpen ? 'px-3 py-2.5' : 'justify-center px-0 py-2.5'
+              )}
+              aria-label="Open feedback form (beta)"
+              title={!isOpen ? 'Feedback (Beta)' : undefined}
+            >
+              <MessageSquarePlus className="h-5 w-5 shrink-0" />
+              {isOpen && (
+                <>
+                  <span className="text-sm font-semibold truncate">Feedback</span>
+                  <span className="ml-auto rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    Beta
+                  </span>
+                </>
+              )}
+            </button>
+          }
+        />
+      </div>
 
       {/* Toggle Button */}
       <div className="px-3 py-2 border-t border-brand-800">

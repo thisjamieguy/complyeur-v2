@@ -8,5 +8,6 @@
 export * from './profiles'
 export * from './companies'
 export * from './employees'
+export * from './feedback'
 export * from './trips'
 export * from './forecasts'

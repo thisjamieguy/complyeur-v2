@@ -6,6 +6,7 @@ import {
   createEmployee,
   updateEmployee,
   deleteEmployee,
+  createFeedbackSubmission,
   createTrip,
   updateTrip,
   deleteTrip,
@@ -14,6 +15,10 @@ import {
   getEmployeeById,
 } from '@/lib/db'
 import { employeeSchema } from '@/lib/validations/employee'
+import {
+  feedbackSubmissionSchema,
+  type FeedbackSubmissionFormData,
+} from '@/lib/validations/feedback'
 import { tripSchema, tripUpdateSchema } from '@/lib/validations/trip'
 import { detectAndProcessAlerts } from '@/lib/services/alert-detection-service'
 import {
@@ -29,6 +34,7 @@ import {
 import type { TripCreateInput, TripUpdate, CompanySettingsUpdate, NotificationPreferencesUpdate, AlertWithEmployee, CompanySettings, NotificationPreferences, BulkTripInput } from '@/types/database-helpers'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
+import { isPrivilegedRole } from '@/lib/permissions'
 
 /**
  * Helper to run alert detection after trip changes
@@ -88,6 +94,30 @@ export async function updateEmployeeAction(id: string, formData: { name: string;
 export async function deleteEmployeeAction(id: string) {
   await deleteEmployee(id)
   revalidateTripData(id)
+}
+
+export async function submitFeedbackAction(
+  formData: FeedbackSubmissionFormData
+): Promise<{ ok: true }> {
+  const validated = feedbackSubmissionSchema.parse(formData)
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    throw new Error('Not authenticated')
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'submitFeedbackAction')
+  if (!rateLimit.allowed) {
+    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
+  }
+
+  await createFeedbackSubmission(validated)
+
+  return { ok: true }
 }
 
 // Trip actions
@@ -198,7 +228,7 @@ export async function bulkAddTripsAction(
     .eq('id', user.id)
     .single()
 
-  if (profile?.role === 'admin') {
+  if (isPrivilegedRole(profile?.role)) {
     const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
     if (!mfa.ok) {
       return { success: false, created: 0, errors: [{ index: 0, message: 'MFA required. Complete setup or verification to continue.' }] }

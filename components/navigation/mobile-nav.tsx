@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu } from 'lucide-react'
+import { Menu, MessageSquarePlus } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -12,6 +12,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { FeedbackDialog } from '@/components/feedback/feedback-dialog'
 import { navItems } from '@/components/navigation/nav-items'
 import { useSidebar } from '@/contexts/sidebar-context'
 import { cn } from '@/lib/utils'
@@ -75,6 +76,23 @@ export function MobileNav() {
               </Link>
             )
           })}
+
+          <div className="mt-3 border-t border-slate-200 px-2 pt-3">
+            <FeedbackDialog
+              trigger={
+                <button
+                  className="flex w-full min-h-[44px] items-center gap-3 rounded-lg bg-amber-400 px-4 py-3 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                  aria-label="Open feedback form (beta)"
+                >
+                  <MessageSquarePlus className="h-5 w-5 shrink-0" />
+                  <span>Feedback</span>
+                  <span className="ml-auto rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                    Beta
+                  </span>
+                </button>
+              }
+            />
+          </div>
         </nav>
       </SheetContent>
     </Sheet>
