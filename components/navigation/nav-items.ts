@@ -5,12 +5,11 @@ import {
   Download,
   Bell,
   TrendingUp,
-  Shield,
   Settings,
   type LucideIcon,
 } from 'lucide-react'
 
-export type NavSection = 'Main' | 'Data' | 'Tools' | 'Compliance' | 'System'
+export type NavSection = 'Main' | 'Data' | 'Tools' | 'System'
 
 export interface NavItem {
   href: string
@@ -41,9 +40,6 @@ export const navItems: NavItem[] = [
   { href: '/future-job-alerts', label: 'Future Alerts', icon: Bell, section: 'Tools' },
   { href: '/trip-forecast', label: 'Trip Forecast', icon: TrendingUp, section: 'Tools' },
 
-  // Compliance
-  { href: '/gdpr', label: 'GDPR', icon: Shield, section: 'Compliance' },
-
   // System
   { href: '/settings', label: 'Settings', icon: Settings, section: 'System' },
 ]
@@ -64,10 +60,6 @@ export const navSections: NavSectionGroup[] = [
   {
     title: 'Tools',
     items: navItems.filter((item) => item.section === 'Tools'),
-  },
-  {
-    title: 'Compliance',
-    items: navItems.filter((item) => item.section === 'Compliance'),
   },
   {
     title: 'System',
