@@ -46,6 +46,7 @@ export type NotificationLog = Tables['notification_log']['Row']
 export type CompanySettings = Tables['company_settings']['Row']
 export type NotificationPreferences = Tables['notification_preferences']['Row']
 export type CompanyEntitlements = Tables['company_entitlements']['Row']
+export type FeedbackSubmission = Tables['feedback_submissions']['Row']
 
 // Admin tables
 export type AdminAuditLog = Tables['admin_audit_log']['Row']
@@ -75,6 +76,7 @@ export type NotificationLogInput = Tables['notification_log']['Insert']
 export type CompanySettingsInput = Tables['company_settings']['Insert']
 export type NotificationPreferencesInput = Tables['notification_preferences']['Insert']
 export type CompanyEntitlementsInput = Tables['company_entitlements']['Insert']
+export type FeedbackSubmissionInput = Tables['feedback_submissions']['Insert']
 
 // Admin insert types
 export type AdminAuditLogInput = Tables['admin_audit_log']['Insert']
@@ -112,6 +114,7 @@ export type NotificationLogUpdate = Tables['notification_log']['Update']
 export type CompanySettingsUpdate = Tables['company_settings']['Update']
 export type NotificationPreferencesUpdate = Tables['notification_preferences']['Update']
 export type CompanyEntitlementsUpdate = Tables['company_entitlements']['Update']
+export type FeedbackSubmissionUpdate = Tables['feedback_submissions']['Update']
 
 // Admin update types
 export type AdminAuditLogUpdate = Tables['admin_audit_log']['Update']
@@ -237,6 +240,20 @@ export type EmployeeFormData = Omit<EmployeeInput, 'id' | 'company_id' | 'create
  */
 export function isAdmin(profile: Profile): boolean {
   return profile.role === 'admin'
+}
+
+/**
+ * Check if a profile has owner role
+ */
+export function isOwner(profile: Profile): boolean {
+  return profile.role === 'owner'
+}
+
+/**
+ * Check if a profile has owner or admin role
+ */
+export function isOwnerOrAdmin(profile: Profile): boolean {
+  return profile.role === 'owner' || profile.role === 'admin'
 }
 
 /**

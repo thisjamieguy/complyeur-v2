@@ -770,6 +770,51 @@ export type Database = {
           },
         ]
       }
+      feedback_submissions: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string
+          id: string
+          message: string
+          page_path: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          company_id: string
+          created_at?: string
+          id?: string
+          message: string
+          page_path: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          page_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_submissions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_submissions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_sessions: {
         Row: {
           company_id: string
@@ -1200,6 +1245,10 @@ export type Database = {
       }
     }
     Functions: {
+      accept_pending_invite_for_auth_user: {
+        Args: { p_user_email: string; p_user_id: string }
+        Returns: string | null
+      }
       create_company_and_profile:
         | {
             Args: { company_name: string; user_email: string; user_id: string }
@@ -1226,11 +1275,21 @@ export type Database = {
             }
             Returns: string
           }
+      get_company_seat_usage: { Args: { p_company_id: string }; Returns: Json }
+      get_company_user_limit: { Args: { p_company_id: string }; Returns: number }
       get_dashboard_summary: { Args: { p_company_id: string }; Returns: Json }
       get_last_audit_hash: { Args: { p_company_id: string }; Returns: string }
       increment_mapping_usage: {
         Args: { mapping_id: string }
         Returns: undefined
+      }
+      transfer_company_ownership: {
+        Args: {
+          p_company_id: string
+          p_current_owner_id: string
+          p_new_owner_id: string
+        }
+        Returns: boolean
       }
       unsubscribe_by_token: { Args: { token: string }; Returns: boolean }
     }
