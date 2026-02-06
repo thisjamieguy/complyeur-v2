@@ -1,5 +1,11 @@
 import type { createClient } from '@/lib/supabase/server'
-import { hasPermission, type Permission, PERMISSIONS } from '@/lib/permissions'
+import {
+  hasPermission,
+  type Permission,
+  PERMISSIONS,
+  isPrivilegedRole,
+  isOwnerOrAdmin,
+} from '@/lib/permissions'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 
 type AuthProfile = {
@@ -48,7 +54,7 @@ async function enforceMfaIfPrivileged(
   profile: AuthProfile,
   userId: string
 ): Promise<Pick<AuthGuardFailure, 'error' | 'status' | 'mfaReason'> | null> {
-  const isPrivileged = profile.role === 'admin' || profile.is_superadmin === true
+  const isPrivileged = isPrivilegedRole(profile.role) || profile.is_superadmin === true
   if (!isPrivileged) return null
 
   const mfa = await enforceMfaForPrivilegedUser(supabase, userId)
@@ -100,7 +106,7 @@ export async function requireAdminAccess(
     return { allowed: false, status: 401, error: 'Unauthorized' }
   }
 
-  if (profile.role !== 'admin') {
+  if (!isOwnerOrAdmin(profile.role)) {
     return { allowed: false, status: 403, error: 'Forbidden' }
   }
 

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, Settings, ChevronUp, User } from 'lucide-react'
+import { LogOut, Settings, ChevronUp } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { getRoleLabel } from '@/lib/permissions'
 
 export interface UserMenuUser {
   id: string
@@ -80,7 +81,7 @@ export function UserMenu({ user, collapsed = false }: UserMenuProps) {
                   variant="secondary"
                   className="shrink-0 bg-brand-700 text-brand-200 border-brand-600 text-[10px] px-1.5"
                 >
-                  {user.role}
+                  {getRoleLabel(user.role)}
                 </Badge>
               )}
 

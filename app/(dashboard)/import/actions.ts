@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import type { Json } from '@/types/database';
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
+import { isPrivilegedRole } from '@/lib/permissions'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import { validateRows } from '@/lib/import/validator'
 import {
@@ -165,7 +166,7 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
 
     await requireCompanyAccess(supabase, profile.company_id)
 
-    if (profile.role === 'admin' && !isDev) {
+    if (isPrivilegedRole(profile.role) && !isDev) {
       const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
       if (!mfa.ok) {
         return { success: false, error: 'MFA required. Complete setup or verification to continue.' }
@@ -522,7 +523,7 @@ export async function executeImport(
       .eq('id', user.id)
       .single()
 
-    if (profile?.role === 'admin' && !isDev) {
+    if (isPrivilegedRole(profile?.role) && !isDev) {
       const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
       if (!mfa.ok) {
         return {

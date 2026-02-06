@@ -27,6 +27,7 @@ import {
 } from './audit'
 import { RECOVERY_PERIOD_DAYS } from './constants'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { isOwnerOrAdmin } from '@/lib/permissions'
 
 // Re-export for convenience
 export { RECOVERY_PERIOD_DAYS }
@@ -100,11 +101,11 @@ export async function softDeleteEmployee(
       }
     }
 
-    // Check admin permission
-    if (profile.role !== 'admin') {
+    // Check owner/admin permission
+    if (!isOwnerOrAdmin(profile.role)) {
       return {
         success: false,
-        error: 'Only administrators can delete employees',
+        error: 'Only owners and administrators can delete employees',
         code: 'UNAUTHORIZED',
       }
     }
@@ -269,11 +270,11 @@ export async function restoreEmployee(
       }
     }
 
-    // Check admin permission
-    if (profile.role !== 'admin') {
+    // Check owner/admin permission
+    if (!isOwnerOrAdmin(profile.role)) {
       return {
         success: false,
-        error: 'Only administrators can restore employees',
+        error: 'Only owners and administrators can restore employees',
         code: 'UNAUTHORIZED',
       }
     }

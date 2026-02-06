@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { getRoleLabel } from '@/lib/permissions'
 
 interface UsersTabProps {
   company: {
@@ -52,8 +53,8 @@ export function UsersTab({ company }: UsersTabProps) {
                   {user.full_name || 'Unnamed User'}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary" className="capitalize">
-                    {user.role || 'viewer'}
+                  <Badge variant="secondary">
+                    {getRoleLabel(user.role ?? 'viewer')}
                   </Badge>
                 </TableCell>
                 <TableCell className="font-mono text-xs text-slate-500">

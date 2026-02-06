@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getTierBadgeClassName, getTierDisplayName } from '@/lib/billing/plans'
+import { getRoleLabel } from '@/lib/permissions'
 
 interface OverviewTabProps {
   company: {
@@ -172,8 +173,8 @@ export function OverviewTab({ company, tier }: OverviewTabProps) {
                     </p>
                     <p className="text-xs text-slate-500">{profile.id}</p>
                   </div>
-                  <Badge variant="secondary" className="capitalize">
-                    {profile.role || 'viewer'}
+                  <Badge variant="secondary">
+                    {getRoleLabel(profile.role ?? 'viewer')}
                   </Badge>
                 </div>
               ))}

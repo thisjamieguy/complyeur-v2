@@ -9,7 +9,7 @@ import { generateDsarExport } from '@/lib/gdpr'
  *
  * Security:
  * - Requires authenticated session
- * - Only admins can access
+ * - Only owners/admins can access
  * - RLS ensures company isolation
  *
  * Usage:
@@ -18,7 +18,7 @@ import { generateDsarExport } from '@/lib/gdpr'
  * Response:
  * - 200: ZIP file download
  * - 401: Unauthorized
- * - 403: Not admin
+ * - 403: Not owner/admin
  * - 404: Employee not found
  * - 500: Export error
  */

@@ -15,6 +15,7 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import { employeeIdSchema } from '@/lib/validations/gdpr'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { isOwnerOrAdmin } from '@/lib/permissions'
 
 /**
  * Gets all employees for the GDPR tools page.
@@ -30,7 +31,7 @@ export async function getEmployeesForGdpr(): Promise<
     .select('company_id, role')
     .single()
 
-  if (!profile?.company_id || profile.role !== 'admin') {
+  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
     return []
   }
 
@@ -325,7 +326,7 @@ export async function getGdprAuditLogAction(options?: {
     .select('company_id, role')
     .single()
 
-  if (!profile?.company_id || profile.role !== 'admin') {
+  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
     return []
   }
 
@@ -340,7 +341,7 @@ export async function getRetentionStatsAction(): Promise<RetentionStats | null> 
 }
 
 /**
- * Checks if the current user is an admin.
+ * Checks if the current user is an owner or admin.
  */
 export async function isAdmin(): Promise<boolean> {
   const supabase = await createClient()
@@ -350,5 +351,5 @@ export async function isAdmin(): Promise<boolean> {
     .select('role')
     .single()
 
-  return profile?.role === 'admin'
+  return isOwnerOrAdmin(profile?.role)
 }

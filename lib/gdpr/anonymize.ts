@@ -19,6 +19,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { logGdprAction, type AnonymizeDetails } from './audit'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { isOwnerOrAdmin } from '@/lib/permissions'
 
 /**
  * Result type for anonymization
@@ -105,11 +106,11 @@ export async function anonymizeEmployee(
       }
     }
 
-    // Check admin permission
-    if (profile.role !== 'admin') {
+    // Check owner/admin permission
+    if (!isOwnerOrAdmin(profile.role)) {
       return {
         success: false,
-        error: 'Only administrators can anonymize employees',
+        error: 'Only owners and administrators can anonymize employees',
         code: 'UNAUTHORIZED',
       }
     }

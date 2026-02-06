@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
+import { isPrivilegedRole } from '@/lib/permissions'
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/layout/app-shell'
 import { DataRefreshHandler } from '@/components/data-refresh-handler'
@@ -44,7 +45,7 @@ export default async function DashboardLayout({
     }
   } else {
     // Profile successfully retrieved - check privilege and enforce MFA
-    const isPrivileged = profile.role === 'admin' || profile.is_superadmin === true
+    const isPrivileged = isPrivilegedRole(profile.role) || profile.is_superadmin === true
 
     if (isPrivileged) {
       const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)

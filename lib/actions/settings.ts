@@ -116,7 +116,7 @@ export async function updateCompanySettings(
 
   // Check permission
   if (!hasPermission(profile.role, PERMISSIONS.SETTINGS_UPDATE)) {
-    return { success: false, error: 'Only admins can update settings' }
+    return { success: false, error: 'Only owners and admins can update settings' }
   }
 
   // Validate input

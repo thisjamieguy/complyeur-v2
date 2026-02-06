@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { logGdprAction } from '@/lib/gdpr/audit'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { isOwnerOrAdmin } from '@/lib/permissions'
 
 /**
  * Parameters for bulk data deletion
@@ -84,7 +85,7 @@ export async function getDataCounts(): Promise<DataCounts> {
     .select('company_id, role')
     .single()
 
-  if (!profile?.company_id || profile.role !== 'admin') {
+  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
     return { employees: 0, trips: 0, mappings: 0, history: 0 }
   }
 
@@ -129,7 +130,7 @@ export async function getEmployeesForDeletion(): Promise<EmployeeItem[]> {
     .select('company_id, role')
     .single()
 
-  if (!profile?.company_id || profile.role !== 'admin') {
+  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
     return []
   }
 
@@ -159,7 +160,7 @@ export async function getTripsForDeletion(): Promise<TripItem[]> {
     .select('company_id, role')
     .single()
 
-  if (!profile?.company_id || profile.role !== 'admin') {
+  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
     return []
   }
 
@@ -195,7 +196,7 @@ export async function getMappingsForDeletion(): Promise<MappingItem[]> {
     .select('company_id, role')
     .single()
 
-  if (!profile?.company_id || profile.role !== 'admin') {
+  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
     return []
   }
 
@@ -224,7 +225,7 @@ export async function getHistoryForDeletion(): Promise<HistoryItem[]> {
     .select('company_id, role')
     .single()
 
-  if (!profile?.company_id || profile.role !== 'admin') {
+  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
     return []
   }
 
@@ -268,7 +269,7 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
   let historyDeleted = 0
 
   try {
-    // Verify authentication and admin role
+    // Verify authentication and owner/admin role
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return {
@@ -287,14 +288,14 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
       .eq('id', user.id)
       .single()
 
-    if (!profile?.company_id || profile.role !== 'admin') {
+    if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
       return {
         success: false,
         employees: 0,
         trips: 0,
         mappings: 0,
         history: 0,
-        errors: ['Admin access required'],
+        errors: ['Owner or admin access required'],
       }
     }
 

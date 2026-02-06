@@ -51,7 +51,7 @@ export default async function GdprPage() {
         </div>
         <Badge variant="outline" className="gap-1">
           <FileText className="h-3 w-3" />
-          Admin Only
+          Owner/Admin Only
         </Badge>
       </div>
 

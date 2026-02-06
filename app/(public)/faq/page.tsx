@@ -286,7 +286,7 @@ const faqData: FAQSection[] = [
       {
         question: 'How do I add team members?',
         answer:
-          'Go to Settings > Team. Enter the email address of your colleague and select their role (Admin or Viewer). They will receive an invitation to join your company account.',
+          'Go to Settings > Team. Enter the email address of your colleague and select their role (Admin, Manager, or Employee). They will receive an invitation to join your company account.',
       },
       {
         question: 'How does billing work?',

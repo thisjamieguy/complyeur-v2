@@ -60,6 +60,7 @@ export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];
  * Must match the role column in profiles table
  */
 export const ROLES = {
+  OWNER: 'owner',
   ADMIN: 'admin',
   MANAGER: 'manager',
   VIEWER: 'viewer',
@@ -74,6 +75,9 @@ export type UserRole = typeof ROLES[keyof typeof ROLES];
 // ===========================================
 
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  // Owner: Full company access
+  owner: Object.values(PERMISSIONS),
+
   // Admin: Full access to everything
   admin: Object.values(PERMISSIONS),
 
@@ -189,5 +193,33 @@ export function getPermissionsForRole(role: UserRole): Permission[] {
  */
 export function isValidRole(role: string | undefined | null): role is UserRole {
   if (!role) return false;
-  return ['admin', 'manager', 'viewer'].includes(role);
+  return ['owner', 'admin', 'manager', 'viewer'].includes(role);
+}
+
+/**
+ * Human-readable label for a role.
+ * NOTE: We intentionally keep the internal key as `viewer` for now, but
+ * surface it as `Employee` in the UI.
+ */
+export function getRoleLabel(role: string | undefined | null): string {
+  switch (role) {
+    case ROLES.OWNER:
+      return 'Owner';
+    case ROLES.ADMIN:
+      return 'Admin';
+    case ROLES.MANAGER:
+      return 'Manager';
+    case ROLES.VIEWER:
+      return 'Employee';
+    default:
+      return 'Unknown';
+  }
+}
+
+export function isOwnerOrAdmin(role: string | undefined | null): boolean {
+  return role === ROLES.OWNER || role === ROLES.ADMIN;
+}
+
+export function isPrivilegedRole(role: string | undefined | null): boolean {
+  return role === ROLES.OWNER || role === ROLES.ADMIN;
 }
