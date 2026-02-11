@@ -7,6 +7,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { DatabaseError } from '@/lib/errors';
+import { requireCompanyAccess } from '@/lib/security/tenant-access';
 import type { Trip } from '@/types/database-helpers';
 import type { ForecastTrip, ForecastEmployee } from '@/types/forecast';
 
@@ -37,6 +38,7 @@ export async function getFutureTrips(): Promise<
   Array<ForecastTrip & { employee_name: string }>
 > {
   const supabase = await createClient();
+  const { companyId } = await requireCompanyAccess(supabase);
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -48,6 +50,7 @@ export async function getFutureTrips(): Promise<
       employee:employees!inner(name)
     `
     )
+    .eq('company_id', companyId)
     .gte('entry_date', today)
     .eq('ghosted', false)
     .order('entry_date', { ascending: true });
@@ -74,11 +77,13 @@ export async function getAllTripsForEmployee(
   employeeId: string
 ): Promise<ForecastTrip[]> {
   const supabase = await createClient();
+  const { companyId } = await requireCompanyAccess(supabase);
 
   const { data, error } = await supabase
     .from('trips')
     .select('*')
     .eq('employee_id', employeeId)
+    .eq('company_id', companyId)
     .order('entry_date', { ascending: true });
 
   if (error) {
@@ -97,11 +102,13 @@ export async function getAllTripsGroupedByEmployee(): Promise<
   Map<string, { employee: ForecastEmployee; trips: ForecastTrip[] }>
 > {
   const supabase = await createClient();
+  const { companyId } = await requireCompanyAccess(supabase);
 
   // Get all employees
   const { data: employees, error: employeesError } = await supabase
     .from('employees')
     .select('id, name')
+    .eq('company_id', companyId)
     .order('name', { ascending: true });
 
   if (employeesError) {
@@ -113,6 +120,7 @@ export async function getAllTripsGroupedByEmployee(): Promise<
   const { data: trips, error: tripsError } = await supabase
     .from('trips')
     .select('*')
+    .eq('company_id', companyId)
     .order('entry_date', { ascending: true });
 
   if (tripsError) {
@@ -149,10 +157,12 @@ export async function getAllTripsGroupedByEmployee(): Promise<
  */
 export async function getEmployeesForSelect(): Promise<ForecastEmployee[]> {
   const supabase = await createClient();
+  const { companyId } = await requireCompanyAccess(supabase);
 
   const { data, error } = await supabase
     .from('employees')
     .select('id, name')
+    .eq('company_id', companyId)
     .order('name', { ascending: true });
 
   if (error) {

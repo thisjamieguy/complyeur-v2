@@ -8,10 +8,12 @@ import type { Employee, EmployeeCreateInput, EmployeeUpdate } from '@/types/data
  */
 export async function getEmployees(): Promise<Employee[]> {
   const supabase = await createClient()
+  const { companyId } = await requireCompanyAccess(supabase)
 
   const { data, error } = await supabase
     .from('employees')
     .select('*')
+    .eq('company_id', companyId)
     .order('name', { ascending: true })
 
   if (error) {
@@ -27,11 +29,13 @@ export async function getEmployees(): Promise<Employee[]> {
  */
 export async function getEmployeeById(id: string): Promise<Employee | null> {
   const supabase = await createClient()
+  const { companyId } = await requireCompanyAccess(supabase)
 
   const { data, error } = await supabase
     .from('employees')
     .select('*')
     .eq('id', id)
+    .eq('company_id', companyId)
     .single()
 
   if (error) {
@@ -138,10 +142,12 @@ export async function deleteEmployee(id: string): Promise<void> {
  */
 export async function getEmployeeCount(): Promise<number> {
   const supabase = await createClient()
+  const { companyId } = await requireCompanyAccess(supabase)
 
   const { count, error } = await supabase
     .from('employees')
     .select('*', { count: 'exact', head: true })
+    .eq('company_id', companyId)
 
   if (error) {
     console.error('Error counting employees:', error)

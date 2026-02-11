@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/nextjs'
+
 /**
  * @fileoverview Performance instrumentation utilities for ComplyEUR.
  *
@@ -29,6 +31,23 @@ const MAX_METRICS_BUFFER = 100
 /**
  * Add a metric to the buffer (ring buffer behavior)
  */
+
+function persistMetricToSentry(metric: PerformanceMetric, reason: 'slow' | 'error' | 'budget'): void {
+  if (process.env.NODE_ENV !== 'production') {
+    return
+  }
+
+  Sentry.captureMessage(`performance:${reason}:${metric.name}`, {
+    level: reason === 'error' ? 'error' : 'warning',
+    extra: {
+      duration: metric.duration,
+      timestamp: metric.timestamp.toISOString(),
+      success: metric.success,
+      metadata: metric.metadata,
+    },
+  })
+}
+
 function addMetric(metric: PerformanceMetric): void {
   metricsBuffer.push(metric)
   if (metricsBuffer.length > MAX_METRICS_BUFFER) {
@@ -96,6 +115,7 @@ export async function withTiming<T>(
         `[SLOW] ${name}: ${duration.toFixed(2)}ms (threshold: ${threshold}ms)`,
         options?.metadata ? JSON.stringify(options.metadata) : ''
       )
+      persistMetricToSentry(metric, 'slow')
     }
 
     return result
@@ -118,6 +138,7 @@ export async function withTiming<T>(
       `[ERROR] ${name}: ${duration.toFixed(2)}ms`,
       error instanceof Error ? error.message : error
     )
+    persistMetricToSentry(metric, 'error')
     throw error
   }
 }
@@ -301,5 +322,6 @@ export function measurePayload(
     console.warn(
       `[PAYLOAD OVER BUDGET] ${name}: ${sizeKB.toFixed(1)}KB > ${budgetKB}KB budget`
     )
+    persistMetricToSentry(metric, 'budget')
   }
 }

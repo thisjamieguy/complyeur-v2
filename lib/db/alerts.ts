@@ -594,24 +594,34 @@ export async function getNotificationRecipients(
     return []
   }
 
-  // Batch fetch emails from auth.users using admin client
+  // Batch fetch emails from auth.users using admin client (paginated)
   const emailMap: Map<string, string> = new Map()
   try {
     const adminClient = createAdminClient()
-    const { data: authUsers, error: authError } = await adminClient.auth.admin.listUsers({
-      perPage: 1000, // Should be enough for most companies
-    })
+    const targetUserIds = new Set(userIds)
+    const pageSize = 1000
+    let page = 1
+    let hasMore = true
 
-    if (authError) {
-      console.error('Error fetching auth users:', authError)
-      return []
-    }
+    while (hasMore && emailMap.size < targetUserIds.size) {
+      const { data: authUsers, error: authError } = await adminClient.auth.admin.listUsers({
+        page,
+        perPage: pageSize,
+      })
 
-    // Create lookup map of user ID -> email
-    for (const user of authUsers.users) {
-      if (user.email && userIds.includes(user.id)) {
-        emailMap.set(user.id, user.email)
+      if (authError) {
+        console.error('Error fetching auth users:', authError)
+        return []
       }
+
+      for (const user of authUsers.users) {
+        if (user.email && targetUserIds.has(user.id)) {
+          emailMap.set(user.id, user.email)
+        }
+      }
+
+      hasMore = authUsers.users.length === pageSize
+      page += 1
     }
   } catch (adminError) {
     // Admin client may not be configured in all environments

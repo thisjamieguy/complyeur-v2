@@ -124,7 +124,7 @@ export async function createTrip(trip: TripCreateInput): Promise<Trip> {
   // Check for overlapping trips
   const { data: existingTrips, error: tripsError } = await supabase
     .from('trips')
-    .select('id, entry_date, exit_date')
+    .select('id, company_id, entry_date, exit_date')
     .eq('employee_id', trip.employee_id)
 
   if (tripsError) {
@@ -132,7 +132,13 @@ export async function createTrip(trip: TripCreateInput): Promise<Trip> {
     throw new DatabaseError('Failed to validate trip dates')
   }
 
-  const overlap = checkOverlap(trip.entry_date, trip.exit_date, existingTrips ?? [])
+  const relevantTrips = (existingTrips ?? []).filter((existingTrip) =>
+    (!existingTrip.company_id || existingTrip.company_id === companyId) &&
+    existingTrip.entry_date <= trip.exit_date &&
+    existingTrip.exit_date >= trip.entry_date
+  )
+
+  const overlap = checkOverlap(trip.entry_date, trip.exit_date, relevantTrips)
   if (overlap) {
     throw new ValidationError(overlap.message)
   }
@@ -199,7 +205,7 @@ export async function updateTrip(id: string, updates: TripUpdate): Promise<Trip>
     // Get other trips for this employee
     const { data: existingTrips, error: tripsError } = await supabase
       .from('trips')
-      .select('id, entry_date, exit_date')
+      .select('id, company_id, entry_date, exit_date')
       .eq('employee_id', existingTrip.employee_id)
       .neq('id', id) // Exclude the trip being updated
 
@@ -208,7 +214,13 @@ export async function updateTrip(id: string, updates: TripUpdate): Promise<Trip>
       throw new DatabaseError('Failed to validate trip dates')
     }
 
-    const overlap = checkOverlap(newEntryDate, newExitDate, existingTrips ?? [])
+    const relevantTrips = (existingTrips ?? []).filter((tripRecord) =>
+      (!tripRecord.company_id || tripRecord.company_id === companyId) &&
+      tripRecord.entry_date <= newExitDate &&
+      tripRecord.exit_date >= newEntryDate
+    )
+
+    const overlap = checkOverlap(newEntryDate, newExitDate, relevantTrips)
     if (overlap) {
       throw new ValidationError(overlap.message)
     }
@@ -380,9 +392,12 @@ export async function createBulkTrips(trips: BulkTripInput[]): Promise<BulkTripR
   }
 
   // Get existing trips for overlap checking
+  const minEntryDate = trips.reduce((min, t) => (t.entry_date < min ? t.entry_date : min), trips[0].entry_date)
+  const maxExitDate = trips.reduce((max, t) => (t.exit_date > max ? t.exit_date : max), trips[0].exit_date)
+
   const { data: existingTrips, error: tripsError } = await supabase
     .from('trips')
-    .select('id, entry_date, exit_date')
+    .select('id, company_id, entry_date, exit_date')
     .eq('employee_id', employeeId)
 
   if (tripsError) {
@@ -394,7 +409,17 @@ export async function createBulkTrips(trips: BulkTripInput[]): Promise<BulkTripR
   const validTrips: BulkTripInput[] = []
 
   // Include newly validated trips in overlap checking
-  const allTripsForOverlapCheck = [...(existingTrips ?? [])]
+  const allTripsForOverlapCheck: TripDateRange[] = (existingTrips ?? [])
+    .filter((tripRecord) =>
+      (!tripRecord.company_id || tripRecord.company_id === companyId) &&
+      tripRecord.entry_date <= maxExitDate &&
+      tripRecord.exit_date >= minEntryDate
+    )
+    .map((tripRecord) => ({
+      id: tripRecord.id,
+      entry_date: tripRecord.entry_date,
+      exit_date: tripRecord.exit_date,
+    }))
 
   for (let i = 0; i < trips.length; i++) {
     const trip = trips[i]
@@ -509,7 +534,7 @@ export async function reassignTrip(tripId: string, newEmployeeId: string): Promi
   // Check for overlapping trips with new employee
   const { data: existingTrips, error: tripsError } = await supabase
     .from('trips')
-    .select('id, entry_date, exit_date')
+    .select('id, company_id, entry_date, exit_date')
     .eq('employee_id', newEmployeeId)
     .neq('id', tripId) // Exclude the trip being moved
 
@@ -518,7 +543,13 @@ export async function reassignTrip(tripId: string, newEmployeeId: string): Promi
     throw new DatabaseError('Failed to validate trip dates')
   }
 
-  const overlap = checkOverlap(trip.entry_date, trip.exit_date, existingTrips ?? [])
+  const relevantTrips = (existingTrips ?? []).filter((existingTrip) =>
+    (!existingTrip.company_id || existingTrip.company_id === companyId) &&
+    existingTrip.entry_date <= trip.exit_date &&
+    existingTrip.exit_date >= trip.entry_date
+  )
+
+  const overlap = checkOverlap(trip.entry_date, trip.exit_date, relevantTrips)
   if (overlap) {
     throw new ValidationError('Trip would overlap with existing trips for this employee')
   }

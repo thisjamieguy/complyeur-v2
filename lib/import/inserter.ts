@@ -481,18 +481,6 @@ async function insertTrips(
     }
   }
 
-  // Get existing trips for duplicate detection
-  const { data: existingTrips } = await supabase
-    .from('trips')
-    .select('id, employee_id, entry_date, exit_date')
-    .eq('company_id', companyId);
-
-  // Build a set of existing trip keys for fast lookup
-  // Key format: "employeeId|entryDate|exitDate"
-  const existingTripKeys = new Set(
-    (existingTrips ?? []).map((t) => `${t.employee_id}|${t.entry_date}|${t.exit_date}`)
-  );
-
   // Collect warnings from validation
   for (const row of rows) {
     warnings.push(...row.warnings);
@@ -510,6 +498,7 @@ async function insertTrips(
 
   // Track trips we're adding to avoid duplicates within the same import
   const newTripKeys = new Set<string>();
+  const existingTripsByEmployee = new Map<string, Array<{ company_id: string; entry_date: string; exit_date: string }>>();
 
   for (const row of validRows) {
     if (!isParsedTripRow(row.data)) continue;
@@ -567,7 +556,40 @@ async function insertTrips(
     // Check for duplicate trip (same employee + same dates)
     const tripKey = `${employeeId}|${tripData.entry_date}|${tripData.exit_date}`;
 
-    if (existingTripKeys.has(tripKey) || newTripKeys.has(tripKey)) {
+    const isDuplicateInImport = newTripKeys.has(tripKey);
+    let isDuplicateInDatabase = false;
+
+    if (!isDuplicateInImport) {
+      let existingTripsForEmployee = existingTripsByEmployee.get(employeeId);
+
+      if (!existingTripsForEmployee) {
+        const { data: employeeTrips, error: duplicateLookupError } = await supabase
+          .from('trips')
+          .select('company_id, entry_date, exit_date')
+          .eq('employee_id', employeeId);
+
+        if (duplicateLookupError) {
+          errors.push({
+            row: row.row_number,
+            column: '',
+            value: '',
+            message: `Failed to check duplicate trip: ${duplicateLookupError.message}`,
+            severity: 'error',
+          });
+          tripsSkipped++;
+          continue;
+        }
+
+        existingTripsForEmployee = (employeeTrips ?? []).filter((existingTrip) => (!existingTrip.company_id || existingTrip.company_id === companyId));
+        existingTripsByEmployee.set(employeeId, existingTripsForEmployee);
+      }
+
+      isDuplicateInDatabase = existingTripsForEmployee.some((existingTrip) =>
+        existingTrip.entry_date === tripData.entry_date && existingTrip.exit_date === tripData.exit_date
+      );
+    }
+
+    if (isDuplicateInImport || isDuplicateInDatabase) {
       warnings.push({
         row: row.row_number,
         column: 'entry_date',
