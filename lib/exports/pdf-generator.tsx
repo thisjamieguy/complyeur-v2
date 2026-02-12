@@ -765,7 +765,7 @@ function FutureAlertsTable({ alerts }: { alerts: FutureAlertExportRow[] }) {
             style={[
               styles.tableCell,
               { width: '12%', textAlign: 'right' },
-              ...(alert.daysAfterTrip > 90 ? [{ color: COLORS.red.text }] : []),
+              ...(alert.daysAfterTrip >= 90 ? [{ color: COLORS.red.text }] : []),
             ]}
           >
             {alert.daysAfterTrip}

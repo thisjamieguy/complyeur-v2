@@ -14,7 +14,6 @@
  */
 
 import {
-  parseISO,
   differenceInDays,
   addDays,
   isBefore,
@@ -29,6 +28,7 @@ import {
   SCHENGEN_DAY_LIMIT,
   WINDOW_SIZE_DAYS,
   DEFAULT_COMPLIANCE_START_DATE,
+  parseDateOnlyAsUTC,
   validateCountry,
 } from '@/lib/compliance';
 import type { Trip as ComplianceTrip, ComplianceConfig } from '@/lib/compliance';
@@ -103,13 +103,13 @@ export function getRiskLevelForForecast(
 
 /**
  * Safely parses a date from string or Date object.
- * Always uses date-fns parseISO to avoid timezone issues.
+ * Date-only strings are parsed at UTC midnight for stable day math.
  */
 function safeParseDate(date: string | Date): Date {
   if (date instanceof Date) {
     return date;
   }
-  return parseISO(date);
+  return parseDateOnlyAsUTC(date);
 }
 
 /**
@@ -211,7 +211,7 @@ export function calculateFutureJobCompliance(
   const riskLevel = getRiskLevelForForecast(daysAfterTrip, warningThreshold);
 
   // Determine compliance
-  const isCompliant = daysAfterTrip <= limit;
+  const isCompliant = daysAfterTrip < limit;
 
   // Calculate compliant-from date if not compliant
   let compliantFromDate: Date | null = null;
@@ -259,7 +259,7 @@ export function calculateFutureJobCompliance(
  * Starting from the trip's entry date, check each subsequent day:
  * 1. Calculate days used in the 180-day window for that check date
  * 2. Add the trip duration
- * 3. If total <= limit, return that date
+ * 3. If total < limit, return that date
  * 4. Continue for up to 180 days
  *
  * @param allTrips - All trips for the employee
@@ -329,7 +329,7 @@ export function calculateCompliantFromDate(
     // Check if trip would be compliant starting on this date
     const daysAfterTrip = daysUsedBefore + tripDuration;
 
-    if (daysAfterTrip <= limit) {
+    if (daysAfterTrip < limit) {
       return checkDate;
     }
   }

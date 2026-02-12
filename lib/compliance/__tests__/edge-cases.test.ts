@@ -337,11 +337,10 @@ describe('Required Test Scenarios', () => {
     // Scenario 22: One day away
     it('22. At 90 days, returns tomorrow', () => {
       // Use dates at beginning of window so they expire quickly
-      // For ref date Jan 10, window is [Jul 14, Jan 10] (subDays(Jan 10, 179) = Jul 14)
+      // For ref date Jan 10, window is [Jul 15, Jan 10] (179 days back, inclusive)
       // Use 90 days starting Jul 15 (Jul 15 - Oct 12)
       // On Jan 10, all 90 days in window → at limit
-      // On Jan 11, window is [Jul 15, Jan 11] → still 90 days (Jul 14 was not present)
-      // On Jan 12, window is [Jul 16, Jan 12] → Jul 15 falls out → 89 days → safe
+      // On Jan 11, window is [Jul 16, Jan 11] → Jul 15 falls out → 89 days → safe
       const dates = generateDates('2025-07-15', 90); // Jul 15 - Oct 12
       const presence = new Set(dates);
       const today = new Date('2026-01-10T00:00:00.000Z');
@@ -351,18 +350,17 @@ describe('Required Test Scenarios', () => {
       });
 
       expect(result).not.toBeNull();
-      expect(result!.toISOString()).toContain('2026-01-12');
+      expect(result!.toISOString()).toContain('2026-01-11');
     });
 
     // Scenario 23: Week away
     it('23. Returns exact date when compliant (multi-day wait)', () => {
       // Use 95 days starting Jul 15 (Jul 15 - Oct 17)
-      // On Jan 10, window is [Jul 14, Jan 10], all 95 days in window
+      // On Jan 10, window is [Jul 15, Jan 10], all 95 days in window
       // Need to get down to 89 days → need 6 presence days to expire
-      // Jan 11: [Jul 15, Jan 11] → Jul 14 not present, still 95
-      // Jan 12: [Jul 16, Jan 12] → Jul 15 out → 94
+      // Jan 11: [Jul 16, Jan 11] → Jul 15 out → 94
       // ...each day one more falls out...
-      // Jan 17: [Jul 21, Jan 17] → Jul 15-20 out → 89 → safe
+      // Jan 16: [Jul 21, Jan 16] → Jul 15-20 out → 89 → safe
       const dates = generateDates('2025-07-15', 95); // Jul 15 - Oct 17
       const presence = new Set(dates);
       const today = new Date('2026-01-10T00:00:00.000Z');
@@ -372,8 +370,8 @@ describe('Required Test Scenarios', () => {
       });
 
       expect(result).not.toBeNull();
-      // Need 6 presence days to expire → safe on Jan 17
-      expect(result!.toISOString()).toContain('2026-01-17');
+      // Need 6 presence days to expire → safe on Jan 16
+      expect(result!.toISOString()).toContain('2026-01-16');
     });
 
     // Scenario 24: Extended wait

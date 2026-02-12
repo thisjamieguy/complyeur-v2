@@ -15,10 +15,10 @@
 
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { parseISO } from 'date-fns'
 import {
   calculateCompliance,
   isSchengenCountry,
+  parseDateOnlyAsUTC,
   type Trip as ComplianceTrip,
   type RiskLevel,
 } from '@/lib/compliance'
@@ -112,8 +112,8 @@ export const getEmployeesWithSnapshots = cache(
           .map((t) => ({
             id: t.id,
             country: t.country,
-            entryDate: parseISO(t.entry_date),
-            exitDate: parseISO(t.exit_date),
+            entryDate: parseDateOnlyAsUTC(t.entry_date),
+            exitDate: parseDateOnlyAsUTC(t.exit_date),
           }))
 
         const compliance = calculateCompliance(complianceTrips, {

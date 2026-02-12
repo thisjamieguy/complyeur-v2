@@ -32,7 +32,7 @@ export interface EmployeeCompliance {
   last_trip_date: string | null
   /** Total number of trips for this employee */
   total_trips: number
-  /** Whether currently compliant (days_used <= 90) */
+  /** Whether currently compliant (days_used < 90; 90 is a breach) */
   is_compliant: boolean
 }
 

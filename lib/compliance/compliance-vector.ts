@@ -8,7 +8,7 @@
  * @version 2025-01-07
  */
 
-import { addDays, subDays, isAfter, isBefore, isEqual, isValid } from 'date-fns';
+import { isAfter, isBefore, isEqual, isValid } from 'date-fns';
 import { presenceDays, normalizeToUTCDate } from './presence-calculator';
 import { daysUsedInWindow } from './window-calculator';
 import { getRiskLevel } from './risk-calculator';
@@ -19,6 +19,7 @@ import {
   WINDOW_SIZE_DAYS,
 } from './constants';
 import { InvalidReferenceDateError } from './errors';
+import { addUtcDays } from './date-utils';
 import type { Trip, ComplianceConfig, DailyCompliance, RiskThresholds } from './types';
 
 /**
@@ -92,7 +93,7 @@ export function computeComplianceVector(
   while (!isAfter(currentDate, normalizedEnd)) {
     // Calculate window boundaries for this reference date
     // Window: [refDate - 179, refDate] = 180 days inclusive of reference date
-    let windowStart = subDays(currentDate, WINDOW_SIZE_DAYS - 1);
+    let windowStart = addUtcDays(currentDate, -(WINDOW_SIZE_DAYS - 1));
     const windowEnd = currentDate;
 
     // Respect compliance start date
@@ -123,7 +124,7 @@ export function computeComplianceVector(
       riskLevel: getRiskLevel(daysRemaining, thresholds),
     });
 
-    currentDate = addDays(currentDate, 1);
+    currentDate = addUtcDays(currentDate, 1);
   }
 
   return result;
@@ -176,7 +177,7 @@ export function computeComplianceVectorOptimized(
 
   // Calculate initial count for first reference date
   // Window: [startDate - 179, startDate] = 180 days inclusive of reference date
-  let windowStartBoundary = subDays(normalizedStart, WINDOW_SIZE_DAYS - 1);
+  let windowStartBoundary = addUtcDays(normalizedStart, -(WINDOW_SIZE_DAYS - 1));
   if (isBefore(windowStartBoundary, normalizedComplianceStart)) {
     windowStartBoundary = normalizedComplianceStart;
   }
@@ -219,7 +220,7 @@ export function computeComplianceVectorOptimized(
     // - Remove the day that falls out: currentDate - 179 (old window start)
     // - Add the day that enters: nextDate (new window end)
 
-    const nextDate = addDays(currentDate, 1);
+    const nextDate = addUtcDays(currentDate, 1);
     if (isAfter(nextDate, normalizedEnd)) {
       break;
     }
@@ -227,7 +228,7 @@ export function computeComplianceVectorOptimized(
     // Day falling out: the old window start (currentDate - 179)
     // For nextDate, window starts at nextDate - 179 = currentDate - 178
     // so currentDate - 179 falls out
-    const dayFallingOut = subDays(currentDate, WINDOW_SIZE_DAYS - 1);
+    const dayFallingOut = addUtcDays(currentDate, -(WINDOW_SIZE_DAYS - 1));
     const dayFallingOutKey = dateToKey(dayFallingOut);
 
     // Only decrement if this day was actually in our count

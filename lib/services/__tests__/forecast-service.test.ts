@@ -1,4 +1,4 @@
-import { addDays, format, isBefore, parseISO } from 'date-fns';
+import { addDays, format, isBefore } from 'date-fns';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -7,12 +7,17 @@ import {
   WINDOW_SIZE_DAYS,
   daysUsedInWindow,
   isSchengenCountry,
+  parseDateOnlyAsUTC,
   presenceDays,
 } from '@/lib/compliance';
 import type { ComplianceConfig, Trip as ComplianceTrip } from '@/lib/compliance';
 import type { ForecastTrip } from '@/types/forecast';
 
-import { calculateCompliantFromDate, calculateTripDuration } from '../forecast-service';
+import {
+  calculateCompliantFromDate,
+  calculateFutureJobCompliance,
+  calculateTripDuration,
+} from '../forecast-service';
 
 function createTrip(
   trip: Pick<ForecastTrip, 'id' | 'country' | 'entryDate' | 'exitDate'> &
@@ -29,7 +34,10 @@ function createTrip(
     jobRef: null,
     isPrivate: false,
     ghosted: trip.ghosted ?? false,
-    travelDays: calculateTripDuration(parseISO(trip.entryDate), parseISO(trip.exitDate)),
+    travelDays: calculateTripDuration(
+      parseDateOnlyAsUTC(trip.entryDate),
+      parseDateOnlyAsUTC(trip.exitDate)
+    ),
   };
 }
 
@@ -43,8 +51,8 @@ function baselineCalculateCompliantFromDate(
   futureTrip: ForecastTrip,
   limit: number = SCHENGEN_DAY_LIMIT
 ): Date | null {
-  const tripEntryDate = parseISO(futureTrip.entryDate);
-  const tripExitDate = parseISO(futureTrip.exitDate);
+  const tripEntryDate = parseDateOnlyAsUTC(futureTrip.entryDate);
+  const tripExitDate = parseDateOnlyAsUTC(futureTrip.exitDate);
   const tripDuration = calculateTripDuration(tripEntryDate, tripExitDate);
 
   if (!isSchengenCountry(futureTrip.country)) {
@@ -59,8 +67,8 @@ function baselineCalculateCompliantFromDate(
 
   const complianceTrips: ComplianceTrip[] = relevantTrips.map((trip) => ({
     id: trip.id,
-    entryDate: parseISO(trip.entryDate),
-    exitDate: parseISO(trip.exitDate),
+    entryDate: parseDateOnlyAsUTC(trip.entryDate),
+    exitDate: parseDateOnlyAsUTC(trip.exitDate),
     country: trip.country,
   }));
 
@@ -85,7 +93,7 @@ function baselineCalculateCompliantFromDate(
     const daysUsedBefore = daysUsedInWindow(presence, checkDate, complianceConfig);
     const daysAfterTrip = daysUsedBefore + tripDuration;
 
-    if (daysAfterTrip <= limit) {
+    if (daysAfterTrip < limit) {
       return checkDate;
     }
   }
@@ -149,6 +157,45 @@ function generateScenario(seed: number): { allTrips: ForecastTrip[]; futureTrip:
 }
 
 describe('calculateCompliantFromDate', () => {
+  it('treats exactly 90 days after trip as non-compliant', () => {
+    const base = {
+      employeeId: 'emp-1',
+      companyId: 'co-1',
+      purpose: null,
+      jobRef: null,
+      isPrivate: false,
+      ghosted: false,
+    };
+
+    const futureTrip = createTrip({
+      id: 'future-90',
+      country: 'FR',
+      entryDate: '2026-07-01',
+      exitDate: '2026-07-01',
+      ...base,
+    });
+
+    const historicalTrip = createTrip({
+      id: 'hist-89',
+      country: 'FR',
+      entryDate: '2026-04-03',
+      exitDate: '2026-06-30',
+      ...base,
+    });
+
+    const result = calculateFutureJobCompliance(
+      futureTrip,
+      [futureTrip, historicalTrip],
+      'Test Employee'
+    );
+
+    expect(result.daysUsedBeforeTrip).toBe(89);
+    expect(result.daysAfterTrip).toBe(90);
+    expect(result.riskLevel).toBe('red');
+    expect(result.isCompliant).toBe(false);
+    expect(result.compliantFromDate).not.toBeNull();
+  });
+
   it('returns null for non-Schengen future trips', () => {
     const futureTrip = createTrip({
       id: 'future-us',

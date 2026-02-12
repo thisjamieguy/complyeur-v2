@@ -74,7 +74,7 @@ export interface ForecastResult {
   daysRemainingAfterTrip: number;
   /** Risk level based on daysAfterTrip */
   riskLevel: ForecastRiskLevel;
-  /** Whether the trip is compliant (daysAfterTrip <= 90) */
+  /** Whether the trip is compliant (daysAfterTrip < 90; 90 is a breach) */
   isCompliant: boolean;
   /** If not compliant, earliest date when trip would become compliant */
   compliantFromDate: Date | null;

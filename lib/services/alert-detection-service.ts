@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { parseISO } from 'date-fns'
 import {
   calculateCompliance,
   isSchengenCountry,
+  parseDateOnlyAsUTC,
 } from '@/lib/compliance'
 import type { Trip as ComplianceTrip } from '@/lib/compliance'
 import {
@@ -76,8 +76,8 @@ function toComplianceTrips(trips: Trip[]): ComplianceTrip[] {
     .filter(trip => !trip.ghosted && isSchengenCountry(trip.country))
     .map(trip => ({
       country: trip.country,
-      entryDate: parseISO(trip.entry_date),
-      exitDate: parseISO(trip.exit_date),
+      entryDate: parseDateOnlyAsUTC(trip.entry_date),
+      exitDate: parseDateOnlyAsUTC(trip.exit_date),
     }))
 }
 

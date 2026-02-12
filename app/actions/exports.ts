@@ -12,13 +12,14 @@
  */
 
 import { cache } from 'react'
-import { format, parseISO, subDays } from 'date-fns'
+import { format, subDays } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
 import {
   calculateCompliance,
   isSchengenCountry,
   presenceDays,
   earliestSafeEntry,
+  parseDateOnlyAsUTC,
   type Trip as ComplianceTrip,
 } from '@/lib/compliance'
 import {
@@ -142,8 +143,8 @@ export async function exportComplianceData(
     }
 
     // Calculate compliance for each employee
-    const referenceDate = parseISO(validatedOptions.dateRange.end)
-    const windowStart = parseISO(validatedOptions.dateRange.start)
+    const referenceDate = parseDateOnlyAsUTC(validatedOptions.dateRange.end)
+    const windowStart = parseDateOnlyAsUTC(validatedOptions.dateRange.start)
     const today = new Date()
 
     const exportData: EmployeeExportRow[] = employees.map((employee) => {
@@ -156,8 +157,8 @@ export async function exportComplianceData(
       const complianceTrips: ComplianceTrip[] = activeTrips.map((t) => ({
         id: t.id,
         country: t.country,
-        entryDate: parseISO(t.entry_date),
-        exitDate: parseISO(t.exit_date),
+        entryDate: parseDateOnlyAsUTC(t.entry_date),
+        exitDate: parseDateOnlyAsUTC(t.exit_date),
       }))
 
       // Calculate compliance
@@ -193,7 +194,7 @@ export async function exportComplianceData(
         status: riskLevelToStatus(compliance.riskLevel),
         daysUsed: compliance.daysUsed,
         daysRemaining: compliance.daysRemaining,
-        lastTripEnd: lastTrip ? parseISO(lastTrip.exit_date) : null,
+        lastTripEnd: lastTrip ? parseDateOnlyAsUTC(lastTrip.exit_date) : null,
         lastTripCountry: lastTrip ? getCountryName(lastTrip.country) : null,
         nextSafeEntry: nextSafe,
         totalTrips: tripsInWindow.length,
@@ -272,8 +273,8 @@ export async function exportComplianceData(
 
         const tripRows: TripExportRow[] = trips.map((t) => ({
           id: t.id,
-          entryDate: parseISO(t.entry_date),
-          exitDate: parseISO(t.exit_date),
+          entryDate: parseDateOnlyAsUTC(t.entry_date),
+          exitDate: parseDateOnlyAsUTC(t.exit_date),
           country: t.is_private ? 'Private' : getCountryName(t.country),
           days:
             Math.floor(

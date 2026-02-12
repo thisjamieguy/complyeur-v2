@@ -12,7 +12,7 @@ import { BulkAddTripsModal } from '@/components/trips/bulk-add-trips-modal'
 import { TripList } from '@/components/trips/trip-list'
 import { isSchengenCountry } from '@/lib/constants/schengen-countries'
 import { isExemptFromTracking, NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
-import { calculateCompliance, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'
+import { calculateCompliance, parseDateOnlyAsUTC, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'
 
 interface EmployeeDetailPageProps {
   params: Promise<{ id: string }>
@@ -32,8 +32,8 @@ function formatDateTime(dateString: string): string {
  */
 function toComplianceTrip(trip: { entry_date: string; exit_date: string; country: string }): ComplianceTrip {
   return {
-    entryDate: parseISO(trip.entry_date),
-    exitDate: parseISO(trip.exit_date),
+    entryDate: parseDateOnlyAsUTC(trip.entry_date),
+    exitDate: parseDateOnlyAsUTC(trip.exit_date),
     country: trip.country,
   }
 }

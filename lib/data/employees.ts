@@ -9,11 +9,11 @@
 
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { parseISO } from 'date-fns'
 import {
   calculateCompliance,
   isSchengenCountry,
   getStatusFromDaysUsed,
+  parseDateOnlyAsUTC,
   DEFAULT_STATUS_THRESHOLDS,
   type Trip as ComplianceTrip,
   type StatusThresholds,
@@ -73,8 +73,8 @@ function toComplianceTrip(trip: {
   return {
     id: trip.id,
     country: trip.country,
-    entryDate: parseISO(trip.entry_date),
-    exitDate: parseISO(trip.exit_date),
+    entryDate: parseDateOnlyAsUTC(trip.entry_date),
+    exitDate: parseDateOnlyAsUTC(trip.exit_date),
   }
 }
 

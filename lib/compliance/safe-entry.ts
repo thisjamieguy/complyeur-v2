@@ -8,11 +8,12 @@
  * @see EU Regulation 610/2013 (Schengen Borders Code)
  */
 
-import { addDays, differenceInDays, isValid } from 'date-fns';
+import { isValid } from 'date-fns';
 import { normalizeToUTCDate } from './presence-calculator';
 import { daysUsedInWindow, canSafelyEnter } from './window-calculator';
 import { SCHENGEN_DAY_LIMIT, WINDOW_SIZE_DAYS, DEFAULT_COMPLIANCE_START_DATE } from './constants';
 import { InvalidReferenceDateError } from './errors';
+import { addUtcDays, differenceInUtcDays } from './date-utils';
 import type { ComplianceConfig, SafeEntryResult } from './types';
 
 /**
@@ -60,7 +61,7 @@ export function earliestSafeEntry(
 
   // Search forward up to 180 days (after which all current days would have expired)
   for (let daysAhead = 1; daysAhead <= WINDOW_SIZE_DAYS; daysAhead++) {
-    const checkDate = addDays(normalizedToday, daysAhead);
+    const checkDate = addUtcDays(normalizedToday, daysAhead);
     const daysUsed = daysUsedInWindow(presence, checkDate, config);
 
     // Can enter if <= limit - 1 days used (leaving room for entry day)
@@ -103,7 +104,7 @@ export function daysUntilCompliant(
   }
 
   const normalizedToday = normalizeToUTCDate(today);
-  return differenceInDays(safeDate, normalizedToday);
+  return differenceInUtcDays(safeDate, normalizedToday);
 }
 
 /**
@@ -156,7 +157,7 @@ export function getSafeEntryInfo(
 
   // Find earliest safe entry date
   const safeDate = earliestSafeEntry(presence, normalizedToday, config);
-  const daysToWait = safeDate ? differenceInDays(safeDate, normalizedToday) : 0;
+  const daysToWait = safeDate ? differenceInUtcDays(safeDate, normalizedToday) : 0;
   const daysUsedOnEntry = safeDate
     ? daysUsedInWindow(presence, safeDate, config)
     : currentDaysUsed;
@@ -193,7 +194,7 @@ export function projectExpiringDays(
   let previousDaysUsed = daysUsedInWindow(presence, normalizedFrom, config);
 
   for (let i = 0; i <= days; i++) {
-    const checkDate = addDays(normalizedFrom, i);
+    const checkDate = addUtcDays(normalizedFrom, i);
     const daysUsed = daysUsedInWindow(presence, checkDate, config);
     const expiringDays = i === 0 ? 0 : Math.max(0, previousDaysUsed - daysUsed);
 

@@ -32,7 +32,13 @@ export function FormatSelector() {
 
   const handleDownloadTemplate = (e: React.MouseEvent, templateUrl: string) => {
     e.stopPropagation();
-    window.open(templateUrl, '_blank');
+    const filename = templateUrl.split('/').pop() || 'template.csv';
+    const link = document.createElement('a');
+    link.href = templateUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   };
 
   return (

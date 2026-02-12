@@ -15,7 +15,7 @@
  */
 
 import JSZip from 'jszip'
-import { format, parseISO, subDays } from 'date-fns'
+import { format, subDays } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
 import { requireAdminAccess } from '@/lib/security/authorization'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
@@ -23,6 +23,7 @@ import { logGdprAction, type DsarExportDetails } from './audit'
 import {
   calculateCompliance,
   isSchengenCountry,
+  parseDateOnlyAsUTC,
   type Trip as ComplianceTrip,
   type RiskLevel,
 } from '@/lib/compliance'
@@ -364,8 +365,8 @@ export async function generateDsarExport(
       .map((t) => ({
         id: t.id,
         country: t.country,
-        entryDate: parseISO(t.entry_date),
-        exitDate: parseISO(t.exit_date),
+        entryDate: parseDateOnlyAsUTC(t.entry_date),
+        exitDate: parseDateOnlyAsUTC(t.exit_date),
       }))
 
     const compliance = calculateCompliance(schengenTrips, {

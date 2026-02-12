@@ -10,10 +10,11 @@
  * @see EU Regulation 610/2013 (Schengen Borders Code)
  */
 
-import { subDays, isEqual, isAfter, isBefore, isValid } from 'date-fns';
+import { isEqual, isAfter, isBefore, isValid } from 'date-fns';
 import { normalizeToUTCDate } from './presence-calculator';
 import { SCHENGEN_DAY_LIMIT, WINDOW_SIZE_DAYS, DEFAULT_COMPLIANCE_START_DATE } from './constants';
 import { InvalidReferenceDateError } from './errors';
+import { addUtcDays } from './date-utils';
 import type { ComplianceConfig } from './types';
 
 /**
@@ -52,7 +53,7 @@ export function isInWindow(date: Date, refDate: Date): boolean {
   // Normalize all dates to UTC midnight for consistent comparison
   const normalizedDate = normalizeToUTCDate(date);
   const normalizedRef = normalizeToUTCDate(refDate);
-  const windowStart = normalizeToUTCDate(subDays(normalizedRef, WINDOW_SIZE_DAYS - 1)); // 179 days back
+  const windowStart = addUtcDays(normalizedRef, -(WINDOW_SIZE_DAYS - 1)); // 179 days back
   const windowEnd = normalizeToUTCDate(normalizedRef); // Today (inclusive)
 
   return (
@@ -100,7 +101,7 @@ export function daysUsedInWindow(
 
   // Calculate window boundaries (normalize to ensure consistent UTC midnight)
   // Window: [refDate - 179, refDate] = 180 days inclusive of reference date
-  let windowStart = normalizeToUTCDate(subDays(normalizedRef, WINDOW_SIZE_DAYS - 1));
+  let windowStart = addUtcDays(normalizedRef, -(WINDOW_SIZE_DAYS - 1));
   const windowEnd = normalizeToUTCDate(normalizedRef);
 
   // Don't count days before compliance tracking started
@@ -225,7 +226,7 @@ export function getWindowBounds(
   const normalizedComplianceStart = normalizeToUTCDate(complianceStartDate);
 
   // Window: [refDate - 179, refDate] = 180 days inclusive of reference date
-  let windowStart = normalizeToUTCDate(subDays(normalizedRef, WINDOW_SIZE_DAYS - 1));
+  let windowStart = addUtcDays(normalizedRef, -(WINDOW_SIZE_DAYS - 1));
   const windowEnd = normalizeToUTCDate(normalizedRef);
 
   // Respect compliance start date

@@ -112,6 +112,7 @@ export {
   dateKeysToArray,
   getPresenceBounds,
 } from './presence-calculator';
+export { parseDateOnlyAsUTC } from './date-utils';
 
 // ============================================================================
 // Window Calculation

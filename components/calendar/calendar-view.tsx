@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react'
 import {
-  parseISO,
   startOfDay,
   addDays,
   subDays,
@@ -16,6 +15,7 @@ import {
   calculateCompliance,
   isSchengenCountry,
   createComplianceCalculator,
+  parseDateOnlyAsUTC,
   type Trip as ComplianceTrip,
   type RiskLevel,
 } from '@/lib/compliance'
@@ -58,8 +58,8 @@ function toComplianceTrip(trip: DbTrip): ComplianceTrip {
   return {
     id: trip.id,
     country: trip.country,
-    entryDate: parseISO(trip.entry_date),
-    exitDate: parseISO(trip.exit_date),
+    entryDate: parseDateOnlyAsUTC(trip.entry_date),
+    exitDate: parseDateOnlyAsUTC(trip.exit_date),
   }
 }
 
@@ -85,7 +85,7 @@ function getTripRiskLevel(
   // Calculate compliance at end of this trip (memoized)
   const result = calculator(complianceTrips, {
     mode: 'audit',
-    referenceDate: parseISO(trip.exit_date),
+    referenceDate: parseDateOnlyAsUTC(trip.exit_date),
   })
 
   return result.riskLevel
@@ -136,8 +136,8 @@ export function CalendarView({ employees }: CalendarViewProps) {
 
       // Process trips that fall within the date range
       const tripsInRange = activeTrips.filter((trip) => {
-        const entryDate = parseISO(trip.entry_date)
-        const exitDate = parseISO(trip.exit_date)
+        const entryDate = parseDateOnlyAsUTC(trip.entry_date)
+        const exitDate = parseDateOnlyAsUTC(trip.exit_date)
 
         // Check if trip overlaps with our date range
         return (
@@ -149,8 +149,8 @@ export function CalendarView({ employees }: CalendarViewProps) {
 
       // Process each trip with memoized calculations
       const processedTrips: ProcessedTrip[] = tripsInRange.map((trip) => {
-        const entryDate = parseISO(trip.entry_date)
-        const exitDate = parseISO(trip.exit_date)
+        const entryDate = parseDateOnlyAsUTC(trip.entry_date)
+        const exitDate = parseDateOnlyAsUTC(trip.exit_date)
         const duration = differenceInDays(exitDate, entryDate) + 1
         const isSchengen = isSchengenCountry(trip.country)
 

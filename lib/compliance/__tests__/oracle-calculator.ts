@@ -12,7 +12,7 @@
  * @version 2025-01-07
  */
 
-import { addDays, subDays, isBefore, isAfter, isEqual, differenceInDays } from 'date-fns';
+import { isBefore, isAfter, isEqual } from 'date-fns';
 
 // ============================================================================
 // Types (minimal, self-contained)
@@ -71,6 +71,13 @@ function normalizeDate(date: Date): Date {
     date.getUTCMonth(),
     date.getUTCDate()
   ));
+}
+
+/**
+ * Adds whole days using UTC calendar arithmetic (DST-safe).
+ */
+function addUtcDays(date: Date, days: number): Date {
+  return new Date(normalizeDate(date).getTime() + days * 24 * 60 * 60 * 1000);
 }
 
 /**
@@ -181,7 +188,7 @@ export function oracleDaysUsedInWindow(
   const normalizedComplianceStart = normalizeDate(complianceStart);
 
   // Window boundaries: [refDate - 179, refDate] = 180 days inclusive
-  let windowStart = subDays(normalizedRef, WINDOW_SIZE - 1);
+  let windowStart = addUtcDays(normalizedRef, -(WINDOW_SIZE - 1));
   const windowEnd = normalizedRef;
 
   // Respect compliance start
@@ -247,7 +254,7 @@ export function oracleEarliestSafeEntry(
 
   // Search forward
   for (let daysAhead = 1; daysAhead <= WINDOW_SIZE; daysAhead++) {
-    const checkDate = addDays(normalizedToday, daysAhead);
+    const checkDate = addUtcDays(normalizedToday, daysAhead);
     const used = oracleDaysUsedInWindow(presence, checkDate, config);
     if (used <= limit - 1) {
       return checkDate;
