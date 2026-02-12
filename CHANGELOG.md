@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(changelog): capture latest commit metadata [`44c1367`](https://github.com/thisjamieguy/complyeur-v2/commit/44c1367bc421b1c405822ecc39ce30c176179a58)
 - chore(changelog): update unreleased commit list [`1e86aa6`](https://github.com/thisjamieguy/complyeur-v2/commit/1e86aa62e715c94f7be5f45ec038053895f9981d)
 - chore: checkpoint current workspace changes [`78b389e`](https://github.com/thisjamieguy/complyeur-v2/commit/78b389ec6e69f4278f0103c0f102cb34ad2458a2)
 - feat(billing): connect pricing page to Stripe checkout [`cbdc75e`](https://github.com/thisjamieguy/complyeur-v2/commit/cbdc75e13db99cbf62c86b12ffa235dc9120eccb)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Merge pull request #9 from thisjamieguy/claude/security-audit-complyeur-3Qgjh [`8278a81`](https://github.com/thisjamieguy/complyeur-v2/commit/8278a81b52b765538db9201b458dd3cfee87f8e7)
 - docs(security): add comprehensive pre-launch security audit report [`5afcb50`](https://github.com/thisjamieguy/complyeur-v2/commit/5afcb504094d1562f88bfd3d6ab9010a064043fc)
 - chore(changelog): finalize changelog after commit split [`5c3b758`](https://github.com/thisjamieguy/complyeur-v2/commit/5c3b758f0b0032fbefaa774502369c7847c2eaf0)
-- chore(changelog): update unreleased commit history [`0aee3d8`](https://github.com/thisjamieguy/complyeur-v2/commit/0aee3d829dd61baa6050ab6ccb918db15e5d7766)
 
 ## v1.0.0 - 2026-01-22
 
