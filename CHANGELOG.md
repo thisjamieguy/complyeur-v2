@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(changelog): finalize unreleased changelog sync [`34bf7cb`](https://github.com/thisjamieguy/complyeur-v2/commit/34bf7cbda0bd89c115216066e3b68e2429a91104)
 - chore(changelog): sync unreleased entries [`70f5076`](https://github.com/thisjamieguy/complyeur-v2/commit/70f5076fc0999f17cba7f7d37618cf3b5b7150ae)
 - fix: unify UTC 90/180 calculations across app [`77f6a29`](https://github.com/thisjamieguy/complyeur-v2/commit/77f6a29f571d6cbb6514fa1ada599f20feb4bec3)
 - feat: add compliance improvements, forecast service enhancements, and test coverage [`360ffc7`](https://github.com/thisjamieguy/complyeur-v2/commit/360ffc7352e4dec6b3ad090cc76d6db639637ba8)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - style(import): reduce non-schengen advisory dialog size [`1279bbd`](https://github.com/thisjamieguy/complyeur-v2/commit/1279bbdbf434b63e04f1f16b85a0c568b3faf27a)
 - fix(import): keep hook order stable on preview page [`e7dee06`](https://github.com/thisjamieguy/complyeur-v2/commit/e7dee060dc5172530938baab4cf0dc3edd764610)
 - chore: checkpoint import workflow changes before hook bugfix [`f87be86`](https://github.com/thisjamieguy/complyeur-v2/commit/f87be8620e4f4f65f6b795d9a3ca6e40a9586b92)
-- fix: resolve missing waitlist action imports in design variants [`aed2d5d`](https://github.com/thisjamieguy/complyeur-v2/commit/aed2d5dff4ec45bcaad9c91a5f8ae30fd3173c4b)
 
 ## v1.0.0 - 2026-01-22
 
