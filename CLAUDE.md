@@ -167,21 +167,22 @@ TypeScript significantly improves AI tool accuracy (Cursor, Claude Code).
 ## Supabase Specifics
 
 ### Row Level Security (MANDATORY)
-**Every table must have RLS enabled.** No exceptions.
+**Every table must have RLS enabled.** No exceptions. An `rls_auto_enable()` event trigger enforces this on new tables.
 ```sql
 -- Enable RLS
 ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
 
 -- Example policy: users see only their company's data
+-- Uses get_current_user_company_id() for performance (cached per-statement)
 CREATE POLICY "Users see own employees"
   ON employees FOR SELECT
-  USING (company_id = auth.uid());
+  USING (company_id = (SELECT get_current_user_company_id()));
 ```
 
 ### Keys & Security
 - **anon key:** Safe to use in frontend
 - **service_role key:** NEVER expose in frontend — server/Edge Functions only
-- Generate types after schema changes: `npx supabase gen types typescript --project-id YOUR_ID > src/types/supabase.ts`
+- Generate types after schema changes: `npx supabase gen types typescript --project-id YOUR_ID > types/database.ts`
 
 ### Auth Patterns
 - Use Supabase Auth for all authentication
@@ -236,9 +237,13 @@ CREATE POLICY "Users see own employees"
 ### Database Schema (Simplified)
 ```
 companies (id, name, email, stripe_customer_id, created_at)
-employees (id, company_id, name, passport_number, nationality, created_at)
-trips (id, employee_id, company_id, start_date, end_date, destination, created_at)
+employees (id, company_id, name, nationality_type, created_at)
+trips (id, employee_id, company_id, entry_date, exit_date, country, travel_days, created_at)
 ```
+
+- `employees.nationality_type`: required — `'uk_citizen'`, `'eu_schengen_citizen'`, or `'rest_of_world'` (used for 90/180 exemptions)
+- `trips.travel_days`: computed column (`exit_date - entry_date + 1`, PostgreSQL GENERATED ALWAYS AS STORED)
+- `trips.country`: 2-character ISO code (CHECK constraint)
 
 ---
 
@@ -275,23 +280,59 @@ When adding new third-party services, update CSP headers:
 ## File Structure
 ```
 /app                 → Next.js App Router pages
-  /dashboard         → Protected dashboard routes
-  /auth              → Auth pages (login, signup)
-  /(public)          → Public marketing pages
-  /actions           → Server actions
-  /api               → API routes
-/components          → Reusable UI components
-  /ui                → Base components (Button, Input, Card)
+  /(auth)            → Login, signup, password reset (public)
+  /(dashboard)       → Protected app pages (requires auth)
+    /dashboard       → Main compliance dashboard
+    /employee        → Employee CRUD (singular, has [id]/ dynamic route)
+    /import          → Excel/CSV bulk import
+    /settings        → Company settings (import-history/, mappings/, team/)
+    /calendar        → Calendar view of travel
+    /exports         → Data export features
+    /gdpr            → GDPR data management
+    /trip-forecast   → Trip forecasting tools
+    /actions.ts      → Shared server actions for dashboard
+  /(public)          → Public marketing pages (about, pricing, faq, etc.)
+  /admin             → Admin panel (companies, tiers, activity)
+  /auth              → OAuth callback handler
+  /mfa               → Multi-factor authentication flows
+  /actions           → Top-level server actions
+  /api               → API routes (minimal — health, billing, GDPR)
+/components          → Organized by FEATURE FOLDER
+  /ui                → Shadcn/UI primitives (DO NOT edit directly)
+  /dashboard         → Dashboard widgets and cards
+  /employees         → Employee CRUD components
+  /trips             → Trip CRUD components
+  /import            → Import feature components
+  /settings          → Settings page components
   /forms             → Form components
-  /layout            → Layout components (Header, Sidebar)
+  /layout            → Layout components (header, sidebar)
+  /navigation        → Nav components
+  /admin, /alerts, /calendar, /exports, /feedback,
+  /forecasting, /gdpr, /marketing, /mfa → Feature components
 /hooks               → Custom React hooks
-/lib                 → Utilities
-  /supabase          → Supabase client and queries
-  /utils             → Helper functions
+/contexts            → React Context providers
+/lib                 → Utilities and business logic
+  /supabase          → Supabase clients (client.ts, server.ts, admin.ts)
+  /db                → Database query layer (one file per entity)
+  /compliance        → 90/180-day calculation engine
+  /validations       → Zod schemas (trip, employee, etc.)
+  /errors            → Custom error classes (AuthError, ValidationError, etc.)
+  /services          → Business logic services (alert detection, etc.)
+  /security          → Security helpers (MFA enforcement, etc.)
+  /billing           → Stripe billing integration
+  /constants         → App-wide constants (schengen-countries, etc.)
+  /import            → Import parsing, validation, insertion logic
+  /gdpr              → GDPR compliance utilities
+  /permissions.ts    → Role-based permission system
+  /rate-limit.ts     → Server action rate limiting
 /types               → TypeScript interfaces and generated Supabase types
+/__tests__           → Unit and integration tests
+/e2e                 → Playwright end-to-end tests
+/scripts             → Build and utility scripts
 /supabase
   /migrations        → Database migrations
   config.toml        → Local Supabase configuration
+/memory              → AI context files (ARCHITECTURE.md, CONVENTIONS.md)
 ```
 
 ---

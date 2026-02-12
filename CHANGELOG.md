@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(changelog): sync unreleased entries [`58d7263`](https://github.com/thisjamieguy/complyeur-v2/commit/58d726371b29f62d983d525d4a0072a4aebb5bf3)
 - docs: update memory files to match actual codebase [`082f719`](https://github.com/thisjamieguy/complyeur-v2/commit/082f71944b12c2c717b4269091f13535d7fe26e8)
 - chore(changelog): settle auto-changelog entries [`cf52edd`](https://github.com/thisjamieguy/complyeur-v2/commit/cf52edddd12619ffeddfb7e38860b1a024841357)
 - chore(changelog): finalize unreleased changelog sync [`34bf7cb`](https://github.com/thisjamieguy/complyeur-v2/commit/34bf7cbda0bd89c115216066e3b68e2429a91104)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): add recent commit entry for changelog update [`79308d4`](https://github.com/thisjamieguy/complyeur-v2/commit/79308d4e60c4198c8a7540bee63aedff756027ab)
 - chore(changelog): update changelog with recent commit entries [`08274fb`](https://github.com/thisjamieguy/complyeur-v2/commit/08274fbb6ad8b9f55af753f8308dd22a640dc13f)
 - chore(changelog): update changelog with recent commit entries [`242eaae`](https://github.com/thisjamieguy/complyeur-v2/commit/242eaae22b584053498c0db9cff11608fa817a83)
-- style(import): reduce non-schengen advisory dialog size [`1279bbd`](https://github.com/thisjamieguy/complyeur-v2/commit/1279bbdbf434b63e04f1f16b85a0c568b3faf27a)
 
 ## v1.0.0 - 2026-01-22
 
