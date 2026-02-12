@@ -1,9 +1,10 @@
 'use client'
 
 import * as React from 'react'
-import { format, subDays, startOfQuarter, subQuarters, startOfYear } from 'date-fns'
+import { format, startOfQuarter, subQuarters, startOfYear } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
 import type { DateRange } from 'react-day-picker'
+import { addUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -36,39 +37,47 @@ export function DateRangePicker({
   const [preset, setPreset] = React.useState<string>('180')
   const [showCustom, setShowCustom] = React.useState(false)
 
+  const getLastNDaysRange = React.useCallback((days: number) => {
+    const today = toUTCMidnight(new Date())
+    return {
+      from: addUtcDays(today, -(days - 1)),
+      to: today,
+    }
+  }, [])
+
   // Calculate date range from preset
   const applyPreset = React.useCallback(
     (presetValue: string) => {
-      const today = new Date()
+      const today = toUTCMidnight(new Date())
       let from: Date
       let to: Date = today
 
       switch (presetValue) {
         case '30':
-          from = subDays(today, 30)
+          from = addUtcDays(today, -29)
           break
         case '90':
-          from = subDays(today, 90)
+          from = addUtcDays(today, -89)
           break
         case '180':
-          from = subDays(today, 180)
+          from = addUtcDays(today, -179)
           break
         case 'quarter':
-          from = startOfQuarter(today)
+          from = toUTCMidnight(startOfQuarter(today))
           break
         case 'last-quarter':
           const lastQ = subQuarters(today, 1)
-          from = startOfQuarter(lastQ)
-          to = subDays(startOfQuarter(today), 1)
+          from = toUTCMidnight(startOfQuarter(lastQ))
+          to = addUtcDays(toUTCMidnight(startOfQuarter(today)), -1)
           break
         case 'ytd':
-          from = startOfYear(today)
+          from = toUTCMidnight(startOfYear(today))
           break
         case 'custom':
           setShowCustom(true)
           return
         default:
-          from = subDays(today, 180)
+          from = addUtcDays(today, -179)
       }
 
       setShowCustom(false)
@@ -150,7 +159,10 @@ export function DateRangePicker({
                 mode="single"
                 selected={value?.to}
                 onSelect={(date) =>
-                  onChange({ from: value?.from || subDays(new Date(), 180), to: date })
+                  onChange({
+                    from: value?.from || getLastNDaysRange(180).from,
+                    to: date,
+                  })
                 }
                 initialFocus
               />

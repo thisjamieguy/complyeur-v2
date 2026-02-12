@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: add compliance improvements, forecast service enhancements, and test coverage [`360ffc7`](https://github.com/thisjamieguy/complyeur-v2/commit/360ffc7352e4dec6b3ad090cc76d6db639637ba8)
 - chore(changelog): add recent commit entry for changelog update [`79308d4`](https://github.com/thisjamieguy/complyeur-v2/commit/79308d4e60c4198c8a7540bee63aedff756027ab)
 - chore(changelog): update changelog with recent commit entries [`08274fb`](https://github.com/thisjamieguy/complyeur-v2/commit/08274fbb6ad8b9f55af753f8308dd22a640dc13f)
 - chore(changelog): update changelog with recent commit entries [`242eaae`](https://github.com/thisjamieguy/complyeur-v2/commit/242eaae22b584053498c0db9cff11608fa817a83)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: resolve missing waitlist action imports in design variants [`aed2d5d`](https://github.com/thisjamieguy/complyeur-v2/commit/aed2d5dff4ec45bcaad9c91a5f8ae30fd3173c4b)
 - chore(changelog): finalize unreleased changelog sync [`bd668ac`](https://github.com/thisjamieguy/complyeur-v2/commit/bd668acebffe0a64b7c4f3f619b48f23caf070d2)
 - chore(changelog): sync unreleased entries [`772ae6c`](https://github.com/thisjamieguy/complyeur-v2/commit/772ae6c459def81e47a491b8da3087c2ad8d7515)
-- feat: encrypt waitlist emails and refresh landing content [`0c209ae`](https://github.com/thisjamieguy/complyeur-v2/commit/0c209ae12fac55b730a622729dd814745b620c43)
 
 ## v1.0.0 - 2026-01-22
 

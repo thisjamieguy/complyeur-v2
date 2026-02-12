@@ -164,8 +164,7 @@ export function presenceDays(
     let effectiveEnd = normalizedExit;
     // In audit mode, clip active/spanning trips to the reference date.
     // This counts presence "as of" the reference date, including that day itself.
-    // Note: The window calculation excludes the reference date, so these days
-    // contribute to historical presence but not to today's own window.
+    // Note: The rolling window includes the reference date itself.
     if (config.mode === 'audit' && isAfter(normalizedExit, referenceDate)) {
       // Clip to reference date - but only for the day generation
       // We count up to and including the reference date

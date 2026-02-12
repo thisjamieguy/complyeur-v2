@@ -27,6 +27,7 @@ import {
   isSchengenCountry,
   isNonSchengenEU,
 } from '@/lib/constants/schengen-countries'
+import { getWindowBounds, parseDateOnlyAsUTC } from '@/lib/compliance'
 import type { Trip, Employee } from '@/types/database-helpers'
 
 interface TripListProps {
@@ -50,11 +51,11 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
 
   const filteredTrips = useMemo(() => {
     if (tripFilter === 'all') return trips
-    const today = new Date()
-    const cutoff = new Date(today)
-    cutoff.setDate(cutoff.getDate() - 180)
+    const { windowStart, windowEnd } = getWindowBounds(new Date())
     return trips.filter(
-      (trip) => new Date(trip.exit_date) >= cutoff && new Date(trip.entry_date) <= today
+      (trip) =>
+        parseDateOnlyAsUTC(trip.exit_date) >= windowStart &&
+        parseDateOnlyAsUTC(trip.entry_date) <= windowEnd
     )
   }, [trips, tripFilter])
 

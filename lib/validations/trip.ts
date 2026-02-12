@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { validateCountry, COUNTRY_NAMES } from '@/lib/constants/schengen-countries'
+import { differenceInUtcDays, parseDateOnlyAsUTC } from '@/lib/compliance/date-utils'
 import {
   isValidISODate,
   isDateTooFarInPast,
@@ -55,7 +56,7 @@ export const tripSchema = z
   // Validate entry date is not too far in the past (180 days max)
   .refine(
     (data) => {
-      const entry = new Date(data.entry_date)
+      const entry = parseDateOnlyAsUTC(data.entry_date)
       return !isDateTooFarInPast(entry, 180)
     },
     {
@@ -66,7 +67,7 @@ export const tripSchema = z
   // Validate exit date is not too far in the future (30 days max)
   .refine(
     (data) => {
-      const exit = new Date(data.exit_date)
+      const exit = parseDateOnlyAsUTC(data.exit_date)
       return !isDateTooFarInFuture(exit, 30)
     },
     {
@@ -77,8 +78,8 @@ export const tripSchema = z
   // Validate exit date is on or after entry date
   .refine(
     (data) => {
-      const entry = new Date(data.entry_date)
-      const exit = new Date(data.exit_date)
+      const entry = parseDateOnlyAsUTC(data.entry_date)
+      const exit = parseDateOnlyAsUTC(data.exit_date)
       return exit >= entry
     },
     {
@@ -89,8 +90,8 @@ export const tripSchema = z
   // Validate trip duration does not exceed 180 days
   .refine(
     (data) => {
-      const entry = new Date(data.entry_date)
-      const exit = new Date(data.exit_date)
+      const entry = parseDateOnlyAsUTC(data.entry_date)
+      const exit = parseDateOnlyAsUTC(data.exit_date)
       const duration = getTripDurationDays(entry, exit)
       return duration <= 180
     },
@@ -140,8 +141,8 @@ export const tripUpdateSchema = z
   .refine(
     (data) => {
       if (data.entry_date && data.exit_date) {
-        const entry = new Date(data.entry_date)
-        const exit = new Date(data.exit_date)
+        const entry = parseDateOnlyAsUTC(data.entry_date)
+        const exit = parseDateOnlyAsUTC(data.exit_date)
         return exit >= entry
       }
       return true
@@ -154,8 +155,8 @@ export const tripUpdateSchema = z
   .refine(
     (data) => {
       if (data.entry_date && data.exit_date) {
-        const entry = new Date(data.entry_date)
-        const exit = new Date(data.exit_date)
+        const entry = parseDateOnlyAsUTC(data.entry_date)
+        const exit = parseDateOnlyAsUTC(data.exit_date)
         const duration = getTripDurationDays(entry, exit)
         return duration <= 180
       }
@@ -198,8 +199,8 @@ export function checkTripOverlap(
   existingTrips: Trip[],
   excludeTripId?: string
 ): OverlapResult {
-  const newEntry = new Date(newEntryDate)
-  const newExit = new Date(newExitDate)
+  const newEntry = parseDateOnlyAsUTC(newEntryDate)
+  const newExit = parseDateOnlyAsUTC(newExitDate)
 
   const overlappingTrip = existingTrips.find((trip) => {
     // Skip the trip being edited
@@ -207,8 +208,8 @@ export function checkTripOverlap(
       return false
     }
 
-    const tripStart = new Date(trip.entry_date)
-    const tripEnd = new Date(trip.exit_date)
+    const tripStart = parseDateOnlyAsUTC(trip.entry_date)
+    const tripEnd = parseDateOnlyAsUTC(trip.exit_date)
 
     // Overlap exists if: newEntry <= tripEnd AND newExit >= tripStart
     return newEntry <= tripEnd && newExit >= tripStart
@@ -235,10 +236,9 @@ export function checkTripOverlap(
  * Calculate travel days (inclusive of both entry and exit dates)
  */
 export function calculateTravelDays(entryDate: string, exitDate: string): number {
-  const entry = new Date(entryDate)
-  const exit = new Date(exitDate)
-  const diffTime = Math.abs(exit.getTime() - entry.getTime())
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const entry = parseDateOnlyAsUTC(entryDate)
+  const exit = parseDateOnlyAsUTC(exitDate)
+  const diffDays = Math.abs(differenceInUtcDays(exit, entry))
   return diffDays + 1 // Add 1 because both dates count
 }
 

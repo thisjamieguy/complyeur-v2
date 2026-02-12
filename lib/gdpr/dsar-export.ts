@@ -15,18 +15,20 @@
  */
 
 import JSZip from 'jszip'
-import { format, subDays } from 'date-fns'
+import { format } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
 import { requireAdminAccess } from '@/lib/security/authorization'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import { logGdprAction, type DsarExportDetails } from './audit'
 import {
   calculateCompliance,
+  getWindowBounds,
   isSchengenCountry,
   parseDateOnlyAsUTC,
   type Trip as ComplianceTrip,
   type RiskLevel,
 } from '@/lib/compliance'
+import { toUTCMidnight } from '@/lib/compliance/date-utils'
 import { getCountryName } from '@/lib/constants/schengen-countries'
 
 /**
@@ -359,7 +361,7 @@ export async function generateDsarExport(
     }))
 
     // Calculate current compliance snapshot
-    const now = new Date()
+    const now = toUTCMidnight(new Date())
     const schengenTrips: ComplianceTrip[] = tripList
       .filter((t) => !t.ghosted && isSchengenCountry(t.country))
       .map((t) => ({
@@ -374,18 +376,17 @@ export async function generateDsarExport(
       referenceDate: now,
     })
 
-    // Calculate 180-day window for compliance
-    const windowEnd = now
-    const windowStart = subDays(now, 179) // 180 days including reference date
+    // Calculate 180-day window for compliance using the core engine logic.
+    const { windowStart, windowEnd } = getWindowBounds(now)
 
     const complianceSnapshot: ComplianceSnapshot = {
       calculated_at: now.toISOString(),
-      reference_date: format(now, 'yyyy-MM-dd'),
+      reference_date: now.toISOString().slice(0, 10),
       days_used: compliance.daysUsed,
       days_remaining: compliance.daysRemaining,
       risk_level: compliance.riskLevel,
-      window_start: format(windowStart, 'yyyy-MM-dd'),
-      window_end: format(windowEnd, 'yyyy-MM-dd'),
+      window_start: windowStart.toISOString().slice(0, 10),
+      window_end: windowEnd.toISOString().slice(0, 10),
     }
 
     // Find date range of trips

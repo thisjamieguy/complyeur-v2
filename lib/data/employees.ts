@@ -18,6 +18,7 @@ import {
   type Trip as ComplianceTrip,
   type StatusThresholds,
 } from '@/lib/compliance'
+import { toUTCMidnight } from '@/lib/compliance/date-utils'
 import { withDbTiming } from '@/lib/performance'
 import { isExemptFromTracking, type NationalityType } from '@/lib/constants/nationality-types'
 import type { EmployeeCompliance, ComplianceStats } from '@/types/dashboard'
@@ -133,7 +134,7 @@ export const getEmployeeComplianceData = cache(async (
     return []
   }
 
-  const today = new Date()
+  const today = toUTCMidnight(new Date())
   const thresholds = statusThresholds ?? DEFAULT_STATUS_THRESHOLDS
 
   return employees.map((employee) => {
@@ -201,7 +202,7 @@ export async function getEmployeeComplianceDataPaginated(
 ): Promise<PaginatedEmployeeResult> {
   const { page = 1, pageSize = 25, search } = params
   const thresholds = statusThresholds ?? DEFAULT_STATUS_THRESHOLDS
-  const today = new Date()
+  const today = toUTCMidnight(new Date())
 
   return withDbTiming('getEmployeeComplianceDataPaginated', async () => {
     const supabase = await createClient()
@@ -318,7 +319,7 @@ export const getEmployeeStats = cache(async (
   return withDbTiming('getEmployeeStats', async () => {
     const supabase = await createClient()
     const thresholds = statusThresholds ?? DEFAULT_STATUS_THRESHOLDS
-    const today = new Date()
+    const today = toUTCMidnight(new Date())
 
     // Fetch all employees to calculate stats (this is still needed for accurate stats)
     let query = supabase

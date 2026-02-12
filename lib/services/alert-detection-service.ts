@@ -4,6 +4,7 @@ import {
   isSchengenCountry,
   parseDateOnlyAsUTC,
 } from '@/lib/compliance'
+import { toUTCMidnight } from '@/lib/compliance/date-utils'
 import type { Trip as ComplianceTrip } from '@/lib/compliance'
 import {
   createAlert,
@@ -223,7 +224,7 @@ export async function detectAndProcessAlerts(
   const complianceTrips = toComplianceTrips(trips ?? [])
   const result = calculateCompliance(complianceTrips, {
     mode: 'audit',
-    referenceDate: new Date(),
+    referenceDate: toUTCMidnight(new Date()),
   })
 
   const { daysUsed, daysRemaining } = result

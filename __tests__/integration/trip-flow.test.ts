@@ -281,11 +281,11 @@ describe('Trip management flow', () => {
       // Trip: Oct 12-31 (20 days)
       const trips = [createTrip({ entryDate: '2025-10-12', exitDate: '2025-10-31' })];
 
-      // On Apr 15: window is [Oct 17, Apr 14]
-      // Oct 12-16 (5 days) have fallen out, Oct 17-31 (15 days) remain
+      // On Apr 15: window is [Oct 18, Apr 15] (180 days inclusive)
+      // Oct 12-17 (6 days) have fallen out, Oct 18-31 (14 days) remain
       const apr15Config = createConfig({ referenceDate: '2026-04-15' });
       const apr15Result = calculateCompliance(trips, apr15Config);
-      expect(apr15Result.daysUsed).toBe(15);
+      expect(apr15Result.daysUsed).toBe(14);
     });
   });
 });

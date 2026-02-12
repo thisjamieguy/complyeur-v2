@@ -2,6 +2,13 @@
  * Date validation helpers for trip and compliance calculations
  */
 
+import {
+  addUtcDays,
+  differenceInUtcDays,
+  parseDateOnlyAsUTC,
+  toUTCMidnight,
+} from '@/lib/compliance/date-utils'
+
 /**
  * Check if a date range is valid (end >= start)
  */
@@ -16,13 +23,9 @@ export function isValidDateRange(start: Date, end: Date): boolean {
  * @returns true if the date is too far in the past
  */
 export function isDateTooFarInPast(date: Date, maxDaysBack: number = 180): boolean {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const threshold = new Date(today)
-  threshold.setDate(threshold.getDate() - maxDaysBack)
-
-  return date < threshold
+  const today = toUTCMidnight(new Date())
+  const threshold = addUtcDays(today, -maxDaysBack)
+  return toUTCMidnight(date) < threshold
 }
 
 /**
@@ -32,13 +35,9 @@ export function isDateTooFarInPast(date: Date, maxDaysBack: number = 180): boole
  * @returns true if the date is too far in the future
  */
 export function isDateTooFarInFuture(date: Date, maxDaysForward: number = 30): boolean {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const threshold = new Date(today)
-  threshold.setDate(threshold.getDate() + maxDaysForward)
-
-  return date > threshold
+  const today = toUTCMidnight(new Date())
+  const threshold = addUtcDays(today, maxDaysForward)
+  return toUTCMidnight(date) > threshold
 }
 
 /**
@@ -46,17 +45,8 @@ export function isDateTooFarInFuture(date: Date, maxDaysForward: number = 30): b
  * Entry and exit dates both count as presence days per Schengen rules
  */
 export function getTripDurationDays(start: Date, end: Date): number {
-  const startDate = new Date(start)
-  startDate.setHours(0, 0, 0, 0)
-
-  const endDate = new Date(end)
-  endDate.setHours(0, 0, 0, 0)
-
-  const diffTime = endDate.getTime() - startDate.getTime()
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
   // Both entry and exit days count (inclusive)
-  return diffDays + 1
+  return differenceInUtcDays(end, start) + 1
 }
 
 /**
@@ -66,7 +56,7 @@ export function getTripDurationDays(start: Date, end: Date): number {
 export function parseDate(dateString: string): Date | null {
   if (!dateString) return null
 
-  const date = new Date(dateString)
+  const date = parseDateOnlyAsUTC(dateString)
   if (isNaN(date.getTime())) return null
 
   return date
@@ -76,11 +66,12 @@ export function parseDate(dateString: string): Date | null {
  * Format a date for display (e.g., "15 Jan 2025")
  */
 export function formatDateForDisplay(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date
+  const d = typeof date === 'string' ? parseDateOnlyAsUTC(date) : date
   return d.toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+    timeZone: 'UTC',
   })
 }
 
@@ -121,15 +112,15 @@ export function isValidISODate(dateString: string): boolean {
   if (!dateRegex.test(dateString)) return false
 
   // Check it parses to a valid date
-  const date = new Date(dateString)
+  const date = parseDateOnlyAsUTC(dateString)
   if (isNaN(date.getTime())) return false
 
   // Ensure the date string matches what we get when converting back
   // This catches things like 2025-02-31 which would become 2025-03-03
   const [year, month, day] = dateString.split('-').map(Number)
   return (
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
   )
 }

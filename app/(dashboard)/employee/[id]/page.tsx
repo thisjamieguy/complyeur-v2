@@ -13,6 +13,7 @@ import { TripList } from '@/components/trips/trip-list'
 import { isSchengenCountry } from '@/lib/constants/schengen-countries'
 import { isExemptFromTracking, NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
 import { calculateCompliance, parseDateOnlyAsUTC, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'
+import { toUTCMidnight } from '@/lib/compliance/date-utils'
 
 interface EmployeeDetailPageProps {
   params: Promise<{ id: string }>
@@ -28,7 +29,7 @@ function formatDateTime(dateString: string): string {
 
 /**
  * Convert database trip to compliance engine format
- * Uses parseISO from date-fns to avoid timezone issues
+ * Uses UTC date-only parsing to avoid timezone drift
  */
 function toComplianceTrip(trip: { entry_date: string; exit_date: string; country: string }): ComplianceTrip {
   return {
@@ -109,7 +110,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
   const complianceResult = !exempt && schengenTrips.length > 0
     ? calculateCompliance(complianceTrips, {
         mode: 'audit',
-        referenceDate: new Date(),
+        referenceDate: toUTCMidnight(new Date()),
       })
     : null
 

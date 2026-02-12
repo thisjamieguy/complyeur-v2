@@ -12,7 +12,7 @@
  */
 
 import { cache } from 'react'
-import { format, subDays } from 'date-fns'
+import { format } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
 import {
   calculateCompliance,
@@ -22,6 +22,7 @@ import {
   parseDateOnlyAsUTC,
   type Trip as ComplianceTrip,
 } from '@/lib/compliance'
+import { differenceInUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 import {
   generateComplianceCsv,
   getComplianceCsvFilename,
@@ -184,8 +185,8 @@ export async function exportComplianceData(
       // Count trips in window
       const tripsInWindow = activeTrips.filter(
         (t) =>
-          new Date(t.exit_date) >= windowStart &&
-          new Date(t.entry_date) <= referenceDate
+          parseDateOnlyAsUTC(t.exit_date) >= windowStart &&
+          parseDateOnlyAsUTC(t.entry_date) <= referenceDate
       )
 
       return {
@@ -263,8 +264,8 @@ export async function exportComplianceData(
           .filter((t) => !t.ghosted)
           .filter(
             (t) =>
-              new Date(t.exit_date) >= windowStart &&
-              new Date(t.entry_date) <= referenceDate
+              parseDateOnlyAsUTC(t.exit_date) >= windowStart &&
+              parseDateOnlyAsUTC(t.entry_date) <= referenceDate
           )
           .sort(
             (a, b) =>
@@ -277,10 +278,9 @@ export async function exportComplianceData(
           exitDate: parseDateOnlyAsUTC(t.exit_date),
           country: t.is_private ? 'Private' : getCountryName(t.country),
           days:
-            Math.floor(
-              (new Date(t.exit_date).getTime() -
-                new Date(t.entry_date).getTime()) /
-                (1000 * 60 * 60 * 24)
+            differenceInUtcDays(
+              parseDateOnlyAsUTC(t.exit_date),
+              parseDateOnlyAsUTC(t.entry_date)
             ) + 1,
           purpose: t.purpose,
           isPrivate: t.is_private ?? false,
@@ -441,8 +441,7 @@ async function exportFutureAlerts(
     }
 
     // Calculate forecasts for all future trips
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = toUTCMidnight(new Date())
 
     const allAlerts: FutureAlertExportRow[] = []
 
@@ -465,7 +464,7 @@ async function exportFutureAlerts(
       // Filter to future trips only
       const futureTrips = forecastTrips.filter((trip) => {
         if (trip.ghosted) return false
-        const entryDate = new Date(trip.entryDate)
+        const entryDate = parseDateOnlyAsUTC(trip.entryDate)
         return entryDate >= today
       })
 

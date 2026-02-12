@@ -1,4 +1,4 @@
-import { addDays, format, isBefore } from 'date-fns';
+import { format, isBefore } from 'date-fns';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -12,6 +12,7 @@ import {
 } from '@/lib/compliance';
 import type { ComplianceConfig, Trip as ComplianceTrip } from '@/lib/compliance';
 import type { ForecastTrip } from '@/types/forecast';
+import { addUtcDays } from '@/lib/compliance/date-utils';
 
 import {
   calculateCompliantFromDate,
@@ -42,7 +43,7 @@ function createTrip(
 }
 
 function dateKey(date: Date | null): string | null {
-  return date ? format(date, 'yyyy-MM-dd') : null;
+  return date ? date.toISOString().slice(0, 10) : null;
 }
 
 // Characterization baseline: pre-refactor algorithm.
@@ -76,7 +77,7 @@ function baselineCalculateCompliantFromDate(
   let checkDate = tripEntryDate;
 
   for (let i = 0; i <= maxCheckDays; i++) {
-    checkDate = addDays(tripEntryDate, i);
+    checkDate = addUtcDays(tripEntryDate, i);
 
     const tripsBeforeCheck = complianceTrips.filter((trip) =>
       isBefore(trip.entryDate, checkDate)
@@ -98,7 +99,7 @@ function baselineCalculateCompliantFromDate(
     }
   }
 
-  return addDays(tripEntryDate, maxCheckDays);
+  return addUtcDays(tripEntryDate, maxCheckDays);
 }
 
 function createSeededRng(seed: number): () => number {
@@ -119,11 +120,11 @@ function randomFrom<T>(rng: () => number, values: readonly T[]): T {
 
 function generateScenario(seed: number): { allTrips: ForecastTrip[]; futureTrip: ForecastTrip } {
   const rng = createSeededRng(seed);
-  const baseDate = addDays(new Date('2026-07-01T00:00:00.000Z'), randomInt(rng, 0, 30));
+  const baseDate = addUtcDays(new Date('2026-07-01T00:00:00.000Z'), randomInt(rng, 0, 30));
 
   const futureDuration = randomInt(rng, 1, 21);
   const futureEntryDate = format(baseDate, 'yyyy-MM-dd');
-  const futureExitDate = format(addDays(baseDate, futureDuration - 1), 'yyyy-MM-dd');
+  const futureExitDate = format(addUtcDays(baseDate, futureDuration - 1), 'yyyy-MM-dd');
 
   const futureTrip = createTrip({
     id: `future-${seed}`,
@@ -139,8 +140,8 @@ function generateScenario(seed: number): { allTrips: ForecastTrip[]; futureTrip:
   for (let i = 0; i < historicalTripCount; i++) {
     const startOffsetDays = randomInt(rng, -260, 120);
     const durationDays = randomInt(rng, 1, 28);
-    const entryDate = addDays(baseDate, startOffsetDays);
-    const exitDate = addDays(entryDate, durationDays - 1);
+    const entryDate = addUtcDays(baseDate, startOffsetDays);
+    const exitDate = addUtcDays(entryDate, durationDays - 1);
 
     allTrips.push(
       createTrip({

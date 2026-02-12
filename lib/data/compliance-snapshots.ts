@@ -22,6 +22,7 @@ import {
   type Trip as ComplianceTrip,
   type RiskLevel,
 } from '@/lib/compliance'
+import { toUTCMidnight } from '@/lib/compliance/date-utils'
 import { withDbTiming, trackCacheAccess } from '@/lib/performance'
 
 /**
@@ -83,7 +84,7 @@ export const getEmployeesWithSnapshots = cache(
         throw new Error('Failed to fetch employees')
       }
 
-      const today = new Date()
+      const today = toUTCMidnight(new Date())
       const results: EmployeeWithSnapshot[] = []
 
       for (const emp of employees ?? []) {

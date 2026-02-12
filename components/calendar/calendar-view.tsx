@@ -6,7 +6,6 @@ import {
   addDays,
   subDays,
   eachDayOfInterval,
-  differenceInDays,
   isWithinInterval,
   format,
 } from 'date-fns'
@@ -19,6 +18,7 @@ import {
   type Trip as ComplianceTrip,
   type RiskLevel,
 } from '@/lib/compliance'
+import { differenceInUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 import { RangeSelector } from './range-selector'
 import { GanttChart } from './gantt-chart'
 import { MobileCalendarView } from './mobile-calendar-view'
@@ -118,7 +118,7 @@ export function CalendarView({ employees }: CalendarViewProps) {
 
   // Process employees and their trips with memoized calculations
   const processedEmployees = useMemo((): ProcessedEmployee[] => {
-    const today = startOfDay(new Date())
+    const today = toUTCMidnight(new Date())
 
     return employees.map((employee) => {
       // Filter out ghosted trips
@@ -151,7 +151,7 @@ export function CalendarView({ employees }: CalendarViewProps) {
       const processedTrips: ProcessedTrip[] = tripsInRange.map((trip) => {
         const entryDate = parseDateOnlyAsUTC(trip.entry_date)
         const exitDate = parseDateOnlyAsUTC(trip.exit_date)
-        const duration = differenceInDays(exitDate, entryDate) + 1
+        const duration = differenceInUtcDays(exitDate, entryDate) + 1
         const isSchengen = isSchengenCountry(trip.country)
 
         // Calculate risk level at end of trip (memoized)

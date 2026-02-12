@@ -19,7 +19,13 @@ import {
 } from '@/components/ui/form'
 import { CountrySelect } from './country-select'
 import { validateCountry, COUNTRY_NAMES } from '@/lib/constants/schengen-countries'
-import { checkTripDurationWarning, getTripDurationDays } from '@/lib/validations/dates'
+import {
+  checkTripDurationWarning,
+  getTripDurationDays,
+  isDateTooFarInFuture,
+  isDateTooFarInPast,
+} from '@/lib/validations/dates'
+import { parseDateOnlyAsUTC } from '@/lib/compliance/date-utils'
 import type { Trip } from '@/types/database-helpers'
 
 // Form values type (input type for the form)
@@ -60,12 +66,8 @@ const tripFormSchema = z
   // Validate entry date is not too far in the past (180 days max)
   .refine(
     (data) => {
-      const entry = new Date(data.entry_date)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const threshold = new Date(today)
-      threshold.setDate(threshold.getDate() - 180)
-      return entry >= threshold
+      const entry = parseDateOnlyAsUTC(data.entry_date)
+      return !isDateTooFarInPast(entry, 180)
     },
     {
       message: 'Entry date cannot be more than 180 days in the past',
@@ -75,12 +77,8 @@ const tripFormSchema = z
   // Validate exit date is not too far in the future (30 days max)
   .refine(
     (data) => {
-      const exit = new Date(data.exit_date)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const threshold = new Date(today)
-      threshold.setDate(threshold.getDate() + 30)
-      return exit <= threshold
+      const exit = parseDateOnlyAsUTC(data.exit_date)
+      return !isDateTooFarInFuture(exit, 30)
     },
     {
       message: 'Exit date cannot be more than 30 days in the future',
@@ -90,8 +88,8 @@ const tripFormSchema = z
   // Validate exit date is on or after entry date
   .refine(
     (data) => {
-      const entry = new Date(data.entry_date)
-      const exit = new Date(data.exit_date)
+      const entry = parseDateOnlyAsUTC(data.entry_date)
+      const exit = parseDateOnlyAsUTC(data.exit_date)
       return exit >= entry
     },
     {
@@ -102,8 +100,8 @@ const tripFormSchema = z
   // Validate trip duration does not exceed 180 days
   .refine(
     (data) => {
-      const entry = new Date(data.entry_date)
-      const exit = new Date(data.exit_date)
+      const entry = parseDateOnlyAsUTC(data.entry_date)
+      const exit = parseDateOnlyAsUTC(data.exit_date)
       const duration = getTripDurationDays(entry, exit)
       return duration <= 180
     },
@@ -162,8 +160,8 @@ export function TripForm({
   // Calculate trip duration warning
   const durationWarning = useMemo(() => {
     if (entryDate && exitDate) {
-      const entry = new Date(entryDate)
-      const exit = new Date(exitDate)
+      const entry = parseDateOnlyAsUTC(entryDate)
+      const exit = parseDateOnlyAsUTC(exitDate)
       if (!isNaN(entry.getTime()) && !isNaN(exit.getTime()) && exit >= entry) {
         return checkTripDurationWarning(entry, exit)
       }

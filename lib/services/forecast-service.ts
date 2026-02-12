@@ -14,8 +14,6 @@
  */
 
 import {
-  differenceInDays,
-  addDays,
   isBefore,
   isAfter,
   isEqual,
@@ -31,6 +29,7 @@ import {
   parseDateOnlyAsUTC,
   validateCountry,
 } from '@/lib/compliance';
+import { addUtcDays, differenceInUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils';
 import type { Trip as ComplianceTrip, ComplianceConfig } from '@/lib/compliance';
 import type {
   ForecastTrip,
@@ -128,7 +127,7 @@ function toComplianceTrip(trip: ForecastTrip): ComplianceTrip {
  * Calculates trip duration in days (both entry and exit dates count).
  */
 export function calculateTripDuration(entryDate: Date, exitDate: Date): number {
-  return differenceInDays(exitDate, entryDate) + 1;
+  return differenceInUtcDays(exitDate, entryDate) + 1;
 }
 
 // ============================================================================
@@ -194,7 +193,7 @@ export function calculateFutureJobCompliance(
   const presence = presenceDays(complianceTrips, complianceConfig);
 
   // Calculate days used in the 180-day window BEFORE the trip starts
-  // The window is [entryDate - 180, entryDate - 1]
+  // The window is [entryDate - 179, entryDate] (180 days inclusive)
   const daysUsedBeforeTrip = daysUsedInWindow(presence, tripEntryDate, complianceConfig);
 
   // Calculate days after the trip
@@ -307,7 +306,7 @@ export function calculateCompliantFromDate(
   let nextTripIndex = 0;
 
   for (let i = 0; i <= maxCheckDays; i++) {
-    checkDate = addDays(tripEntryDate, i);
+    checkDate = addUtcDays(tripEntryDate, i);
 
     // Include newly eligible trips for this check date.
     while (
@@ -335,7 +334,7 @@ export function calculateCompliantFromDate(
   }
 
   // Return the max check date if still not compliant
-  return addDays(tripEntryDate, maxCheckDays);
+  return addUtcDays(tripEntryDate, maxCheckDays);
 }
 
 // ============================================================================
@@ -410,8 +409,7 @@ export function calculateAllFutureForecasts(
   allTrips: ForecastTrip[],
   config: Partial<ForecastConfig> = {}
 ): ForecastResult[] {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = toUTCMidnight(new Date());
 
   // Filter to future trips only (entry date > today)
   const futureTrips = allTrips.filter((trip) => {
