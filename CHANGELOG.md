@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: checkpoint current workspace changes [`78b389e`](https://github.com/thisjamieguy/complyeur-v2/commit/78b389ec6e69f4278f0103c0f102cb34ad2458a2)
 - feat(billing): connect pricing page to Stripe checkout [`cbdc75e`](https://github.com/thisjamieguy/complyeur-v2/commit/cbdc75e13db99cbf62c86b12ffa235dc9120eccb)
 - chore(changelog): update changelog to include missing entries for v1.0.0 release [`a653c13`](https://github.com/thisjamieguy/complyeur-v2/commit/a653c1322fc1003fe729005c038aa1c1ac16c87e)
 - chore(changelog): update changelog format and add missing entries for v1.0.0 release [`1e34732`](https://github.com/thisjamieguy/complyeur-v2/commit/1e3473283898f260bbf5b982192a9e742f250bb6)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): finalize changelog after commit split [`5c3b758`](https://github.com/thisjamieguy/complyeur-v2/commit/5c3b758f0b0032fbefaa774502369c7847c2eaf0)
 - chore(changelog): update unreleased commit history [`0aee3d8`](https://github.com/thisjamieguy/complyeur-v2/commit/0aee3d829dd61baa6050ab6ccb918db15e5d7766)
 - chore(types): regenerate Supabase types for roles, invites, and feedback [`f5f748d`](https://github.com/thisjamieguy/complyeur-v2/commit/f5f748df94d922f79b7d4e3c3114bcd4927e107e)
-- perf(forecast): optimize compliant-date scan with characterization tests [`286354f`](https://github.com/thisjamieguy/complyeur-v2/commit/286354fa7ddca09d68379954100ccb1480a0a976)
 
 ## v1.0.0 - 2026-01-22
 
