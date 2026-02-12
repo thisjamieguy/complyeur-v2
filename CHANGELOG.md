@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(changelog): update changelog with recent commit entries [`242eaae`](https://github.com/thisjamieguy/complyeur-v2/commit/242eaae22b584053498c0db9cff11608fa817a83)
 - style(import): reduce non-schengen advisory dialog size [`1279bbd`](https://github.com/thisjamieguy/complyeur-v2/commit/1279bbdbf434b63e04f1f16b85a0c568b3faf27a)
 - fix(import): keep hook order stable on preview page [`e7dee06`](https://github.com/thisjamieguy/complyeur-v2/commit/e7dee060dc5172530938baab4cf0dc3edd764610)
 - chore: checkpoint import workflow changes before hook bugfix [`f87be86`](https://github.com/thisjamieguy/complyeur-v2/commit/f87be8620e4f4f65f6b795d9a3ca6e40a9586b92)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: encrypt waitlist emails and refresh landing content [`0c209ae`](https://github.com/thisjamieguy/complyeur-v2/commit/0c209ae12fac55b730a622729dd814745b620c43)
 - chore(changelog): sync unreleased entries [`a4990d9`](https://github.com/thisjamieguy/complyeur-v2/commit/a4990d919717c6dca9e4e606603e93efcd402023)
 - chore(changelog): capture latest commit metadata [`44c1367`](https://github.com/thisjamieguy/complyeur-v2/commit/44c1367bc421b1c405822ecc39ce30c176179a58)
-- chore(changelog): update unreleased commit list [`1e86aa6`](https://github.com/thisjamieguy/complyeur-v2/commit/1e86aa62e715c94f7be5f45ec038053895f9981d)
 
 ## v1.0.0 - 2026-01-22
 
