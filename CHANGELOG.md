@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: encrypt waitlist emails and refresh landing content [`0c209ae`](https://github.com/thisjamieguy/complyeur-v2/commit/0c209ae12fac55b730a622729dd814745b620c43)
+- chore(changelog): sync unreleased entries [`a4990d9`](https://github.com/thisjamieguy/complyeur-v2/commit/a4990d919717c6dca9e4e606603e93efcd402023)
 - chore(changelog): capture latest commit metadata [`44c1367`](https://github.com/thisjamieguy/complyeur-v2/commit/44c1367bc421b1c405822ecc39ce30c176179a58)
 - chore(changelog): update unreleased commit list [`1e86aa6`](https://github.com/thisjamieguy/complyeur-v2/commit/1e86aa62e715c94f7be5f45ec038053895f9981d)
 - chore: checkpoint current workspace changes [`78b389e`](https://github.com/thisjamieguy/complyeur-v2/commit/78b389ec6e69f4278f0103c0f102cb34ad2458a2)
@@ -17,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): update changelog format and add missing entries for v1.0.0 release [`1e34732`](https://github.com/thisjamieguy/complyeur-v2/commit/1e3473283898f260bbf5b982192a9e742f250bb6)
 - fix(changelog): add missing feat entry for status thresholds implementation [`a2e2678`](https://github.com/thisjamieguy/complyeur-v2/commit/a2e267889cd5498ea18ece9b977123ce19efd2c4)
 - Merge pull request #9 from thisjamieguy/claude/security-audit-complyeur-3Qgjh [`8278a81`](https://github.com/thisjamieguy/complyeur-v2/commit/8278a81b52b765538db9201b458dd3cfee87f8e7)
-- docs(security): add comprehensive pre-launch security audit report [`5afcb50`](https://github.com/thisjamieguy/complyeur-v2/commit/5afcb504094d1562f88bfd3d6ab9010a064043fc)
-- chore(changelog): finalize changelog after commit split [`5c3b758`](https://github.com/thisjamieguy/complyeur-v2/commit/5c3b758f0b0032fbefaa774502369c7847c2eaf0)
 
 ## v1.0.0 - 2026-01-22
 
