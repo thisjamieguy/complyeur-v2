@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { joinWaitlist, type WaitlistState } from './actions'
+import { joinWaitlist, type WaitlistState } from '@/app/(preview)/landing/actions'
 import { cn } from '@/lib/utils'
 import { BrowserFrame } from '@/components/marketing/browser-frame'
 import { DemoCalendar } from '@/components/marketing/demo-calendar'
