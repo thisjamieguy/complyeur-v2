@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- docs: update memory files to match actual codebase [`082f719`](https://github.com/thisjamieguy/complyeur-v2/commit/082f71944b12c2c717b4269091f13535d7fe26e8)
+- chore(changelog): settle auto-changelog entries [`cf52edd`](https://github.com/thisjamieguy/complyeur-v2/commit/cf52edddd12619ffeddfb7e38860b1a024841357)
 - chore(changelog): finalize unreleased changelog sync [`34bf7cb`](https://github.com/thisjamieguy/complyeur-v2/commit/34bf7cbda0bd89c115216066e3b68e2429a91104)
 - chore(changelog): sync unreleased entries [`70f5076`](https://github.com/thisjamieguy/complyeur-v2/commit/70f5076fc0999f17cba7f7d37618cf3b5b7150ae)
 - fix: unify UTC 90/180 calculations across app [`77f6a29`](https://github.com/thisjamieguy/complyeur-v2/commit/77f6a29f571d6cbb6514fa1ada599f20feb4bec3)
@@ -17,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): update changelog with recent commit entries [`08274fb`](https://github.com/thisjamieguy/complyeur-v2/commit/08274fbb6ad8b9f55af753f8308dd22a640dc13f)
 - chore(changelog): update changelog with recent commit entries [`242eaae`](https://github.com/thisjamieguy/complyeur-v2/commit/242eaae22b584053498c0db9cff11608fa817a83)
 - style(import): reduce non-schengen advisory dialog size [`1279bbd`](https://github.com/thisjamieguy/complyeur-v2/commit/1279bbdbf434b63e04f1f16b85a0c568b3faf27a)
-- fix(import): keep hook order stable on preview page [`e7dee06`](https://github.com/thisjamieguy/complyeur-v2/commit/e7dee060dc5172530938baab4cf0dc3edd764610)
-- chore: checkpoint import workflow changes before hook bugfix [`f87be86`](https://github.com/thisjamieguy/complyeur-v2/commit/f87be8620e4f4f65f6b795d9a3ca6e40a9586b92)
 
 ## v1.0.0 - 2026-01-22
 
