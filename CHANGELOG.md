@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(changelog): update changelog to include missing entries for v1.0.0 release [`a653c13`](https://github.com/thisjamieguy/complyeur-v2/commit/a653c1322fc1003fe729005c038aa1c1ac16c87e)
 - chore(changelog): update changelog format and add missing entries for v1.0.0 release [`1e34732`](https://github.com/thisjamieguy/complyeur-v2/commit/1e3473283898f260bbf5b982192a9e742f250bb6)
 - fix(changelog): add missing feat entry for status thresholds implementation [`a2e2678`](https://github.com/thisjamieguy/complyeur-v2/commit/a2e267889cd5498ea18ece9b977123ce19efd2c4)
 - Merge pull request #9 from thisjamieguy/claude/security-audit-complyeur-3Qgjh [`8278a81`](https://github.com/thisjamieguy/complyeur-v2/commit/8278a81b52b765538db9201b458dd3cfee87f8e7)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(types): regenerate Supabase types for roles, invites, and feedback [`f5f748d`](https://github.com/thisjamieguy/complyeur-v2/commit/f5f748df94d922f79b7d4e3c3114bcd4927e107e)
 - perf(forecast): optimize compliant-date scan with characterization tests [`286354f`](https://github.com/thisjamieguy/complyeur-v2/commit/286354fa7ddca09d68379954100ccb1480a0a976)
 - feat(feedback): add in-app feedback capture flow and storage [`534deca`](https://github.com/thisjamieguy/complyeur-v2/commit/534decaf261ef156f6ccc1be769f3c495998f6ca)
-- feat(team): add owner role, invites, and ownership transfer workflow [`fb982f1`](https://github.com/thisjamieguy/complyeur-v2/commit/fb982f13e1af3f511438cc878d1b677e4ff62e30)
 
 ## v1.0.0 - 2026-01-22
 
