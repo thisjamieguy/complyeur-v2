@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useCallback, useMemo, useState } from 'react'
+import { Suspense, useCallback, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { BillingInterval, TierSlug } from '@/lib/billing/plans'
 import {
@@ -16,7 +16,7 @@ function formatCap(value: number | null): string {
   return value.toLocaleString('en-GB')
 }
 
-export default function PricingPage() {
+function PricingPageContent() {
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
   const [submittingPlan, setSubmittingPlan] = useState<TierSlug | null>(null)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
@@ -247,5 +247,13 @@ export default function PricingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={null}>
+      <PricingPageContent />
+    </Suspense>
   )
 }

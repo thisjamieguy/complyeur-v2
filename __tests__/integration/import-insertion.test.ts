@@ -345,6 +345,92 @@ describe('Import Database Insertion', () => {
       expect(result.employees_created).toBe(0);
     });
 
+    it('handles duplicate names as same employee when configured', async () => {
+      const { createClient } = await import('@/lib/supabase/server');
+
+      const mockClient = createComprehensiveMock({
+        existingEmployees: [],
+        insertedEmployees: [{ id: 'emp-1', name: 'Jane Doe', email: 'jane.one@test.com' }],
+      });
+
+      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+
+      const { insertValidRows } = await import('@/lib/import/inserter');
+      const rows = [
+        createValidatedEmployeeRow({
+          row_number: 2,
+          first_name: 'Jane',
+          last_name: 'Doe',
+          email: 'jane.one@test.com',
+        }),
+        createValidatedEmployeeRow({
+          row_number: 3,
+          first_name: 'Jane',
+          last_name: 'Doe',
+          email: 'jane.two@test.com',
+        }),
+      ];
+
+      const options: DuplicateOptions = {
+        employees: 'update',
+        trips: 'skip',
+        employee_name_conflicts: 'same_employee',
+      };
+
+      const result = await insertValidRows('session-123', 'employees', rows, options);
+
+      expect(result.employees_created).toBe(1);
+      expect(
+        result.warnings.some((w) => w.message.includes('resolved as same employee'))
+      ).toBe(true);
+    });
+
+    it('auto-renames duplicate names when configured', async () => {
+      const { createClient } = await import('@/lib/supabase/server');
+
+      const mockClient = createComprehensiveMock({
+        existingEmployees: [],
+        insertedEmployees: [
+          { id: 'emp-1', name: 'Jane Doe', email: 'jane.one@test.com' },
+          { id: 'emp-2', name: 'Jane Doe (2)', email: 'jane.two@test.com' },
+        ],
+      });
+
+      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+
+      const { insertValidRows } = await import('@/lib/import/inserter');
+      const rows = [
+        createValidatedEmployeeRow({
+          row_number: 2,
+          first_name: 'Jane',
+          last_name: 'Doe',
+          email: 'jane.one@test.com',
+        }),
+        createValidatedEmployeeRow({
+          row_number: 3,
+          first_name: 'Jane',
+          last_name: 'Doe',
+          email: 'jane.two@test.com',
+        }),
+      ];
+
+      const options: DuplicateOptions = {
+        employees: 'update',
+        trips: 'skip',
+        employee_name_conflicts: 'rename',
+      };
+
+      const result = await insertValidRows('session-123', 'employees', rows, options);
+
+      expect(result.employees_created).toBe(2);
+      expect(result.warnings.some((w) => w.message.includes('auto-renamed'))).toBe(true);
+
+      const insertCall = (mockClient.employeesBuilder.insert as Mock).mock.calls[0][0] as Array<{
+        name: string;
+      }>;
+      expect(insertCall[1]?.name).toContain('(2)');
+    });
+
     it('returns error when profile not found', async () => {
       const { createClient } = await import('@/lib/supabase/server');
 

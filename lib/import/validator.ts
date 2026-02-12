@@ -11,7 +11,7 @@ import {
   isParsedEmployeeRow,
   isParsedTripRow,
 } from '@/types/import';
-import { parseISO, isValid, isBefore, isAfter, addDays, subYears } from 'date-fns';
+import { parseISO, isValid, isBefore, subYears } from 'date-fns';
 import { toCountryCode } from './country-codes';
 
 // ============================================================
@@ -185,7 +185,6 @@ function validateTripRow(
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const twoYearsAgo = subYears(today, 2);
-  const sevenDaysFromNow = addDays(today, 7);
 
   // Employee email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -281,14 +280,6 @@ function validateTripRow(
         message: 'Invalid date format. Use YYYY-MM-DD',
         severity: 'error',
       });
-    } else if (isAfter(exitDate, sevenDaysFromNow)) {
-      warnings.push({
-        row: rowNum,
-        column: 'exit_date',
-        value: row.exit_date,
-        message: 'Exit date is in the future. This trip will be marked as upcoming.',
-        severity: 'warning',
-      });
     }
   }
 
@@ -327,14 +318,8 @@ function validateTripRow(
         severity: 'error',
       });
     } else if (NON_SCHENGEN_EU.has(countryCode)) {
-      warnings.push({
-        row: rowNum,
-        column: 'country',
-        value: row.country,
-        message: `${row.country} is not a Schengen country. This trip will not count towards the 90/180 rule but will still be recorded.`,
-        severity: 'warning',
-      });
-      // Store the converted code back on the row for downstream use
+      // Non-Schengen trips are valid imports; they are recorded but excluded
+      // from Schengen 90/180 calculations. Surface this in preview as advisory UI.
       row.country = countryCode;
     } else if (!SCHENGEN_COUNTRIES.has(countryCode)) {
       errors.push({

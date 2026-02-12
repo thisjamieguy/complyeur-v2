@@ -278,7 +278,7 @@ describe('WarningSummaryBanners', () => {
       const banner = screen.getByRole('button');
       fireEvent.click(banner);
 
-      expect(screen.getByText(/2025-02-10 to 2025-02-13/)).toBeInTheDocument();
+      expect(screen.getByText(/10-02-2025 to 13-02-2025/)).toBeInTheDocument();
     });
 
     test('displays single date when entry and exit are same', () => {
@@ -298,9 +298,9 @@ describe('WarningSummaryBanners', () => {
       const banner = screen.getByRole('button');
       fireEvent.click(banner);
 
-      // Should show single date, not "2025-03-06 to 2025-03-06"
-      expect(screen.getByText(/\(2025-03-06\)/)).toBeInTheDocument();
-      expect(screen.queryByText(/to 2025-03-06/)).not.toBeInTheDocument();
+      // Should show single date, not "06-03-2025 to 06-03-2025"
+      expect(screen.getByText(/\(06-03-2025\)/)).toBeInTheDocument();
+      expect(screen.queryByText(/to 06-03-2025/)).not.toBeInTheDocument();
     });
   });
 

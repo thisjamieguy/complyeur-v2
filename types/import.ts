@@ -157,17 +157,26 @@ export interface ImportResult {
 // ============================================================
 
 export type DuplicateHandlingMode = 'skip' | 'update';
+export type EmployeeNameConflictMode = 'new_employee' | 'same_employee' | 'rename';
 
 export interface DuplicateOptions {
   /** How to handle employees that already exist (matched by email) */
   employees: DuplicateHandlingMode;
   /** How to handle trips that already exist (matched by employee + dates) */
   trips: DuplicateHandlingMode;
+  /**
+   * How to handle duplicate employee names within the same import file.
+   * - new_employee: keep duplicates as separate employees
+   * - same_employee: keep first occurrence, skip later duplicates
+   * - rename: auto-rename later duplicates (e.g., "Jane Doe (2)")
+   */
+  employee_name_conflicts?: EmployeeNameConflictMode;
 }
 
 export const DEFAULT_DUPLICATE_OPTIONS: DuplicateOptions = {
   employees: 'update',
   trips: 'skip',
+  employee_name_conflicts: 'new_employee',
 };
 
 // ============================================================

@@ -19,6 +19,10 @@ import {
 } from '@/lib/import/mapping';
 import { analyzeAmbiguity, type AmbiguityReport } from '@/lib/import/date-parser';
 import {
+  getStoredImportDateFormat,
+  setStoredImportDateFormat,
+} from '@/lib/import/date-preferences';
+import {
   createImportSession,
   saveParsedData,
   loadSavedMappings,
@@ -79,6 +83,10 @@ export default function UploadPage() {
       router.push('/import');
     }
   }, [formatParam, router]);
+
+  useEffect(() => {
+    setSelectedDateFormat(getStoredImportDateFormat());
+  }, []);
 
   // ============================================================
   // FILE UPLOAD HANDLER
@@ -235,7 +243,7 @@ export default function UploadPage() {
 
           if (report.requiresConfirmation) {
             // Set default format based on detection
-            if (report.detectedFormat === 'DD/MM' || report.detectedFormat === 'UNKNOWN') {
+            if (report.detectedFormat === 'DD/MM') {
               setSelectedDateFormat('DD/MM');
             } else if (report.detectedFormat === 'MM/DD') {
               setSelectedDateFormat('MM/DD');
@@ -271,7 +279,9 @@ export default function UploadPage() {
 
     try {
       // Apply mappings to transform data
-      const transformedData = applyMappings(data, state.mappings);
+      const transformedData = applyMappings(data, state.mappings, {
+        preferredDateFormat: selectedDateFormat,
+      });
 
       // Validate the rows
       const validatedRows = await validateRows(transformedData, state.format);
@@ -350,6 +360,7 @@ export default function UploadPage() {
     if (!rawData || !mappingState || !sessionId) return;
 
     setDateConfirmed(true);
+    setStoredImportDateFormat(selectedDateFormat);
     await completeProcessing(rawData, mappingState, sessionId);
   };
 
@@ -393,7 +404,10 @@ export default function UploadPage() {
         <DateFormatConfirmation
           report={dateReport}
           selectedFormat={selectedDateFormat}
-          onFormatChange={setSelectedDateFormat}
+          onFormatChange={(format) => {
+            setSelectedDateFormat(format);
+            setStoredImportDateFormat(format);
+          }}
           isConfirmed={dateConfirmed}
           onConfirm={handleDateConfirm}
         />

@@ -142,6 +142,7 @@ async function insertEmployees(
   const warnings: ValidationError[] = [];
   let employeesCreated = 0;
   let employeesUpdated = 0;
+  const employeeNameConflictMode = duplicateOptions.employee_name_conflicts ?? 'new_employee';
 
   // Get existing employees (include email for duplicate detection)
   // Filter out soft-deleted employees so re-imports work after deletion
@@ -169,12 +170,42 @@ async function insertEmployees(
   // Prepare employees to insert and update
   const employeesToInsert: { name: string; email: string; company_id: string }[] = [];
   const employeesToUpdate: { id: string; name: string; rowNum: number }[] = [];
+  const seenNameCounts = new Map<string, number>();
 
   for (const row of validRows) {
     if (!isParsedEmployeeRow(row.data)) continue;
 
     const employeeData = row.data as ParsedEmployeeRow;
-    const fullName = `${employeeData.first_name.trim()} ${employeeData.last_name.trim()}`;
+    const baseFullName = `${employeeData.first_name.trim()} ${employeeData.last_name.trim()}`;
+    const normalizedName = baseFullName.toLowerCase().replace(/\s+/g, ' ').trim();
+    const seenCount = seenNameCounts.get(normalizedName) ?? 0;
+    let fullName = baseFullName;
+
+    if (seenCount > 0) {
+      if (employeeNameConflictMode === 'same_employee') {
+        warnings.push({
+          row: row.row_number,
+          column: 'first_name',
+          value: baseFullName,
+          message: `Duplicate name "${baseFullName}" resolved as same employee. This row was skipped.`,
+          severity: 'warning',
+        });
+        continue;
+      }
+
+      if (employeeNameConflictMode === 'rename') {
+        fullName = `${baseFullName} (${seenCount + 1})`;
+        warnings.push({
+          row: row.row_number,
+          column: 'first_name',
+          value: baseFullName,
+          message: `Duplicate name "${baseFullName}" was auto-renamed to "${fullName}" for import.`,
+          severity: 'warning',
+        });
+      }
+    }
+
+    seenNameCounts.set(normalizedName, seenCount + 1);
     const normalizedEmail = employeeData.email.toLowerCase().trim();
 
     // Check for duplicate by email
@@ -264,6 +295,7 @@ async function insertEmployees(
       error_count: errors.length,
       warning_count: warnings.length,
       duplicate_mode: duplicateOptions.employees,
+      employee_name_conflict_mode: employeeNameConflictMode,
     },
   });
 

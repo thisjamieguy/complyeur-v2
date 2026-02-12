@@ -5,6 +5,7 @@ import { ChevronRight, FileSpreadsheet, History, Shield, Users } from 'lucide-re
 import { SettingsForm } from '@/components/settings/settings-form'
 import { SecuritySettings } from '@/components/settings/security-settings'
 import { DangerZone } from '@/components/settings/danger-zone'
+import { DateFormatPreferences } from '@/components/settings/date-format-preferences'
 import { UserPreferencesForm } from './user-preferences-form'
 import { getCompanySettings, canViewSettings, canUpdateSettings } from '@/lib/actions/settings'
 import { getNotificationPreferencesAction } from '../actions'
@@ -137,6 +138,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           {settings ? (
             <>
               <SettingsForm settings={settings} canEdit={canEdit} />
+              <DateFormatPreferences />
               <SecuritySettings />
 
               <div className="bg-white rounded-xl border shadow-sm p-6">

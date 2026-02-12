@@ -27,6 +27,8 @@ import {
   REQUIRED_TRIP_FIELDS,
 } from '@/types/import';
 import { mapHeaders, type CanonicalField } from './header-aliases';
+import { parseDate } from './date-parser';
+import type { PreferredImportDateFormat } from './date-preferences';
 
 // ============================================================
 // HELPER: Extract Sample Values
@@ -323,8 +325,11 @@ export function updateMapping(
  */
 export function applyMappings(
   rawData: Record<string, unknown>[],
-  mappings: ColumnMapping[]
+  mappings: ColumnMapping[],
+  options: { preferredDateFormat?: PreferredImportDateFormat } = {}
 ): ParsedRow[] {
+  const preferredDateFormat = options.preferredDateFormat ?? 'DD/MM';
+
   // Create lookup: sourceColumn → targetField
   const mappingLookup = new Map<string, TargetField>();
   for (const mapping of mappings) {
@@ -341,7 +346,17 @@ export function applyMappings(
     for (const [sourceColumn, value] of Object.entries(row)) {
       const targetField = mappingLookup.get(sourceColumn);
       if (targetField) {
-        transformed[targetField] = value;
+        if (targetField === 'entry_date' || targetField === 'exit_date') {
+          const rawDateValue = value === null || value === undefined ? '' : String(value).trim();
+          if (!rawDateValue) {
+            transformed[targetField] = '';
+          } else {
+            const parsed = parseDate(rawDateValue, { preferredFormat: preferredDateFormat });
+            transformed[targetField] = parsed.date ?? rawDateValue;
+          }
+        } else {
+          transformed[targetField] = value;
+        }
       }
     }
 

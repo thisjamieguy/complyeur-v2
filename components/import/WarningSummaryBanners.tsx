@@ -1,8 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { ValidatedRow, ParsedRow, isParsedTripRow } from '@/types/import';
+import {
+  formatIsoDateForDisplay,
+  getStoredDateDisplayFormat,
+  type DateDisplayFormat,
+} from '@/lib/import/date-preferences';
 
 interface WarningSummaryBannersProps {
   rows: ValidatedRow<ParsedRow>[];
@@ -39,6 +44,11 @@ function extractCountryFromMessage(message: string): string | null {
 
 export function WarningSummaryBanners({ rows }: WarningSummaryBannersProps) {
   const [expandedPatterns, setExpandedPatterns] = useState<Set<string>>(new Set());
+  const [dateDisplayFormat, setDateDisplayFormat] = useState<DateDisplayFormat>('DD-MM-YYYY');
+
+  useEffect(() => {
+    setDateDisplayFormat(getStoredDateDisplayFormat());
+  }, []);
 
   // Group warnings by pattern
   const groupedWarnings = new Map<string, GroupedWarning>();
@@ -158,8 +168,9 @@ export function WarningSummaryBanners({ rows }: WarningSummaryBannersProps) {
                         <span className="font-medium">{row.country}</span>
                         {' '}
                         <span className="text-amber-600/70">
-                          ({row.entryDate}
-                          {row.entryDate !== row.exitDate && ` to ${row.exitDate}`})
+                          ({formatIsoDateForDisplay(row.entryDate, dateDisplayFormat)}
+                          {row.entryDate !== row.exitDate &&
+                            ` to ${formatIsoDateForDisplay(row.exitDate, dateDisplayFormat)}`})
                         </span>
                       </span>
                     </div>

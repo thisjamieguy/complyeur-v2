@@ -492,7 +492,7 @@ Bob,Brown,bob@test.com
       expect(summary.errors).toBe(2);
     });
 
-    it('warns for non-Schengen EU countries (trips still recorded)', async () => {
+    it('accepts non-Schengen EU countries without blocking import', async () => {
       const csv = `email,entry_date,exit_date,country
 test@test.com,2025-11-01,2025-11-10,IE`;
 
@@ -501,9 +501,9 @@ test@test.com,2025-11-01,2025-11-10,IE`;
       const tripRows = toTripRows(parseResult.rawData!, parseResult.rawHeaders!);
       const validatedRows = await validateRows(tripRows, 'trips');
 
-      // Ireland (IE) is non-Schengen EU - should be valid with warning
+      // Ireland (IE) is non-Schengen EU - should be valid (advisory handled in preview UI)
       expect(validatedRows[0].is_valid).toBe(true);
-      expect(validatedRows[0].warnings.some(w => w.message.includes('not a Schengen'))).toBe(true);
+      expect(validatedRows[0].warnings.length).toBe(0);
     });
   });
 
