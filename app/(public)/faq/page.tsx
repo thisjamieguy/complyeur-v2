@@ -252,7 +252,7 @@ const faqData: FAQSection[] = [
       {
         question: 'What data does ComplyEur store?',
         answer:
-          'We store employee names, trip dates, destinations, and job references. All data is encrypted at rest and in transit. We do not sell or share your data with third parties.',
+          'We store employee names, trip dates, destinations, and job references. Data is encrypted in transit (TLS), and at-rest protections are applied via infrastructure controls. Waitlist email addresses also use application-layer AES-256-GCM encryption at rest. We do not sell or share your data with third parties.',
       },
       {
         question: "How do I export an employee's data (DSAR)?",

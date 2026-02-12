@@ -3,11 +3,37 @@
 import { createClient } from '@/lib/supabase/server'
 import { waitlistSchema } from '@/lib/validations/waitlist'
 import { sendWaitlistEmail } from '@/lib/services/waitlist-email'
+import {
+  encryptWaitlistEmail,
+  hashWaitlistEmail,
+  isWaitlistEmailEncryptionRequired,
+  normalizeWaitlistEmail,
+} from '@/lib/security/waitlist-encryption'
 
 export type WaitlistState = {
   success: boolean
   message: string
   error?: string
+}
+
+type WaitlistInsertPayload = {
+  company_name: string | null
+  source: string
+  email: string | null
+  email_hash: string | null
+  email_ciphertext: string | null
+  email_iv: string | null
+  email_tag: string | null
+  email_key_version: string | null
+  email_encryption_algorithm: string | null
+}
+
+type WaitlistInsertResult = { error: { code?: string } | null }
+
+type WaitlistInsertClient = {
+  from: (table: 'waitlist') => {
+    insert: (value: WaitlistInsertPayload) => Promise<WaitlistInsertResult>
+  }
 }
 
 /**
@@ -102,15 +128,42 @@ export async function joinWaitlist(
 
   try {
     const supabase = await createClient()
+    const normalizedEmail = normalizeWaitlistEmail(email)
+
+    const waitlistInsert: WaitlistInsertPayload = {
+      company_name: companyName || null,
+      source: 'landing',
+      email: normalizedEmail,
+      email_hash: null,
+      email_ciphertext: null,
+      email_iv: null,
+      email_tag: null,
+      email_key_version: null,
+      email_encryption_algorithm: null,
+    }
+
+    try {
+      const encryptedEmail = encryptWaitlistEmail(normalizedEmail)
+      waitlistInsert.email = null
+      waitlistInsert.email_hash = hashWaitlistEmail(normalizedEmail)
+      waitlistInsert.email_ciphertext = encryptedEmail.ciphertext
+      waitlistInsert.email_iv = encryptedEmail.iv
+      waitlistInsert.email_tag = encryptedEmail.tag
+      waitlistInsert.email_key_version = encryptedEmail.keyVersion
+      waitlistInsert.email_encryption_algorithm = encryptedEmail.algorithm
+    } catch (encryptionError) {
+      if (isWaitlistEmailEncryptionRequired()) {
+        throw encryptionError
+      }
+
+      console.warn(
+        '[Waitlist] WAITLIST_EMAIL_ENCRYPTION_KEY not configured - storing plaintext waitlist email in non-production environment'
+      )
+    }
 
     // Insert into waitlist table
-    const { error: insertError } = await (supabase as any)
-      .from('waitlist')
-      .insert({
-        email,
-        company_name: companyName || null,
-        source: 'landing',
-      })
+    const waitlistClient = supabase as unknown as WaitlistInsertClient
+    const { error: insertError } = await waitlistClient.from('waitlist').insert(waitlistInsert)
 
     if (insertError) {
       // Check for duplicate email
@@ -131,7 +184,7 @@ export async function joinWaitlist(
     }
 
     // Send confirmation email (fire and forget - don't block on this)
-    sendWaitlistEmail({ email, companyName: companyName || undefined }).catch(
+    sendWaitlistEmail({ email: normalizedEmail, companyName: companyName || undefined }).catch(
       (err) => console.error('[Waitlist] Email error:', err)
     )
 

@@ -126,7 +126,7 @@ function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'minimal'
               Submitting...
             </span>
           ) : (
-            'Join Waitlist'
+            'Apply for Early Access'
           )}
         </button>
       </div>
@@ -243,7 +243,7 @@ export default function LandingPage() {
                 href="#waitlist"
                 className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
               >
-                Join Waitlist
+                Apply for Early Access
               </Link>
             </div>
           </div>
@@ -269,21 +269,30 @@ export default function LandingPage() {
 
               <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
                 <span className="h-2 w-2 rounded-full bg-brand-500" />
-                Early access for UK teams
+                Private early access for UK teams
               </p>
 
               <h1 className="landing-serif text-balance text-5xl font-semibold leading-[1.02] text-slate-900 sm:text-6xl lg:text-7xl">
-                Know every Schengen day before it becomes a border issue.
+                Know every Schengen day before each EU trip is approved.
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl">
-                ComplyEur gives operations teams a live 90/180-day command center. Track every traveller,
-                catch risk early, and plan EU trips with confidence instead of spreadsheets.
+                Built for UK businesses sending staff to the EU, ComplyEur gives HR, operations, and mobility teams a
+                live 90/180-day compliance view for every traveller.
+              </p>
+
+              <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
+                As the EU Entry/Exit System (EES) introduces automated border checks, manual day counting leaves less
+                room for error. ComplyEur acts as your compliance control layer and system of record for Schengen
+                travel.
               </p>
 
               <div id="waitlist" className="landing-panel mt-10 rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur">
                 <p className="mb-5 text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">
-                  Start with the launch cohort
+                  Apply for the limited early-access cohort
+                </p>
+                <p className="mb-5 text-sm text-slate-600">
+                  We are onboarding a private launch group of UK teams with active EU travel.
                 </p>
                 <WaitlistForm variant="default" />
                 <Link
@@ -330,8 +339,8 @@ export default function LandingPage() {
         <section className="py-12">
           <div className="mx-auto max-w-6xl px-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <TrustStat value="90/180" label="Rolling window logic modeled natively, not via manual formulas." />
-              <TrustStat value="Live" label="Status updates recalculate immediately whenever trips are changed." />
+              <TrustStat value="90/180" label="Rolling windows recalculate daily as travel records change." />
+              <TrustStat value="Live" label="Each trip update refreshes remaining days instantly across the team." />
               <TrustStat value="CSV + XLSX" label="Import historical travel records in minutes for full context." />
               <TrustStat value="GDPR" label="Privacy-first handling designed for people and payroll data." />
             </div>
@@ -344,13 +353,15 @@ export default function LandingPage() {
             <div>
               <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">Why teams switch</p>
               <h2 className="landing-serif text-balance text-4xl font-semibold leading-tight text-white sm:text-5xl">
-                Fines, entry bans, and grounded projects all start with one missed count.
+                Automated EU border controls raise the compliance bar for every trip.
               </h2>
             </div>
             <div>
               <p className="text-xl leading-relaxed text-slate-200">
-                Border enforcement is tighter and tolerance for manual errors is lower. ComplyEur gives travel, operations,
-                and HR a single source of truth, so every itinerary decision is backed by live compliance context.
+                With EES-driven automated enforcement, rolling 90/180 limits allow less tolerance for manual errors.
+                Because the window recalculates daily, one new trip can change the entire allowance, which is where spreadsheet
+                formulas often fail at scale. Built alongside UK engineering and project-based businesses managing
+                frequent EU travel, ComplyEur gives HR, operations, and mobility teams one reliable source of truth.
               </p>
             </div>
           </div>
@@ -368,7 +379,8 @@ export default function LandingPage() {
                 Setup in one session. Start tracking the same day.
               </h2>
               <p className="mt-4 text-lg leading-relaxed text-slate-600">
-                No complex rollout. Add employees, import travel history, and monitor risk from one workspace.
+                No complex rollout. Add employees, import travel history, and run Schengen travel compliance from one
+                workspace.
               </p>
             </div>
 
@@ -379,7 +391,7 @@ export default function LandingPage() {
               />
               <JourneyStep
                 title="Import or log trips"
-                body="Upload existing files or enter trips manually. ComplyEur recalculates the full rolling window instantly."
+                body="Upload existing files or enter trips manually. ComplyEur recalculates the full rolling window instantly across past and future plans."
               />
               <JourneyStep
                 title="Act before risk"
@@ -426,12 +438,12 @@ export default function LandingPage() {
         <section className="relative overflow-hidden bg-slate-900 py-24">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(92,127,163,0.35),transparent_45%)]" />
           <div className="relative mx-auto max-w-3xl px-6 text-center">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">Launch access</p>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">Private launch cohort</p>
             <h2 className="landing-serif text-balance text-4xl font-semibold text-white sm:text-5xl">
-              Build your next EU travel plan on data, not guesswork.
+              Secure private early access for your UK travel team.
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-slate-300">
-              Join the waitlist and get early access to automated Schengen tracking for your team.
+              We are onboarding a limited cohort of HR, operations, and mobility teams managing frequent EU travel.
             </p>
             <div className="mx-auto mt-10 max-w-xl rounded-3xl border border-slate-700/70 bg-slate-950/35 p-6 backdrop-blur">
               <WaitlistForm variant="minimal" />

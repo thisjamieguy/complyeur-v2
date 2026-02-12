@@ -64,7 +64,7 @@ export default function PrivacyPage() {
           <h3 className="text-xl font-semibold text-slate-900 mb-3">Employee Data</h3>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2">
             <li>Employee names</li>
-            <li>Passport numbers (encrypted at rest)</li>
+            <li>Employee email addresses (when provided)</li>
             <li>Nationality information</li>
             <li>Travel dates and destinations</li>
           </ul>
@@ -111,7 +111,7 @@ export default function PrivacyPage() {
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2">
             <li>
               <strong>Supabase</strong> - Database hosting and authentication services.
-              Your data is stored securely in Supabase&apos;s infrastructure with encryption at rest.
+              Your data is stored in Supabase infrastructure with at-rest encryption controls.
             </li>
             <li>
               <strong>Stripe</strong> - Payment processing. Stripe handles all payment card data
@@ -242,7 +242,8 @@ export default function PrivacyPage() {
           </p>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">
             <li>All data is encrypted in transit using TLS 1.3</li>
-            <li>Sensitive data (such as passport numbers) is encrypted at rest</li>
+            <li>Waitlist email addresses are encrypted at rest using AES-256-GCM</li>
+            <li>Database at-rest protections are enforced through infrastructure controls</li>
             <li>Access to production systems is restricted and logged</li>
             <li>Regular security audits and vulnerability assessments</li>
             <li>Multi-factor authentication for administrative access</li>

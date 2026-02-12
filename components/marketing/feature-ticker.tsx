@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const features = [
-  "Track your team's 90/180-day rule automatically",
-  'Plan future trips confidently',
-  'Get alerted before limits are reached',
-  'Import trips from spreadsheets in seconds',
-  'Monitor your whole team in one dashboard',
+  'Built for UK businesses sending staff to the EU',
+  'Designed for HR, operations, and mobility teams',
+  'EES-era automated checks reduce tolerance for manual counting',
+  'One trip update recalculates every rolling 90/180 window',
+  'Keep Schengen travel in one compliance system of record',
 ]
 
 export function FeatureTicker() {
