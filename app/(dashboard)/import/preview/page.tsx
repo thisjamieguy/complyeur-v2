@@ -442,7 +442,7 @@ export default function PreviewPage() {
           setShowNonSchengenAdvisory(true);
         }}
       >
-        <DialogContent className="sm:max-w-[560px]">
+        <DialogContent className="w-[min(92vw,520px)] max-w-[520px] p-5 sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>Non-Schengen Trips Detected</DialogTitle>
             <DialogDescription>
