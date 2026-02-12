@@ -128,5 +128,17 @@
       "mcp__plugin_playwright_playwright__browser_close",
       "Bash(PORT=3001 npm run dev:*)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/claude-stop-hook.sh"
+          }
+        ]
+      }
+    ]
   }
 }
