@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: sync local changes for landing redirect and stop hook [`ade618d`](https://github.com/thisjamieguy/complyeur-v2/commit/ade618d861ed947e07ef2d0785325dc2360e23ab)
 - chore(changelog): sync unreleased entries [`48dbbb9`](https://github.com/thisjamieguy/complyeur-v2/commit/48dbbb996a300745b3850c298f80da226ab94a31)
 - chore(changelog): sync unreleased entries [`ae5284c`](https://github.com/thisjamieguy/complyeur-v2/commit/ae5284cf500ecda2123c8a4ecb99e626e5a0c3e5)
 - docs: update CLAUDE.md to match actual codebase [`8470eef`](https://github.com/thisjamieguy/complyeur-v2/commit/8470eef445834d6b57a1882cf0b300c3106c6f7f)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): finalize unreleased changelog sync [`34bf7cb`](https://github.com/thisjamieguy/complyeur-v2/commit/34bf7cbda0bd89c115216066e3b68e2429a91104)
 - chore(changelog): sync unreleased entries [`70f5076`](https://github.com/thisjamieguy/complyeur-v2/commit/70f5076fc0999f17cba7f7d37618cf3b5b7150ae)
 - fix: unify UTC 90/180 calculations across app [`77f6a29`](https://github.com/thisjamieguy/complyeur-v2/commit/77f6a29f571d6cbb6514fa1ada599f20feb4bec3)
-- feat: add compliance improvements, forecast service enhancements, and test coverage [`360ffc7`](https://github.com/thisjamieguy/complyeur-v2/commit/360ffc7352e4dec6b3ad090cc76d6db639637ba8)
 
 ## v1.0.0 - 2026-01-22
 
