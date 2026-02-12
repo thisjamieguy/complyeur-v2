@@ -159,6 +159,32 @@ export default function PreviewPage() {
     downloadCsv(csv, fileName);
   };
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const isTripImport = session?.format === 'trips' || session?.format === 'gantt';
+    if (!isTripImport) {
+      return;
+    }
+
+    const hasNonSchengenRows = validatedRows.some((row) => {
+      if (!isParsedTripRow(row.data)) return false;
+      const country = row.data.country?.trim().toUpperCase();
+      return Boolean(country && NON_SCHENGEN_EU.has(country));
+    });
+
+    if (!hasNonSchengenRows) {
+      return;
+    }
+
+    const dismissed = window.localStorage.getItem(NON_SCHENGEN_ADVISORY_DISMISSED_KEY) === '1';
+    if (!dismissed) {
+      setShowNonSchengenAdvisory(true);
+    }
+  }, [session, validatedRows]);
+
   if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -251,17 +277,6 @@ export default function PreviewPage() {
     }
     setShowNonSchengenAdvisory(false);
   };
-
-  useEffect(() => {
-    if (!isTripImport || nonSchengenSummary.count === 0 || typeof window === 'undefined') {
-      return;
-    }
-
-    const dismissed = window.localStorage.getItem(NON_SCHENGEN_ADVISORY_DISMISSED_KEY) === '1';
-    if (!dismissed) {
-      setShowNonSchengenAdvisory(true);
-    }
-  }, [isTripImport, nonSchengenSummary.count]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
