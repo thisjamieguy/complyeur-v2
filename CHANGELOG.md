@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- style(import): reduce non-schengen advisory dialog size [`1279bbd`](https://github.com/thisjamieguy/complyeur-v2/commit/1279bbdbf434b63e04f1f16b85a0c568b3faf27a)
+- fix(import): keep hook order stable on preview page [`e7dee06`](https://github.com/thisjamieguy/complyeur-v2/commit/e7dee060dc5172530938baab4cf0dc3edd764610)
+- chore: checkpoint import workflow changes before hook bugfix [`f87be86`](https://github.com/thisjamieguy/complyeur-v2/commit/f87be8620e4f4f65f6b795d9a3ca6e40a9586b92)
+- fix: resolve missing waitlist action imports in design variants [`aed2d5d`](https://github.com/thisjamieguy/complyeur-v2/commit/aed2d5dff4ec45bcaad9c91a5f8ae30fd3173c4b)
+- chore(changelog): finalize unreleased changelog sync [`bd668ac`](https://github.com/thisjamieguy/complyeur-v2/commit/bd668acebffe0a64b7c4f3f619b48f23caf070d2)
 - chore(changelog): sync unreleased entries [`772ae6c`](https://github.com/thisjamieguy/complyeur-v2/commit/772ae6c459def81e47a491b8da3087c2ad8d7515)
 - feat: encrypt waitlist emails and refresh landing content [`0c209ae`](https://github.com/thisjamieguy/complyeur-v2/commit/0c209ae12fac55b730a622729dd814745b620c43)
 - chore(changelog): sync unreleased entries [`a4990d9`](https://github.com/thisjamieguy/complyeur-v2/commit/a4990d919717c6dca9e4e606603e93efcd402023)
 - chore(changelog): capture latest commit metadata [`44c1367`](https://github.com/thisjamieguy/complyeur-v2/commit/44c1367bc421b1c405822ecc39ce30c176179a58)
 - chore(changelog): update unreleased commit list [`1e86aa6`](https://github.com/thisjamieguy/complyeur-v2/commit/1e86aa62e715c94f7be5f45ec038053895f9981d)
-- chore: checkpoint current workspace changes [`78b389e`](https://github.com/thisjamieguy/complyeur-v2/commit/78b389ec6e69f4278f0103c0f102cb34ad2458a2)
-- feat(billing): connect pricing page to Stripe checkout [`cbdc75e`](https://github.com/thisjamieguy/complyeur-v2/commit/cbdc75e13db99cbf62c86b12ffa235dc9120eccb)
-- chore(changelog): update changelog to include missing entries for v1.0.0 release [`a653c13`](https://github.com/thisjamieguy/complyeur-v2/commit/a653c1322fc1003fe729005c038aa1c1ac16c87e)
-- chore(changelog): update changelog format and add missing entries for v1.0.0 release [`1e34732`](https://github.com/thisjamieguy/complyeur-v2/commit/1e3473283898f260bbf5b982192a9e742f250bb6)
-- fix(changelog): add missing feat entry for status thresholds implementation [`a2e2678`](https://github.com/thisjamieguy/complyeur-v2/commit/a2e267889cd5498ea18ece9b977123ce19efd2c4)
 
 ## v1.0.0 - 2026-01-22
 
