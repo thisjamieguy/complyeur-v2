@@ -1,4 +1,4 @@
-# ComplyEUR Go-Live Checklist
+# ComplyEur Go-Live Checklist
 
 Complete all items before announcing launch.
 

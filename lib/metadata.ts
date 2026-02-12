@@ -5,6 +5,15 @@ import { Metadata } from 'next'
  * Falls back to production URL if environment variable is not set
  */
 export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://complyeur.com'
+export const BRAND_ICON_PATH = '/images/Icons/03_Icon_Only/ComplyEur_Icon.svg'
+
+const rawXHandle = process.env.NEXT_PUBLIC_X_HANDLE || process.env.NEXT_PUBLIC_TWITTER_HANDLE || '@complyeur'
+const normalizedXHandle = rawXHandle.trim()
+export const X_HANDLE = normalizedXHandle.length === 0
+  ? '@complyeur'
+  : normalizedXHandle.startsWith('@')
+    ? normalizedXHandle
+    : `@${normalizedXHandle}`
 
 /**
  * Default Open Graph image for social sharing
@@ -41,10 +50,10 @@ export function createPageMetadata({
   description,
   path,
   ogImage = DEFAULT_OG_IMAGE,
-  appendSiteName = false, // Root layout template already adds " | ComplyEUR"
+  appendSiteName = false, // Root layout template already adds " | ComplyEur"
 }: PageMetadataOptions): Metadata {
   const canonicalUrl = `${SITE_URL}${path}`
-  const fullTitle = appendSiteName ? `${title} | ComplyEUR` : title
+  const fullTitle = appendSiteName ? `${title} | ComplyEur` : title
 
   return {
     title: fullTitle,
@@ -56,7 +65,7 @@ export function createPageMetadata({
       title: fullTitle,
       description,
       url: canonicalUrl,
-      siteName: 'ComplyEUR',
+      siteName: 'ComplyEur',
       images: [
         {
           url: ogImage,
@@ -70,6 +79,8 @@ export function createPageMetadata({
     },
     twitter: {
       card: 'summary_large_image',
+      creator: X_HANDLE,
+      site: X_HANDLE,
       title: fullTitle,
       description,
       images: [ogImage],
@@ -84,8 +95,8 @@ export function createPageMetadata({
 export const defaultMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'ComplyEUR - Schengen Compliance Management',
-    template: '%s | ComplyEUR',
+    default: 'ComplyEur - Schengen Compliance Management',
+    template: '%s | ComplyEur',
   },
   description:
     'Track and manage EU Schengen 90/180-day visa compliance for your employees. Automated tracking, real-time alerts, and compliance reporting for UK businesses.',
@@ -98,9 +109,9 @@ export const defaultMetadata: Metadata = {
     'UK business travel',
     'Schengen visa calculator',
   ],
-  authors: [{ name: 'ComplyEUR' }],
-  creator: 'ComplyEUR',
-  publisher: 'ComplyEUR',
+  authors: [{ name: 'ComplyEur' }],
+  creator: 'ComplyEur',
+  publisher: 'ComplyEur',
   robots: {
     index: true,
     follow: true,
@@ -108,18 +119,29 @@ export const defaultMetadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_GB',
-    siteName: 'ComplyEUR',
+    siteName: 'ComplyEur',
     images: [
       {
         url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: 'ComplyEUR - Schengen Compliance Management',
+        alt: 'ComplyEur - Schengen Compliance Management',
       },
     ],
   },
+  icons: {
+    icon: [
+      {
+        url: BRAND_ICON_PATH,
+        type: 'image/svg+xml',
+      },
+    ],
+    shortcut: [BRAND_ICON_PATH],
+    apple: [BRAND_ICON_PATH],
+  },
   twitter: {
     card: 'summary_large_image',
-    creator: '@complyeur',
+    creator: X_HANDLE,
+    site: X_HANDLE,
   },
 }

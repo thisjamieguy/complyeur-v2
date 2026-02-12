@@ -91,21 +91,24 @@ function LoginForm() {
   const isAnyLoading = isLoading || isGoogleLoading
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10">
+      <div className="h-1 w-full bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400" />
+      <CardHeader className="pb-4">
+        <p className="inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-700">
+          Secure sign in
+        </p>
         <CardTitle asChild>
-          <h1>Sign in to your account</h1>
+          <h1 className="text-2xl">Welcome back</h1>
         </CardTitle>
         <CardDescription>
-          Enter your email and password to access your dashboard
+          Access your compliance dashboard and continue monitoring Schengen risk.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Google OAuth Button */}
         <Button
           type="button"
           variant="outline"
-          className="w-full"
+          className="w-full border-slate-300 bg-white hover:bg-slate-50"
           onClick={handleGoogleSignIn}
           disabled={isAnyLoading}
         >
@@ -119,7 +122,6 @@ function LoginForm() {
           )}
         </Button>
 
-        {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
@@ -131,7 +133,6 @@ function LoginForm() {
           </div>
         </div>
 
-        {/* Email/Password Form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -145,6 +146,7 @@ function LoginForm() {
                       type="email"
                       placeholder="Enter your email"
                       autoComplete="email"
+                      required
                       disabled={isAnyLoading}
                       {...field}
                     />
@@ -164,6 +166,7 @@ function LoginForm() {
                       type="password"
                       placeholder="Enter your password"
                       autoComplete="current-password"
+                      required
                       disabled={isAnyLoading}
                       {...field}
                     />
@@ -178,18 +181,23 @@ function LoginForm() {
           </form>
         </Form>
 
-        {/* Links */}
         <div className="text-center space-y-3">
           <Link
             href="/forgot-password"
-            className="inline-block text-sm text-blue-600 hover:underline py-2 min-h-[44px] leading-relaxed"
+            className="inline-block text-sm text-brand-700 hover:underline py-2 min-h-[44px] leading-relaxed"
           >
             Forgot your password?
           </Link>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-slate-600">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-blue-600 hover:underline py-2">
+            <Link href="/signup" className="text-brand-700 hover:underline py-2">
               Sign up
+            </Link>
+          </div>
+          <div className="text-xs text-slate-500 pt-1">
+            Exploring first?{' '}
+            <Link href="/landing" className="font-medium text-brand-700 hover:underline">
+              Visit the landing page
             </Link>
           </div>
         </div>
@@ -201,10 +209,13 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <Card>
+      <Card className="border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10">
         <CardHeader>
+          <p className="inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-700">
+            Secure sign in
+          </p>
           <CardTitle asChild>
-            <h1>Sign in to your account</h1>
+            <h1 className="text-2xl">Welcome back</h1>
           </CardTitle>
           <CardDescription>Loading...</CardDescription>
         </CardHeader>

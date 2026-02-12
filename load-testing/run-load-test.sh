@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Load Testing Runner Script for ComplyEUR
+# Load Testing Runner Script for ComplyEur
 # This script runs k6 load tests with proper configuration
 
 set -e
@@ -11,7 +11,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}ComplyEUR Load Testing Suite${NC}"
+echo -e "${GREEN}ComplyEur Load Testing Suite${NC}"
 echo "=================================="
 echo ""
 

@@ -263,7 +263,7 @@ export interface ValidationSummary {
 // ============================================================
 
 // ------------------------------------------------------------
-// Target Fields (what ComplyEUR expects)
+// Target Fields (what ComplyEur expects)
 // ------------------------------------------------------------
 
 export const EMPLOYEE_TARGET_FIELDS = [
@@ -319,7 +319,7 @@ export type MappingConfidence =
 
 export interface ColumnMapping {
   sourceColumn: string; // Original column name from file: "Mitarbeiter"
-  targetField: TargetField | null; // ComplyEUR field: "first_name" or null if skipped
+  targetField: TargetField | null; // ComplyEur field: "first_name" or null if skipped
   confidence: MappingConfidence;
   sampleValues: string[]; // First 5 non-empty values from this column
 }

@@ -5,7 +5,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
-import { defaultMetadata, SITE_URL } from "@/lib/metadata";
+import { defaultMetadata, SITE_URL, X_HANDLE } from "@/lib/metadata";
 import "./globals.css";
 
 // Import CookieYes types for global window augmentation
@@ -34,6 +34,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const xProfileUrl = `https://x.com/${X_HANDLE.replace(/^@/, '')}`
+
   return (
     <html lang="en">
       <head>
@@ -62,7 +64,7 @@ export default function RootLayout({
                 "@context": "https://schema.org",
                 "@type": "WebSite",
                 "@id": `${SITE_URL}/#website`,
-                name: "ComplyEUR",
+                name: "ComplyEur",
                 url: SITE_URL,
                 description: "Schengen compliance management for UK businesses",
                 publisher: {
@@ -73,16 +75,17 @@ export default function RootLayout({
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 "@id": `${SITE_URL}/#organization`,
-                name: "ComplyEUR",
+                name: "ComplyEur",
                 url: SITE_URL,
                 logo: `${SITE_URL}/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg`,
+                sameAs: [xProfileUrl],
                 description: "Helping UK businesses track EU Schengen 90/180-day visa compliance for their employees.",
               },
               {
                 "@context": "https://schema.org",
                 "@type": "SoftwareApplication",
                 "@id": `${SITE_URL}/#software`,
-                name: "ComplyEUR",
+                name: "ComplyEur",
                 applicationCategory: "BusinessApplication",
                 applicationSubCategory: "Compliance Management",
                 operatingSystem: "Web browser",

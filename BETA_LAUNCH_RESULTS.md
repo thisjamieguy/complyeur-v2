@@ -1,4 +1,4 @@
-# ComplyEUR Beta Launch Results
+# ComplyEur Beta Launch Results
 
 **Started:** 2026-02-05
 **Status:** In Progress

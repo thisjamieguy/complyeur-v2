@@ -1,4 +1,4 @@
-# Comprehensive Test Suite Design — ComplyEUR
+# Comprehensive Test Suite Design — ComplyEur
 
 **Date:** 2025-02-03
 **Status:** Ready for Implementation
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This document defines a 4-layer test suite to exhaustively verify ComplyEUR's core business function: tracking Schengen visa compliance via the 90/180-day rule.
+This document defines a 4-layer test suite to exhaustively verify ComplyEur's core business function: tracking Schengen visa compliance via the 90/180-day rule.
 
 **Current State:**
 - 642 unit/integration tests (55% coverage)
@@ -279,7 +279,7 @@ UPDATE: playwright.config.ts
 ### Prompt 1: Unit Test Gap Coverage (Layer 1)
 
 ```
-TASK: Fill unit test coverage gaps in ComplyEUR compliance library
+TASK: Fill unit test coverage gaps in ComplyEur compliance library
 
 TARGET FILES:
 - lib/compliance/cached.ts (currently 2% → target 90%)

@@ -226,7 +226,7 @@ export function FeatureCards() {
             Everything you need to stay compliant
           </h2>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-6">
-            Replace spreadsheet anxiety with confidence. ComplyEUR handles the complexity so you can focus on your business.
+            Replace spreadsheet anxiety with confidence. ComplyEur handles the complexity so you can focus on your business.
           </p>
           <GDPRBadge />
         </div>

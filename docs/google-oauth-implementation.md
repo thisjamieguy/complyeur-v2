@@ -80,7 +80,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # App URL (CRITICAL for OAuth redirects)
 NEXT_PUBLIC_APP_URL=http://localhost:3000  # Local
-# NEXT_PUBLIC_APP_URL=https://app.complyeur.com  # Production
+# NEXT_PUBLIC_APP_URL=https://complyeur.com  # Production
 
 # Local Supabase Google OAuth credentials (when using `supabase start`)
 # Redirect URI in Google Cloud Console must be:
@@ -95,13 +95,13 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=your-google-client-secret
 
 | Setting | Local | Production |
 |---------|-------|------------|
-| Site URL | `http://localhost:3000` | `https://app.complyeur.com` |
-| Redirect URLs | `http://localhost:3000/auth/callback` | `https://app.complyeur.com/auth/callback` |
+| Site URL | `http://localhost:3000` | `https://complyeur.com` |
+| Redirect URLs | `http://localhost:3000/auth/callback` | `https://complyeur.com/auth/callback` |
 
 **Important**: Add ALL environments to Redirect URLs:
 - `http://localhost:3000/auth/callback` (local)
 - `https://complyeur-*.vercel.app/auth/callback` (preview deployments)
-- `https://app.complyeur.com/auth/callback` (production)
+- `https://complyeur.com/auth/callback` (production)
 
 #### 2. Authentication > Providers > Google
 
@@ -131,7 +131,7 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=your-google-client-secret
 
 | Field | Value |
 |-------|-------|
-| Name | ComplyEUR Production |
+| Name | ComplyEur Production |
 | Authorized JavaScript origins | `https://your-project.supabase.co` |
 | Authorized redirect URIs | `https://your-project.supabase.co/auth/v1/callback` |
 
@@ -158,8 +158,8 @@ In your Vercel project settings:
 
 ```bash
 # vercel.json or environment settings
-NEXT_PUBLIC_APP_URL=$VERCEL_URL  # Preview
-NEXT_PUBLIC_APP_URL=https://app.complyeur.com  # Production
+NEXT_PUBLIC_APP_URL=https://$VERCEL_URL  # Preview
+NEXT_PUBLIC_APP_URL=https://complyeur.com  # Production
 ```
 
 ---
@@ -260,7 +260,7 @@ Before production launch:
 | File | Action | Purpose |
 |------|--------|---------|
 | `supabase/functions/auth-hook-prevent-linking/index.ts` | Created | Auth hook to prevent identity linking |
-| `supabase/migrations/20260112_google_oauth_support.sql` | Created | Database changes for OAuth support |
+| `supabase/migrations/20260206143000_owner_roles_and_team_invites.sql` | Created | Database changes for OAuth provisioning and invite acceptance |
 | `app/auth/callback/route.ts` | Modified | Enhanced callback with OAuth provisioning |
 | `app/(auth)/actions.ts` | Modified | Added `signInWithGoogle` action |
 | `app/(auth)/login/page.tsx` | Modified | Added Google OAuth button |

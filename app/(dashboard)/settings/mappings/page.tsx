@@ -4,7 +4,7 @@ import { MappingsList } from './mappings-list';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const metadata = {
-  title: 'Column Mappings | Settings | ComplyEUR',
+  title: 'Column Mappings | Settings | ComplyEur',
   description: 'Manage your saved column mappings for data imports',
 };
 

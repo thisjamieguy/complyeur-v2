@@ -1,5 +1,5 @@
 /**
- * Country Code Normalizer for ComplyEUR Import
+ * Country Code Normalizer for ComplyEur Import
  * Converts country names to ISO codes and validates Schengen membership.
  *
  * What it does:

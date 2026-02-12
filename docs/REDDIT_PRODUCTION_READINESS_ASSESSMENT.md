@@ -3,7 +3,7 @@
 Date: 2026-02-08
 
 ## Summary
-ComplyEUR is moderately well-equipped for the operational concerns raised in the Reddit post.
+ComplyEur is moderately well-equipped for the operational concerns raised in the Reddit post.
 
 ## What is already in place
 - Automated/unit/integration/e2e test scripts via Vitest + Playwright.

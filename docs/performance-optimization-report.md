@@ -1,6 +1,6 @@
 # Phase 17: Performance Optimization Report
 
-**Project:** ComplyEUR v2.0
+**Project:** ComplyEur v2.0
 **Phase:** 17 of 35
 **Date:** January 9, 2026
 

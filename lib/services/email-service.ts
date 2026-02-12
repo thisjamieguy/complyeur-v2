@@ -16,7 +16,7 @@ function getResendClient(): Resend | null {
 }
 
 // Email configuration
-const FROM_EMAIL = process.env.EMAIL_FROM || 'ComplyEUR Alerts <alerts@complyeur.com>'
+const FROM_EMAIL = process.env.EMAIL_FROM || 'ComplyEur Alerts <alerts@complyeur.com>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://complyeur.com'
 
 interface AlertEmailData {
@@ -172,7 +172,7 @@ function generateAlertEmailHtml(data: AlertEmailData): string {
           <tr>
             <td style="background-color: #f9fafb; padding: 24px 32px; border-top: 1px solid #e5e7eb;">
               <p style="margin: 0 0 8px; color: #6b7280; font-size: 12px; text-align: center;">
-                This is an automated compliance alert from ComplyEUR.
+                This is an automated compliance alert from ComplyEur.
               </p>
               <p style="margin: 0; color: #9ca3af; font-size: 12px; text-align: center;">
                 <a href="${unsubscribeUrl}" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a> from these notifications
@@ -221,7 +221,7 @@ Further travel to the Schengen area must be avoided until compliance is restored
 View Dashboard: ${dashboardUrl}
 
 ---
-This is an automated compliance alert from ComplyEUR.
+This is an automated compliance alert from ComplyEur.
 Unsubscribe: ${unsubscribeUrl}
 `
 

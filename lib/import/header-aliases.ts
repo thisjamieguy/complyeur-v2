@@ -1,5 +1,5 @@
 /**
- * Header Alias System for ComplyEUR Import
+ * Header Alias System for ComplyEur Import
  * Maps common column header variations to canonical field names.
  *
  * What it does:

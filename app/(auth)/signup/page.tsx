@@ -98,20 +98,25 @@ function SignupForm() {
   const isAnyLoading = isLoading || isGoogleLoading
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create your account</CardTitle>
+    <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10">
+      <div className="h-1 w-full bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400" />
+      <CardHeader className="pb-4">
+        <p className="inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-700">
+          Account setup
+        </p>
+        <CardTitle asChild>
+          <h1 className="text-2xl">Create your account</h1>
+        </CardTitle>
         <CardDescription>
-          Set up your company and start managing Schengen compliance
+          Set up your workspace and start managing Schengen compliance.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Google OAuth Button */}
         <div>
           <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="w-full border-slate-300 bg-white hover:bg-slate-50"
             onClick={handleGoogleSignIn}
             disabled={isAnyLoading}
           >
@@ -130,7 +135,7 @@ function SignupForm() {
               href="/terms"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-brand-700 hover:underline"
             >
               Terms
             </Link>{' '}
@@ -139,14 +144,13 @@ function SignupForm() {
               href="/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-brand-700 hover:underline"
             >
               Privacy Policy
             </Link>
           </p>
         </div>
 
-        {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
@@ -158,7 +162,6 @@ function SignupForm() {
           </div>
         </div>
 
-        {/* Email/Password Form */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -171,6 +174,8 @@ function SignupForm() {
                     <Input
                       type="email"
                       placeholder="Enter your email"
+                      autoComplete="email"
+                      required
                       disabled={isAnyLoading}
                       {...field}
                     />
@@ -189,6 +194,8 @@ function SignupForm() {
                     <Input
                       type="text"
                       placeholder="Enter your company name"
+                      autoComplete="organization"
+                      required
                       disabled={isAnyLoading}
                       {...field}
                     />
@@ -207,6 +214,8 @@ function SignupForm() {
                     <Input
                       type="password"
                       placeholder="Create a password (min 8 characters)"
+                      autoComplete="new-password"
+                      required
                       disabled={isAnyLoading}
                       {...field}
                     />
@@ -225,6 +234,8 @@ function SignupForm() {
                     <Input
                       type="password"
                       placeholder="Confirm your password"
+                      autoComplete="new-password"
+                      required
                       disabled={isAnyLoading}
                       {...field}
                     />
@@ -258,7 +269,7 @@ function SignupForm() {
                         href="/terms"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 underline"
+                        className="text-brand-700 hover:text-brand-800 underline"
                         onClick={(e) => e.stopPropagation()}
                       >
                         Terms of Service
@@ -268,7 +279,7 @@ function SignupForm() {
                         href="/privacy"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 underline"
+                        className="text-brand-700 hover:text-brand-800 underline"
                         onClick={(e) => e.stopPropagation()}
                       >
                         Privacy Policy
@@ -285,12 +296,17 @@ function SignupForm() {
           </form>
         </Form>
 
-        {/* Links */}
-        <div className="text-center">
-          <div className="text-sm text-gray-600">
+        <div className="text-center space-y-3">
+          <div className="text-sm text-slate-600">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:underline">
+            <Link href="/login" className="text-brand-700 hover:underline">
               Sign in
+            </Link>
+          </div>
+          <div className="text-xs text-slate-500">
+            Exploring first?{' '}
+            <Link href="/landing" className="font-medium text-brand-700 hover:underline">
+              Visit the landing page
             </Link>
           </div>
         </div>
@@ -302,9 +318,14 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <Card>
+      <Card className="border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10">
         <CardHeader>
-          <CardTitle>Create your account</CardTitle>
+          <p className="inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-700">
+            Account setup
+          </p>
+          <CardTitle asChild>
+            <h1 className="text-2xl">Create your account</h1>
+          </CardTitle>
           <CardDescription>Loading...</CardDescription>
         </CardHeader>
       </Card>

@@ -4,7 +4,7 @@ import { createPageMetadata } from '@/lib/metadata'
 export const metadata: Metadata = createPageMetadata({
   title: 'Terms of Service',
   description:
-    'Read ComplyEUR Terms of Service for Schengen compliance management. Understand the terms governing your use of our visa tracking platform.',
+    'Read ComplyEur Terms of Service for Schengen compliance management. Understand the terms governing your use of our visa tracking platform.',
   path: '/terms',
 })
 

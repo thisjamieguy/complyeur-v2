@@ -1,4 +1,4 @@
-# ComplyEUR — Pre-Beta Launch Checklist
+# ComplyEur — Pre-Beta Launch Checklist
 
 **Version:** 1.1
 **Last updated:** 2026-02-05
@@ -423,7 +423,7 @@ This checklist is considered complete when:
 - [ ] `sitemap.xml` generated
 - [ ] `robots.txt` allows public pages, blocks dashboard
 - [ ] Canonical URLs set
-- [ ] Landing page explains ComplyEUR in 5 seconds
+- [ ] Landing page explains ComplyEur in 5 seconds
 - [ ] CTA is obvious and works
 - [ ] Social sharing preview looks correct
 - [ ] Favicon and app icons (including Apple touch icon)

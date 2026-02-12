@@ -1,5 +1,5 @@
 /**
- * Gantt/Schedule Parser for ComplyEUR Import
+ * Gantt/Schedule Parser for ComplyEur Import
  *
  * What it does:
  * - Parses schedule/Gantt format files where employees are rows and dates are columns

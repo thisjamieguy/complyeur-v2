@@ -1,291 +1,142 @@
-# ComplyEUR Landing Page — Combined Assessment
+# Heuristic Evaluation: Landing + Associated Pages (Local)
 
-**Evaluated**: 2026-02-04
-**URL**: https://complyeur.com/landing
-**Frameworks**: Nielsen's 10 Heuristics + Web Interface Guidelines + Squirrel Technical Audit
+**Evaluated**: February 12, 2026  
+**Framework**: Nielsen's 10 Usability Heuristics  
+**Environment**: Local app on `http://127.0.0.1:3100`
 
----
+## Scope
 
-## Executive Summary
+Routes reviewed:
+- `/landing`
+- `/pricing`
+- `/about`
+- `/faq`
+- `/contact`
+- `/privacy`
+- `/terms`
+- `/accessibility`
+- `/login`
+- `/signup`
 
-| Assessment | Score | Grade |
-|------------|-------|-------|
-| **Technical (Squirrel)** | 65/100 | D |
-| **Usability (Nielsen's 10)** | 82/100 | B |
-| **Design Guidelines** | 78/100 | C+ |
-| **Combined** | 75/100 | C |
+## Summary
 
-### Quick Stats
-- **Pages crawled**: 9
-- **Rules passed**: 570
-- **Warnings**: 47
-- **Errors**: 18
+- Critical issues: 0
+- Major issues: 4
+- Minor issues: 6
+- Broken internal links from landing flow: 0 (`/`, `/about`, `/contact`, `/faq`, `/login`, `/pricing`, `/privacy`, `/terms` all returned `200`)
 
-**Bottom line**: The landing page has strong visual design and clear messaging, but technical SEO issues (especially missing structured data) are dragging down the overall score. Fixing structured data alone would boost the score significantly.
+**Launch readiness**: **Conditional go-live**.  
+You can soft launch, but fix the 4 major items before paid traffic or broad announcement.
 
----
+## Major Issues (Fix Soon)
 
-## 1. Technical Audit (Squirrel)
+### 1) No explicit submission feedback on waitlist forms
+- **Heuristic violated**: #1 Visibility of System Status, #9 Help Users Recognize/Recover from Errors
+- **Location**: `/landing` (both "Join Waitlist" forms)
+- **Problem**: Submitting a valid email posts successfully (`POST /landing` returns `200`), but there is no explicit success state, no loading state, and no failure message.
+- **Impact**: Users cannot tell if submission worked, which increases re-submits and drop-off.
+- **Recommendation**:
+  - Add loading state: disable button + "Submitting..." text or spinner.
+  - Add inline success confirmation near the submitted form.
+  - Add explicit error feedback with retry guidance.
+- **Severity**: 3 (Major)
 
-### Category Breakdown
+### 2) Signup page has no `<h1>`
+- **Heuristic violated**: #4 Consistency & Standards, #6 Recognition Rather Than Recall
+- **Location**: `/signup`
+- **Problem**: Rendered page has no primary heading (`h1` list was empty during audit).
+- **Impact**: Weak orientation for users and assistive tech; inconsistent page structure versus the rest of the public flow.
+- **Recommendation**: Add a clear `<h1>` (for example, "Create your account") above the form.
+- **Severity**: 3 (Major)
 
-| Category | Score | Status |
-|----------|-------|--------|
-| Accessibility | 100 | ✅ Excellent |
-| Analytics | 100 | ✅ Excellent |
-| E-E-A-T | 100 | ✅ Excellent |
-| Mobile | 100 | ✅ Excellent |
-| Social Media | 100 | ✅ Excellent |
-| URL Structure | 100 | ✅ Excellent |
-| Core SEO | 91 | ✅ Good |
-| Links | 89 | ✅ Good |
-| Performance | 87 | ⚠️ Minor issues |
-| Images | 84 | ⚠️ Minor issues |
-| Crawlability | 84 | ⚠️ Minor issues |
-| Security | 82 | ⚠️ Needs attention |
-| Content | 75 | ⚠️ Needs attention |
-| **Structured Data** | **0** | ❌ Critical |
+### 3) Auth forms rely on post-submit validation instead of preventative semantics
+- **Heuristic violated**: #5 Error Prevention, #7 Flexibility & Efficiency of Use
+- **Location**: `/login`, `/signup`
+- **Problem**:
+  - Key inputs are not marked `required`.
+  - Browser surfaced warnings about missing `autocomplete` usage on input fields.
+  - Validation errors only appear after submit.
+- **Impact**: Slower form completion, weaker password manager/autofill support, higher frustration.
+- **Recommendation**:
+  - Add `required` where mandatory.
+  - Add `autocomplete` tokens (`email`, `current-password`, `new-password`, `organization` where applicable).
+  - Keep server validation, but strengthen client-side prevention.
+- **Severity**: 3 (Major)
 
-### Critical Issues (Fix Immediately)
+### 4) Navigation model changes abruptly between landing and associated pages
+- **Heuristic violated**: #3 User Control & Freedom, #4 Consistency & Standards
+- **Location**: `/landing` vs `/pricing`, `/about`, `/faq`, `/contact`, `/privacy`, `/terms`, `/accessibility`
+- **Problem**: Landing has a full top nav; most associated pages reduce to logo + footer links only.
+- **Impact**: Users lose fast wayfinding once they enter secondary pages, especially on long legal/help pages.
+- **Recommendation**: Keep a lightweight but consistent top nav (or sticky in-page quick nav) across associated pages.
+- **Severity**: 3 (Major)
 
-#### 1. Missing Structured Data (Schema.org)
-- **Rule**: `schema/json-ld-valid`
-- **Impact**: Search engines can't understand your content structure
-- **Affects**: All 9 pages
-- **Fix**: Add JSON-LD schema for Organization, WebSite, FAQPage, etc.
+## Minor Issues (Fix Later)
 
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "ComplyEUR",
-  "applicationCategory": "BusinessApplication",
-  "operatingSystem": "Web",
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "GBP"
-  }
-}
-```
+### 1) Waitlist empty-email error relies on browser-native popup only
+- **Heuristic violated**: #9 Help Users Recognize/Recover from Errors
+- **Location**: `/landing`
+- **Problem**: Empty email shows browser message ("Please fill in this field.") with no persistent inline error UI.
+- **Impact**: Inconsistent behavior across browsers, weaker clarity for some users.
+- **Recommendation**: Add inline, accessible error text tied with `aria-describedby`.
+- **Severity**: 2 (Minor)
 
-#### 2. Login Page Missing H1
-- **Rule**: `core/h1`
-- **Location**: `/login`
-- **Fix**: Add an H1 heading to the login page
+### 2) Many small interactive targets on mobile
+- **Heuristic violated**: #8 Aesthetic & Minimalist Design (readability/operability balance)
+- **Location**: Most associated pages at mobile width (`390px`)
+- **Problem**: High count of sub-40px clickable elements, especially in legal/footer dense areas.
+- **Impact**: Harder tap accuracy on phones.
+- **Recommendation**: Increase line height/padding for dense link groups and legal cross-links.
+- **Severity**: 2 (Minor)
 
-#### 3. Duplicate Content
-- **Rule**: `content/duplicate-title`, `content/duplicate-description`
-- **Issue**: `/landing` and `/` have identical meta tags
-- **Fix**: Either redirect `/` → `/landing` permanently OR give each unique metadata
+### 3) FAQ is dense and lacks a "find answer fast" control
+- **Heuristic violated**: #6 Recognition Rather Than Recall
+- **Location**: `/faq`
+- **Problem**: Long accordion list without local search/filter/jump links.
+- **Impact**: Slower answer discovery for first-time users.
+- **Recommendation**: Add FAQ search and category quick-jump links.
+- **Severity**: 2 (Minor)
 
-### Major Issues (Fix Soon)
+### 4) Repeated image/preload warnings in console
+- **Heuristic violated**: #1 Visibility of System Status (indirect performance quality signal)
+- **Location**: Multiple pages
+- **Problem**: Repeated warnings for unused preloaded logo assets and image dimension ratio mismatches.
+- **Impact**: Potential performance overhead and noisy runtime telemetry.
+- **Recommendation**: Align preload strategy with actual above-the-fold usage and preserve image aspect ratio with matching dimensions/styles.
+- **Severity**: 2 (Minor)
 
-#### 4. Security Warnings
-- **Form CAPTCHA**: 2 public forms without bot protection
-  - Recommendation: Add reCAPTCHA or hCaptcha to waitlist forms
-- **CSP Issues**: `unsafe-inline` and `unsafe-eval` in Content Security Policy
-- **Potential Secrets**: 20 detections (likely false positives from minified JS—verify manually)
+### 5) Marketing pages heavily depend on footer for secondary navigation
+- **Heuristic violated**: #3 User Control & Freedom
+- **Location**: `/pricing`, `/about`, `/faq`, `/contact`, `/privacy`, `/terms`, `/accessibility`
+- **Problem**: Primary cross-page movement is often at page bottom.
+- **Impact**: More scrolling to change route, especially on long pages.
+- **Recommendation**: Add a slim secondary nav or floating "quick links" block.
+- **Severity**: 2 (Minor)
 
-#### 5. Performance Issues
-- **LCP Images**: Logo not preloaded (affects all 9 pages)
-- **Lazy Loading**: Above-fold icon incorrectly has `loading="lazy"`
+### 6) Conversion intent is split across two waitlist forms on one page
+- **Heuristic violated**: #8 Aesthetic & Minimalist Design
+- **Location**: `/landing`
+- **Problem**: Two similar waitlist forms can feel repetitive without clear distinction.
+- **Impact**: Mild cognitive overhead and unclear "best" action point.
+- **Recommendation**: Keep one primary form and convert the second into a contextual CTA link, or clearly explain the difference.
+- **Severity**: 2 (Minor)
 
-#### 6. SEO Issues
-- **FAQ Title**: 69 chars (max 60)
-- **FAQ Description**: 166 chars (max 160)
-- **Thin Content**: FAQ (226 words) and Login (19 words) below 300-word minimum
+## Strengths Observed
 
-#### 7. Crawlability Issues
-- **Redirect Chain**: `/` → `/landing` (307 redirect)
-- **Missing from Sitemap**: `/login` not in sitemap.xml
-- **Orphan Page**: `/landing` has <2 incoming links
+- Clear and specific landing value proposition with strong visual hierarchy.
+- Route coverage for associated pages is complete and internally linked correctly.
+- Skip link and main landmark are present across reviewed routes.
+- Mobile layout did not show horizontal overflow in tested viewport (`390px`).
+- Auth pages show explicit inline error text after failed submit (good recovery messaging once triggered).
+- Pricing toggle uses clear state semantics (`aria-pressed`), supporting assistive technologies.
 
-### Minor Issues (Fix Later)
+## Launch Checklist Before Going Live
 
-- **External Links**: Articles have 0 external links (affects E-E-A-T)
-- **Keyword Density**: Some words slightly overused (complyeur, data, service)
-- **HTTP→HTTPS**: All HTTP links properly redirect (good, but could use HSTS preload)
+1. Add explicit success/loading/error states for waitlist submission on `/landing`.
+2. Add `<h1>` to `/signup`.
+3. Add `required` + `autocomplete` semantics on `/login` and `/signup`.
+4. Add consistent top-level navigation pattern across associated pages.
 
----
+## Suggested Next Step
 
-## 2. Heuristic Evaluation (Nielsen's 10)
-
-### Scores by Heuristic
-
-| # | Heuristic | Score | Issues |
-|---|-----------|-------|--------|
-| 1 | Visibility of System Status | 3/4 | No loading states visible |
-| 2 | Match Real World | 4/4 | Excellent domain language |
-| 3 | User Control & Freedom | 3/4 | No clear exit from modals |
-| 4 | Consistency & Standards | 3/4 | Duplicate title issue |
-| 5 | Error Prevention | 2/4 | No form validation visible |
-| 6 | Recognition over Recall | 4/4 | Clear labels and cues |
-| 7 | Flexibility & Efficiency | 3/4 | Missing autocomplete |
-| 8 | Aesthetic & Minimalist | 4/4 | Clean, focused design |
-| 9 | Help Users with Errors | 2/4 | No inline error messages |
-| 10 | Help & Documentation | 3/4 | FAQ exists, no contextual help |
-
-### Detailed Findings
-
-#### Strengths Observed ✅
-- **Excellent visual hierarchy**: Clear heading structure, scannable content
-- **Strong value proposition**: "Fines. Bans. Stranded employees." creates urgency
-- **Social proof through UI preview**: Dashboard mockup shows real functionality
-- **Trust signals**: GDPR badge, encryption mentions, "No spam" reassurance
-- **Clear CTA**: "Join Waitlist" appears twice, always visible
-- **Clean 3-step process**: Easy to understand onboarding flow
-- **Professional aesthetic**: No sparkle emojis, no placeholder content
-- **Mobile responsive**: Layout adapts well
-
-#### Issues Found
-
-##### H5 - Error Prevention (Severity: 3 - Major)
-- **Location**: Email input field
-- **Problem**: No visible validation before form submission
-- **Impact**: Users may submit invalid emails without feedback
-- **Recommendation**: Add real-time email format validation with inline feedback
-
-##### H9 - Help Users with Errors (Severity: 2 - Minor)
-- **Location**: Waitlist form
-- **Problem**: No visible error states in the design
-- **Impact**: Users won't know what went wrong if submission fails
-- **Recommendation**: Design error states with specific, actionable messages
-
-##### H1 - Visibility of System Status (Severity: 2 - Minor)
-- **Location**: "Join Waitlist" button
-- **Problem**: No loading indicator shown during form submission
-- **Impact**: Users may click multiple times
-- **Recommendation**: Add loading spinner and disable button during submission
-
-##### H4 - Consistency (Severity: 2 - Minor)
-- **Location**: Page titles
-- **Problem**: "ComplyEUR" appears twice in titles
-- **Impact**: Looks unprofessional in browser tabs
-- **Recommendation**: Fix title template to append brand name once
-
-##### H7 - Flexibility (Severity: 2 - Minor)
-- **Location**: Login form
-- **Problem**: Missing `autocomplete` attributes
-- **Impact**: Password managers don't work properly
-- **Recommendation**: Add `autocomplete="email"` and `autocomplete="current-password"`
-
----
-
-## 3. Web Interface Guidelines Compliance
-
-### Passing ✅
-- [x] Semantic HTML used (proper heading hierarchy)
-- [x] `<button>` for actions, `<a>` for navigation
-- [x] Clean typography (proper ellipsis usage)
-- [x] Consistent color scheme
-- [x] Mobile-responsive design
-- [x] Active voice in copy
-- [x] Specific button labels ("Join Waitlist" not "Submit")
-- [x] Second person voice ("your team")
-- [x] Title Case for headings
-- [x] Skip link present
-
-### Needs Attention ⚠️
-- [ ] **Form `autocomplete`**: Add to email/password inputs
-- [ ] **Preconnect links**: Add for CDNs and external resources
-- [ ] **Critical font preload**: Not detected
-- [ ] **`text-wrap: balance`**: Check headings for text wrapping
-- [ ] **Image dimensions**: Verify all `<img>` have `width` and `height`
-
-### Unknown (Requires Code Review)
-- [ ] `aria-label` on icon-only buttons
-- [ ] `prefers-reduced-motion` support
-- [ ] Tabular numbers for statistics
-- [ ] `touch-action: manipulation`
-
----
-
-## 4. Content & Copy Assessment
-
-### What's Working
-- **Pain-focused headline**: "Fines. Bans. Stranded employees." — emotional, specific
-- **Clear problem statement**: "How are you tracking your team's Schengen days?"
-- **Benefit-driven features**: "Answers in seconds, not hours"
-- **Trust building**: GDPR, UK data hosting, encryption
-- **Realistic UI preview**: Shows actual app functionality
-- **No placeholder content**: All copy is specific and real
-
-### Improvement Opportunities
-1. **Add social proof**: No testimonials, case studies, or user counts
-2. **Clarify pricing**: "What does it cost?" is unanswered
-3. **Address objections**: "What if my data is wrong?" not covered
-4. **Add urgency**: "Now accepting early access signups" is weak—consider countdown or limited spots
-
----
-
-## 5. Prioritized Recommendations
-
-### Fix Immediately (Severity 4 - Blocks Goals)
-| # | Issue | Impact |
-|---|-------|--------|
-| 1 | Add JSON-LD structured data | +15-20 points on overall score |
-| 2 | Add H1 to login page | SEO compliance |
-| 3 | Fix duplicate meta tags (/ vs /landing) | Avoids content confusion |
-
-### Fix Soon (Severity 3 - Major Impact)
-| # | Issue | Impact |
-|---|-------|--------|
-| 4 | Add CAPTCHA to waitlist forms | Prevent spam signups |
-| 5 | Preload LCP images (logo) | Faster perceived load |
-| 6 | Fix lazy loading on above-fold images | Performance |
-| 7 | Add form validation with inline errors | Better UX |
-| 8 | Add loading states to form submission | Prevent double-clicks |
-| 9 | Trim FAQ title/description to limits | SEO compliance |
-| 10 | Add `autocomplete` to login form | Password manager support |
-
-### Fix Later (Severity 2 - Minor)
-| # | Issue | Impact |
-|---|-------|--------|
-| 11 | Add external links to content pages | E-E-A-T signal |
-| 12 | Expand thin content (FAQ, login) | Better SEO |
-| 13 | Add /login to sitemap.xml | Crawlability |
-| 14 | Add preconnect for external resources | Performance |
-| 15 | Sync success state between waitlist forms | Polish |
-
-### Polish (Severity 1 - Cosmetic)
-| # | Issue | Impact |
-|---|-------|--------|
-| 16 | Add social proof (testimonials) | Conversion |
-| 17 | Clarify pricing expectations | Reduce friction |
-| 18 | Standardize footer link text | Consistency |
-
----
-
-## Before/After Targets
-
-| Metric | Current | Target | Priority |
-|--------|---------|--------|----------|
-| **Overall Score** | 65 | 85+ | High |
-| Structured Data | 0 | 100 | Critical |
-| Security | 82 | 95+ | Medium |
-| Performance | 87 | 95+ | Medium |
-| Content | 75 | 85+ | Medium |
-
----
-
-## Quick Wins (< 30 min each)
-
-1. **Add JSON-LD** to `app/layout.tsx` — biggest impact
-2. **Add H1** to login page
-3. **Fix meta duplicates** — either redirect or unique titles
-4. **Add `autocomplete`** to login form inputs
-5. **Preload logo** in document head
-
----
-
-## Next Steps
-
-1. Start with structured data (item #1) — will significantly boost score
-2. Run `squirrel audit https://complyeur.com/landing --format llm` after each fix batch
-3. Target 85+ before public launch
-
----
-
-*Assessment generated: 2026-02-04*
-*Tools: Squirrel v0.0.24 + Nielsen's 10 Heuristics + Vercel Web Interface Guidelines*
+After these four fixes, run a quick re-audit of the same route set and then proceed to live launch.

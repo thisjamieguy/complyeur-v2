@@ -11,7 +11,7 @@ export function MaintenanceBanner() {
       <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
         <Wrench className="h-5 w-5 flex-shrink-0" />
         <p className="text-sm font-medium">
-          ComplyEUR is undergoing scheduled maintenance. Some features may be temporarily unavailable.
+          ComplyEur is undergoing scheduled maintenance. Some features may be temporarily unavailable.
         </p>
       </div>
     </div>

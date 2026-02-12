@@ -41,7 +41,7 @@ function generateWaitlistEmailHtml(data: WaitlistEmailData): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to the ComplyEUR Waitlist</title>
+  <title>Welcome to the ComplyEur Waitlist</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 48px 20px;">
@@ -51,7 +51,7 @@ function generateWaitlistEmailHtml(data: WaitlistEmailData): string {
           <!-- Header -->
           <tr>
             <td style="background-color: #e2e8f0; padding: 32px 40px; text-align: center; border-bottom: 1px solid #cbd5e1;">
-              <img src="${APP_URL}/logo.svg" alt="ComplyEUR" width="240" height="60" style="display: block; margin: 0 auto;" />
+              <img src="${APP_URL}/logo.svg" alt="ComplyEur" width="240" height="60" style="display: block; margin: 0 auto;" />
             </td>
           </tr>
 
@@ -63,15 +63,15 @@ function generateWaitlistEmailHtml(data: WaitlistEmailData): string {
               </h2>
 
               <p style="margin: 0 0 24px; color: #475569; font-size: 16px; line-height: 1.6;">
-                Thank you for joining the ComplyEUR waitlist. You'll be among the first to know when we launch.
+                Thank you for joining the ComplyEur waitlist. You'll be among the first to know when we launch.
               </p>
 
               <div style="background-color: #f8fafc; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
                 <p style="margin: 0 0 12px; color: #0f172a; font-size: 14px; font-weight: 600;">
-                  What is ComplyEUR?
+                  What is ComplyEur?
                 </p>
                 <p style="margin: 0; color: #64748b; font-size: 14px; line-height: 1.5;">
-                  ComplyEUR helps UK businesses track Schengen visa compliance for employees traveling to the EU. No more spreadsheets, no more guesswork — just automated tracking of the 90/180-day rule.
+                  ComplyEur helps UK businesses track Schengen visa compliance for employees traveling to the EU. No more spreadsheets, no more guesswork — just automated tracking of the 90/180-day rule.
                 </p>
               </div>
 
@@ -85,7 +85,7 @@ function generateWaitlistEmailHtml(data: WaitlistEmailData): string {
           <tr>
             <td style="background-color: #f8fafc; padding: 24px 40px; border-top: 1px solid #e2e8f0;">
               <p style="margin: 0; color: #94a3b8; font-size: 12px; text-align: center;">
-                © ${new Date().getFullYear()} ComplyEUR. All rights reserved.
+                © ${new Date().getFullYear()} ComplyEur. All rights reserved.
               </p>
               <p style="margin: 8px 0 0; color: #94a3b8; font-size: 12px; text-align: center;">
                 <a href="${APP_URL}" style="color: #64748b; text-decoration: underline;">complyeur.com</a>
@@ -111,19 +111,19 @@ function generateWaitlistEmailText(data: WaitlistEmailData): string {
   const { companyName } = data
 
   return `
-Welcome to the ComplyEUR Waitlist!
+Welcome to the ComplyEur Waitlist!
 
 You're on the list${companyName ? `, ${companyName}` : ''}!
 
-Thank you for joining the ComplyEUR waitlist. You'll be among the first to know when we launch.
+Thank you for joining the ComplyEur waitlist. You'll be among the first to know when we launch.
 
-What is ComplyEUR?
-ComplyEUR helps UK businesses track Schengen visa compliance for employees traveling to the EU. No more spreadsheets, no more guesswork — just automated tracking of the 90/180-day rule.
+What is ComplyEur?
+ComplyEur helps UK businesses track Schengen visa compliance for employees traveling to the EU. No more spreadsheets, no more guesswork — just automated tracking of the 90/180-day rule.
 
 We'll be in touch soon with updates on our launch. In the meantime, if you have any questions, just reply to this email.
 
 ---
-© ${new Date().getFullYear()} ComplyEUR. All rights reserved.
+© ${new Date().getFullYear()} ComplyEur. All rights reserved.
 ${APP_URL}
 `.trim()
 }
@@ -150,7 +150,7 @@ export async function sendWaitlistEmail(data: WaitlistEmailData): Promise<EmailR
     const { data: result, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: data.email,
-      subject: "You're on the ComplyEUR waitlist!",
+      subject: "You're on the ComplyEur waitlist!",
       html: generateWaitlistEmailHtml(data),
       text: generateWaitlistEmailText(data),
       tags: [

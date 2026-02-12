@@ -1,4 +1,4 @@
-# ComplyEUR Admin Panel Guide
+# ComplyEur Admin Panel Guide
 
 > **Who is this for?** Super admins managing companies, subscriptions, and users.
 > **Access URL:** `https://complyeur.com/admin`

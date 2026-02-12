@@ -2,35 +2,59 @@ import Link from 'next/link'
 
 export default function TermsPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
-      <h1 className="text-3xl font-bold text-slate-900 mb-2">Terms of Service</h1>
-      <p className="text-sm text-slate-500 mb-12">Last updated: February 6, 2026</p>
+    <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="landing-aurora-top absolute -top-32 left-[-8rem] h-[24rem] w-[24rem] rounded-full" />
+        <div className="landing-aurora-bottom absolute right-[-8rem] top-[18rem] h-[22rem] w-[22rem] rounded-full" />
+        <div className="landing-grid absolute inset-0" />
+      </div>
 
-      <div className="prose prose-slate max-w-none">
+      <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="landing-panel rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-10">
+          <div className="max-w-3xl">
+            <Link href="/landing" className="text-sm font-semibold text-brand-700 hover:underline">
+              Back to landing
+            </Link>
+            <p className="mt-5 inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+              Terms
+            </p>
+            <h1 className="landing-serif mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+              Terms of Service
+            </h1>
+            <p className="mt-3 text-sm text-slate-500">Last updated: February 6, 2026</p>
+            <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
+              These terms govern access to and use of ComplyEur. They outline account responsibilities, billing conditions, and liability boundaries.
+            </p>
+            <p className="mt-4 text-sm text-slate-500">
+              You may also want to review our <Link href="/privacy" className="font-medium text-brand-700 hover:underline">Privacy Policy</Link> and <Link href="/contact" className="font-medium text-brand-700 hover:underline">Contact</Link> page.
+            </p>
+          </div>
+
+          <div className="mt-10 space-y-8">
         {/* 1. Acceptance of Terms */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">1. Acceptance of Terms</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">1. Acceptance of Terms</h2>
           <p className="text-base text-slate-700 leading-relaxed">
-            By accessing or using ComplyEUR (&quot;the Service&quot;), you agree to be bound by these
+            By accessing or using ComplyEur (&quot;the Service&quot;), you agree to be bound by these
             Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, you may not
             access or use the Service.
           </p>
           <p className="text-base text-slate-700 leading-relaxed mt-4">
             These Terms constitute a legally binding agreement between you (either an individual
-            or a legal entity) and ComplyEUR. By creating an account, you represent that you have
+            or a legal entity) and ComplyEur. By creating an account, you represent that you have
             the authority to enter into this agreement on behalf of yourself or your organization.
           </p>
         </section>
 
         {/* 2. Description of Service */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">2. Description of Service</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">2. Description of Service</h2>
           <p className="text-base text-slate-700 leading-relaxed">
-            ComplyEUR is a software-as-a-service (SaaS) platform that helps businesses track and
+            ComplyEur is a software-as-a-service (SaaS) platform that helps businesses track and
             manage employee travel compliance with EU Schengen 90/180-day visa rules.
           </p>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">What ComplyEUR Does</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">What ComplyEur Does</h3>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2">
             <li>Tracks employee travel dates within the Schengen Area</li>
             <li>Calculates days spent in the Schengen zone based on the 90/180-day rolling window</li>
@@ -39,13 +63,13 @@ export default function TermsPage() {
             <li>Offers tools for planning future travel within compliance limits</li>
           </ul>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">What ComplyEUR Does NOT Do</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">What ComplyEur Does NOT Do</h3>
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-4">
             <p className="text-base text-amber-800 font-medium">
               Important Disclaimer
             </p>
             <p className="text-base text-amber-700 mt-2">
-              ComplyEUR is a compliance tracking tool only. It does NOT provide legal advice,
+              ComplyEur is a compliance tracking tool only. It does NOT provide legal advice,
               immigration consulting, or visa application services. The information provided
               by the Service is for informational purposes only and should not be relied upon
               as legal advice. For specific immigration or visa questions, please consult a
@@ -55,8 +79,8 @@ export default function TermsPage() {
         </section>
 
         {/* 3. User Accounts and Responsibilities */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">3. User Accounts and Responsibilities</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">3. User Accounts and Responsibilities</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             To use the Service, you must create an account. You are responsible for:
           </p>
@@ -75,20 +99,20 @@ export default function TermsPage() {
         </section>
 
         {/* 4. Data Accuracy Disclaimer */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">4. Data Accuracy Disclaimer</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">4. Data Accuracy Disclaimer</h2>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-base text-red-800 font-medium">
               Critical Notice Regarding Data Accuracy
             </p>
             <p className="text-base text-red-700 mt-2">
               The accuracy of compliance calculations depends entirely on the accuracy of
-              travel data you enter into the Service. ComplyEUR cannot verify the accuracy
+              travel data you enter into the Service. ComplyEur cannot verify the accuracy
               of user-provided data and is not responsible for any errors, omissions, or
               inaccuracies in the data you provide.
             </p>
             <p className="text-base text-red-700 mt-2">
-              <strong>ComplyEUR is not liable for any visa violations, fines, penalties,
+              <strong>ComplyEur is not liable for any visa violations, fines, penalties,
               or other consequences resulting from incorrect data entry or reliance on
               the Service&apos;s calculations.</strong> It is your responsibility to verify
               all compliance information with relevant immigration authorities.
@@ -97,10 +121,10 @@ export default function TermsPage() {
         </section>
 
         {/* 5. Subscription and Payment */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">5. Subscription and Payment</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">5. Subscription and Payment</h2>
           <p className="text-base text-slate-700 leading-relaxed">
-            ComplyEUR offers subscription-based access to the Service. By subscribing:
+            ComplyEur offers subscription-based access to the Service. By subscribing:
           </p>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">
             <li>You agree to pay the subscription fees at the rates in effect at the time of purchase</li>
@@ -114,14 +138,14 @@ export default function TermsPage() {
         </section>
 
         {/* 6. Refund Policy */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">6. Refund Policy</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">6. Refund Policy</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We offer a <strong>14-day money-back guarantee</strong> for new subscriptions:
           </p>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">
             <li>You may request a full refund within 14 days of your initial subscription purchase</li>
-            <li>Refund requests must be submitted to <a href="mailto:support@complyeur.com" className="text-blue-600 hover:text-blue-700 underline">support@complyeur.com</a></li>
+            <li>Refund requests must be submitted to <a href="mailto:support@complyeur.com" className="font-medium text-brand-700 hover:underline">support@complyeur.com</a></li>
             <li>Refunds will be processed within 5-10 business days</li>
             <li>After the 14-day period, fees are non-refundable</li>
             <li>Renewal payments are not eligible for the money-back guarantee</li>
@@ -129,8 +153,8 @@ export default function TermsPage() {
         </section>
 
         {/* 7. Limitation of Liability */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">7. Limitation of Liability</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">7. Limitation of Liability</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW:
           </p>
@@ -144,14 +168,14 @@ export default function TermsPage() {
               We do not warrant that the Service will be uninterrupted, secure, or error-free.
             </li>
             <li>
-              <strong>ComplyEUR shall not be liable for any indirect, incidental, special,
+              <strong>ComplyEur shall not be liable for any indirect, incidental, special,
               consequential, or punitive damages</strong>, including but not limited to loss
               of profits, data, business opportunities, or goodwill.
             </li>
             <li>
               <strong>Our maximum aggregate liability</strong> for any claims arising from
               or related to the Service shall not exceed the total amount of subscription
-              fees paid by you to ComplyEUR in the twelve (12) months preceding the claim.
+              fees paid by you to ComplyEur in the twelve (12) months preceding the claim.
             </li>
           </ul>
           <p className="text-base text-slate-700 leading-relaxed mt-4">
@@ -161,19 +185,19 @@ export default function TermsPage() {
         </section>
 
         {/* 8. Intellectual Property */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">8. Intellectual Property</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">8. Intellectual Property</h2>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Our Intellectual Property</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">Our Intellectual Property</h3>
           <p className="text-base text-slate-700 leading-relaxed">
             The Service, including all content, features, functionality, software, code,
-            designs, and branding (collectively, &quot;ComplyEUR IP&quot;), is owned by ComplyEUR
+            designs, and branding (collectively, &quot;ComplyEur IP&quot;), is owned by ComplyEur
             and protected by copyright, trademark, and other intellectual property laws.
             You may not copy, modify, distribute, sell, or lease any part of the Service
             without our prior written consent.
           </p>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Your Data</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">Your Data</h3>
           <p className="text-base text-slate-700 leading-relaxed">
             You retain all ownership rights to the data you enter into the Service. By using
             the Service, you grant us a limited license to store, process, and display your
@@ -182,10 +206,10 @@ export default function TermsPage() {
         </section>
 
         {/* 9. Termination */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">9. Termination</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">9. Termination</h2>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Termination by You</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">Termination by You</h3>
           <p className="text-base text-slate-700 leading-relaxed">
             You may cancel your subscription and terminate your account at any time through
             your account settings. Upon cancellation:
@@ -198,7 +222,7 @@ export default function TermsPage() {
             <li>After cancellation, your data will be subject to our data retention policy</li>
           </ul>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Termination by ComplyEUR</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">Termination by ComplyEur</h3>
           <p className="text-base text-slate-700 leading-relaxed">
             We reserve the right to suspend or terminate your access to the Service if:
           </p>
@@ -211,8 +235,8 @@ export default function TermsPage() {
         </section>
 
         {/* 10. Changes to Terms */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">10. Changes to Terms</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">10. Changes to Terms</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We may modify these Terms from time to time. When we make changes:
           </p>
@@ -225,8 +249,8 @@ export default function TermsPage() {
         </section>
 
         {/* 11. Governing Law */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">11. Governing Law</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">11. Governing Law</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             These Terms shall be governed by and construed in accordance with the laws of
             England and Wales, without regard to its conflict of law provisions.
@@ -242,43 +266,65 @@ export default function TermsPage() {
         </section>
 
         {/* 12. Contact Us */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">12. Contact Us</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">12. Contact Us</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             If you have any questions about these Terms of Service, please contact us:
           </p>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">
             <li>
               <strong>Email:</strong>{' '}
-              <a href="mailto:legal@complyeur.com" className="text-blue-600 hover:text-blue-700 underline">
+              <a href="mailto:legal@complyeur.com" className="font-medium text-brand-700 hover:underline">
                 legal@complyeur.com
               </a>
             </li>
             <li>
               <strong>Support:</strong>{' '}
-              <a href="mailto:support@complyeur.com" className="text-blue-600 hover:text-blue-700 underline">
+              <a href="mailto:support@complyeur.com" className="font-medium text-brand-700 hover:underline">
                 support@complyeur.com
               </a>
             </li>
           </ul>
         </section>
 
-        {/* Related Links */}
-        <section className="mt-16 pt-8 border-t border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Related Documents</h2>
-          <ul className="text-base text-slate-700 space-y-2">
-            <li>
-              <Link href="/privacy" className="text-blue-600 hover:text-blue-700 underline">
-                Privacy Policy
+          </div>
+
+          <section className="mt-10 rounded-2xl border border-brand-200/80 bg-brand-50/70 p-6">
+            <h2 className="text-xl font-semibold text-slate-900">Need clarification on a contract or billing clause?</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Reach out and we can direct you to legal or support contacts based on your request.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a
+                href="mailto:legal@complyeur.com"
+                className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
+              >
+                Email legal
+              </a>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-slate-900"
+              >
+                Contact page
               </Link>
-            </li>
-            <li>
-              <Link href="/accessibility" className="text-blue-600 hover:text-blue-700 underline">
-                Accessibility Statement
+            </div>
+          </section>
+
+          <section className="mt-10 border-t border-slate-200 pt-8">
+            <h2 className="text-lg font-semibold text-slate-900">Related Documents</h2>
+            <div className="mt-4 flex flex-wrap gap-4 text-sm">
+              <Link href="/privacy" className="font-medium text-brand-700 hover:underline">
+                Privacy
               </Link>
-            </li>
-          </ul>
-        </section>
+              <Link href="/accessibility" className="font-medium text-brand-700 hover:underline">
+                Accessibility
+              </Link>
+              <Link href="/contact" className="font-medium text-brand-700 hover:underline">
+                Contact
+              </Link>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/nextjs'
 
 /**
- * @fileoverview Performance instrumentation utilities for ComplyEUR.
+ * @fileoverview Performance instrumentation utilities for ComplyEur.
  *
  * Provides timing wrappers, logging, and metrics collection for server actions,
  * database queries, and other performance-critical operations.

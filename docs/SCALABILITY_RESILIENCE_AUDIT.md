@@ -1,4 +1,4 @@
-# ComplyEUR Scalability & Resilience Audit Report
+# ComplyEur Scalability & Resilience Audit Report
 
 **Date:** 2026-01-17
 **Auditor:** Claude Code
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This audit identifies gaps that could cause failures at scale in the ComplyEUR Next.js codebase. The focus areas are database queries, multi-tenant security, error handling, and observability.
+This audit identifies gaps that could cause failures at scale in the ComplyEur Next.js codebase. The focus areas are database queries, multi-tenant security, error handling, and observability.
 
 **Overall Assessment:** The codebase has good foundational security with RLS policies and defense-in-depth patterns in critical paths. However, several scalability issues exist that will cause problems at 100+ companies or companies with 100+ employees.
 

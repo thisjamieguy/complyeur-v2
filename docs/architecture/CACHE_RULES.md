@@ -1,6 +1,6 @@
-# ComplyEUR Cache Rules
+# ComplyEur Cache Rules
 
-This document defines the caching strategy for ComplyEUR v2.0, covering what is cached,
+This document defines the caching strategy for ComplyEur v2.0, covering what is cached,
 how long, what invalidates it, and who owns each cache layer.
 
 ## Cache Architecture Overview

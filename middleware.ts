@@ -5,6 +5,13 @@ import { checkRateLimit } from '@/lib/rate-limit'
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Allow static assets from /public to bypass auth/session checks.
+  // Without this, image/logo requests can be redirected as protected routes.
+  const isStaticAssetRequest = /\.[^/]+$/.test(pathname)
+  if (isStaticAssetRequest) {
+    return NextResponse.next()
+  }
+
   // 1. Rate Limiting - applies to API routes and auth form submissions (POST only)
   // Uses Upstash Redis for distributed rate limiting in serverless environments
   // Excluded: health endpoint (monitoring), auth/callback (OAuth redirects from providers)
@@ -35,7 +42,9 @@ export async function middleware(request: NextRequest) {
     '/privacy', '/terms', '/accessibility',
     '/sitemap.xml', '/robots.txt', '/icon.svg',
   ]
+  const isLandingVariantRoute = pathname.startsWith('/landing')
   const isPublicRoute = publicRoutes.includes(pathname) ||
+                        isLandingVariantRoute ||
                         pathname.startsWith('/api/') ||
                         pathname.startsWith('/auth/')
 
@@ -79,8 +88,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
+     * - files in /public (all paths containing a file extension)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
   ],
 }

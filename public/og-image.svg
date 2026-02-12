@@ -31,7 +31,7 @@
 
   <!-- Logo/Brand -->
   <text x="100" y="180" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="700" fill="#ffffff">
-    ComplyEUR
+    ComplyEur
   </text>
 
   <!-- Tagline -->

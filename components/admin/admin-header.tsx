@@ -66,7 +66,7 @@ export function AdminHeader({ user, adminName }: AdminHeaderProps) {
             />
             <Image
               src="/images/Icons/04_Wordmark_Only/ComplyEur_Wordmark.svg"
-              alt="ComplyEUR"
+              alt="ComplyEur"
               width={100}
               height={20}
               className="h-5 w-auto"
@@ -115,6 +115,22 @@ export function AdminHeader({ user, adminName }: AdminHeaderProps) {
       {/* Page title */}
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
         <div className="flex items-center gap-x-4 lg:gap-x-6">
+          <Link href="/admin" className="flex items-center gap-2 lg:hidden">
+            <Image
+              src="/images/Icons/03_Icon_Only/ComplyEur_Icon.svg"
+              alt="ComplyEur"
+              width={24}
+              height={24}
+              className="h-6 w-6"
+            />
+            <Image
+              src="/images/Icons/04_Wordmark_Only/ComplyEur_Wordmark.svg"
+              alt="ComplyEur"
+              width={90}
+              height={18}
+              className="h-4 w-auto"
+            />
+          </Link>
           <h1 className="text-lg font-semibold text-slate-900">
             {getPageTitle()}
           </h1>

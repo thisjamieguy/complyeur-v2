@@ -77,8 +77,8 @@ export async function enrollTotpAction(): Promise<EnrollResult> {
 
   const { data, error } = await supabase.auth.mfa.enroll({
     factorType: 'totp',
-    friendlyName: 'ComplyEUR',
-    issuer: 'ComplyEUR',
+    friendlyName: 'ComplyEur',
+    issuer: 'ComplyEur',
   })
 
   if (error || !data) {

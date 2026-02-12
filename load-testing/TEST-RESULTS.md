@@ -474,7 +474,7 @@ iterations.................: 2389
 
 ## Conclusion
 
-Your ComplyEUR application demonstrates **excellent production performance** and is ready for scale:
+Your ComplyEur application demonstrates **excellent production performance** and is ready for scale:
 
 ### Development Environment
 - **Sweet spot:** 1-20 concurrent users

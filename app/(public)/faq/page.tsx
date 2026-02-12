@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import {
@@ -72,7 +73,7 @@ const faqData: FAQSection[] = [
     ],
   },
   {
-    title: 'Using ComplyEUR',
+    title: 'Using ComplyEur',
     items: [
       {
         question: 'How do I add an employee?',
@@ -131,22 +132,22 @@ const faqData: FAQSection[] = [
       {
         question: 'What file formats can I import?',
         answer:
-          'ComplyEUR supports CSV and Excel (.xlsx) files. Your file should include columns for employee name, trip start date, trip end date, and optionally destination country and job reference.',
+          'ComplyEur supports CSV and Excel (.xlsx) files. Your file should include columns for employee name, trip start date, trip end date, and optionally destination country and job reference.',
       },
       {
         question: 'How does column mapping work?',
         answer:
-          'After uploading, you will see a mapping screen where you match your spreadsheet columns to ComplyEUR fields. We auto-detect common column names, but you can adjust the mapping manually. Save your mapping for future imports.',
+          'After uploading, you will see a mapping screen where you match your spreadsheet columns to ComplyEur fields. We auto-detect common column names, but you can adjust the mapping manually. Save your mapping for future imports.',
       },
       {
         question: 'What date formats are supported?',
         answer:
-          'ComplyEUR detects common date formats including DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, and variations with different separators. During import, you will confirm the detected format to ensure dates are parsed correctly.',
+          'ComplyEur detects common date formats including DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, and variations with different separators. During import, you will confirm the detected format to ensure dates are parsed correctly.',
       },
       {
         question: 'How are duplicate trips handled?',
         answer:
-          'During import, ComplyEUR detects potential duplicates (same employee, same dates). You can choose to skip duplicates, update existing trips, or import them anyway. We recommend skipping duplicates to avoid double-counting days.',
+          'During import, ComplyEur detects potential duplicates (same employee, same dates). You can choose to skip duplicates, update existing trips, or import them anyway. We recommend skipping duplicates to avoid double-counting days.',
       },
       {
         question: 'My import failed. What should I check?',
@@ -249,7 +250,7 @@ const faqData: FAQSection[] = [
     title: 'GDPR & Data Privacy',
     items: [
       {
-        question: 'What data does ComplyEUR store?',
+        question: 'What data does ComplyEur store?',
         answer:
           'We store employee names, trip dates, destinations, and job references. All data is encrypted at rest and in transit. We do not sell or share your data with third parties.',
       },
@@ -271,7 +272,7 @@ const faqData: FAQSection[] = [
       {
         question: 'Where is my data stored?',
         answer:
-          'ComplyEUR uses Supabase (built on PostgreSQL) with data centres in the EU. Your data never leaves the EU unless you explicitly export it.',
+          'ComplyEur uses Supabase (built on PostgreSQL) with data centres in the EU. Your data never leaves the EU unless you explicitly export it.',
       },
     ],
   },
@@ -291,7 +292,7 @@ const faqData: FAQSection[] = [
       {
         question: 'How does billing work?',
         answer:
-          'ComplyEUR offers monthly and annual billing in GBP (excluding VAT). Each plan includes a set number of tracked employees, and you can change plans with updates taking effect on your next renewal date.',
+          'ComplyEur offers monthly and annual billing in GBP (excluding VAT). Each plan includes a set number of tracked employees, and you can change plans with updates taking effect on your next renewal date.',
       },
       {
         question: 'Can I cancel my subscription?',
@@ -307,7 +308,7 @@ function FAQItemComponent({ item }: { item: FAQItem }) {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex w-full items-center justify-between py-4 text-left text-base font-medium text-slate-900 hover:text-slate-700 border-b border-slate-200">
+      <CollapsibleTrigger className="flex w-full items-center justify-between gap-4 border-b border-slate-200 py-4 text-left text-base font-medium text-slate-900 transition-colors hover:text-slate-700">
         <span>{item.question}</span>
         <ChevronDown
           className={`h-5 w-5 text-slate-500 transition-transform duration-200 ${
@@ -326,81 +327,108 @@ function FAQItemComponent({ item }: { item: FAQItem }) {
 
 export default function FAQPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
-      <h1 className="text-3xl font-bold text-slate-900 mb-4">
-        Frequently Asked Questions
-      </h1>
-      <p className="text-base text-slate-600 mb-12">
-        Find answers to common questions about the 90/180-day rule and using
-        ComplyEUR.
-      </p>
-
-      <div className="space-y-12">
-        {faqData.map((section) => (
-          <section key={section.title}>
-            <h2 className="text-xl font-semibold text-slate-900 mb-4">
-              {section.title}
-            </h2>
-            <div className="bg-white rounded-xl border border-slate-200 px-6">
-              {section.items.map((item, index) => (
-                <FAQItemComponent key={index} item={item} />
-              ))}
-            </div>
-          </section>
-        ))}
+    <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="landing-aurora-top absolute -top-32 left-[-8rem] h-[24rem] w-[24rem] rounded-full" />
+        <div className="landing-aurora-bottom absolute right-[-8rem] top-[18rem] h-[22rem] w-[22rem] rounded-full" />
+        <div className="landing-grid absolute inset-0" />
       </div>
 
-      {/* Still have questions */}
-      <section className="mt-16">
-        <div className="bg-slate-50 rounded-xl p-6 text-center">
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">
-            Still have questions?
-          </h3>
-          <p className="text-base text-slate-600 mb-4">
-            We are here to help. Get in touch and we will respond as soon as we
-            can.
-          </p>
-          <Link
-            href="/contact"
-            className="inline-flex items-center justify-center px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Contact Us
-          </Link>
-        </div>
-      </section>
+      <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="landing-panel rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-10">
+          <div className="max-w-3xl">
+            <Link href="/landing" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm hover:opacity-85 transition-opacity">
+              <Image
+                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
+                alt="ComplyEur"
+                width={150}
+                height={40}
+                className="h-7 w-auto"
+                priority
+              />
+            </Link>
+            <Link href="/landing" className="mt-4 inline-flex text-sm font-semibold text-brand-700 hover:underline">
+              Back to landing
+            </Link>
+            <p className="mt-5 inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+              FAQ
+            </p>
+            <h1 className="landing-serif mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+              Frequently Asked Questions
+            </h1>
+            <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
+              Find answers to common questions about the 90/180-day rule and using ComplyEur.
+            </p>
+            <p className="mt-4 text-sm text-slate-500">
+              New here? Read <Link href="/about" className="font-medium text-brand-700 hover:underline">about ComplyEur</Link> or compare plans on <Link href="/pricing" className="font-medium text-brand-700 hover:underline">pricing</Link>.
+            </p>
+          </div>
 
-      {/* Related Links */}
-      <section className="mt-12 pt-8 border-t border-slate-200">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">
-          Related Pages
-        </h2>
-        <ul className="text-base text-slate-700 space-y-2">
-          <li>
-            <Link
-              href="/about"
-              className="text-blue-600 hover:text-blue-700 underline"
-            >
-              About ComplyEUR
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/privacy"
-              className="text-blue-600 hover:text-blue-700 underline"
-            >
-              Privacy Policy
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/terms"
-              className="text-blue-600 hover:text-blue-700 underline"
-            >
-              Terms of Service
-            </Link>
-          </li>
-        </ul>
-      </section>
+          <div className="mt-10 space-y-8">
+            {faqData.map((section) => (
+              <section key={section.title}>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {section.title}
+                </h2>
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-6 shadow-sm">
+                  {section.items.map((item, index) => (
+                    <FAQItemComponent key={index} item={item} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+
+          <section className="mt-10 rounded-2xl border border-brand-200/80 bg-brand-50/70 p-6">
+            <h3 className="text-xl font-semibold text-slate-900">
+              Still have questions?
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              We are happy to help with plan fit, setup, or data import questions.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
+              >
+                Contact us
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-slate-900"
+              >
+                View pricing
+              </Link>
+            </div>
+          </section>
+
+          <section className="mt-10 border-t border-slate-200 pt-8">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Related Pages
+            </h2>
+            <div className="mt-4 flex flex-wrap gap-4 text-sm">
+              <Link
+                href="/about"
+                className="font-medium text-brand-700 hover:underline"
+              >
+                About
+              </Link>
+              <Link
+                href="/privacy"
+                className="font-medium text-brand-700 hover:underline"
+              >
+                Privacy
+              </Link>
+              <Link
+                href="/terms"
+                className="font-medium text-brand-700 hover:underline"
+              >
+                Terms
+              </Link>
+            </div>
+          </section>
+        </div>
+      </div>
 
       {/* FAQ Schema for SEO - content is from static faqData, not user input */}
       <script

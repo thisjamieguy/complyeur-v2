@@ -1,6 +1,6 @@
 # Maintainability & Scale Readiness Audit
 
-**Project:** ComplyEUR v2.0
+**Project:** ComplyEur v2.0
 **Date:** 2026-01-19
 **Auditor:** Principal/Staff+ Engineer (Automated)
 **Scope:** Long-term maintainability and scale readiness review (READ-ONLY)

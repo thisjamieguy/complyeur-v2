@@ -1,17 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 
-type RiskLevel = 'green' | 'amber' | 'red'
+export type RiskLevel = 'green' | 'amber' | 'red'
 
-interface DemoEmployee {
+export interface DemoEmployee {
   id: number
   name: string
   daysUsed: number
   daysRemaining: number
   status: RiskLevel
   lastTrip: string
+}
+
+interface DemoEmployeeListProps {
+  employees?: DemoEmployee[]
+  highlightedEmployeeName?: string
 }
 
 // Status badge styling matching the real StatusBadge component
@@ -44,7 +49,7 @@ function DemoStatusBadge({ status }: { status: RiskLevel }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-sm font-medium border transition-all duration-500',
+        'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 text-sm font-medium transition-all duration-500',
         config.bg,
         config.text,
         config.border
@@ -58,8 +63,7 @@ function DemoStatusBadge({ status }: { status: RiskLevel }) {
   )
 }
 
-// Animation keyframes for the demo
-// Each employee has a sequence of states they cycle through
+// Animation keyframes for the fallback autonomous demo mode.
 const employeeAnimations: Array<{
   name: string
   lastTrip: string
@@ -111,145 +115,140 @@ const employeeAnimations: Array<{
     frames: [
       { daysUsed: 88, status: 'red' },
       { daysUsed: 88, status: 'red' },
-      { daysUsed: 65, status: 'amber' }, // Days "freed up" as old trips leave window
+      { daysUsed: 65, status: 'amber' },
       { daysUsed: 88, status: 'red' },
     ],
   },
 ]
 
-export function DemoEmployeeList() {
-  const [frameIndex, setFrameIndex] = useState(0)
-  const [employees, setEmployees] = useState<DemoEmployee[]>(() =>
-    employeeAnimations.map((emp, idx) => ({
+function getAutonomousEmployees(frameIndex: number): DemoEmployee[] {
+  return employeeAnimations.map((emp, idx) => {
+    const frame = emp.frames[frameIndex]
+    return {
       id: idx,
       name: emp.name,
       lastTrip: emp.lastTrip,
-      daysUsed: emp.frames[0].daysUsed,
-      daysRemaining: 90 - emp.frames[0].daysUsed,
-      status: emp.frames[0].status,
-    }))
-  )
+      daysUsed: frame.daysUsed,
+      daysRemaining: 90 - frame.daysUsed,
+      status: frame.status,
+    }
+  })
+}
 
-  // Animate through frames
+export function DemoEmployeeList({ employees, highlightedEmployeeName }: DemoEmployeeListProps) {
+  const isControlled = Boolean(employees)
+  const [frameIndex, setFrameIndex] = useState(0)
+
+  const autonomousEmployees = useMemo(() => getAutonomousEmployees(frameIndex), [frameIndex])
+  const rows = employees ?? autonomousEmployees
+
   useEffect(() => {
+    if (isControlled) return
+
     const interval = setInterval(() => {
       setFrameIndex((prev) => (prev + 1) % employeeAnimations[0].frames.length)
-    }, 2500) // Change every 2.5 seconds
+    }, 2500)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [isControlled])
 
-  // Update employees when frame changes
-  useEffect(() => {
-    setEmployees(
-      employeeAnimations.map((emp, idx) => {
-        const frame = emp.frames[frameIndex]
-        return {
-          id: idx,
-          name: emp.name,
-          lastTrip: emp.lastTrip,
-          daysUsed: frame.daysUsed,
-          daysRemaining: 90 - frame.daysUsed,
-          status: frame.status,
-        }
-      })
-    )
-  }, [frameIndex])
+  const compliantCount = rows.filter((employee) => employee.status === 'green').length
+  const atRiskCount = rows.filter((employee) => employee.status === 'amber').length
+  const nonCompliantCount = rows.filter((employee) => employee.status === 'red').length
 
   return (
     <div className="bg-slate-50 p-4">
-      {/* Mini stats row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <div className="bg-white rounded-lg p-3 border border-slate-200">
-          <div className="text-2xl font-bold text-slate-900">5</div>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <div className="text-2xl font-bold text-slate-900">{rows.length}</div>
           <div className="text-xs text-slate-500">Total</div>
         </div>
-        <div className="bg-white rounded-lg p-3 border border-slate-200">
-          <div className="text-2xl font-bold text-green-600">
-            {employees.filter((e) => e.status === 'green').length}
-          </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <div className="text-2xl font-bold text-green-600 transition-all duration-500">{compliantCount}</div>
           <div className="text-xs text-slate-500">Compliant</div>
         </div>
-        <div className="bg-white rounded-lg p-3 border border-slate-200">
-          <div className="text-2xl font-bold text-amber-600">
-            {employees.filter((e) => e.status === 'amber').length}
-          </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <div className="text-2xl font-bold text-amber-600 transition-all duration-500">{atRiskCount}</div>
           <div className="text-xs text-slate-500">At Risk</div>
         </div>
-        <div className="bg-white rounded-lg p-3 border border-slate-200">
-          <div className="text-2xl font-bold text-red-600">
-            {employees.filter((e) => e.status === 'red').length}
-          </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <div className="text-2xl font-bold text-red-600 transition-all duration-500">{nonCompliantCount}</div>
           <div className="text-xs text-slate-500">Non-Compliant</div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[400px]">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="text-left px-4 py-3 text-sm font-semibold text-slate-700">
+            <tr className="border-b border-slate-200 bg-slate-50">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
                 Employee
               </th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-slate-700">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
                 Status
               </th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-slate-700 hidden sm:table-cell">
+              <th className="hidden px-4 py-3 text-left text-sm font-semibold text-slate-700 sm:table-cell">
                 Days Used
               </th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-slate-700">
+              <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
                 Remaining
               </th>
             </tr>
           </thead>
           <tbody>
-            {employees.map((employee) => (
-              <tr
-                key={employee.id}
-                className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors"
-              >
-                <td className="px-4 py-3">
-                  <span className="font-medium text-slate-900">{employee.name}</span>
-                </td>
-                <td className="px-4 py-3">
-                  <DemoStatusBadge status={employee.status} />
-                </td>
-                <td className="px-4 py-3 hidden sm:table-cell">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-600 tabular-nums transition-all duration-500">
-                      {employee.daysUsed} / 90
-                    </span>
-                    {/* Mini progress bar */}
-                    <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          'h-full rounded-full transition-all duration-500',
-                          employee.status === 'green' && 'bg-green-500',
-                          employee.status === 'amber' && 'bg-amber-500',
-                          employee.status === 'red' && 'bg-red-500'
-                        )}
-                        style={{ width: `${(employee.daysUsed / 90) * 100}%` }}
-                      />
+            {rows.map((employee) => {
+              const isHighlighted = highlightedEmployeeName === employee.name
+
+              return (
+                <tr
+                  key={employee.id}
+                  className={cn(
+                    'border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50',
+                    isHighlighted &&
+                      'bg-brand-50/60 shadow-[inset_0_0_0_1px_rgba(53,92,130,0.22)] motion-safe:animate-pulse'
+                  )}
+                >
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-slate-900">{employee.name}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <DemoStatusBadge status={employee.status} />
+                  </td>
+                  <td className="hidden px-4 py-3 sm:table-cell">
+                    <div className="flex items-center gap-2">
+                      <span className="tabular-nums text-sm text-slate-600 transition-all duration-500">
+                        {employee.daysUsed} / 90
+                      </span>
+                      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all duration-500',
+                            employee.status === 'green' && 'bg-green-500',
+                            employee.status === 'amber' && 'bg-amber-500',
+                            employee.status === 'red' && 'bg-red-500'
+                          )}
+                          style={{ width: `${(employee.daysUsed / 90) * 100}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={cn(
-                      'font-medium tabular-nums transition-colors duration-500',
-                      employee.daysRemaining >= 30 && 'text-green-600',
-                      employee.daysRemaining >= 10 &&
-                        employee.daysRemaining < 30 &&
-                        'text-amber-600',
-                      employee.daysRemaining < 10 && 'text-red-600'
-                    )}
-                  >
-                    {employee.daysRemaining} days
-                  </span>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={cn(
+                        'tabular-nums font-medium transition-colors duration-500',
+                        employee.daysRemaining >= 30 && 'text-green-600',
+                        employee.daysRemaining >= 10 &&
+                          employee.daysRemaining < 30 &&
+                          'text-amber-600',
+                        employee.daysRemaining < 10 && 'text-red-600'
+                      )}
+                    >
+                      {employee.daysRemaining} days
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

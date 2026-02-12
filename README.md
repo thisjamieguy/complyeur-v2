@@ -1,4 +1,4 @@
-# ComplyEUR
+# ComplyEur
 
 **Version: v0.1.0**
 
@@ -53,7 +53,7 @@ B2B SaaS application helping UK companies track employee travel compliance with 
 ## Setup
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 20.9+
 - pnpm (recommended) or npm
 - Supabase account
 - Resend account (for emails)
@@ -70,8 +70,8 @@ pnpm install
 cp .env.example .env.local
 # Fill in your Supabase and Resend credentials
 
-# Generate database types
-pnpm db:types
+# (Optional) Generate database types for your active Supabase project
+# supabase gen types typescript --project-id <your-project-ref> > types/database.ts
 
 # Start development server
 pnpm dev
@@ -95,7 +95,6 @@ pnpm dev            # Start dev server (Turbopack)
 pnpm build          # Production build
 pnpm test           # Run unit tests
 pnpm test:e2e       # Run Playwright tests
-pnpm db:types       # Regenerate Supabase types
 pnpm lint           # ESLint
 ```
 

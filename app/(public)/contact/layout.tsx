@@ -3,7 +3,7 @@ import { createPageMetadata } from '@/lib/metadata'
 
 export const metadata: Metadata = createPageMetadata({
   title: 'Contact Us',
-  description: 'Get in touch with ComplyEUR for Schengen compliance questions, support enquiries, or partnership opportunities. We respond within 24 hours.',
+  description: 'Get in touch with ComplyEur for Schengen compliance questions, support enquiries, or partnership opportunities. We respond within 24 hours.',
   path: '/contact',
 })
 

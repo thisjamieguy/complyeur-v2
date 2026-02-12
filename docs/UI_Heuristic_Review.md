@@ -1,5 +1,5 @@
 # UI Heuristic Evaluation Report
-## ComplyEUR v2.0 — Nielsen's 10 Usability Heuristics
+## ComplyEur v2.0 — Nielsen's 10 Usability Heuristics
 
 **Evaluation Date:** January 2026
 **Evaluator:** Automated UX Review
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This report evaluates ComplyEUR's user interface against Nielsen's 10 Usability Heuristics. The app demonstrates strong foundations with consistent component usage and good mobile responsiveness. Key strengths include excellent loading state management and clear visual hierarchy. Primary improvement areas include error prevention on forms, help/documentation accessibility, and flexibility features for power users.
+This report evaluates ComplyEur's user interface against Nielsen's 10 Usability Heuristics. The app demonstrates strong foundations with consistent component usage and good mobile responsiveness. Key strengths include excellent loading state management and clear visual hierarchy. Primary improvement areas include error prevention on forms, help/documentation accessibility, and flexibility features for power users.
 
 **Overall Score: 3.6/5** (Good with room for improvement)
 
@@ -790,7 +790,7 @@ This report evaluates ComplyEUR's user interface against Nielsen's 10 Usability 
      </CollapsibleTrigger>
      <CollapsibleContent className="mt-2 p-4 bg-blue-50 rounded-lg">
        <p>Non-EU nationals can stay in the Schengen Area for up to 90 days
-       within any rolling 180-day period. ComplyEUR tracks this automatically
+       within any rolling 180-day period. ComplyEur tracks this automatically
        for each employee.</p>
      </CollapsibleContent>
    </Collapsible>
@@ -927,7 +927,7 @@ This report evaluates ComplyEUR's user interface against Nielsen's 10 Usability 
 
 ## Conclusion
 
-ComplyEUR v2.0 demonstrates solid UX foundations with consistent design patterns, good responsive behavior, and appropriate loading states. The primary areas for improvement are:
+ComplyEur v2.0 demonstrates solid UX foundations with consistent design patterns, good responsive behavior, and appropriate loading states. The primary areas for improvement are:
 
 1. **Help & Documentation (Score: 2.5/5)** — Users need more contextual guidance, especially around the 90/180 rule
 2. **Error Recovery (Score: 3.0/5)** — Error messages need specificity and recovery options

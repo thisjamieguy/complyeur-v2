@@ -1,5 +1,5 @@
 /**
- * Column Mapping Logic for ComplyEUR Import
+ * Column Mapping Logic for ComplyEur Import
  *
  * Handles the initialization, detection, and application of column mappings.
  * Integrates with header-aliases.ts for auto-detection and supports

@@ -12,7 +12,7 @@ import type { NotificationPreferences } from '@/types/database-helpers'
 import { cn } from '@/lib/utils'
 
 export const metadata = {
-  title: 'Settings | ComplyEUR',
+  title: 'Settings | ComplyEur',
   description: 'Configure your company settings for Schengen compliance tracking',
 }
 
@@ -100,7 +100,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
         <p className="text-slate-600 mt-1">
-          Configure how ComplyEUR works for your organization.
+          Configure how ComplyEur works for your organization.
         </p>
       </div>
 

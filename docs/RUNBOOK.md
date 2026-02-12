@@ -1,6 +1,6 @@
-# ComplyEUR Deployment Runbook
+# ComplyEur Deployment Runbook
 
-This document contains operational procedures for deploying, monitoring, and maintaining ComplyEUR in production.
+This document contains operational procedures for deploying, monitoring, and maintaining ComplyEur in production.
 
 ---
 
@@ -33,7 +33,7 @@ git push origin main
 
 ### Manual Deployment
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Select the ComplyEUR project
+2. Select the ComplyEur project
 3. Click **Deployments** tab
 4. Click **...** on the latest deployment
 5. Select **Redeploy**
@@ -49,7 +49,7 @@ git push origin main
 
 If a deployment causes issues, rollback to a previous version:
 
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → ComplyEUR project
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → ComplyEur project
 2. Click **Deployments** tab
 3. Find the last working deployment (look at timestamps and commit messages)
 4. Click **...** on that deployment
@@ -133,7 +133,7 @@ SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public';
 ## How to Check Logs
 
 ### Vercel Runtime Logs
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → ComplyEUR
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → ComplyEur
 2. Click **Logs** tab
 3. Filter by:
    - **Level**: Error, Warning, Info
@@ -152,7 +152,7 @@ SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public';
 
 ### Sentry Error Tracking
 1. Go to [Sentry Dashboard](https://sentry.io)
-2. Select ComplyEUR project
+2. Select ComplyEur project
 3. View **Issues** for grouped errors
 4. Check **Performance** for slow transactions
 
@@ -163,7 +163,7 @@ SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public';
 Maintenance mode shows a banner to users without taking the site offline.
 
 ### Enable Maintenance Mode
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → ComplyEUR → **Settings** → **Environment Variables**
+1. Go to [Vercel Dashboard](https://vercel.com/dashboard) → ComplyEur → **Settings** → **Environment Variables**
 2. Add variable:
    - Name: `NEXT_PUBLIC_MAINTENANCE_MODE`
    - Value: `true`

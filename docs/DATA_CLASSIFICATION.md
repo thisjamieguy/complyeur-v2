@@ -1,6 +1,6 @@
 # Data Classification Inventory
 
-This register maps ComplyEUR data stores to classification levels for SOC 2 and GDPR.
+This register maps ComplyEur data stores to classification levels for SOC 2 and GDPR.
 
 ## Classification Levels
 - **Public**: Approved for public release.

@@ -4,7 +4,7 @@ import { createPageMetadata } from '@/lib/metadata'
 export const metadata: Metadata = createPageMetadata({
   title: 'Reset Your Password',
   description:
-    'Forgot your ComplyEUR password? Enter your email to receive a secure password reset link and regain access to your Schengen compliance dashboard.',
+    'Forgot your ComplyEur password? Enter your email to receive a secure password reset link and regain access to your Schengen compliance dashboard.',
   path: '/forgot-password',
 })
 

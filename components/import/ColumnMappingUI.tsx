@@ -297,7 +297,7 @@ export function ColumnMappingUI({
           <h2 className="text-xl font-semibold text-slate-900 mb-2">Map Columns</h2>
           <p className="text-slate-500">
             Some columns in your file weren&apos;t recognized. Please map them to the
-            correct ComplyEUR fields.
+            correct ComplyEur fields.
           </p>
         </div>
 

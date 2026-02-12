@@ -22,9 +22,9 @@ export function Footer() {
               height={20}
               aria-hidden="true"
             />
-            <span className="font-medium text-brand-700">ComplyEUR</span>
+            <span className="font-medium text-brand-700">ComplyEur</span>
           </div>
-          <p>&copy; {new Date().getFullYear()} ComplyEUR. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} ComplyEur. All rights reserved.</p>
           <div className="flex flex-wrap justify-center gap-4 mt-4">
             <Link
               href="/about"

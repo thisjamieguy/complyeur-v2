@@ -1,10 +1,10 @@
 # Security Audit Gap Analysis
 **Date:** 14 January 2026
-**Target:** ComplyEUR MVP
+**Target:** ComplyEur MVP
 **Scope:** Comparison of codebase against "SaaS Security Audit Checklist"
 
 ## Executive Summary
-ComplyEUR has a strong security foundation for an MVP, particularly in Data Protection (GDPR), Input Validation, and Access Control (RLS). The use of Supabase provides robust defaults for authentication and encryption. However, **Multi-Factor Authentication (MFA)** is currently a non-functional mockup, which is a critical gap. Additionally, centralized security logging (SIEM) and automated vulnerability scanning in CI/CD are missing.
+ComplyEur has a strong security foundation for an MVP, particularly in Data Protection (GDPR), Input Validation, and Access Control (RLS). The use of Supabase provides robust defaults for authentication and encryption. However, **Multi-Factor Authentication (MFA)** is currently a non-functional mockup, which is a critical gap. Additionally, centralized security logging (SIEM) and automated vulnerability scanning in CI/CD are missing.
 
 ---
 

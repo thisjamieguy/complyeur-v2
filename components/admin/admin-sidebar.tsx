@@ -38,7 +38,7 @@ export function AdminSidebar() {
           />
           <Image
             src="/images/Icons/04_Wordmark_Only/ComplyEur_Wordmark.svg"
-            alt="ComplyEUR"
+            alt="ComplyEur"
             width={100}
             height={20}
             className="h-5 w-auto"

@@ -1,4 +1,4 @@
-# ComplyEUR Supabase Security Baseline Audit
+# ComplyEur Supabase Security Baseline Audit
 
 **Audit Date:** 2026-02-01
 **Auditor:** Claude (Automated Security Review)
@@ -11,7 +11,7 @@
 
 ### Overall Status: **PASS**
 
-ComplyEUR demonstrates a strong security posture for a multi-tenant B2B SaaS application. All business data tables have Row Level Security (RLS) enabled with proper tenant isolation via `company_id` checks. No anonymous access to sensitive data is possible. Admin tables are explicitly protected with deny-all policies. The service role key is properly isolated to server-side code only. Auth implementation follows best practices with MFA enforcement for privileged users, rate limiting, and proper redirect validation.
+ComplyEur demonstrates a strong security posture for a multi-tenant B2B SaaS application. All business data tables have Row Level Security (RLS) enabled with proper tenant isolation via `company_id` checks. No anonymous access to sensitive data is possible. Admin tables are explicitly protected with deny-all policies. The service role key is properly isolated to server-side code only. Auth implementation follows best practices with MFA enforcement for privileged users, rate limiting, and proper redirect validation.
 
 **No critical vulnerabilities were found. No immediate action is required.**
 
@@ -220,7 +220,7 @@ GRANT EXECUTE ON FUNCTION unsubscribe_by_token TO anon;
 
 **Overall Verdict: PASS**
 
-The ComplyEUR Supabase implementation follows security best practices for a multi-tenant B2B SaaS. No emergency actions are required. The single low-priority recommendation is to remove the temporary test email endpoint before production deployment.
+The ComplyEur Supabase implementation follows security best practices for a multi-tenant B2B SaaS. No emergency actions are required. The single low-priority recommendation is to remove the temporary test email endpoint before production deployment.
 
 ---
 

@@ -1,8 +1,8 @@
-# ComplyEUR Load Testing Guide
+# ComplyEur Load Testing Guide
 
 ## Overview
 
-This directory contains k6 load testing scripts to test ComplyEUR's performance under various loads.
+This directory contains k6 load testing scripts to test ComplyEur's performance under various loads.
 
 ## Test Results Summary (February 4, 2026)
 

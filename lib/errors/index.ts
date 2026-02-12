@@ -1,7 +1,7 @@
 import { ZodError } from 'zod'
 
 /**
- * Centralized error handling for ComplyEUR
+ * Centralized error handling for ComplyEur
  *
  * Key principles:
  * - Never expose raw database errors to users

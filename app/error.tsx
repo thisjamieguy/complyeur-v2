@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import * as Sentry from '@sentry/nextjs'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -21,6 +22,14 @@ export default function GlobalError({
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="max-w-md w-full">
         <CardHeader>
+          <Image
+            src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
+            alt="ComplyEur"
+            width={150}
+            height={40}
+            className="h-7 w-auto mb-3"
+            priority
+          />
           <CardTitle className="text-red-600">Something went wrong</CardTitle>
           <CardDescription>
             An unexpected error occurred. Our team has been notified.

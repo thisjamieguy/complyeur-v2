@@ -1,6 +1,6 @@
 # Incident Response Plan (SOC 2 / GDPR)
 
-This playbook defines how ComplyEUR detects, triages, contains, and communicates security incidents in production.
+This playbook defines how ComplyEur detects, triages, contains, and communicates security incidents in production.
 
 ---
 
@@ -118,7 +118,7 @@ We will provide a full report within [TIMEFRAME].
 
 ### Regulator Notice (GDPR)
 ```
-Controller: ComplyEUR
+Controller: ComplyEur
 Incident date/time: [DATE/TIME]
 Nature of breach: [DESCRIPTION]
 Categories of data: [DATA TYPES]

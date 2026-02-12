@@ -11,7 +11,7 @@ export default function AccessibilityPage() {
         <section>
           <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">1. Our Commitment</h2>
           <p className="text-base text-slate-700 leading-relaxed">
-            ComplyEUR is committed to ensuring digital accessibility for people of all abilities.
+            ComplyEur is committed to ensuring digital accessibility for people of all abilities.
             We believe that everyone should have equal access to information and functionality
             on our platform, regardless of any disabilities or impairments.
           </p>
@@ -41,7 +41,7 @@ export default function AccessibilityPage() {
         <section>
           <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">3. What We&apos;re Doing</h2>
           <p className="text-base text-slate-700 leading-relaxed">
-            We have taken the following measures to ensure accessibility on ComplyEUR:
+            We have taken the following measures to ensure accessibility on ComplyEur:
           </p>
 
           <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Semantic HTML</h3>
@@ -89,7 +89,7 @@ export default function AccessibilityPage() {
         <section>
           <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">4. Known Limitations</h2>
           <p className="text-base text-slate-700 leading-relaxed">
-            While we strive to make ComplyEUR as accessible as possible, some areas may have
+            While we strive to make ComplyEur as accessible as possible, some areas may have
             limitations. We are actively working to address these:
           </p>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">
@@ -118,7 +118,7 @@ export default function AccessibilityPage() {
         <section>
           <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">5. Feedback and Contact</h2>
           <p className="text-base text-slate-700 leading-relaxed">
-            We welcome your feedback on the accessibility of ComplyEUR. If you encounter
+            We welcome your feedback on the accessibility of ComplyEur. If you encounter
             any accessibility barriers or have suggestions for improvement, please let us know:
           </p>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">

@@ -4,40 +4,64 @@ import Link from 'next/link'
 
 export default function PrivacyPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
-      <h1 className="text-3xl font-bold text-slate-900 mb-2">Privacy Policy</h1>
-      <p className="text-sm text-slate-500 mb-12">Last updated: January 9, 2025</p>
+    <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="landing-aurora-top absolute -top-32 left-[-8rem] h-[24rem] w-[24rem] rounded-full" />
+        <div className="landing-aurora-bottom absolute right-[-8rem] top-[18rem] h-[22rem] w-[22rem] rounded-full" />
+        <div className="landing-grid absolute inset-0" />
+      </div>
 
-      <div className="prose prose-slate max-w-none">
+      <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="landing-panel rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-10">
+          <div className="max-w-3xl">
+            <Link href="/landing" className="text-sm font-semibold text-brand-700 hover:underline">
+              Back to landing
+            </Link>
+            <p className="mt-5 inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+              Privacy
+            </p>
+            <h1 className="landing-serif mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+              Privacy Policy
+            </h1>
+            <p className="mt-3 text-sm text-slate-500">Last updated: January 9, 2025</p>
+            <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
+              We explain what data we collect, why we collect it, and the controls available to your organization and users.
+            </p>
+            <p className="mt-4 text-sm text-slate-500">
+              Also review our <Link href="/terms" className="font-medium text-brand-700 hover:underline">Terms</Link> and <Link href="/contact" className="font-medium text-brand-700 hover:underline">Contact</Link> page for legal and support channels.
+            </p>
+          </div>
+
+          <div className="mt-10 space-y-8">
         {/* 1. Introduction */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">1. Introduction</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">1. Introduction</h2>
           <p className="text-base text-slate-700 leading-relaxed">
-            ComplyEUR (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy.
+            ComplyEur (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy.
             This Privacy Policy explains how we collect, use, disclose, and safeguard your information
             when you use our Schengen compliance management service.
           </p>
           <p className="text-base text-slate-700 leading-relaxed mt-4">
-            By using ComplyEUR, you agree to the collection and use of information in accordance with
+            By using ComplyEur, you agree to the collection and use of information in accordance with
             this policy. If you do not agree with the terms of this policy, please do not access or use our service.
           </p>
         </section>
 
         {/* 2. Information We Collect */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">2. Information We Collect</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">2. Information We Collect</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We collect information that you provide directly to us when using our service:
           </p>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Account Information</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">Account Information</h3>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2">
             <li>Email addresses</li>
             <li>Company names</li>
             <li>User names and contact details</li>
           </ul>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Employee Data</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">Employee Data</h3>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2">
             <li>Employee names</li>
             <li>Passport numbers (encrypted at rest)</li>
@@ -45,7 +69,7 @@ export default function PrivacyPage() {
             <li>Travel dates and destinations</li>
           </ul>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Technical Information</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">Technical Information</h3>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2">
             <li>Browser type and version</li>
             <li>Device information</li>
@@ -55,8 +79,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 3. How We Use Your Information */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">3. How We Use Your Information</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">3. How We Use Your Information</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We use the information we collect solely to provide and improve our Schengen compliance
             tracking service. Specifically, we use your information to:
@@ -75,15 +99,15 @@ export default function PrivacyPage() {
         </section>
 
         {/* 4. Data Sharing and Third Parties */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">4. Data Sharing and Third Parties</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">4. Data Sharing and Third Parties</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We work with trusted third-party service providers who assist us in operating our service.
             These providers have access to your data only to perform specific tasks on our behalf and
             are obligated to protect your information.
           </p>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Our Service Providers</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">Our Service Providers</h3>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2">
             <li>
               <strong>Supabase</strong> - Database hosting and authentication services.
@@ -105,8 +129,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 5. Data Retention */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">5. Data Retention</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">5. Data Retention</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We retain your data for as long as necessary to provide our services and comply with
             legal obligations:
@@ -133,8 +157,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 6. Your Rights (GDPR/UK GDPR) */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">6. Your Rights (GDPR/UK GDPR)</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">6. Your Rights (GDPR/UK GDPR)</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             If you are located in the European Economic Area (EEA) or United Kingdom, you have
             certain rights under the General Data Protection Regulation (GDPR) and UK GDPR:
@@ -167,21 +191,21 @@ export default function PrivacyPage() {
           </ul>
           <p className="text-base text-slate-700 leading-relaxed mt-4">
             To exercise any of these rights, please contact us at{' '}
-            <a href="mailto:privacy@complyeur.com" className="text-blue-600 hover:text-blue-700 underline">
+            <a href="mailto:privacy@complyeur.com" className="font-medium text-brand-700 hover:underline">
               privacy@complyeur.com
             </a>.
           </p>
         </section>
 
         {/* 7. Cookies */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">7. Cookies</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">7. Cookies</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We use cookies and similar tracking technologies to operate our service and improve
             your experience. You can manage your cookie preferences at any time.
           </p>
 
-          <h3 className="text-xl font-semibold text-slate-900 mt-8 mb-3">Types of Cookies We Use</h3>
+          <h3 className="text-xl font-semibold text-slate-900 mb-3">Types of Cookies We Use</h3>
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2">
             <li>
               <strong>Necessary Cookies:</strong> Essential for the operation of our service,
@@ -201,7 +225,7 @@ export default function PrivacyPage() {
                   window.cookieyes.showSettingsPopup()
                 }
               }}
-              className="text-blue-600 hover:text-blue-700 underline"
+              className="font-medium text-brand-700 hover:underline"
             >
               Cookie Settings
             </button>
@@ -210,8 +234,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 8. Security */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">8. Security</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">8. Security</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We take the security of your data seriously and implement appropriate technical and
             organizational measures to protect your personal information:
@@ -230,8 +254,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 9. Changes to This Policy */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">9. Changes to This Policy</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">9. Changes to This Policy</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We may update this Privacy Policy from time to time. We will notify you of any
             material changes by:
@@ -249,8 +273,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 10. Contact Us */}
-        <section>
-          <h2 className="text-2xl font-semibold text-slate-900 mt-12 mb-4">10. Contact Us</h2>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">10. Contact Us</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             If you have any questions about this Privacy Policy, your personal data, or wish
             to exercise your data protection rights, please contact us:
@@ -258,13 +282,13 @@ export default function PrivacyPage() {
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">
             <li>
               <strong>Email:</strong>{' '}
-              <a href="mailto:privacy@complyeur.com" className="text-blue-600 hover:text-blue-700 underline">
+              <a href="mailto:privacy@complyeur.com" className="font-medium text-brand-700 hover:underline">
                 privacy@complyeur.com
               </a>
             </li>
             <li>
               <strong>Data Protection Officer:</strong>{' '}
-              <a href="mailto:dpo@complyeur.com" className="text-blue-600 hover:text-blue-700 underline">
+              <a href="mailto:dpo@complyeur.com" className="font-medium text-brand-700 hover:underline">
                 dpo@complyeur.com
               </a>
             </li>
@@ -276,22 +300,44 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        {/* Related Links */}
-        <section className="mt-16 pt-8 border-t border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Related Documents</h2>
-          <ul className="text-base text-slate-700 space-y-2">
-            <li>
-              <Link href="/terms" className="text-blue-600 hover:text-blue-700 underline">
-                Terms of Service
+          </div>
+
+          <section className="mt-10 rounded-2xl border border-brand-200/80 bg-brand-50/70 p-6">
+            <h2 className="text-xl font-semibold text-slate-900">Questions about your data handling obligations?</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              If you need support for DSAR, deletion workflows, or legal review context, contact us directly.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a
+                href="mailto:privacy@complyeur.com"
+                className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
+              >
+                Email privacy team
+              </a>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-slate-900"
+              >
+                Contact page
               </Link>
-            </li>
-            <li>
-              <Link href="/accessibility" className="text-blue-600 hover:text-blue-700 underline">
-                Accessibility Statement
+            </div>
+          </section>
+
+          <section className="mt-10 border-t border-slate-200 pt-8">
+            <h2 className="text-lg font-semibold text-slate-900">Related Documents</h2>
+            <div className="mt-4 flex flex-wrap gap-4 text-sm">
+              <Link href="/terms" className="font-medium text-brand-700 hover:underline">
+                Terms
               </Link>
-            </li>
-          </ul>
-        </section>
+              <Link href="/accessibility" className="font-medium text-brand-700 hover:underline">
+                Accessibility
+              </Link>
+              <Link href="/contact" className="font-medium text-brand-700 hover:underline">
+                Contact
+              </Link>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   )

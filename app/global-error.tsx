@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import * as Sentry from '@sentry/nextjs'
+import Image from 'next/image'
 
 // global-error.tsx catches errors in the root layout and template
 // It must define its own <html> and <body> tags since it replaces the root layout when triggered
@@ -21,6 +22,14 @@ export default function GlobalError({
       <body>
         <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
           <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+            <Image
+              src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
+              alt="ComplyEur"
+              width={150}
+              height={40}
+              className="h-7 w-auto mb-3"
+              priority
+            />
             <h1 className="text-xl font-semibold text-red-600 mb-2">
               Something went wrong
             </h1>

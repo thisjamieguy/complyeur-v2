@@ -5,8 +5,8 @@ import { AdminHeader } from '@/components/admin/admin-header'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Admin | ComplyEUR',
-  description: 'ComplyEUR administration panel',
+  title: 'Admin | ComplyEur',
+  description: 'ComplyEur administration panel',
 }
 
 export default async function AdminLayout({

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context'
 import { Sidebar } from './sidebar'
 import { MobileNav } from '@/components/navigation/mobile-nav'
@@ -28,10 +29,14 @@ function AppShellContent({ children, user }: AppShellProps) {
       <header className="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-16 items-center gap-3 border-b border-brand-100 bg-white px-4">
         <MobileNav />
         <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white font-bold text-sm">
-            CE
-          </div>
-          <span className="text-lg font-semibold text-brand-900">ComplyEUR</span>
+          <Image
+            src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
+            alt="ComplyEur"
+            width={140}
+            height={38}
+            className="h-7 w-auto"
+            priority
+          />
         </Link>
       </header>
 

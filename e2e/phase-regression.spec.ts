@@ -14,7 +14,7 @@ test.describe('Phase 1-2: Auth & Foundation', () => {
 
   test('public pages load without auth', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/ComplyEUR/i);
+    await expect(page).toHaveTitle(/ComplyEur/i);
 
     await page.goto('/login');
     await expect(page.locator('form')).toBeVisible();

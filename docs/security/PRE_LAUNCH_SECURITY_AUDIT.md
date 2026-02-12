@@ -1,9 +1,13 @@
-# ComplyEUR Pre-Launch Security Audit Report
+# ComplyEur Pre-Launch Security Audit Report
 
 **Audit Date:** 2026-02-07
 **Auditor:** Claude Opus 4.6 (Automated Static Analysis)
 **Scope:** Full codebase at `/home/user/complyeur-v2` -- 345+ files across 60 directories
 **Codebase:** Next.js 16 (App Router), TypeScript, Supabase PostgreSQL with RLS, Tailwind + Shadcn/UI
+
+> **Historical Snapshot Note (2026-02-11):**
+> This report reflects repository state on 2026-02-07. Some findings have since been remediated.
+> See `docs/REMEDIATION_AUDIT_2026-02-09.md` for follow-up status.
 
 ---
 
@@ -204,9 +208,9 @@ The application has a strong security foundation -- RLS on all 23 tables, a well
 
 ### Findings
 
-**F5-1 [LOW]: No `.env.example` file exists**
-- The `.gitignore` pattern `.env*` also blocks `.env.example` from being committed
-- Environment documentation exists in CLAUDE.md and README but a template file is standard practice
+**F5-1 [LOW]: `.env.example` was missing at audit time (resolved)**
+- At audit time, `.env.example` was not present in the repository.
+- Update (2026-02-11): `.env.example` exists at repo root with placeholder values.
 
 **F5-2 [LOW]: Test script has hardcoded E2E credentials (`scripts/create-test-user.ts:12-13`)**
 - `e2e-test@complyeur.test` / `E2ETestPassword123!` -- test-only, `.test` TLD

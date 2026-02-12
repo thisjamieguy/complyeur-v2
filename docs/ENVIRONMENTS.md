@@ -1,86 +1,86 @@
-# ComplyEUR Multi-Environment Setup
+# ComplyEur Environment Setup
 
 ## Overview
 
-ComplyEUR uses three separate Supabase projects for complete environment isolation.
+ComplyEur operates with two active runtime environments:
 
-| Environment | Project Name | Region | Status | Purpose |
-|-------------|--------------|--------|--------|---------|
-| Development | complyeur-dev | Frankfurt (eu-central-1) | Active | Local development and testing |
-| Staging | complyeur-staging | Frankfurt (eu-central-1) | Inactive | Pre-production testing (activate when needed) |
-| Production | complyeur-prod | London (eu-west-2) | Active | Live customer-facing application |
+| Runtime Environment | Vercel Environment | Purpose |
+|---|---|---|
+| Production | Production | Live customer-facing application |
+| Test/Preview | Preview | Development, QA, and branch previews |
+
+This matches the canonical architecture in `docs/architecture/ENVIRONMENTS.md`.
 
 ---
 
-## Project Details
+## Supabase Projects
 
-### Development (complyeur-dev)
+### Test/Preview project
 
+- **Project Name:** `complyeur-dev`
 - **Supabase Dashboard:** https://supabase.com/dashboard/project/ympwgavzlvyklkucskcj
 - **Project URL:** https://ympwgavzlvyklkucskcj.supabase.co
 - **Region:** Frankfurt (eu-central-1)
-- **Environment File:** `.env.local`
-- **Purpose:** Local development, feature testing, debugging
+- **Primary local env file:** `.env.local`
+- **Use for:** local development, QA, and all preview deployments
 
-### Staging (complyeur-staging)
+### Production project
 
-- **Supabase Dashboard:** https://supabase.com/dashboard/project/erojhukkihzxksbnjoix
-- **Project URL:** https://erojhukkihzxksbnjoix.supabase.co
-- **Region:** Frankfurt (eu-central-1)
-- **Environment File:** `.env.staging`
-- **Status:** Currently INACTIVE - restore via dashboard before use
-- **Purpose:** Pre-production validation, QA testing, client demos
-
-### Production (complyeur-prod)
-
+- **Project Name:** `complyeur-prod`
 - **Supabase Dashboard:** https://supabase.com/dashboard/project/bewydxxynjtfpytunlcq
 - **Project URL:** https://bewydxxynjtfpytunlcq.supabase.co
 - **Region:** London (eu-west-2)
-- **Environment File:** `.env.production`
-- **Purpose:** Live customer data, production workloads
+- **Primary env file for reference:** `.env.production`
+- **Use for:** live customer data and production workloads only
+
+---
+
+## Vercel Environment Variable Mapping
+
+Set variables in Vercel Dashboard -> Project -> Settings -> Environment Variables:
+
+1. **Preview deployments** -> Test/Preview Supabase credentials
+2. **Production deployment** -> Production Supabase credentials
+
+Do not set cross-environment secrets to "All Environments" when values differ.
 
 ---
 
 ## Environment Files
 
-All environment files are gitignored for security. Each contains:
+Environment files are gitignored for security. Common keys include:
 
+```bash
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+SUPABASE_DB_PASSWORD
+NEXT_PUBLIC_APP_URL
+UPSTASH_REDIS_REST_URL
+UPSTASH_REDIS_REST_TOKEN
 ```
-NEXT_PUBLIC_SUPABASE_URL      - Public API endpoint
-NEXT_PUBLIC_SUPABASE_ANON_KEY - Public anonymous key (safe for frontend)
-SUPABASE_SERVICE_ROLE_KEY     - Private service key (server-side only!)
-SUPABASE_DB_PASSWORD          - Database password (for direct connections)
-NEXT_PUBLIC_APP_URL           - Application base URL
-UPSTASH_REDIS_REST_URL        - Redis URL for rate limiting
-UPSTASH_REDIS_REST_TOKEN      - Redis auth token
-```
-
----
-
-## Vercel Deployment
-
-Configure environment variables in Vercel for each deployment environment:
-
-1. **Preview deployments** → Use staging credentials
-2. **Production deployment** → Use production credentials
-
-Set variables in: Vercel Dashboard > Project > Settings > Environment Variables
 
 ---
 
 ## Security Notes
 
-- Never commit `.env.*` files (already in `.gitignore`)
-- `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS - never expose in frontend
-- Each environment has isolated data - no cross-contamination
-- Production uses a different region for disaster awareness
+- Never commit `.env.*` files.
+- `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS and must never be exposed client-side.
+- Keep production and test credentials fully separate.
+- Verify target environment before running migrations or destructive scripts.
 
 ---
 
-## Legacy Project
+## Legacy/Inactive Projects
 
-The original `complyeur-v2` project still exists but is INACTIVE. It can be deleted once you confirm all data has been migrated to the new dev environment.
+### Staging (inactive)
 
-- **Reference ID:** sheqtawytsidyhzpzefk
-- **Region:** London (eu-west-2)
-- **Status:** INACTIVE
+- **Project Name:** `complyeur-staging`
+- **Project URL:** https://erojhukkihzxksbnjoix.supabase.co
+- **Status:** Inactive/archived, not part of active runtime flow
+
+### Legacy v2 project (inactive)
+
+- **Reference ID:** `sheqtawytsidyhzpzefk`
+- **Status:** Inactive/legacy
+- **Note:** Do not use for current deployments or type generation.

@@ -1,7 +1,7 @@
-# CLAUDE.md — ComplyEUR Development Context
+# CLAUDE.md — ComplyEur Development Context
 
 ## Project Overview
-**ComplyEUR** is a B2B SaaS application helping companies track employee travel compliance with the EU's 90/180-day Schengen visa rule. Target market: UK businesses with employees traveling to the EU post-Brexit.
+**ComplyEur** is a B2B SaaS application helping companies track employee travel compliance with the EU's 90/180-day Schengen visa rule. Target market: UK businesses with employees traveling to the EU post-Brexit.
 
 - **Current Version:** v2.0 (Supabase rebuild)
 - **Developer:** Solo founder, AI-assisted development workflow

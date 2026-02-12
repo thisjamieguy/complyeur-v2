@@ -7,7 +7,7 @@ import { getImportSessionsPaginated } from '../../import/actions';
 import { ImportHistoryList } from './import-history-list';
 
 export const metadata: Metadata = {
-  title: 'Import History | ComplyEUR',
+  title: 'Import History | ComplyEur',
   description: 'View your past import sessions and results',
 };
 

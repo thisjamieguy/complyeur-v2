@@ -1,4 +1,4 @@
-# ComplyEUR Pre-Release Regression Checklist
+# ComplyEur Pre-Release Regression Checklist
 
 **Version:** 2.0
 **Last Updated:** January 2026

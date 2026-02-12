@@ -36,7 +36,7 @@ export function Sidebar({ user }: SidebarProps) {
         >
           <Image
             src="/images/Icons/03_Icon_Only/ComplyEur_Icon.svg"
-            alt="ComplyEUR"
+            alt="ComplyEur"
             width={32}
             height={32}
             className="shrink-0 brightness-0 invert"
@@ -44,7 +44,7 @@ export function Sidebar({ user }: SidebarProps) {
           {isOpen && (
             <Image
               src="/images/Icons/04_Wordmark_Only/ComplyEur_Wordmark.svg"
-              alt="ComplyEUR"
+              alt="ComplyEur"
               width={120}
               height={24}
               className="h-6 w-auto brightness-0 invert"

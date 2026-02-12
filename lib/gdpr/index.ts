@@ -1,7 +1,7 @@
 /**
  * @fileoverview GDPR & Privacy Tools
  *
- * This module provides comprehensive GDPR compliance tools for ComplyEUR:
+ * This module provides comprehensive GDPR compliance tools for ComplyEur:
  *
  * - Audit Logging: Tamper-evident logging with hash chain integrity
  * - DSAR Export: Data Subject Access Request ZIP generation

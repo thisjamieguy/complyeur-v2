@@ -119,7 +119,7 @@ function generateReport() {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ComplyEUR Test Report</title>
+  <title>ComplyEur Test Report</title>
   <style>
     :root {
       --success: #22c55e;
@@ -172,7 +172,7 @@ function generateReport() {
   </style>
 </head>
 <body>
-  <h1>ComplyEUR Test Report</h1>
+  <h1>ComplyEur Test Report</h1>
   <p class="timestamp">Generated: ${timestamp}</p>
 
   <div class="grid">

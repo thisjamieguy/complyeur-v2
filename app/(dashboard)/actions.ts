@@ -34,7 +34,7 @@ import {
 import type { TripCreateInput, TripUpdate, CompanySettingsUpdate, NotificationPreferencesUpdate, AlertWithEmployee, CompanySettings, NotificationPreferences, BulkTripInput } from '@/types/database-helpers'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
-import { isPrivilegedRole } from '@/lib/permissions'
+import { hasPermission, isPrivilegedRole, PERMISSIONS, type Permission } from '@/lib/permissions'
 
 /**
  * Helper to run alert detection after trip changes
@@ -79,19 +79,54 @@ function revalidateTripData(employeeId?: string): void {
   }
 }
 
+async function enforceMutationAccess(
+  permission: Permission,
+  actionName: string
+): Promise<{ userId: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    throw new Error('Not authenticated')
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, actionName)
+  if (!rateLimit.allowed) {
+    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile?.role || !hasPermission(profile.role, permission)) {
+    throw new Error('Forbidden')
+  }
+
+  return { userId: user.id }
+}
+
 export async function addEmployeeAction(formData: { name: string; nationality_type?: string }) {
+  await enforceMutationAccess(PERMISSIONS.EMPLOYEES_CREATE, 'addEmployeeAction')
   const validated = employeeSchema.parse(formData)
   await createEmployee(validated)
   revalidateTripData()
 }
 
 export async function updateEmployeeAction(id: string, formData: { name: string; nationality_type?: string }) {
+  await enforceMutationAccess(PERMISSIONS.EMPLOYEES_UPDATE, 'updateEmployeeAction')
   const validated = employeeSchema.parse(formData)
   await updateEmployee(id, validated)
   revalidateTripData(id)
 }
 
 export async function deleteEmployeeAction(id: string) {
+  await enforceMutationAccess(PERMISSIONS.EMPLOYEES_DELETE, 'deleteEmployeeAction')
   await deleteEmployee(id)
   revalidateTripData(id)
 }
@@ -132,6 +167,7 @@ export async function addTripAction(formData: {
   is_private?: boolean
   ghosted?: boolean
 }) {
+  await enforceMutationAccess(PERMISSIONS.TRIPS_CREATE, 'addTripAction')
   const validated = tripSchema.parse(formData)
   const tripData: TripCreateInput = {
     employee_id: validated.employee_id,
@@ -165,6 +201,7 @@ export async function updateTripAction(
     ghosted?: boolean
   }
 ) {
+  await enforceMutationAccess(PERMISSIONS.TRIPS_UPDATE, 'updateTripAction')
   const validated = tripUpdateSchema.parse(formData)
   const updateData: TripUpdate = {}
 
@@ -186,6 +223,7 @@ export async function updateTripAction(
 }
 
 export async function deleteTripAction(tripId: string, employeeId: string) {
+  await enforceMutationAccess(PERMISSIONS.TRIPS_DELETE, 'deleteTripAction')
   await deleteTrip(tripId)
 
   // Run alert detection after trip deletion (may resolve alerts)
@@ -227,6 +265,10 @@ export async function bulkAddTripsAction(
     .select('role')
     .eq('id', user.id)
     .single()
+
+  if (!hasPermission(profile?.role, PERMISSIONS.TRIPS_CREATE)) {
+    return { success: false, created: 0, errors: [{ index: 0, message: 'Forbidden' }] }
+  }
 
   if (isPrivilegedRole(profile?.role)) {
     const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
@@ -296,6 +338,7 @@ export async function reassignTripAction(
   currentEmployeeId: string,
   newEmployeeId: string
 ): Promise<void> {
+  await enforceMutationAccess(PERMISSIONS.TRIPS_UPDATE, 'reassignTripAction')
   await reassignTrip(tripId, newEmployeeId)
 
   // Run alert detection for both employees (trip removed from one, added to other)
@@ -328,6 +371,7 @@ export async function getUnacknowledgedAlertsAction(): Promise<AlertWithEmployee
  * Acknowledge an alert (mark as read)
  */
 export async function acknowledgeAlertAction(alertId: string): Promise<void> {
+  await enforceMutationAccess(PERMISSIONS.ALERTS_MANAGE, 'acknowledgeAlertAction')
   await acknowledgeAlert(alertId)
   revalidatePath('/dashboard')
 }
@@ -336,6 +380,7 @@ export async function acknowledgeAlertAction(alertId: string): Promise<void> {
  * Resolve an alert
  */
 export async function resolveAlertAction(alertId: string): Promise<void> {
+  await enforceMutationAccess(PERMISSIONS.ALERTS_MANAGE, 'resolveAlertAction')
   await resolveAlert(alertId)
   revalidatePath('/dashboard')
 }
@@ -357,6 +402,7 @@ export async function getCompanySettingsAction(): Promise<CompanySettings> {
 export async function updateCompanySettingsAction(
   updates: CompanySettingsUpdate
 ): Promise<CompanySettings> {
+  await enforceMutationAccess(PERMISSIONS.SETTINGS_UPDATE, 'updateCompanySettingsAction')
   const settings = await updateCompanySettings(updates)
   revalidatePath('/settings')
   revalidatePath('/dashboard')

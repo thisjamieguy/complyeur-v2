@@ -1,5 +1,5 @@
 /**
- * Multi-Format Date Parser with Ambiguity Detection for ComplyEUR Import
+ * Multi-Format Date Parser with Ambiguity Detection for ComplyEur Import
  *
  * What it does:
  * - Parses dates in multiple formats (ISO, UK, US, text, Excel serial)
