@@ -21,6 +21,6 @@ export default async function Home() {
   if (user) {
     redirect('/dashboard')
   } else {
-    redirect('/landing-v2')
+    redirect('/landing')
   }
 }

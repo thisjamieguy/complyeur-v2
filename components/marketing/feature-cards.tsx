@@ -1,5 +1,3 @@
-'use client'
-
 import { cn } from '@/lib/utils'
 
 // Inline SVG illustrations for each feature - styled to match brand

@@ -12,6 +12,37 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
+  const publicMarketingRoutes = [
+    '/',
+    '/landing',
+    '/about',
+    '/contact',
+    '/faq',
+    '/pricing',
+    '/privacy',
+    '/terms',
+    '/accessibility',
+    '/sitemap.xml',
+    '/robots.txt',
+    '/icon.svg',
+  ]
+  const isAuthRoute = authRoutes.includes(pathname)
+  const isLandingVariantRoute = pathname.startsWith('/landing')
+  const isPublicMarketingRoute =
+    publicMarketingRoutes.includes(pathname) || isLandingVariantRoute
+
+  // Legacy landing variant route: always promote traffic to current landing page.
+  if (pathname === '/landing-v2') {
+    return NextResponse.redirect(new URL('/landing', request.url))
+  }
+
+  // Public marketing routes do not require per-request Supabase auth hydration.
+  // Skipping this avoids an external call on every anonymous landing-page request.
+  if (isPublicMarketingRoute) {
+    return NextResponse.next()
+  }
+
   // 1. Rate Limiting - applies to API routes and auth form submissions (POST only)
   // Uses Upstash Redis for distributed rate limiting in serverless environments
   // Excluded: health endpoint (monitoring), auth/callback (OAuth redirects from providers)
@@ -33,20 +64,9 @@ export async function middleware(request: NextRequest) {
   // 2. Auth & Session Management
   const { supabaseResponse, user } = await updateSession(request)
 
-  const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
-  const isAuthRoute = authRoutes.includes(pathname)
-
   // Public routes that don't require authentication
-  const publicRoutes = [
-    '/', '/landing', '/about', '/contact', '/faq', '/pricing',
-    '/privacy', '/terms', '/accessibility',
-    '/sitemap.xml', '/robots.txt', '/icon.svg',
-  ]
-  const isLandingVariantRoute = pathname.startsWith('/landing')
-  const isPublicRoute = publicRoutes.includes(pathname) ||
-                        isLandingVariantRoute ||
-                        pathname.startsWith('/api/') ||
-                        pathname.startsWith('/auth/')
+  const isPublicRoute =
+    isPublicMarketingRoute || pathname.startsWith('/api/') || pathname.startsWith('/auth/')
 
   // Protected routes: everything that isn't public or auth
   // This covers all (dashboard) route group pages: /calendar, /import, /settings,
