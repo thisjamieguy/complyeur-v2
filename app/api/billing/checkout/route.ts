@@ -8,6 +8,7 @@ type CheckoutRequestBody = {
   planSlug?: string
   billingInterval?: BillingInterval
   source?: CheckoutSource
+  promotionCode?: string
 }
 
 type CheckoutSource = 'pricing' | 'onboarding'
@@ -17,6 +18,12 @@ const VALID_PLAN_SLUGS: ReadonlySet<string> = new Set(
   SELF_SERVE_PLANS.map((plan) => plan.slug)
 )
 const VALID_CHECKOUT_SOURCES = new Set<CheckoutSource>(['pricing', 'onboarding'])
+const MAX_PROMOTION_CODE_LENGTH = 80
+
+type StripePromotionCodeLookupResponse = {
+  data?: Array<{ id?: string }>
+  error?: { message?: string }
+}
 
 function resolveStripeSecretKey(): string {
   const secretKey = process.env.STRIPE_SECRET_KEY
@@ -40,6 +47,55 @@ function getPriceIdForInterval(
     : tier.stripe_price_id_monthly
 }
 
+function normalizePromotionCode(value?: string): string | null {
+  if (typeof value !== 'string') return null
+
+  const trimmedValue = value.trim()
+  if (!trimmedValue) return null
+
+  return trimmedValue
+}
+
+async function resolvePromotionCodeId(
+  stripeSecretKey: string,
+  promotionCode: string
+): Promise<{ promotionCodeId: string | null; error: string | null }> {
+  const query = new URLSearchParams()
+  query.set('code', promotionCode)
+  query.set('active', 'true')
+  query.set('limit', '1')
+
+  const response = await fetch(`https://api.stripe.com/v1/promotion_codes?${query.toString()}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${stripeSecretKey}`,
+    },
+    cache: 'no-store',
+  })
+
+  const payload = await response.json() as StripePromotionCodeLookupResponse
+
+  if (!response.ok) {
+    console.error('[billing/checkout] Promotion code lookup failed:', payload)
+    return {
+      promotionCodeId: null,
+      error:
+        payload.error?.message ||
+        'Unable to validate that code right now. Please try again.',
+    }
+  }
+
+  const promotionCodeId = payload.data?.[0]?.id ?? null
+  if (!promotionCodeId) {
+    return {
+      promotionCodeId: null,
+      error: 'That code is invalid or no longer active.',
+    }
+  }
+
+  return { promotionCodeId, error: null }
+}
+
 export async function POST(request: NextRequest) {
   let body: CheckoutRequestBody
 
@@ -55,6 +111,7 @@ export async function POST(request: NextRequest) {
   const planSlug = body.planSlug
   const billingInterval = body.billingInterval
   const source = body.source ?? 'pricing'
+  const promotionCode = normalizePromotionCode(body.promotionCode)
 
   if (!planSlug || !VALID_PLAN_SLUGS.has(planSlug)) {
     return NextResponse.json(
@@ -77,7 +134,15 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  if (promotionCode && promotionCode.length > MAX_PROMOTION_CODE_LENGTH) {
+    return NextResponse.json(
+      { error: 'Promo code is too long.' },
+      { status: 400 }
+    )
+  }
+
   try {
+    const stripeSecretKey = resolveStripeSecretKey()
     const supabase = await createClient()
     const {
       data: { user },
@@ -123,6 +188,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    let promotionCodeId: string | null = null
+    if (promotionCode) {
+      const lookup = await resolvePromotionCodeId(stripeSecretKey, promotionCode)
+      if (lookup.error || !lookup.promotionCodeId) {
+        return NextResponse.json(
+          { error: lookup.error ?? 'Unable to validate promo code.' },
+          { status: 400 }
+        )
+      }
+      promotionCodeId = lookup.promotionCodeId
+    }
+
     const redirectPath = source === 'onboarding' ? '/onboarding' : '/pricing'
     const successUrl = new URL(redirectPath, request.url)
     successUrl.searchParams.set('checkout', 'success')
@@ -137,10 +214,17 @@ export async function POST(request: NextRequest) {
     stripeBody.set('cancel_url', cancelUrl.toString())
     stripeBody.set('line_items[0][price]', stripePriceId)
     stripeBody.set('line_items[0][quantity]', '1')
-    stripeBody.set('allow_promotion_codes', 'true')
+    if (promotionCodeId) {
+      stripeBody.set('discounts[0][promotion_code]', promotionCodeId)
+    } else {
+      stripeBody.set('allow_promotion_codes', 'true')
+    }
     stripeBody.set('metadata[plan_slug]', planSlug)
     stripeBody.set('metadata[billing_interval]', billingInterval)
     stripeBody.set('metadata[source]', source)
+    if (promotionCode) {
+      stripeBody.set('metadata[promotion_code]', promotionCode)
+    }
 
     stripeBody.set('client_reference_id', user.id)
 
@@ -151,7 +235,7 @@ export async function POST(request: NextRequest) {
     const stripeResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${resolveStripeSecretKey()}`,
+        Authorization: `Bearer ${stripeSecretKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: stripeBody.toString(),

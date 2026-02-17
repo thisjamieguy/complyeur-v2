@@ -122,6 +122,31 @@ export async function verifyTotpAction(factorId: string, code: string): Promise<
   return { success: true }
 }
 
+export async function unenrollTotpAction(): Promise<VerifyResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const { data: factors } = await supabase.auth.mfa.listFactors()
+  const totpFactor =
+    factors?.totp?.[0] ??
+    factors?.all?.find((f) => f.factor_type === 'totp') ??
+    null
+
+  if (!totpFactor) {
+    return { success: false, error: 'No TOTP factor found' }
+  }
+
+  const { error } = await supabase.auth.mfa.unenroll({ factorId: totpFactor.id })
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
+}
+
 type BackupCodesResult =
   | { success: true; codes: string[] }
   | { success: false; error: string }

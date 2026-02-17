@@ -2,9 +2,16 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { logGdprAction } from '@/lib/gdpr/audit'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import { isOwnerOrAdmin } from '@/lib/permissions'
+
+/**
+ * Max IDs per Supabase PostgREST `.in()` call to stay under URL length limits.
+ * Each UUID is ~36 chars; 100 UUIDs ≈ 3.6 KB which is safely under the ~8 KB limit.
+ */
+const BATCH_SIZE = 100
 
 /**
  * Parameters for bulk data deletion
@@ -259,6 +266,12 @@ export async function getHistoryForDeletion(): Promise<HistoryItem[]> {
  *
  * Execution order: trips → employees → mappings → history
  * (trips first due to foreign key constraints)
+ *
+ * Uses admin client (service role) for the actual database operations because:
+ * 1. Large ID lists exceed PostgREST URL limits — batching is needed
+ * 2. Employee soft-delete (setting deleted_at) can trigger RLS violations
+ *    when the updated row becomes invisible to the user's SELECT policies
+ * Authentication and authorization are verified first with the regular client.
  */
 export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDeleteResult> {
   const supabase = await createClient()
@@ -269,7 +282,7 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
   let historyDeleted = 0
 
   try {
-    // Verify authentication and owner/admin role
+    // Verify authentication and owner/admin role using the regular (RLS-enforced) client
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return {
@@ -301,70 +314,101 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
 
     await requireCompanyAccess(supabase, profile.company_id)
 
-    // 1. Hard-delete trips (batch)
-    if (params.tripIds.length > 0) {
-      const { error: tripError, count } = await supabase
-        .from('trips')
-        .delete({ count: 'exact' })
-        .eq('company_id', profile.company_id)
-        .in('id', params.tripIds)
+    // Use admin client for actual operations (bypasses RLS after auth verification above)
+    const admin = createAdminClient()
 
-      if (tripError) {
-        console.error('[BulkDelete] Trip deletion failed:', tripError)
-        errors.push(`Failed to delete trips: ${tripError.message}`)
-      } else {
-        tripsDeleted = count ?? params.tripIds.length
+    // 1. Hard-delete trips in batches
+    if (params.tripIds.length > 0) {
+      try {
+        for (let i = 0; i < params.tripIds.length; i += BATCH_SIZE) {
+          const batch = params.tripIds.slice(i, i + BATCH_SIZE)
+          const { error: tripError, count } = await admin
+            .from('trips')
+            .delete({ count: 'exact' })
+            .eq('company_id', profile.company_id)
+            .in('id', batch)
+
+          if (tripError) {
+            throw tripError
+          }
+          tripsDeleted += count ?? batch.length
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        console.error('[BulkDelete] Trip deletion failed:', err)
+        errors.push(`Failed to delete trips: ${msg}`)
       }
     }
 
-    // 2. Soft-delete employees (batch update deleted_at)
+    // 2. Soft-delete employees in batches (update deleted_at)
     if (params.employeeIds.length > 0) {
       const now = new Date().toISOString()
 
-      const { error: empError, count } = await supabase
-        .from('employees')
-        .update({ deleted_at: now } as Record<string, unknown>)
-        .eq('company_id', profile.company_id)
-        .in('id', params.employeeIds)
-        .is('deleted_at', null)
+      try {
+        for (let i = 0; i < params.employeeIds.length; i += BATCH_SIZE) {
+          const batch = params.employeeIds.slice(i, i + BATCH_SIZE)
+          const { error: empError, count } = await admin
+            .from('employees')
+            .update({ deleted_at: now } as Record<string, unknown>)
+            .eq('company_id', profile.company_id)
+            .in('id', batch)
+            .is('deleted_at', null)
 
-      if (empError) {
-        console.error('[BulkDelete] Employee deletion failed:', empError)
-        errors.push(`Failed to delete employees: ${empError.message}`)
-      } else {
-        employeesDeleted = count ?? params.employeeIds.length
+          if (empError) {
+            throw empError
+          }
+          employeesDeleted += count ?? batch.length
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        console.error('[BulkDelete] Employee deletion failed:', err)
+        errors.push(`Failed to delete employees: ${msg}`)
       }
     }
 
-    // 3. Hard-delete column mappings (batch)
+    // 3. Hard-delete column mappings in batches
     if (params.mappingIds.length > 0) {
-      const { error: mapError, count } = await supabase
-        .from('column_mappings')
-        .delete({ count: 'exact' })
-        .eq('company_id', profile.company_id)
-        .in('id', params.mappingIds)
+      try {
+        for (let i = 0; i < params.mappingIds.length; i += BATCH_SIZE) {
+          const batch = params.mappingIds.slice(i, i + BATCH_SIZE)
+          const { error: mapError, count } = await admin
+            .from('column_mappings')
+            .delete({ count: 'exact' })
+            .eq('company_id', profile.company_id)
+            .in('id', batch)
 
-      if (mapError) {
-        console.error('[BulkDelete] Mapping deletion failed:', mapError)
-        errors.push(`Failed to delete mappings: ${mapError.message}`)
-      } else {
-        mappingsDeleted = count ?? params.mappingIds.length
+          if (mapError) {
+            throw mapError
+          }
+          mappingsDeleted += count ?? batch.length
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        console.error('[BulkDelete] Mapping deletion failed:', err)
+        errors.push(`Failed to delete mappings: ${msg}`)
       }
     }
 
-    // 4. Hard-delete import history (batch)
+    // 4. Hard-delete import history in batches
     if (params.historyIds.length > 0) {
-      const { error: histError, count } = await supabase
-        .from('import_sessions')
-        .delete({ count: 'exact' })
-        .eq('company_id', profile.company_id)
-        .in('id', params.historyIds)
+      try {
+        for (let i = 0; i < params.historyIds.length; i += BATCH_SIZE) {
+          const batch = params.historyIds.slice(i, i + BATCH_SIZE)
+          const { error: histError, count } = await admin
+            .from('import_sessions')
+            .delete({ count: 'exact' })
+            .eq('company_id', profile.company_id)
+            .in('id', batch)
 
-      if (histError) {
-        console.error('[BulkDelete] History deletion failed:', histError)
-        errors.push(`Failed to delete import history: ${histError.message}`)
-      } else {
-        historyDeleted = count ?? params.historyIds.length
+          if (histError) {
+            throw histError
+          }
+          historyDeleted += count ?? batch.length
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error'
+        console.error('[BulkDelete] History deletion failed:', err)
+        errors.push(`Failed to delete import history: ${msg}`)
       }
     }
 

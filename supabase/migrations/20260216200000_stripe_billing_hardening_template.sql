@@ -77,6 +77,19 @@ BEGIN
 END
 $$;
 
+-- Clear placeholder price IDs that don't match real Stripe format (price_XYZ)
+-- before adding the format constraint. Placeholders from launch_tier_rebrand
+-- contain underscores (e.g. 'price_basic_monthly_gbp') which are not valid.
+UPDATE public.tiers
+  SET stripe_price_id_monthly = NULL
+  WHERE stripe_price_id_monthly IS NOT NULL
+    AND stripe_price_id_monthly !~ '^price_[A-Za-z0-9]+$';
+
+UPDATE public.tiers
+  SET stripe_price_id_annual = NULL
+  WHERE stripe_price_id_annual IS NOT NULL
+    AND stripe_price_id_annual !~ '^price_[A-Za-z0-9]+$';
+
 DO $$
 BEGIN
   IF NOT EXISTS (

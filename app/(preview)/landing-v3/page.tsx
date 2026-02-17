@@ -36,7 +36,7 @@ function TrustStat({ value, label }: { value: string; label: string }) {
 
 export default function LandingPage() {
   return (
-    <div className="landing-shell relative min-h-screen overflow-x-hidden bg-[color:var(--landing-surface)] text-slate-900">
+    <div className="landing-shell landing-font relative min-h-screen overflow-x-hidden bg-[color:var(--landing-surface)] text-slate-900">
       <SkipLink />
 
       <div className="pointer-events-none absolute inset-0">

@@ -6,6 +6,10 @@ import { createClient } from '@/lib/supabase/server'
 import { companyNameSchema, addEmployeeSchema, inviteTeamSchema } from '@/lib/validations/onboarding'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ValidationError, DatabaseError } from '@/lib/errors'
+import {
+  dispatchInviteEmail,
+  normalizeInviteEmail,
+} from '@/lib/services/team-invites'
 
 async function getAuthenticatedUser() {
   const supabase = await createClient()
@@ -95,20 +99,23 @@ export async function inviteTeamMembers(formData: FormData) {
   const admin = createAdminClient()
 
   for (const email of validEmails) {
-    if (email === user.email) continue
+    const normalizedEmail = normalizeInviteEmail(email)
+    if (normalizedEmail === normalizeInviteEmail(user.email ?? '')) continue
 
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
 
-    const { error } = await admin
+    const { data: inviteRow, error } = await admin
       .from('company_user_invites')
       .insert({
         company_id: companyId,
-        email,
+        email: normalizedEmail,
         role: 'manager',
         status: 'pending',
         invited_by: user.id,
         expires_at: expiresAt,
       })
+      .select('id')
+      .single()
 
     if (error) {
       // Skip duplicates silently
@@ -116,6 +123,17 @@ export async function inviteTeamMembers(formData: FormData) {
         continue
       }
       console.error('Failed to invite team member:', error)
+      continue
+    }
+
+    const dispatchResult = await dispatchInviteEmail(admin, normalizedEmail, '/onboarding')
+    if (!dispatchResult.success) {
+      await admin
+        .from('company_user_invites')
+        .update({ status: 'revoked', updated_at: new Date().toISOString() })
+        .eq('id', inviteRow.id)
+
+      console.error('Failed to send onboarding invite email:', dispatchResult.error)
     }
   }
 

@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { env } from '@/lib/env'
 import {
   isOwnerOrAdmin,
   hasPermission,
@@ -12,6 +11,7 @@ import {
   type UserRole,
 } from '@/lib/permissions'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { dispatchInviteEmail, normalizeInviteEmail } from '@/lib/services/team-invites'
 
 type TeamRole = Exclude<UserRole, 'owner'>
 
@@ -88,20 +88,6 @@ function getAdminClientResult() {
   }
 }
 
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
-}
-
-function isRecoverableInviteError(message: string): boolean {
-  const lower = message.toLowerCase()
-  return (
-    lower.includes('already been registered') ||
-    lower.includes('already registered') ||
-    lower.includes('user already registered') ||
-    lower.includes('already exists')
-  )
-}
-
 function isValidInviteRole(role: string): role is TeamRole {
   return TEAM_ROLES.includes(role as TeamRole)
 }
@@ -150,7 +136,7 @@ async function getActorContext(): Promise<ActionResult<ActorContext>> {
     success: true,
     data: {
       userId: user.id,
-      userEmail: normalizeEmail(user.email ?? ''),
+      userEmail: normalizeInviteEmail(user.email ?? ''),
       companyId: profile.company_id,
       role: profile.role,
     },
@@ -261,7 +247,7 @@ export async function inviteTeamMember(email: string, role: TeamRole): Promise<A
     return { success: false, error: 'Only owners and admins can invite users' }
   }
 
-  const normalizedEmail = normalizeEmail(email)
+  const normalizedEmail = normalizeInviteEmail(email)
   if (!normalizedEmail || !normalizedEmail.includes('@')) {
     return { success: false, error: 'Please provide a valid email address' }
   }
@@ -312,29 +298,22 @@ export async function inviteTeamMember(email: string, role: TeamRole): Promise<A
     return { success: false, error: 'Failed to create invite' }
   }
 
-  const appUrl = env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '')
-  const redirectTo = `${appUrl}/auth/callback?next=%2Fsettings%2Fteam`
-
-  const { error: authInviteError } = await admin.auth.admin.inviteUserByEmail(
-    normalizedEmail,
-    { redirectTo }
-  )
-
-  if (authInviteError) {
-    if (isRecoverableInviteError(authInviteError.message)) {
-      revalidatePath('/settings/team')
-      return {
-        success: true,
-        warning: 'Invite saved. This user already has an account, so ask them to use the invite link to join your company.',
-      }
-    }
-
+  const dispatchResult = await dispatchInviteEmail(admin, normalizedEmail, '/settings/team')
+  if (!dispatchResult.success) {
     await admin
       .from('company_user_invites')
       .update({ status: 'revoked', updated_at: new Date().toISOString() })
       .eq('id', inviteRow.id)
 
-    return { success: false, error: `Failed to send invite email: ${authInviteError.message}` }
+    return { success: false, error: `Failed to send invite email: ${dispatchResult.error}` }
+  }
+
+  if (dispatchResult.recoverableExistingUser) {
+    revalidatePath('/settings/team')
+    return {
+      success: true,
+      warning: 'Invite saved. This user already has an account, so ask them to use the invite link to join your company.',
+    }
   }
 
   revalidatePath('/settings/team')
@@ -455,7 +434,7 @@ export async function removeTeamMember(targetUserId: string): Promise<ActionResu
       .from('company_user_invites')
       .update({ status: 'revoked', updated_at: new Date().toISOString() })
       .eq('company_id', actor.companyId)
-      .eq('email', normalizeEmail(targetProfile.email))
+      .eq('email', normalizeInviteEmail(targetProfile.email))
       .eq('status', 'pending')
   }
 
