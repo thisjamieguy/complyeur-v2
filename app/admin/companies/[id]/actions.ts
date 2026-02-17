@@ -78,25 +78,59 @@ export async function updateEntitlements(
 }
 
 export async function changeTier(companyId: string, tierSlug: string) {
+  // Validate company ID
+  const companyIdResult = companyIdSchema.safeParse(companyId)
+  if (!companyIdResult.success) {
+    return { success: false, error: 'Invalid company ID format' }
+  }
+
   const { user } = await requireSuperAdmin()
-  await requireAdminCompanyAccess(companyId)
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
-  // Get current state
-  const { data: before } = await supabase
-    .from('company_entitlements')
-    .select('tier_slug')
-    .eq('company_id', companyId)
+  // Fetch the tier defaults so we can sync all entitlements
+  const { data: tierDefaults, error: tierError } = await supabase
+    .from('tiers')
+    .select(
+      'slug, max_employees, max_users, can_export_csv, can_export_pdf, can_forecast, can_calendar, can_bulk_import, can_api_access, can_sso, can_audit_logs'
+    )
+    .eq('slug', tierSlug)
     .single()
 
-  // Update tier
-  const { error } = await supabase
+  if (tierError || !tierDefaults) {
+    console.error('Failed to fetch tier defaults:', tierError)
+    return { success: false, error: 'Invalid tier selected' }
+  }
+
+  // Get current state for audit log
+  const { data: before } = await supabase
+    .from('company_entitlements')
+    .select('*')
+    .eq('company_id', companyIdResult.data)
+    .single()
+
+  // Update tier AND sync all entitlements from tier defaults
+  const { data: after, error } = await supabase
     .from('company_entitlements')
     .update({
       tier_slug: tierSlug,
+      max_employees: tierDefaults.max_employees,
+      max_users: tierDefaults.max_users,
+      can_export_csv: tierDefaults.can_export_csv,
+      can_export_pdf: tierDefaults.can_export_pdf,
+      can_forecast: tierDefaults.can_forecast,
+      can_calendar: tierDefaults.can_calendar,
+      can_bulk_import: tierDefaults.can_bulk_import,
+      can_api_access: tierDefaults.can_api_access,
+      can_sso: tierDefaults.can_sso,
+      can_audit_logs: tierDefaults.can_audit_logs,
+      manual_override: false,
+      override_notes: null,
       updated_at: new Date().toISOString(),
     })
-    .eq('company_id', companyId)
+    .eq('company_id', companyIdResult.data)
+    .select()
+    .single()
 
   if (error) {
     console.error('Failed to change tier:', error)
@@ -105,12 +139,10 @@ export async function changeTier(companyId: string, tierSlug: string) {
 
   await logAdminAction({
     adminUserId: user.id,
-    targetCompanyId: companyId,
+    targetCompanyId: companyIdResult.data,
     action: ADMIN_ACTIONS.TIER_CHANGED,
-    details: {
-      old_tier: before?.tier_slug,
-      new_tier: tierSlug,
-    },
+    detailsBefore: before as Record<string, unknown>,
+    detailsAfter: after as Record<string, unknown>,
   })
 
   revalidatePath(`/admin/companies/${companyId}`)

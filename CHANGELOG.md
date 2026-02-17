@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(changelog): sync auto-changelog [`fea752b`](https://github.com/thisjamieguy/complyeur-v2/commit/fea752be4adc567de8d32e09af480838ab5bc004)
 - chore(changelog): sync auto-changelog [`2ad78fc`](https://github.com/thisjamieguy/complyeur-v2/commit/2ad78fc6cec4a38f86e04e18246181c6839be9b5)
 - fix: team invites, bulk-delete batching, promo codes, MFA unenroll, and RLS policy [`9918789`](https://github.com/thisjamieguy/complyeur-v2/commit/991878921c5a8ccb3d2704b3571b64a18d9e3e17)
 - chore(changelog): sync auto-changelog [`e413f2c`](https://github.com/thisjamieguy/complyeur-v2/commit/e413f2ca3ebaa8a87c5ab13934423d08624beb86)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: sandbox calendar auto-fit with dynamic column width and month headers [`9de3e90`](https://github.com/thisjamieguy/complyeur-v2/commit/9de3e90096b5933f37a018abb9108e1e99d9e21b)
 - chore(changelog): finalize unreleased changelog sync [`2cde438`](https://github.com/thisjamieguy/complyeur-v2/commit/2cde438de5753d1fbece15ef8b7b762ba7adf72f)
 - chore(changelog): sync unreleased entries [`4d8aa5b`](https://github.com/thisjamieguy/complyeur-v2/commit/4d8aa5b86b9f5103fc07d3468f8e03faecb82870)
-- feat: ship UX remediation, onboarding, and related app updates [`41792bc`](https://github.com/thisjamieguy/complyeur-v2/commit/41792bc8590242bd0180596d70c9f60c569a88e6)
 
 ## v1.0.0 - 2026-01-22
 

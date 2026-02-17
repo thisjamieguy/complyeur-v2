@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import { Shield, Smartphone, Key, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -22,7 +21,6 @@ import {
 type EnrollData = { factorId: string; qrCode: string; secret: string }
 
 export function MfaEnrollmentPanel({ required = false }: { required?: boolean }) {
-  const router = useRouter()
   const [status, setStatus] = useState<Awaited<ReturnType<typeof getMfaStatusAction>> | null>(null)
   const [enrollData, setEnrollData] = useState<EnrollData | null>(null)
   const [totpCode, setTotpCode] = useState('')
@@ -40,6 +38,13 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
   useEffect(() => {
     loadStatus()
   }, [])
+
+  // Auto-start enrollment when MFA is required but not yet set up
+  useEffect(() => {
+    if (required && status?.success && !status.hasVerifiedFactor && !enrollData) {
+      handleEnroll()
+    }
+  }, [required, status, enrollData])
 
   useEffect(() => {
     if (!backupCodes || !status?.success) return
@@ -288,7 +293,10 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
       {required && isVerified && (
         <div className="pt-4 border-t">
           <Button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => {
+              // Full page reload ensures AAL2 session cookies are sent on the next request
+              window.location.href = '/dashboard'
+            }}
             className="w-full"
             size="lg"
           >

@@ -3,11 +3,10 @@
 import { useState, useTransition } from 'react'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -24,7 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { AlertTriangle, Clock, Pause, Play } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Clock, Pause, Play } from 'lucide-react'
 import {
   changeTier,
   extendTrial,
@@ -32,7 +31,7 @@ import {
   suspendCompany,
   restoreCompany,
 } from '@/app/admin/companies/[id]/actions'
-import { getTierDisplayName } from '@/lib/billing/plans'
+import { getTierDisplayName, getPlanBySlug } from '@/lib/billing/plans'
 
 interface EntitlementsTabProps {
   company: {
@@ -72,7 +71,7 @@ interface EntitlementsTabProps {
   }>
 }
 
-export function EntitlementsTab({ company, tier, tiers }: EntitlementsTabProps) {
+export function EntitlementsTab({ company, tier: _tier, tiers }: EntitlementsTabProps) {
   const [isPending, startTransition] = useTransition()
   const [trialDays, setTrialDays] = useState('7')
   const [trialReason, setTrialReason] = useState('')
@@ -81,14 +80,28 @@ export function EntitlementsTab({ company, tier, tiers }: EntitlementsTabProps) 
   const [showRestoreDialog, setShowRestoreDialog] = useState(false)
   const [showExtendDialog, setShowExtendDialog] = useState(false)
   const [showConvertDialog, setShowConvertDialog] = useState(false)
+  const [pendingTierSlug, setPendingTierSlug] = useState<string | null>(null)
+  const [showTierChangeDialog, setShowTierChangeDialog] = useState(false)
 
   const entitlement = company.company_entitlements
 
-  const handleTierChange = (newTier: string) => {
+  const currentPlan = getPlanBySlug(entitlement?.tier_slug)
+  const pendingPlan = getPlanBySlug(pendingTierSlug)
+
+  const handleTierSelectChange = (newTier: string) => {
+    if (newTier === entitlement?.tier_slug) return
+    setPendingTierSlug(newTier)
+    setShowTierChangeDialog(true)
+  }
+
+  const handleTierChangeConfirm = () => {
+    if (!pendingTierSlug) return
     startTransition(async () => {
-      const result = await changeTier(company.id, newTier)
+      const result = await changeTier(company.id, pendingTierSlug)
       if (result.success) {
-        toast.success('Tier updated successfully')
+        toast.success(`Tier changed to ${getTierDisplayName(pendingTierSlug)}`)
+        setShowTierChangeDialog(false)
+        setPendingTierSlug(null)
       } else {
         toast.error(result.error || 'Failed to update tier')
       }
@@ -170,7 +183,7 @@ export function EntitlementsTab({ company, tier, tiers }: EntitlementsTabProps) 
               <Label>Current Tier</Label>
               <Select
                 value={entitlement?.tier_slug || 'free'}
-                onValueChange={handleTierChange}
+                onValueChange={handleTierSelectChange}
                 disabled={isPending}
               >
                 <SelectTrigger className="mt-1.5">
@@ -186,8 +199,72 @@ export function EntitlementsTab({ company, tier, tiers }: EntitlementsTabProps) 
               </Select>
             </div>
           </div>
+          {entitlement?.manual_override && (
+            <p className="text-xs text-amber-600">
+              This company has manually overridden entitlements. Changing the tier will reset them to the new tier defaults.
+            </p>
+          )}
         </CardContent>
       </Card>
+
+      {/* Tier Change Confirmation Dialog */}
+      <Dialog
+        open={showTierChangeDialog}
+        onOpenChange={(open) => {
+          setShowTierChangeDialog(open)
+          if (!open) setPendingTierSlug(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change Subscription Tier</DialogTitle>
+            <DialogDescription>
+              This will update {company.name}&apos;s tier and sync all entitlements to the new tier defaults.
+            </DialogDescription>
+          </DialogHeader>
+          {currentPlan && pendingPlan && (
+            <div className="py-4 space-y-4">
+              <div className="flex items-center justify-center gap-3 text-sm">
+                <span className="font-medium">{currentPlan.publicName}</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{pendingPlan.publicName}</span>
+              </div>
+              <div className="rounded-lg border p-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Employees</span>
+                  <span>
+                    {currentPlan.employeeCap ?? 'Unlimited'}
+                    {' \u2192 '}
+                    {pendingPlan.employeeCap ?? 'Unlimited'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Users</span>
+                  <span>
+                    {currentPlan.userCap ?? 'Unlimited'}
+                    {' \u2192 '}
+                    {pendingPlan.userCap ?? 'Unlimited'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowTierChangeDialog(false)
+                setPendingTierSlug(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleTierChangeConfirm} disabled={isPending}>
+              {isPending ? 'Changing...' : 'Confirm Tier Change'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Trial Management */}
       <Card>
