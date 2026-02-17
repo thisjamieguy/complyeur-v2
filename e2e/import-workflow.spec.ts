@@ -22,6 +22,7 @@ import { generateEmployeeCSV, generateTripCSV } from '../__tests__/utils/csv-gen
 
 const SCRATCHPAD_DIR = process.env.TEST_TEMP_DIR || '/tmp/playwright-import-tests';
 const TEST_TIMEOUT = 60000;
+const createdTestFiles = new Set<string>();
 
 // Test credentials - should match test user in Supabase
 const TEST_CREDENTIALS = {
@@ -47,8 +48,10 @@ function ensureScratchpadDir(): void {
  */
 function writeTestFile(filename: string, content: string): string {
   ensureScratchpadDir();
-  const filePath = path.join(SCRATCHPAD_DIR, filename);
+  const uniquePrefix = `${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+  const filePath = path.join(SCRATCHPAD_DIR, `${uniquePrefix}-${filename}`);
   fs.writeFileSync(filePath, content, 'utf-8');
+  createdTestFiles.add(filePath);
   return filePath;
 }
 
@@ -56,14 +59,12 @@ function writeTestFile(filename: string, content: string): string {
  * Clean up test files
  */
 function cleanupTestFiles(): void {
-  if (fs.existsSync(SCRATCHPAD_DIR)) {
-    const files = fs.readdirSync(SCRATCHPAD_DIR);
-    for (const file of files) {
-      if (file.startsWith('test-') && (file.endsWith('.csv') || file.endsWith('.xlsx'))) {
-        fs.unlinkSync(path.join(SCRATCHPAD_DIR, file));
-      }
+  for (const filePath of createdTestFiles) {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
   }
+  createdTestFiles.clear();
 }
 
 /**
@@ -73,8 +74,13 @@ function cleanupTestFiles(): void {
 async function login(page: Page): Promise<boolean> {
   await page.goto('/login');
 
-  // Check if we're in waitlist mode (redirected to landing page)
   const currentUrl = page.url();
+  const isAuthenticatedRoute = /\/dashboard|\/employees|\/import|\/calendar/.test(currentUrl);
+  if (isAuthenticatedRoute) {
+    return true;
+  }
+
+  // Check if we're in waitlist mode (redirected to landing page)
   if (currentUrl.includes('/landing') || currentUrl.includes('waitlist')) {
     console.log('App is in waitlist mode - login not available');
     return false;
@@ -85,7 +91,7 @@ async function login(page: Page): Promise<boolean> {
   const hasLoginForm = await emailInput.isVisible({ timeout: 5000 }).catch(() => false);
 
   if (!hasLoginForm) {
-    console.log('Login form not found - may be in waitlist mode');
+    console.log('Login form not found - login unavailable');
     return false;
   }
 
@@ -275,7 +281,9 @@ test.describe('Import Workflow E2E', () => {
       await expect(errorIndicator.first()).toBeVisible();
 
       // Verify the warning callout about skipped rows
-      await expect(page.getByText(/will be skipped/i)).toBeVisible();
+      await expect(
+        page.locator('p').filter({ hasText: /rows have errors and will be skipped/i })
+      ).toBeVisible();
     });
 
     test('allows column remapping for non-standard headers', async ({ page }) => {

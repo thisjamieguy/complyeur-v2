@@ -19,6 +19,7 @@
     "test:e2e": "playwright test",
     "test:e2e:import": "playwright test e2e/import-workflow.spec.ts",
     "test:e2e:dashboard": "playwright test e2e/dashboard-verification.spec.ts",
+    "test:e2e:multi-user": "playwright test e2e/multi-user-isolation.spec.ts",
     "test:e2e:stress": "playwright test e2e/stress-test.spec.ts --timeout=300000",
     "test:regression": "playwright test e2e/phase-regression.spec.ts",
     "test:regression:ui": "playwright test e2e/phase-regression.spec.ts --ui",

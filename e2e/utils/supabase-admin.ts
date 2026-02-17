@@ -64,7 +64,11 @@ export async function ensureTestUser(params: {
     userId = createData.user.id
   } else if (createError) {
     const msg = createError.message.toLowerCase()
-    if (msg.includes('already registered') || msg.includes('user already')) {
+    if (
+      msg.includes('already registered') ||
+      msg.includes('already been registered') ||
+      msg.includes('user already')
+    ) {
       userId = await findUserIdByEmail(supabase, normalizedEmail)
     } else {
       return { ok: false, reason: `Failed to create user: ${createError.message}` }

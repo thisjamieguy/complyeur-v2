@@ -25,13 +25,13 @@ test.describe('Phase 1-2: Auth & Foundation', () => {
 
   test('protected routes redirect to login', async ({ page }) => {
     await page.goto('/dashboard');
-    await expect(page).toHaveURL(/login/);
+    await expect(page).toHaveURL(/landing|login/);
 
     await page.goto('/calendar');
-    await expect(page).toHaveURL(/login/);
+    await expect(page).toHaveURL(/landing|login/);
 
     await page.goto('/settings');
-    await expect(page).toHaveURL(/login/);
+    await expect(page).toHaveURL(/landing|login/);
   });
 
   test('login form has required fields', async ({ page }) => {

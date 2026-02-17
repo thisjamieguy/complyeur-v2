@@ -35,6 +35,7 @@ export default defineConfig({
         // Use stored auth state if file exists
         ...(authFileExists ? { storageState: authFile } : {}),
       },
+      testIgnore: /phase-regression\.spec\.ts/,
     },
     // No-auth project for regression tests that test public pages
     {

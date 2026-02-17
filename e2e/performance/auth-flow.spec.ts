@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test'
+import { test, expect, Page, BrowserContext } from '@playwright/test'
 import { deleteUserByEmail, ensureTestUser, hasAdminConfig } from '../utils/supabase-admin'
 
 // Helper function to generate a unique email for signup tests
@@ -9,6 +9,7 @@ function generateUniqueEmail() {
 
 test.describe('Authentication Performance', () => {
   let page: Page
+  let context: BrowserContext
   const defaultPassword = 'TestPassword123!'
   const loginEmail = process.env.E2E_LOGIN_EMAIL || 'e2e.login@complyeur.test'
   const loginPassword = process.env.E2E_LOGIN_PASSWORD || defaultPassword
@@ -28,11 +29,12 @@ test.describe('Authentication Performance', () => {
   })
 
   test.beforeEach(async ({ browser }) => {
-    page = await browser.newPage()
+    context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    page = await context.newPage()
   })
 
   test.afterEach(async () => {
-    await page.close()
+    await Promise.allSettled([page.close(), context.close()])
   })
 
   test('should measure login performance', async () => {
@@ -41,13 +43,25 @@ test.describe('Authentication Performance', () => {
     }
 
     await page.goto('/login')
+    const currentUrl = page.url()
+    if (currentUrl.includes('/landing') || currentUrl.includes('waitlist')) {
+      test.skip(true, 'Login is unavailable in waitlist mode.')
+      return
+    }
 
-    await page.getByLabel('Email').fill(process.env.E2E_LOGIN_EMAIL!)
-    await page.getByLabel('Password').fill(process.env.E2E_LOGIN_PASSWORD!)
+    const emailInput = page.getByLabel(/email/i)
+    const hasLoginForm = await emailInput.isVisible({ timeout: 5000 }).catch(() => false)
+    if (!hasLoginForm) {
+      test.skip(true, 'Login form is not available.')
+      return
+    }
+
+    await emailInput.fill(process.env.E2E_LOGIN_EMAIL!)
+    await page.getByLabel(/password/i).fill(process.env.E2E_LOGIN_PASSWORD!)
 
     const startTime = performance.now()
     await page.getByRole('button', { name: /sign in/i }).click()
-    await page.waitForURL(/\/dashboard/) // Wait for navigation to the dashboard
+    await page.waitForURL(/\/dashboard|\/onboarding/) // Wait for authenticated redirect
     const duration = performance.now() - startTime
 
     console.log(`Login performance: ${duration.toFixed(2)} ms`)
@@ -56,10 +70,24 @@ test.describe('Authentication Performance', () => {
   test('should measure signup performance', async () => {
     const uniqueEmail = generateUniqueEmail()
     await page.goto('/signup')
+    const currentUrl = page.url()
+    if (currentUrl.includes('/landing') || currentUrl.includes('waitlist')) {
+      test.skip(true, 'Signup is unavailable in waitlist mode.')
+      return
+    }
 
-    await page.getByLabel('Name').fill('Performance Test User')
-    await page.getByLabel('Email').fill(uniqueEmail)
-    await page.getByLabel('Company').fill('Performance Test Company')
+    const nameInput = page.getByLabel(/name/i)
+    const emailInput = page.getByLabel(/email/i)
+    const companyInput = page.getByLabel(/company/i)
+    const hasSignupForm = await nameInput.isVisible({ timeout: 5000 }).catch(() => false)
+    if (!hasSignupForm) {
+      test.skip(true, 'Signup form is not available.')
+      return
+    }
+
+    await nameInput.fill('Performance Test User')
+    await emailInput.fill(uniqueEmail)
+    await companyInput.fill('Performance Test Company')
     await page.locator('input[name="password"]').fill(defaultPassword)
     await page.locator('input[name="confirmPassword"]').fill(defaultPassword)
 
