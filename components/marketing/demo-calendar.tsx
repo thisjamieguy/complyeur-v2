@@ -32,12 +32,12 @@ interface DemoCalendarProps {
   referenceDate?: Date
 }
 
-const DAY_WIDTH = 44
 const ROW_HEIGHT = 40
 const NAME_WIDTH = 120
 const DAY_MS = 24 * 60 * 60 * 1000
 const BUFFER_DAYS = 2
 const MIN_WINDOW_DAYS = 14
+const MAX_TIMELINE_WIDTH = 620
 
 const defaultEmployees: CalendarEmployeeRow[] = [
   {
@@ -104,11 +104,50 @@ function getRiskLevelFromDuration(durationDays: number): RiskLevel {
   return 'red'
 }
 
-function generateDayLabels(windowStartDate: Date, totalDays: number): string[] {
+function generateDayLabels(windowStartDate: Date, totalDays: number, dayWidth: number): string[] {
   return Array.from({ length: totalDays }, (_, i) => {
     const date = addDays(windowStartDate, i)
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+    if (dayWidth >= 44) {
+      return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+    }
+    return date.getDate().toString()
   })
+}
+
+interface MonthSpan {
+  label: string
+  startIdx: number
+  count: number
+}
+
+function computeMonthSpans(windowStartDate: Date, totalDays: number): MonthSpan[] {
+  const spans: MonthSpan[] = []
+  let currentMonth = -1
+  let currentSpan: MonthSpan | null = null
+
+  for (let i = 0; i < totalDays; i++) {
+    const date = addDays(windowStartDate, i)
+    const month = date.getMonth()
+
+    if (month !== currentMonth) {
+      if (currentSpan) spans.push(currentSpan)
+      currentMonth = month
+      currentSpan = {
+        label: date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }),
+        startIdx: i,
+        count: 1,
+      }
+    } else if (currentSpan) {
+      currentSpan.count++
+    }
+  }
+  if (currentSpan) spans.push(currentSpan)
+  return spans
+}
+
+function computeDayWidth(totalDays: number): number {
+  const width = Math.floor(MAX_TIMELINE_WIDTH / totalDays)
+  return Math.max(18, Math.min(44, width))
 }
 
 function generateDefaultDayLabels(): string[] {
@@ -214,9 +253,9 @@ function convertEmployeesForWindow(
   })
 }
 
-function TripBar({ trip }: { trip: DemoTrip }) {
-  const left = trip.startDay * DAY_WIDTH
-  const width = trip.duration * DAY_WIDTH - 2
+function TripBar({ trip, dayWidth }: { trip: DemoTrip; dayWidth: number }) {
+  const left = trip.startDay * dayWidth
+  const width = trip.duration * dayWidth - 2
 
   return (
     <div
@@ -226,7 +265,7 @@ function TripBar({ trip }: { trip: DemoTrip }) {
       )}
       style={{
         left: `${left}px`,
-        width: `${Math.max(width, 24)}px`,
+        width: `${Math.max(width, 20)}px`,
         top: '50%',
         transform: 'translateY(-50%)',
       }}
@@ -258,9 +297,14 @@ export function DemoCalendar({
 
   const windowEndDate = addDays(windowStartDate, totalDays - 1)
 
+  const dayWidth = isPropDriven ? computeDayWidth(totalDays) : 28
+  const showMonthRow = isPropDriven && dayWidth < 44
+
   const dayLabels = isPropDriven
-    ? generateDayLabels(windowStartDate, totalDays)
+    ? generateDayLabels(windowStartDate, totalDays, dayWidth)
     : defaultDayLabels
+
+  const monthSpans = showMonthRow ? computeMonthSpans(windowStartDate, totalDays) : []
 
   const rows = isPropDriven
     ? convertEmployeesForWindow(employees, windowStartDate, windowEndDate)
@@ -271,7 +315,7 @@ export function DemoCalendar({
   const todayIndex = diffInDays(today, windowStartDate)
   const showTodayMarker = todayIndex >= 0 && todayIndex < totalDays
 
-  const timelineWidth = totalDays * DAY_WIDTH
+  const timelineWidth = totalDays * dayWidth
 
   return (
     <div className="max-w-full overflow-hidden bg-white">
@@ -281,7 +325,10 @@ export function DemoCalendar({
 
       <div className="flex">
         <div className="shrink-0 border-r border-slate-200" style={{ width: NAME_WIDTH }}>
-          <div className="flex h-8 items-center border-b border-slate-200 bg-slate-50 px-3">
+          <div
+            className="flex items-center border-b border-slate-200 bg-slate-50 px-3"
+            style={{ height: showMonthRow ? 48 : 28 }}
+          >
             <span className="text-xs font-medium text-slate-500">Employee</span>
           </div>
 
@@ -296,17 +343,31 @@ export function DemoCalendar({
           ))}
         </div>
 
-        <div className="flex-1 overflow-x-auto">
+        <div className="flex-1 overflow-hidden">
           <div className="relative" style={{ width: timelineWidth }}>
-            <div className="relative flex h-8 border-b border-slate-200 bg-slate-50">
+            {showMonthRow && (
+              <div className="flex h-5 border-b border-slate-200 bg-slate-100">
+                {monthSpans.map((span) => (
+                  <div
+                    key={span.label}
+                    className="flex shrink-0 items-center justify-center text-[10px] font-semibold text-slate-500"
+                    style={{ width: span.count * dayWidth }}
+                  >
+                    {span.label}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="relative flex h-7 border-b border-slate-200 bg-slate-50">
               {dayLabels.map((label, idx) => (
                 <div
                   key={`day-${idx}`}
                   className={cn(
-                    'flex shrink-0 items-center justify-center border-r border-slate-100 text-xs text-slate-500',
+                    'flex shrink-0 items-center justify-center border-r border-slate-100 text-[10px] text-slate-500',
                     showTodayMarker && idx === todayIndex && 'bg-blue-50 font-semibold text-blue-600'
                   )}
-                  style={{ width: DAY_WIDTH }}
+                  style={{ width: dayWidth }}
                 >
                   {label}
                 </div>
@@ -327,21 +388,24 @@ export function DemoCalendar({
                         'shrink-0 border-r border-slate-50',
                         showTodayMarker && idx === todayIndex && 'bg-blue-50/50'
                       )}
-                      style={{ width: DAY_WIDTH }}
+                      style={{ width: dayWidth }}
                     />
                   ))}
                 </div>
 
                 {employee.trips.map((trip, idx) => (
-                  <TripBar key={`${employee.name}-${trip.country}-${idx}`} trip={trip} />
+                  <TripBar key={`${employee.name}-${trip.country}-${idx}`} trip={trip} dayWidth={dayWidth} />
                 ))}
               </div>
             ))}
 
             {showTodayMarker && (
               <div
-                className="pointer-events-none absolute bottom-0 top-8 z-10 w-0.5 bg-blue-500"
-                style={{ left: todayIndex * DAY_WIDTH + DAY_WIDTH / 2 }}
+                className="pointer-events-none absolute bottom-0 z-10 w-0.5 bg-blue-500"
+                style={{
+                  left: todayIndex * dayWidth + dayWidth / 2,
+                  top: showMonthRow ? 25 : 28,
+                }}
               />
             )}
           </div>
