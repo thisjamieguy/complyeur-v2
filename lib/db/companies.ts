@@ -5,9 +5,11 @@ import type { Company, CompanyUpdate } from '@/types/database-helpers'
 
 /**
  * Get a company by ID
+ * RLS restricts to own company; app guard adds defense-in-depth
  */
 export async function getCompanyById(companyId: string): Promise<Company | null> {
   const supabase = await createClient()
+  await requireCompanyAccess(supabase, companyId)
 
   const { data: company, error } = await supabase
     .from('companies')
@@ -28,9 +30,11 @@ export async function getCompanyById(companyId: string): Promise<Company | null>
 
 /**
  * Get a company by slug
+ * RLS restricts to own company; app guard adds defense-in-depth
  */
 export async function getCompanyBySlug(slug: string): Promise<Company | null> {
   const supabase = await createClient()
+  await requireCompanyAccess(supabase)
 
   const { data: company, error } = await supabase
     .from('companies')

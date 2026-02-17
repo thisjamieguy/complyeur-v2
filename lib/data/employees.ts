@@ -62,6 +62,63 @@ interface DbEmployee {
   }>
 }
 
+interface DbEmployeeWithoutNationality {
+  id: string
+  name: string
+  nationality_type?: string | null
+  trips?: Array<{
+    id: string
+    country: string
+    entry_date: string
+    exit_date: string
+    ghosted: boolean | null
+  }>
+}
+
+interface SupabaseQueryErrorLike {
+  code?: string | null
+  message?: string | null
+}
+
+const DEFAULT_NATIONALITY_TYPE: NationalityType = 'uk_citizen'
+const VALID_NATIONALITY_TYPES = new Set<NationalityType>([
+  'uk_citizen',
+  'eu_schengen_citizen',
+  'rest_of_world',
+])
+
+function isMissingNationalityTypeColumnError(
+  error: SupabaseQueryErrorLike | null | undefined
+): boolean {
+  if (!error) return false
+  if (error.code === '42703') return true
+
+  const message = (error.message ?? '').toLowerCase()
+  return message.includes('nationality_type') && message.includes('does not exist')
+}
+
+function normalizeNationalityType(
+  nationalityType: string | null | undefined
+): NationalityType {
+  if (
+    nationalityType &&
+    VALID_NATIONALITY_TYPES.has(nationalityType as NationalityType)
+  ) {
+    return nationalityType as NationalityType
+  }
+  return DEFAULT_NATIONALITY_TYPE
+}
+
+function withDefaultNationality(
+  employees: DbEmployeeWithoutNationality[] | null | undefined
+): DbEmployee[] {
+  return (employees ?? []).map((employee) => ({
+    ...employee,
+    nationality_type: normalizeNationalityType(employee.nationality_type),
+    trips: employee.trips ?? [],
+  }))
+}
+
 /**
  * Convert database trip to compliance engine format
  */
@@ -90,31 +147,60 @@ export const getEmployeesWithTrips = cache(async (): Promise<DbEmployee[]> => {
   return withDbTiming('getEmployeesWithTrips', async () => {
     const supabase = await createClient()
 
+    const runQuery = async (includeNationalityType: boolean) => {
+      const selectClause = includeNationalityType
+        ? `
+            id,
+            name,
+            nationality_type,
+            trips (
+              id,
+              country,
+              entry_date,
+              exit_date,
+              ghosted
+            )
+          `
+        : `
+            id,
+            name,
+            trips (
+              id,
+              country,
+              entry_date,
+              exit_date,
+              ghosted
+            )
+          `
+
+      return supabase
+        .from('employees')
+        .select(selectClause)
+        .is('deleted_at', null)
+        .order('name')
+    }
+
     // Single query with nested join - no N+1 pattern
     // Uses idx_employees_company_not_deleted and idx_trips_employee_not_ghosted indexes
-    const { data: employees, error } = await supabase
-      .from('employees')
-      .select(`
-        id,
-        name,
-        nationality_type,
-        trips (
-          id,
-          country,
-          entry_date,
-          exit_date,
-          ghosted
-        )
-      `)
-      .is('deleted_at', null)
-      .order('name')
+    let { data: employees, error } = await runQuery(true)
+
+    if (error && isMissingNationalityTypeColumnError(error)) {
+      console.warn(
+        '[Employees] employees.nationality_type is missing; using legacy dashboard fallback'
+      )
+      const fallback = await runQuery(false)
+      employees = fallback.data
+      error = fallback.error
+    }
 
     if (error) {
       console.error('Error fetching employees:', error)
       throw new Error('Failed to fetch employees')
     }
 
-    return (employees ?? []) as DbEmployee[]
+    return withDefaultNationality(
+      (employees ?? []) as unknown as DbEmployeeWithoutNationality[]
+    )
   })
 })
 
@@ -138,7 +224,7 @@ export const getEmployeeComplianceData = cache(async (
   const thresholds = statusThresholds ?? DEFAULT_STATUS_THRESHOLDS
 
   return employees.map((employee) => {
-    const nationalityType = employee.nationality_type as NationalityType
+    const nationalityType = normalizeNationalityType(employee.nationality_type)
     const exempt = isExemptFromTracking(nationalityType)
 
     // Find most recent trip (by exit date)
@@ -207,35 +293,58 @@ export async function getEmployeeComplianceDataPaginated(
   return withDbTiming('getEmployeeComplianceDataPaginated', async () => {
     const supabase = await createClient()
 
-    // Build base query
-    let query = supabase
-      .from('employees')
-      .select(`
-        id,
-        name,
-        nationality_type,
-        trips (
-          id,
-          country,
-          entry_date,
-          exit_date,
-          ghosted
-        )
-      `, { count: 'exact' })
-      .is('deleted_at', null)
+    const runQuery = async (includeNationalityType: boolean) => {
+      const selectClause = includeNationalityType
+        ? `
+            id,
+            name,
+            nationality_type,
+            trips (
+              id,
+              country,
+              entry_date,
+              exit_date,
+              ghosted
+            )
+          `
+        : `
+            id,
+            name,
+            trips (
+              id,
+              country,
+              entry_date,
+              exit_date,
+              ghosted
+            )
+          `
 
-    // Apply search filter if provided
-    if (search?.trim()) {
-      query = query.ilike('name', `%${search.trim()}%`)
+      let query = supabase
+        .from('employees')
+        .select(selectClause, { count: 'exact' })
+        .is('deleted_at', null)
+
+      if (search?.trim()) {
+        query = query.ilike('name', `%${search.trim()}%`)
+      }
+
+      const from = (page - 1) * pageSize
+      const to = from + pageSize - 1
+
+      return query.order('name').range(from, to)
     }
 
-    // Apply ordering and pagination
-    const from = (page - 1) * pageSize
-    const to = from + pageSize - 1
+    let { data: employees, error, count } = await runQuery(true)
 
-    const { data: employees, error, count } = await query
-      .order('name')
-      .range(from, to)
+    if (error && isMissingNationalityTypeColumnError(error)) {
+      console.warn(
+        '[Employees] employees.nationality_type is missing; using legacy paginated fallback'
+      )
+      const fallback = await runQuery(false)
+      employees = fallback.data
+      error = fallback.error
+      count = fallback.count
+    }
 
     if (error) {
       console.error('Error fetching paginated employees:', error)
@@ -246,8 +355,10 @@ export async function getEmployeeComplianceDataPaginated(
     const totalPages = Math.ceil(totalCount / pageSize)
 
     // Calculate compliance for fetched employees
-    const employeeCompliance = ((employees ?? []) as DbEmployee[]).map((employee) => {
-      const nationalityType = employee.nationality_type as NationalityType
+    const employeeCompliance = withDefaultNationality(
+      (employees ?? []) as unknown as DbEmployeeWithoutNationality[]
+    ).map((employee) => {
+      const nationalityType = normalizeNationalityType(employee.nationality_type)
       const exempt = isExemptFromTracking(nationalityType)
 
       const lastTrip = (employee.trips || [])
@@ -321,35 +432,63 @@ export const getEmployeeStats = cache(async (
     const thresholds = statusThresholds ?? DEFAULT_STATUS_THRESHOLDS
     const today = toUTCMidnight(new Date())
 
-    // Fetch all employees to calculate stats (this is still needed for accurate stats)
-    let query = supabase
-      .from('employees')
-      .select(`
-        id,
-        name,
-        nationality_type,
-        trips (
-          id,
-          country,
-          entry_date,
-          exit_date,
-          ghosted
-        )
-      `)
-      .is('deleted_at', null)
+    const runQuery = async (includeNationalityType: boolean) => {
+      const selectClause = includeNationalityType
+        ? `
+            id,
+            name,
+            nationality_type,
+            trips (
+              id,
+              country,
+              entry_date,
+              exit_date,
+              ghosted
+            )
+          `
+        : `
+            id,
+            name,
+            trips (
+              id,
+              country,
+              entry_date,
+              exit_date,
+              ghosted
+            )
+          `
 
-    if (search?.trim()) {
-      query = query.ilike('name', `%${search.trim()}%`)
+      let query = supabase
+        .from('employees')
+        .select(selectClause)
+        .is('deleted_at', null)
+
+      if (search?.trim()) {
+        query = query.ilike('name', `%${search.trim()}%`)
+      }
+
+      return query.order('name')
     }
 
-    const { data: employees, error } = await query.order('name')
+    let { data: employees, error } = await runQuery(true)
+
+    if (error && isMissingNationalityTypeColumnError(error)) {
+      console.warn(
+        '[Employees] employees.nationality_type is missing; using legacy stats fallback'
+      )
+      const fallback = await runQuery(false)
+      employees = fallback.data
+      error = fallback.error
+    }
 
     if (error) {
       console.error('Error fetching employee stats:', error)
       throw new Error('Failed to fetch employee stats')
     }
 
-    const allEmployees = (employees ?? []) as DbEmployee[]
+    const allEmployees = withDefaultNationality(
+      (employees ?? []) as unknown as DbEmployeeWithoutNationality[]
+    )
 
     // Calculate stats
     let compliant = 0
@@ -359,7 +498,7 @@ export const getEmployeeStats = cache(async (
     let exempt = 0
 
     for (const employee of allEmployees) {
-      const nationalityType = employee.nationality_type as NationalityType
+      const nationalityType = normalizeNationalityType(employee.nationality_type)
       if (isExemptFromTracking(nationalityType)) {
         exempt++
         continue
@@ -411,30 +550,63 @@ export const getEmployeeById = cache(async (id: string) => {
   return withDbTiming('getEmployeeById', async () => {
     const supabase = await createClient()
 
+    const runQuery = async (includeNationalityType: boolean) => {
+      const selectClause = includeNationalityType
+        ? `
+            id,
+            name,
+            nationality_type,
+            created_at,
+            trips (
+              id,
+              country,
+              entry_date,
+              exit_date,
+              purpose,
+              job_ref,
+              is_private,
+              ghosted,
+              created_at,
+              updated_at
+            )
+          `
+        : `
+            id,
+            name,
+            created_at,
+            trips (
+              id,
+              country,
+              entry_date,
+              exit_date,
+              purpose,
+              job_ref,
+              is_private,
+              ghosted,
+              created_at,
+              updated_at
+            )
+          `
+
+      return supabase
+        .from('employees')
+        .select(selectClause)
+        .eq('id', id)
+        .is('deleted_at', null)
+        .single()
+    }
+
     // Single query with nested join - uses primary key index
-    const { data: employee, error } = await supabase
-      .from('employees')
-      .select(`
-        id,
-        name,
-        nationality_type,
-        created_at,
-        trips (
-          id,
-          country,
-          entry_date,
-          exit_date,
-          purpose,
-          job_ref,
-          is_private,
-          ghosted,
-          created_at,
-          updated_at
-        )
-      `)
-      .eq('id', id)
-      .is('deleted_at', null)
-      .single()
+    let { data: employee, error } = await runQuery(true)
+
+    if (error && isMissingNationalityTypeColumnError(error)) {
+      console.warn(
+        '[Employees] employees.nationality_type is missing; using legacy employee detail fallback'
+      )
+      const fallback = await runQuery(false)
+      employee = fallback.data
+      error = fallback.error
+    }
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -444,7 +616,17 @@ export const getEmployeeById = cache(async (id: string) => {
       throw new Error('Failed to fetch employee')
     }
 
-    return employee
+    if (!employee) {
+      return null
+    }
+
+    const normalizedEmployee = employee as unknown as DbEmployeeWithoutNationality
+
+    return {
+      ...normalizedEmployee,
+      nationality_type: normalizeNationalityType(normalizedEmployee.nationality_type),
+      trips: normalizedEmployee.trips ?? [],
+    }
   })
 })
 

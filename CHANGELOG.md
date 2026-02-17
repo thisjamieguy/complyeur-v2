@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- perf: improve landing TTFB and reduce hydration [`d5bf3c6`](https://github.com/thisjamieguy/complyeur-v2/commit/d5bf3c60cad1f4ca34110131e4108f1024543e48)
+- chore(changelog): sync unreleased entries [`41ca9e8`](https://github.com/thisjamieguy/complyeur-v2/commit/41ca9e849f9fa5c5f58907d4125926d9d466e9fb)
 - chore(changelog): sync unreleased entries [`39257af`](https://github.com/thisjamieguy/complyeur-v2/commit/39257af4cc4bb4bbc1ed646d53305e4d101bdfa8)
 - chore: sync local changes for landing redirect and stop hook [`ade618d`](https://github.com/thisjamieguy/complyeur-v2/commit/ade618d861ed947e07ef2d0785325dc2360e23ab)
 - chore(changelog): sync unreleased entries [`48dbbb9`](https://github.com/thisjamieguy/complyeur-v2/commit/48dbbb996a300745b3850c298f80da226ab94a31)
@@ -17,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): sync unreleased entries [`58d7263`](https://github.com/thisjamieguy/complyeur-v2/commit/58d726371b29f62d983d525d4a0072a4aebb5bf3)
 - docs: update memory files to match actual codebase [`082f719`](https://github.com/thisjamieguy/complyeur-v2/commit/082f71944b12c2c717b4269091f13535d7fe26e8)
 - chore(changelog): settle auto-changelog entries [`cf52edd`](https://github.com/thisjamieguy/complyeur-v2/commit/cf52edddd12619ffeddfb7e38860b1a024841357)
-- chore(changelog): finalize unreleased changelog sync [`34bf7cb`](https://github.com/thisjamieguy/complyeur-v2/commit/34bf7cbda0bd89c115216066e3b68e2429a91104)
-- chore(changelog): sync unreleased entries [`70f5076`](https://github.com/thisjamieguy/complyeur-v2/commit/70f5076fc0999f17cba7f7d37618cf3b5b7150ae)
 
 ## v1.0.0 - 2026-01-22
 

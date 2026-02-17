@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { checkEntitlement } from '@/lib/billing/entitlements'
 import { CalendarView } from '@/components/calendar/calendar-view'
 import { CalendarSkeleton } from '@/components/calendar/calendar-skeleton'
 import { CalendarEmptyState } from '@/components/calendar/calendar-empty-state'
@@ -90,6 +91,11 @@ export default async function CalendarPage() {
 
   if (!user) {
     redirect('/login')
+  }
+
+  const hasCalendar = await checkEntitlement('can_calendar')
+  if (!hasCalendar) {
+    redirect('/dashboard?upgrade=calendar')
   }
 
   return (

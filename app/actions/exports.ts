@@ -50,6 +50,7 @@ import { exportOptionsSchema } from '@/lib/validations/exports'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { requireExportPermission } from '@/lib/security/authorization'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { checkEntitlement } from '@/lib/billing/entitlements'
 
 /**
  * Generates an export of compliance data.
@@ -80,6 +81,13 @@ export async function exportComplianceData(
   const rateLimit = await checkServerActionRateLimit(auth.user.id, 'exportComplianceData')
   if (!rateLimit.allowed) {
     return { success: false, error: rateLimit.error }
+  }
+
+  // Check plan entitlement for the requested export format
+  const entitlementFlag = validatedOptions.format === 'pdf' ? 'can_export_pdf' as const : 'can_export_csv' as const
+  const hasEntitlement = await checkEntitlement(entitlementFlag)
+  if (!hasEntitlement) {
+    return { success: false, error: `${validatedOptions.format.toUpperCase()} export is not available on your current plan. Please upgrade to access this feature.` }
   }
 
   if (!auth.profile.company_id) {

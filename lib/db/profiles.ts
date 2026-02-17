@@ -35,9 +35,11 @@ export async function getCurrentUserProfile(): Promise<ProfileWithCompany | null
 
 /**
  * Get a profile by user ID
+ * Requires authenticated user in the same company (enforced by RLS + app guard)
  */
 export async function getProfileById(userId: string): Promise<Profile | null> {
   const supabase = await createClient()
+  await requireCompanyAccess(supabase)
 
   const { data: profile, error } = await supabase
     .from('profiles')
@@ -98,9 +100,11 @@ export async function updateProfile(
 
 /**
  * Get all profiles for a company
+ * Verifies the caller belongs to the target company
  */
 export async function getCompanyProfiles(companyId: string): Promise<Profile[]> {
   const supabase = await createClient()
+  await requireCompanyAccess(supabase, companyId)
 
   const { data: profiles, error } = await supabase
     .from('profiles')

@@ -1,0 +1,14 @@
+{
+  "free": {
+    "monthly": "price_1T1W4hANIxv7H45OqrIHUGIB",
+    "annual": "price_1T1W4iANIxv7H45OtvZVGh35"
+  },
+  "starter": {
+    "monthly": "price_1T1W4jANIxv7H45OvXykTzJ6",
+    "annual": "price_1T1W4kANIxv7H45OPJ5zIzxf"
+  },
+  "professional": {
+    "monthly": "price_1T1W4lANIxv7H45O2Oy2xPCo",
+    "annual": "price_1T1W4mANIxv7H45O5HaJNi8P"
+  }
+}

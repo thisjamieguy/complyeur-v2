@@ -24,6 +24,10 @@
     "test:regression:ui": "playwright test e2e/phase-regression.spec.ts --ui",
     "test:all": "npm run test:coverage && npm run test:e2e",
     "test:report": "node scripts/generate-test-report.js",
+    "billing:prices:sync": "tsx scripts/syncStripePrices.ts --mapping scripts/stripe-price-mapping.beta.template.json --interval both",
+    "billing:prices:audit": "tsx scripts/auditStripePriceIds.ts",
+    "billing:webhook:configure": "tsx scripts/configureStripeWebhook.ts",
+    "billing:webhook:check": "tsx scripts/configureStripeWebhook.ts --check",
     "security:check": "pnpm audit",
     "stress-test": "tsx scripts/stress-test/index.ts",
     "stress-test:dry": "tsx scripts/stress-test/index.ts --dry-run"
@@ -69,13 +73,14 @@
     "react-hook-form": "^7.70.0",
     "resend": "^6.6.0",
     "sonner": "^2.0.7",
+    "stripe": "^20.3.1",
     "tailwind-merge": "^3.4.0",
     "xlsx": "^0.18.5",
     "zod": "^4.3.5"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.3.0",
-    "@commitlint/config-conventional": "^20.3.0",
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",

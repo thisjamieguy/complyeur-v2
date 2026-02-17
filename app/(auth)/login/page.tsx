@@ -44,6 +44,7 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('next') || '/dashboard'
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -59,7 +60,10 @@ function LoginForm() {
     if (error) {
       toast.error(error)
       // Clear the error from URL without full page reload
-      window.history.replaceState({}, '', '/login')
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('error')
+      const nextUrl = params.toString() ? `/login?${params.toString()}` : '/login'
+      window.history.replaceState({}, '', nextUrl)
     }
   }, [searchParams])
 
@@ -69,6 +73,7 @@ function LoginForm() {
       const formData = new FormData()
       formData.append('email', data.email)
       formData.append('password', data.password)
+      formData.append('redirectTo', redirectTo)
       await login(formData)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Login failed')
@@ -80,7 +85,7 @@ function LoginForm() {
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true)
     try {
-      await signInWithGoogle()
+      await signInWithGoogle(redirectTo)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Google sign-in failed')
       setIsGoogleLoading(false)

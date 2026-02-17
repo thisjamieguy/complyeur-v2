@@ -6,7 +6,9 @@
  */
 
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 import { getEmployeesForSelect, getAllTripsGroupedByEmployee } from '@/lib/db';
+import { checkEntitlement } from '@/lib/billing/entitlements';
 import { TripForecastCalculator } from './trip-forecast-calculator';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -28,7 +30,12 @@ async function TripForecastContent() {
   return <TripForecastCalculator employees={employees} tripsMap={tripsMap} />;
 }
 
-export default function TripForecastPage() {
+export default async function TripForecastPage() {
+  const hasForecast = await checkEntitlement('can_forecast')
+  if (!hasForecast) {
+    redirect('/dashboard?upgrade=forecast')
+  }
+
   return (
     <div className="space-y-6">
       <div>

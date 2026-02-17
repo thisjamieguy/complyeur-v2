@@ -34,7 +34,7 @@ import {
 import type { TripCreateInput, TripUpdate, CompanySettingsUpdate, NotificationPreferencesUpdate, AlertWithEmployee, CompanySettings, NotificationPreferences, BulkTripInput } from '@/types/database-helpers'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
-import { hasPermission, isPrivilegedRole, PERMISSIONS, type Permission } from '@/lib/permissions'
+import { hasPermission, PERMISSIONS, type Permission } from '@/lib/permissions'
 
 /**
  * Helper to run alert detection after trip changes
@@ -270,11 +270,9 @@ export async function bulkAddTripsAction(
     return { success: false, created: 0, errors: [{ index: 0, message: 'Forbidden' }] }
   }
 
-  if (isPrivilegedRole(profile?.role)) {
-    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
-    if (!mfa.ok) {
-      return { success: false, created: 0, errors: [{ index: 0, message: 'MFA required. Complete setup or verification to continue.' }] }
-    }
+  const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, user.email)
+  if (mfa?.ok === false) {
+    return { success: false, created: 0, errors: [{ index: 0, message: 'MFA required. Complete setup or verification to continue.' }] }
   }
 
   if (!trips || trips.length === 0) {
@@ -426,6 +424,13 @@ export async function getNotificationPreferencesAction(): Promise<NotificationPr
 export async function updateNotificationPreferencesAction(
   updates: NotificationPreferencesUpdate
 ): Promise<NotificationPreferences> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const rateCheck = await checkServerActionRateLimit(user.id, 'updateNotificationPreferences')
+  if (!rateCheck.allowed) throw new Error(rateCheck.error || 'Too many requests')
+
   const prefs = await updateNotificationPreferences(updates)
   revalidatePath('/settings')
   return prefs

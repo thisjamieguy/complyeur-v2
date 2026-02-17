@@ -11,6 +11,7 @@ import {
   ROLES,
   type UserRole,
 } from '@/lib/permissions'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 type TeamRole = Exclude<UserRole, 'owner'>
 
@@ -66,6 +67,16 @@ interface ActorContext {
   userEmail: string
   companyId: string
   role: string | null
+}
+
+function deriveFullName(
+  firstName: string | null | undefined,
+  lastName: string | null | undefined
+): string | null {
+  const fullName = [firstName, lastName]
+    .filter((part): part is string => Boolean(part && part.trim()))
+    .join(' ')
+  return fullName || null
 }
 
 function getAdminClientResult() {
@@ -192,7 +203,7 @@ export async function listTeamMembersAndInvites(): Promise<ActionResult<TeamSnap
   const [membersResult, invitesResult, seatUsage] = await Promise.all([
     admin
       .from('profiles')
-      .select('id, email, first_name, last_name, full_name, role, created_at')
+      .select('id, email, first_name, last_name, role, created_at')
       .eq('company_id', actor.companyId)
       .order('created_at', { ascending: true }),
     admin
@@ -212,6 +223,13 @@ export async function listTeamMembersAndInvites(): Promise<ActionResult<TeamSnap
     return { success: false, error: 'Failed to load team invites' }
   }
 
+  const members: TeamMember[] = ((membersResult.data ?? []) as Array<Omit<TeamMember, 'full_name'>>).map(
+    (member) => ({
+      ...member,
+      full_name: deriveFullName(member.first_name, member.last_name),
+    })
+  )
+
   return {
     success: true,
     data: {
@@ -220,7 +238,7 @@ export async function listTeamMembersAndInvites(): Promise<ActionResult<TeamSnap
       canManageUsers: isOwnerOrAdmin(actor.role),
       isOwner: actor.role === ROLES.OWNER,
       seatUsage,
-      members: (membersResult.data ?? []) as TeamMember[],
+      members,
       invites: (invitesResult.data ?? []) as TeamInvite[],
     },
   }
@@ -233,6 +251,12 @@ export async function inviteTeamMember(email: string, role: TeamRole): Promise<A
   }
 
   const actor = actorResult.data
+
+  const rateCheck = await checkServerActionRateLimit(actor.userId, 'inviteTeamMember')
+  if (!rateCheck.allowed) {
+    return { success: false, error: rateCheck.error || 'Too many requests' }
+  }
+
   if (!isOwnerOrAdmin(actor.role)) {
     return { success: false, error: 'Only owners and admins can invite users' }
   }

@@ -31,6 +31,7 @@ function normalizeEmailForAuth(email: string): string {
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
+  const redirectTo = validateRedirectUrl(formData.get('redirectTo') as string | null)
 
   const rawData = {
     email: formData.get('email') as string,
@@ -70,7 +71,7 @@ export async function login(formData: FormData) {
     }
   }
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  redirect(redirectTo)
 }
 
 export async function signup(formData: FormData) {

@@ -23,8 +23,8 @@ export const PLAN_CATALOG: readonly PlanCatalogEntry[] = [
     slug: 'free',
     publicName: 'Basic',
     description: 'Entry tier for smaller teams with occasional Schengen travel.',
-    monthlyPriceGbp: 27,
-    annualPriceGbp: 267,
+    monthlyPriceGbp: 49,
+    annualPriceGbp: 490,
     employeeCap: 10,
     userCap: 2,
     ctaLabel: 'Start Basic',
@@ -36,8 +36,8 @@ export const PLAN_CATALOG: readonly PlanCatalogEntry[] = [
     slug: 'starter',
     publicName: 'Pro',
     description: 'Core plan for teams that need regular compliance monitoring.',
-    monthlyPriceGbp: 87,
-    annualPriceGbp: 867,
+    monthlyPriceGbp: 149,
+    annualPriceGbp: 1490,
     employeeCap: 50,
     userCap: 5,
     ctaLabel: 'Start Pro',
@@ -49,8 +49,8 @@ export const PLAN_CATALOG: readonly PlanCatalogEntry[] = [
     slug: 'professional',
     publicName: 'Pro+',
     description: 'Highest self-serve plan for larger teams and broader oversight.',
-    monthlyPriceGbp: 197,
-    annualPriceGbp: 1967,
+    monthlyPriceGbp: 349,
+    annualPriceGbp: 3490,
     employeeCap: 200,
     userCap: 15,
     ctaLabel: 'Start Pro+',
@@ -60,7 +60,7 @@ export const PLAN_CATALOG: readonly PlanCatalogEntry[] = [
   },
   {
     slug: 'enterprise',
-    publicName: 'Enterprise (Legacy)',
+    publicName: 'Enterprise',
     description: 'Legacy plan retained for existing accounts only.',
     monthlyPriceGbp: 0,
     annualPriceGbp: 0,
@@ -92,13 +92,13 @@ export function getTierDisplayName(
   slug: string | null | undefined,
   displayName?: string | null
 ): string {
-  if (displayName && displayName.trim().length > 0) {
-    return displayName
-  }
-
   const plan = getPlanBySlug(slug)
   if (plan) {
     return plan.publicName
+  }
+
+  if (displayName && displayName.trim().length > 0) {
+    return displayName
   }
 
   if (!slug) {

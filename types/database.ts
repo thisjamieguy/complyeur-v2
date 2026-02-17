@@ -415,6 +415,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           slug: string
+          stripe_customer_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -423,6 +424,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           slug: string
+          stripe_customer_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -431,6 +433,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           slug?: string
+          stripe_customer_id?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -454,6 +457,8 @@ export type Database = {
           max_employees: number | null
           max_users: number | null
           override_notes: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
           suspended_at: string | null
           suspended_reason: string | null
           tier_slug: string | null
@@ -478,6 +483,8 @@ export type Database = {
           max_employees?: number | null
           max_users?: number | null
           override_notes?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           suspended_at?: string | null
           suspended_reason?: string | null
           tier_slug?: string | null
@@ -502,6 +509,8 @@ export type Database = {
           max_employees?: number | null
           max_users?: number | null
           override_notes?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
           suspended_at?: string | null
           suspended_reason?: string | null
           tier_slug?: string | null

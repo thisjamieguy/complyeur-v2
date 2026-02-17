@@ -6,7 +6,6 @@ import { revalidatePath } from 'next/cache';
 import type { Json } from '@/types/database';
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
-import { isPrivilegedRole } from '@/lib/permissions'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import { validateRows } from '@/lib/import/validator'
 import {
@@ -166,11 +165,9 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
 
     await requireCompanyAccess(supabase, profile.company_id)
 
-    if (isPrivilegedRole(profile.role) && !isDev) {
-      const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
-      if (!mfa.ok) {
-        return { success: false, error: 'MFA required. Complete setup or verification to continue.' }
-      }
+    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, user.email)
+    if (mfa?.ok === false) {
+      return { success: false, error: 'MFA required. Complete setup or verification to continue.' }
     }
 
     // Check entitlements - users must have bulk import enabled on their plan
@@ -523,26 +520,24 @@ export async function executeImport(
       .eq('id', user.id)
       .single()
 
-    if (isPrivilegedRole(profile?.role) && !isDev) {
-      const mfa = await enforceMfaForPrivilegedUser(supabase, user.id)
-      if (!mfa.ok) {
-        return {
-          success: false,
-          employees_created: 0,
-          employees_updated: 0,
-          trips_created: 0,
-          trips_skipped: 0,
-          errors: [
-            {
-              row: 0,
-              column: '',
-              value: '',
-              message: 'MFA required. Complete setup or verification to continue.',
-              severity: 'error',
-            },
-          ],
-          warnings: [],
-        }
+    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, user.email)
+    if (mfa?.ok === false) {
+      return {
+        success: false,
+        employees_created: 0,
+        employees_updated: 0,
+        trips_created: 0,
+        trips_skipped: 0,
+        errors: [
+          {
+            row: 0,
+            column: '',
+            value: '',
+            message: 'MFA required. Complete setup or verification to continue.',
+            severity: 'error',
+          },
+        ],
+        warnings: [],
       }
     }
 

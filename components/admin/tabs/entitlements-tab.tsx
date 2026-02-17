@@ -32,6 +32,7 @@ import {
   suspendCompany,
   restoreCompany,
 } from '@/app/admin/companies/[id]/actions'
+import { getTierDisplayName } from '@/lib/billing/plans'
 
 interface EntitlementsTabProps {
   company: {
@@ -178,7 +179,7 @@ export function EntitlementsTab({ company, tier, tiers }: EntitlementsTabProps) 
                 <SelectContent>
                   {tiers.map((t) => (
                     <SelectItem key={t.slug} value={t.slug}>
-                      {t.display_name}
+                      {getTierDisplayName(t.slug, t.display_name)}
                     </SelectItem>
                   ))}
                 </SelectContent>

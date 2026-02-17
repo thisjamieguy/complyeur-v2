@@ -4,6 +4,7 @@ import type { createClient } from '@/lib/supabase/server'
 
 export const MFA_BACKUP_SESSION_COOKIE = 'mfa_backup_session'
 const MFA_BACKUP_SESSION_TTL_HOURS = 12
+const DEFAULT_MFA_REQUIRED_EMAILS = ['james.walsh23@outlook.com']
 
 export type MfaStatus = {
   currentLevel: 'aal1' | 'aal2' | null
@@ -18,6 +19,19 @@ export type MfaEnforcementResult =
 
 export function hashSecret(value: string): string {
   return createHash('sha256').update(value).digest('hex')
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase()
+}
+
+function getMfaRequiredEmails(): Set<string> {
+  return new Set(DEFAULT_MFA_REQUIRED_EMAILS.map((email) => normalizeEmail(email)))
+}
+
+export function isMfaRequiredForEmail(email: string | null | undefined): boolean {
+  if (!email) return false
+  return getMfaRequiredEmails().has(normalizeEmail(email))
 }
 
 export async function getMfaStatusForUser(
@@ -49,8 +63,22 @@ export async function getMfaStatusForUser(
 
 export async function enforceMfaForPrivilegedUser(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string
+  userId: string,
+  userEmail?: string | null
 ): Promise<MfaEnforcementResult> {
+  let email = userEmail ?? null
+
+  if (!email) {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (!error) {
+      email = user?.email ?? null
+    }
+  }
+
+  if (!isMfaRequiredForEmail(email)) {
+    return { ok: true }
+  }
+
   const status = await getMfaStatusForUser(supabase, userId)
 
   if (!status.hasVerifiedFactor) {

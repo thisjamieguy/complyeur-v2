@@ -9,6 +9,9 @@ import { DateFormatPreferences } from '@/components/settings/date-format-prefere
 import { UserPreferencesForm } from './user-preferences-form'
 import { getCompanySettings, canViewSettings, canUpdateSettings } from '@/lib/actions/settings'
 import { getNotificationPreferencesAction } from '../actions'
+import { getCompanyEntitlements } from '@/lib/billing/entitlements'
+import { BillingSection } from '@/components/settings/billing-section'
+import { createClient } from '@/lib/supabase/server'
 import type { NotificationPreferences } from '@/types/database-helpers'
 import { cn } from '@/lib/utils'
 
@@ -88,12 +91,40 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
   let settings = null
   let userPreferences = defaultUserPreferences
+  let entitlements: Awaited<ReturnType<typeof getCompanyEntitlements>> = null
+  let hasStripeCustomer = false
 
   if (activeSection === 'general') {
-    [settings, userPreferences] = await Promise.all([
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const [settingsResult, prefsResult, entitlementsResult] = await Promise.all([
       getCompanySettings(),
       getUserPreferencesWithFallback(),
+      getCompanyEntitlements(),
     ])
+    settings = settingsResult
+    userPreferences = prefsResult
+    entitlements = entitlementsResult
+
+    // Check if company has a Stripe customer ID (for "Manage Billing" button)
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.company_id) {
+        const { data: company } = await supabase
+          .from('companies')
+          .select('stripe_customer_id')
+          .eq('id', profile.company_id)
+          .single()
+
+        hasStripeCustomer = !!company?.stripe_customer_id
+      }
+    }
   }
 
   return (
@@ -138,6 +169,13 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           {settings ? (
             <>
               <SettingsForm settings={settings} canEdit={canEdit} />
+              <BillingSection
+                tierSlug={entitlements?.tier_slug ?? null}
+                isTrial={entitlements?.is_trial ?? false}
+                trialEndsAt={entitlements?.trial_ends_at ?? null}
+                subscriptionStatus={entitlements?.subscription_status ?? null}
+                hasStripeCustomer={hasStripeCustomer}
+              />
               <DateFormatPreferences />
               <SecuritySettings />
 

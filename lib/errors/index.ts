@@ -1,4 +1,5 @@
 import { ZodError } from 'zod'
+import { randomBytes } from 'crypto'
 
 /**
  * Centralized error handling for ComplyEur
@@ -7,7 +8,16 @@ import { ZodError } from 'zod'
  * - Never expose raw database errors to users
  * - Provide actionable error messages
  * - Map technical errors to user-friendly messages
+ * - Generate unique error IDs for support correlation
  */
+
+/**
+ * Generate a unique error correlation ID
+ * Format: ERR-XXXXXXXX (8 hex chars = 4 bytes = ~4 billion unique IDs)
+ */
+export function generateErrorId(): string {
+  return `ERR-${randomBytes(4).toString('hex').toUpperCase()}`
+}
 
 // Application error codes
 export type AppErrorCode =
@@ -28,6 +38,7 @@ export interface AppError {
   message: string
   field?: string
   details?: Record<string, string>
+  errorId?: string
 }
 
 // Error classes (re-exported from existing lib/errors.ts for compatibility)
@@ -164,9 +175,10 @@ export function parseSupabaseError(error: {
         message: 'The request timed out. Please try again.',
       }
 
-    default:
-      // Log the actual error for debugging
-      console.error('[SupabaseError]', { message, code, details })
+    default: {
+      // Log the actual error for debugging with correlation ID
+      const errorId = generateErrorId()
+      console.error(`[SupabaseError] ${errorId}`, { message, code, details })
 
       // Check message content for common patterns
       if (message.includes('JWT') || message.includes('token')) {
@@ -192,8 +204,10 @@ export function parseSupabaseError(error: {
 
       return {
         code: 'UNKNOWN_ERROR',
-        message: 'A database error occurred. Please try again.',
+        message: `A database error occurred. Please try again. (Ref: ${errorId})`,
+        errorId,
       }
+    }
   }
 }
 
@@ -267,18 +281,22 @@ export function parseError(error: unknown): AppError {
     }
 
     // Don't expose raw error messages in production
-    console.error('[UnexpectedError]', error)
+    const errorId = generateErrorId()
+    console.error(`[UnexpectedError] ${errorId}`, error)
     return {
       code: 'UNKNOWN_ERROR',
-      message: 'Something went wrong. Please try again.',
+      message: `Something went wrong. Please try again. (Ref: ${errorId})`,
+      errorId,
     }
   }
 
   // Unknown error type
-  console.error('[UnknownError]', error)
+  const errorId = generateErrorId()
+  console.error(`[UnknownError] ${errorId}`, error)
   return {
     code: 'UNKNOWN_ERROR',
-    message: 'An unexpected error occurred. Please try again.',
+    message: `An unexpected error occurred. Please try again. (Ref: ${errorId})`,
+    errorId,
   }
 }
 

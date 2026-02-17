@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Suspense, useCallback, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { BillingInterval, TierSlug } from '@/lib/billing/plans'
 import {
@@ -20,6 +20,7 @@ function PricingPageContent() {
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
   const [submittingPlan, setSubmittingPlan] = useState<TierSlug | null>(null)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [autoCheckoutAttempted, setAutoCheckoutAttempted] = useState(false)
   const searchParams = useSearchParams()
   const checkoutStatus = searchParams.get('checkout')
 
@@ -31,7 +32,11 @@ function PricingPageContent() {
     []
   )
 
-  const startCheckout = useCallback(async (planSlug: TierSlug) => {
+  const startCheckout = useCallback(async (
+    planSlug: TierSlug,
+    requestedInterval?: BillingInterval
+  ) => {
+    const checkoutInterval = requestedInterval ?? billingInterval
     setCheckoutError(null)
     setSubmittingPlan(planSlug)
 
@@ -43,11 +48,22 @@ function PricingPageContent() {
         },
         body: JSON.stringify({
           planSlug,
-          billingInterval,
+          billingInterval: checkoutInterval,
         }),
       })
 
       const payload = await response.json() as { url?: string; error?: string }
+
+      if (response.status === 401) {
+        const nextParams = new URLSearchParams({
+          autostart: '1',
+          plan: planSlug,
+          billingInterval: checkoutInterval,
+        })
+        setSubmittingPlan(null)
+        window.location.assign(`/login?next=${encodeURIComponent(`/pricing?${nextParams.toString()}`)}`)
+        return
+      }
 
       if (!response.ok || !payload.url) {
         setCheckoutError(
@@ -63,6 +79,38 @@ function PricingPageContent() {
       setSubmittingPlan(null)
     }
   }, [billingInterval])
+
+  useEffect(() => {
+    const intervalFromUrl = searchParams.get('billingInterval')
+    if (intervalFromUrl !== 'monthly' && intervalFromUrl !== 'annual') {
+      return
+    }
+
+    setBillingInterval((current) =>
+      current === intervalFromUrl ? current : intervalFromUrl
+    )
+  }, [searchParams])
+
+  useEffect(() => {
+    if (autoCheckoutAttempted || searchParams.get('autostart') !== '1') {
+      return
+    }
+
+    const planFromUrl = searchParams.get('plan')
+    const intervalFromUrl = searchParams.get('billingInterval')
+
+    if (
+      !planFromUrl ||
+      !SELF_SERVE_PLANS.some((plan) => plan.slug === planFromUrl) ||
+      (intervalFromUrl !== 'monthly' && intervalFromUrl !== 'annual')
+    ) {
+      return
+    }
+
+    setAutoCheckoutAttempted(true)
+    setBillingInterval(intervalFromUrl)
+    void startCheckout(planFromUrl as TierSlug, intervalFromUrl)
+  }, [autoCheckoutAttempted, searchParams, startCheckout])
 
   return (
     <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">

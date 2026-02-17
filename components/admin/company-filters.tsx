@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Search, X } from 'lucide-react'
+import { getTierDisplayName } from '@/lib/billing/plans'
 
 interface Tier {
   slug: string
@@ -105,7 +106,7 @@ export function CompanyFilters({ tiers }: CompanyFiltersProps) {
             <SelectItem value="all">All Tiers</SelectItem>
             {tiers.map((tier) => (
               <SelectItem key={tier.slug} value={tier.slug}>
-                {tier.display_name}
+                {getTierDisplayName(tier.slug, tier.display_name)}
               </SelectItem>
             ))}
           </SelectContent>

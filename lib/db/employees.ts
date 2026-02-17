@@ -3,6 +3,26 @@ import { DatabaseError, NotFoundError } from '@/lib/errors'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { Employee, EmployeeCreateInput, EmployeeUpdate } from '@/types/database-helpers'
 
+interface SupabaseQueryErrorLike {
+  code?: string | null
+  message?: string | null
+}
+
+function isMissingNationalityTypeColumnError(
+  error: SupabaseQueryErrorLike | null | undefined
+): boolean {
+  if (!error) return false
+  if (error.code === '42703') return true
+  const message = (error.message ?? '').toLowerCase()
+  return message.includes('nationality_type') && message.includes('does not exist')
+}
+
+function omitNationalityType<T extends Record<string, unknown>>(input: T): Omit<T, 'nationality_type'> {
+  const copy = { ...input }
+  delete (copy as { nationality_type?: unknown }).nationality_type
+  return copy as Omit<T, 'nationality_type'>
+}
+
 /**
  * Get all employees for current user's company
  */
@@ -57,14 +77,34 @@ export async function createEmployee(employee: EmployeeCreateInput): Promise<Emp
 
   const { companyId } = await requireCompanyAccess(supabase)
 
-  const { data, error } = await supabase
+  const payload = { ...employee, company_id: companyId }
+
+  let { data, error } = await supabase
     .from('employees')
-    .insert({ ...employee, company_id: companyId })
+    .insert(payload)
     .select()
     .single()
 
+  if (error && isMissingNationalityTypeColumnError(error)) {
+    console.warn(
+      '[Employees] employees.nationality_type is missing; retrying create without nationality_type'
+    )
+    const fallback = await supabase
+      .from('employees')
+      .insert(omitNationalityType(payload))
+      .select()
+      .single()
+
+    data = fallback.data
+    error = fallback.error
+  }
+
   if (error) {
     console.error('Error creating employee:', error)
+    throw new DatabaseError('Failed to create employee')
+  }
+
+  if (!data) {
     throw new DatabaseError('Failed to create employee')
   }
 
@@ -89,12 +129,37 @@ export async function updateEmployee(id: string, updates: EmployeeUpdate): Promi
 
   await requireCompanyAccess(supabase, existing.company_id)
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('employees')
     .update(updates)
     .eq('id', id)
     .select()
     .single()
+
+  if (error && isMissingNationalityTypeColumnError(error)) {
+    console.warn(
+      '[Employees] employees.nationality_type is missing; retrying update without nationality_type'
+    )
+    const legacyUpdates = omitNationalityType(updates as Record<string, unknown>)
+
+    if (Object.keys(legacyUpdates).length === 0) {
+      const currentEmployee = await getEmployeeById(id)
+      if (!currentEmployee) {
+        throw new NotFoundError('Employee not found')
+      }
+      return currentEmployee
+    }
+
+    const fallback = await supabase
+      .from('employees')
+      .update(legacyUpdates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    data = fallback.data
+    error = fallback.error
+  }
 
   if (error) {
     console.error('Error updating employee:', error)

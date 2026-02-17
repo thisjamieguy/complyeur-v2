@@ -11,8 +11,8 @@
 |---------|--------|------|------|------|-----|
 | 1. Core Product / Features | ✅ PASS | 21 | 0 | 0 | 0 |
 | 2. Authentication & Account Management | ⚠️ WARN | 13 | 4 | 3 | 0 |
-| 3. Security | ⏳ Pending | - | - | - | - |
-| 4. Payments & Billing (Stripe) | ⏳ Pending | - | - | - | - |
+| 3. Security | ⚠️ WARN | 17 | 3 | 1 | 0 |
+| 4. Payments & Billing (Stripe) | ⚠️ WARN | 14 | 3 | 1 | 0 |
 | 5. UI / UX | ⏳ Pending | - | - | - | - |
 | 6. Accessibility | ⏳ Pending | - | - | - | - |
 | 7. Performance | ⏳ Pending | - | - | - | - |
@@ -167,5 +167,170 @@ These items require manual testing with real email providers and cannot be fully
 - [ ] Password reset email arrives and link works
 - [ ] Reset link becomes invalid after use
 - [ ] Orphaned sessions invalidated after password reset (check Supabase dashboard settings)
+
+---
+
+## Section 3: Security
+
+**Completed:** 2026-02-16
+**Status:** ⚠️ WARN (17 pass, 3 warnings, 1 fail)
+
+### Data Isolation
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Company A cannot see Company B's employees or trips | ✅ | Triple-layer: RLS policies + `requireCompanyAccess()` + explicit `company_id` query filters |
+| RLS policies on every table | ✅ | All 23 tables have RLS enabled. Auto-RLS event trigger prevents future tables missing RLS |
+| URL manipulation doesn't expose other companies' data | ✅ | All dynamic routes (`/employee/[id]`, `/api/gdpr/dsar/[employeeId]`) verify company ownership |
+
+### Secrets & Keys
+
+| Item | Status | Notes |
+|------|--------|-------|
+| `service_role` key not in any client-side code | ✅ | All usages are in server components, server actions, API routes, Edge Functions, or scripts |
+| No API keys in git history | ⚠️ | **Was FAIL:** `.claude/settings.local.json` was tracked with embedded service_role key. **Fixed:** `git rm --cached` applied. **Action required:** Rotate Supabase service_role key |
+| `.env.local` in `.gitignore` | ✅ | `.env*` glob covers all env files; none are git-tracked |
+| Stripe secret key only used server-side | ✅ | Used only in `app/api/billing/checkout/route.ts` (API route) |
+
+### Input Validation
+
+| Item | Status | Notes |
+|------|--------|-------|
+| SQL injection tested on form fields | ✅ | All queries use parameterized Supabase SDK; no raw SQL anywhere |
+| XSS tested on all text inputs | ✅ | React auto-escaping; no unsafe HTML rendering with user data. **Fixed:** Removed `/api/test-email/route.ts` (had reflected XSS) |
+| Form fields have max length limits | ✅ | All Zod schemas have `.max()` constraints. **Fixed:** Added `.max(128)` to password schema |
+| API routes validate request body shape and types | ✅ | Zod validation on all server actions; typed validation on API routes |
+| Large payload / oversized request rejected safely | ✅ | **Fixed:** Added 1MB content-length check in middleware |
+
+### Rate Limiting & Abuse
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Login/signup endpoints rate-limited | ✅ | Auth endpoints: 10 req/min; API routes: 60 req/min; Password reset: 5 req/hr. **Fixed:** Added rate limiting to waitlist POST, team invite, notification preferences |
+| Rate limits tested under deliberate abuse | ⚠️ | Manual test script exists; import actions have mocked tests. No automated e2e abuse tests for auth-specific limits |
+| Internal error IDs logged (but not shown to user) | ✅ | **Fixed:** Added `generateErrorId()` with format `ERR-XXXXXXXX` for support correlation |
+
+### Headers & Transport
+
+| Item | Status | Notes |
+|------|--------|-------|
+| HTTPS enforced | ✅ | Strong HSTS header (2-year max-age, includeSubDomains, preload) + Vercel enforces HTTPS |
+| CSP, X-Frame-Options, X-Content-Type-Options headers set | ✅ | All present on all routes. CSP includes `frame-ancestors 'none'`. Note: `unsafe-eval` in script-src could be tightened |
+| Stripe webhook signature verified | ✅ | **Fixed in Section 4:** `app/api/billing/webhook/route.ts` verifies signatures via `constructWebhookEvent()` using `STRIPE_WEBHOOK_SECRET` |
+| CORS not set to `*` in production | ✅ | No CORS headers set; default same-origin policy applies |
+
+### Sensitive Data
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Passport numbers not logged in console or error messages | ✅ | Passport data parsed from imports but never persisted to DB and never logged |
+| No sensitive data in URLs, query params, or localStorage | ✅ | Only UUIDs, pagination, and UI preferences. No PII in URLs or storage |
+| Principle of least privilege for Supabase roles | ✅ | Admin client restricted to admin-guarded paths. **Fixed:** Added `requireCompanyAccess` to `getCompanyById`, `getCompanyBySlug`, `getProfileById`, `getCompanyProfiles` |
+| Feature flag or kill-switch available for critical features | ❌ | Per-company entitlements exist, but no global kill-switch for Stripe, compliance engine, or import. **Fixed:** Maintenance mode now blocks all non-GET requests in middleware |
+
+### Issues Found
+
+| Issue | Severity | Description |
+|-------|----------|-------------|
+| Missing Stripe webhook handler | High | **Fixed in Section 4** — Full webhook handler implemented |
+| Service role key in git history | High | Key was committed in .claude/settings.local.json. File untracked now but key rotation required |
+| CSP unsafe-eval in production | Low | unsafe-eval in script-src weakens CSP. May be needed for dev/Turbopack but should be removed for production |
+
+### Fixes Applied
+
+| Fix | Date | Description |
+|-----|------|-------------|
+| Untrack `.claude/settings.local.json` | 2026-02-16 | `git rm --cached` to stop tracking file containing service_role key |
+| Remove test-email route | 2026-02-16 | Deleted `/api/test-email/route.ts` with reflected XSS via unescaped companyName query param |
+| Password max length | 2026-02-16 | Added `.max(128)` to password Zod schema to prevent hashing DoS |
+| Error correlation IDs | 2026-02-16 | Added `generateErrorId()` to `lib/errors/index.ts` for support reference tracking |
+| Maintenance mode guard | 2026-02-16 | Middleware now blocks all non-GET/HEAD requests when `NEXT_PUBLIC_MAINTENANCE_MODE=true` |
+| Body size limit | 2026-02-16 | Middleware rejects requests with Content-Length > 1MB (413 response) |
+| Rate limit: waitlist POST | 2026-02-16 | Public marketing route POST requests now pass through rate limiting |
+| Rate limit: team invite | 2026-02-16 | `inviteTeamMember` action now rate-limited via `checkServerActionRateLimit` |
+| Rate limit: notification prefs | 2026-02-16 | `updateNotificationPreferencesAction` now includes auth check + rate limiting |
+| DB function hardening | 2026-02-16 | Added `requireCompanyAccess` to 4 DB functions for defense-in-depth |
+
+### Manual Action Required
+
+- [ ] **Rotate Supabase service_role key** (Dashboard > Settings > API > Regenerate)
+- [x] **Implement Stripe webhook handler** with signature verification — Done in Section 4
+- [ ] Consider scrubbing git history with BFG Repo-Cleaner if repo has been pushed to remote
+
+---
+
+## Section 4: Payments & Billing (Stripe)
+
+**Completed:** 2026-02-16
+**Status:** ⚠️ WARN (14 pass, 3 warnings, 1 fail)
+
+**Overall Assessment:** The Stripe integration was half-built (checkout only). All critical back-half components have now been implemented: webhook handler, subscription sync, billing portal, entitlement enforcement, and plan display. One item remains: placeholder Stripe price IDs need replacing with real ones before live checkout works.
+
+### Checkout Flow
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Pricing page shows correct plans and prices | ✅ | 3 tiers (Basic/Pro/Pro+) displayed with GBP pricing, monthly/annual toggle |
+| Checkout redirects to Stripe correctly | ✅ | `app/api/billing/checkout/route.ts` creates Stripe Checkout Session with correct params |
+| Successful payment grants access | ✅ | **Fixed:** Webhook handler processes `checkout.session.completed`, links Stripe customer to company, activates tier entitlements |
+| Cancelled checkout returns user cleanly | ✅ | Redirects to `/pricing?checkout=cancelled` with clear message |
+
+### Webhooks
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Webhook processes `checkout.session.completed` | ✅ | **Fixed:** `app/api/billing/webhook/route.ts` provisions access after payment (links customer, sets tier, activates entitlements) |
+| Webhook handles `invoice.payment_failed` gracefully | ✅ | **Fixed:** Logs failure details; status change handled by `customer.subscription.updated` event |
+| Duplicate webhook events handled idempotently | ✅ | Updates are idempotent (upsert patterns, `is('stripe_customer_id', null)` guard on customer linking) |
+| Webhook signature verified | ✅ | **Fixed:** `constructWebhookEvent()` in `lib/billing/stripe.ts` verifies `STRIPE_WEBHOOK_SECRET` |
+| Webhook handles subscription lifecycle events | ✅ | **Fixed:** Handles `customer.subscription.updated` (sync status, plan changes) and `customer.subscription.deleted` (downgrade to free) |
+
+### Subscription Management
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Subscription status syncs from Stripe | ✅ | **Fixed:** `stripe_customer_id`, `stripe_subscription_id`, `subscription_status` columns added. Webhook updates status on every event |
+| User can view current plan | ✅ | **Fixed:** `BillingSection` component in Settings > General shows tier, trial days remaining, subscription status |
+| User can access Stripe billing portal | ✅ | **Fixed:** `app/api/billing/portal/route.ts` creates portal sessions. "Manage Billing" button in settings |
+| Subscription cancelled leads to graceful degradation | ✅ | **Fixed:** `customer.subscription.deleted` webhook downgrades to free tier. Entitlement checks gate calendar, forecast, exports |
+
+### Money Truth
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Stripe is source of truth for subscription status | ✅ | **Fixed:** Webhooks sync all status changes to `company_entitlements.subscription_status` |
+| Manual reconciliation path exists (admin override) | ✅ | Comprehensive admin panel: tier changes, trial management, suspend/restore, manual overrides with audit logging |
+| Paid features enforced server-side | ✅ | **Fixed:** `checkEntitlement()` utility added. Calendar, forecast, CSV/PDF exports all check entitlements server-side. Redirects unauthorized users |
+| Stripe live mode vs test mode intentional | ⚠️ | Environment separation sound. **Placeholder price IDs in `tiers` table still need replacing** with real Stripe product/price IDs |
+| Beta pricing/access model clear to testers | ⚠️ | Default 14-day trial automatic. No beta-specific messaging. |
+
+### Issues Found
+
+| Issue | Severity | Status | Description |
+|-------|----------|--------|-------------|
+| No Stripe webhook endpoint | Critical | **Fixed** | Full webhook handler implemented with 4 event types |
+| No `stripe_customer_id` in schema | High | **Fixed** | Migration adds columns + indexes to companies and company_entitlements |
+| Placeholder Stripe price IDs | High | Open | `tiers` table has fake IDs — need real Stripe products/prices created |
+| Feature entitlement gates missing | High | **Fixed** | Calendar, forecast, exports now check entitlements server-side |
+| No user-facing billing UI | Medium | **Fixed** | BillingSection component shows plan, trial, status, with portal + pricing links |
+| No Stripe Node SDK | Low | **Fixed** | `stripe@20.3.1` installed; singleton client in `lib/billing/stripe.ts` |
+
+### Fixes Applied
+
+| Fix | Date | Description |
+|-----|------|-------------|
+| Install Stripe SDK | 2026-02-16 | Added `stripe@20.3.1` via pnpm. Singleton client in `lib/billing/stripe.ts` |
+| Add Stripe schema columns | 2026-02-16 | Migration `20260216180000_add_stripe_billing_columns.sql`: `stripe_customer_id` on companies, `stripe_subscription_id` + `subscription_status` on company_entitlements, with indexes |
+| Implement webhook handler | 2026-02-16 | `app/api/billing/webhook/route.ts`: processes checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed. Signature verification via SDK |
+| Create billing portal | 2026-02-16 | `app/api/billing/portal/route.ts`: authenticated endpoint creates Stripe Customer Portal sessions |
+| Add entitlement enforcement | 2026-02-16 | `lib/billing/entitlements.ts`: `checkEntitlement()` utility. Applied to calendar page, trip-forecast page, and export actions (CSV + PDF) |
+| Add billing UI to settings | 2026-02-16 | `BillingSection` component shows current tier, trial countdown, subscription status, "Manage Billing" and "View Plans" buttons |
+| Update generated types | 2026-02-16 | Added `stripe_customer_id`, `stripe_subscription_id`, `subscription_status` to `types/database.ts` |
+
+### Manual Action Required
+
+- [ ] **Replace placeholder Stripe price IDs** in `tiers` table with real Stripe product/price IDs (create in Stripe Dashboard > Products)
+- [ ] **Configure webhook endpoint** in Stripe Dashboard > Webhooks > Add endpoint: `https://your-domain.com/api/billing/webhook`
+- [ ] **Define beta pricing model** — decide: free beta, discounted, or full pricing with trial
 
 ---

@@ -46,7 +46,7 @@ export default function LandingPage() {
       </div>
 
       <header className="relative z-30">
-        <nav className="sticky top-3 px-4">
+        <nav className="sticky top-8 px-4">
           <div className="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-slate-200/90 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl sm:px-6">
             <Link href="/" className="shrink-0">
               <Image

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SELF_SERVE_PLANS, type BillingInterval } from '@/lib/billing/plans'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
@@ -67,17 +68,23 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = await createClient()
-    const [
-      { data: { user } },
-      tierResult,
-    ] = await Promise.all([
-      supabase.auth.getUser(),
-      supabase
-        .from('tiers')
-        .select('slug, display_name, is_active, stripe_price_id_monthly, stripe_price_id_annual')
-        .eq('slug', planSlug)
-        .maybeSingle(),
-    ])
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Please sign in to your account before starting checkout.' },
+        { status: 401 }
+      )
+    }
+
+    const admin = createAdminClient()
+    const tierResult = await admin
+      .from('tiers')
+      .select('slug, display_name, is_active, stripe_price_id_monthly, stripe_price_id_annual')
+      .eq('slug', planSlug)
+      .maybeSingle()
 
     if (tierResult.error) {
       console.error('[billing/checkout] Failed to read tier:', tierResult.error)
@@ -120,11 +127,9 @@ export async function POST(request: NextRequest) {
     stripeBody.set('metadata[plan_slug]', planSlug)
     stripeBody.set('metadata[billing_interval]', billingInterval)
 
-    if (user?.id) {
-      stripeBody.set('client_reference_id', user.id)
-    }
+    stripeBody.set('client_reference_id', user.id)
 
-    if (user?.email) {
+    if (user.email) {
       stripeBody.set('customer_email', user.email)
     }
 

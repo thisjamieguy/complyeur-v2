@@ -52,6 +52,7 @@ async function createTestUser() {
 
       if (profile) {
         console.log('   Company:', profile.companies?.name || 'None');
+        await ensureNonPrivilegedRole(supabase, existingUser.id);
         console.log('\n✅ Test user is ready to use!');
       } else {
         console.log('   ⚠️  No profile found, creating one...');
@@ -120,10 +121,40 @@ async function setupUserProfile(supabase: ReturnType<typeof createClient>, userI
   await linkUserToCompany(supabase, userId, company.id);
 }
 
+async function ensureNonPrivilegedRole(supabase: ReturnType<typeof createClient>, userId: string) {
+  const { data: profile, error: profileReadError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (profileReadError) {
+    console.error('❌ Failed to read existing profile role:', profileReadError.message);
+    process.exit(1);
+  }
+
+  if (!profile) {
+    return;
+  }
+
+  if (profile.role !== 'manager') {
+    console.log(`   Updating role from "${profile.role}" to "manager" (MFA not required)...`);
+    const { error: roleUpdateError } = await supabase
+      .from('profiles')
+      .update({ role: 'manager' })
+      .eq('id', userId);
+
+    if (roleUpdateError) {
+      console.error('❌ Failed to update user role:', roleUpdateError.message);
+      process.exit(1);
+    }
+  }
+}
+
 async function linkUserToCompany(supabase: ReturnType<typeof createClient>, userId: string, companyId: string) {
   // Create or update profile
   console.log('👤 Setting up user profile...');
-  const { error: profileError } = await supabase
+  let { error: profileError } = await supabase
     .from('profiles')
     .upsert({
       id: userId,
@@ -131,6 +162,18 @@ async function linkUserToCompany(supabase: ReturnType<typeof createClient>, user
       role: 'manager', // Use manager to avoid MFA requirement (admin requires MFA)
       full_name: 'E2E Test User',
     });
+
+  // Some environments may not have full_name in schema cache yet.
+  if (profileError?.message?.includes("'full_name' column")) {
+    const fallback = await supabase
+      .from('profiles')
+      .upsert({
+        id: userId,
+        company_id: companyId,
+        role: 'manager', // Use manager to avoid MFA requirement (admin requires MFA)
+      });
+    profileError = fallback.error;
+  }
 
   if (profileError) {
     console.error('❌ Failed to create profile:', profileError.message);

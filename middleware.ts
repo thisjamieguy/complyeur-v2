@@ -37,28 +37,48 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/landing', request.url))
   }
 
-  // Public marketing routes do not require per-request Supabase auth hydration.
-  // Skipping this avoids an external call on every anonymous landing-page request.
-  if (isPublicMarketingRoute) {
-    return NextResponse.next()
+  // 1a. Maintenance Mode - block mutations when enabled
+  const isMaintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true'
+  if (isMaintenanceMode && request.method !== 'GET' && request.method !== 'HEAD') {
+    return NextResponse.json(
+      { error: 'Service is temporarily under maintenance. Please try again shortly.' },
+      { status: 503 }
+    )
   }
 
-  // 1. Rate Limiting - applies to API routes and auth form submissions (POST only)
+  // 1b. Body size limit - reject oversized requests (1MB)
+  const MAX_BODY_SIZE = 1 * 1024 * 1024 // 1MB
+  const contentLength = request.headers.get('content-length')
+  if (contentLength && parseInt(contentLength, 10) > MAX_BODY_SIZE) {
+    return NextResponse.json(
+      { error: 'Request body too large. Maximum size is 1MB.' },
+      { status: 413 }
+    )
+  }
+
+  // 1c. Rate Limiting - applies to API routes, auth form submissions, and public form POSTs
   // Uses Upstash Redis for distributed rate limiting in serverless environments
   // Excluded: health endpoint (monitoring), auth/callback (OAuth redirects from providers)
-  // Note: Only rate limit POST requests to auth pages to avoid limiting page views
   const isHealthEndpoint = pathname === '/api/health'
   const isAuthCallback = pathname.startsWith('/auth/callback')
   const isAuthPage = pathname.startsWith('/login') ||
       pathname.startsWith('/signup') || pathname.startsWith('/forgot-password') ||
       pathname.startsWith('/reset-password') || pathname.startsWith('/auth/')
+  const isPostToPublicForm = isPublicMarketingRoute && request.method === 'POST'
   const shouldRateLimit = !isHealthEndpoint && !isAuthCallback && (
     pathname.startsWith('/api/') ||
-    (isAuthPage && request.method === 'POST')
+    (isAuthPage && request.method === 'POST') ||
+    isPostToPublicForm
   )
   if (shouldRateLimit) {
     const rateLimitResponse = await checkRateLimit(request)
     if (rateLimitResponse) return rateLimitResponse
+  }
+
+  // Public marketing routes do not require per-request Supabase auth hydration.
+  // Skipping this avoids an external call on every anonymous landing-page request.
+  if (isPublicMarketingRoute) {
+    return NextResponse.next()
   }
 
   // 2. Auth & Session Management

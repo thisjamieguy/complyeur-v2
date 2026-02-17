@@ -54,11 +54,33 @@ export interface AdminDatabase {
           suspended_reason: string | null
           manual_override: boolean | null
           override_notes: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
           created_at: string
           updated_at: string
         }
         Insert: Partial<AdminDatabase['public']['Tables']['company_entitlements']['Row']> & { company_id: string }
         Update: Partial<AdminDatabase['public']['Tables']['company_entitlements']['Row']>
+      }
+      stripe_webhook_events: {
+        Row: {
+          id: string
+          stripe_event_id: string
+          event_type: string
+          payload: Record<string, unknown>
+          processing_status: 'processing' | 'processed' | 'failed'
+          last_error: string | null
+          received_at: string
+          processed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<AdminDatabase['public']['Tables']['stripe_webhook_events']['Row']> & {
+          stripe_event_id: string
+          event_type: string
+          payload: Record<string, unknown>
+        }
+        Update: Partial<AdminDatabase['public']['Tables']['stripe_webhook_events']['Row']>
       }
       company_notes: {
         Row: {
