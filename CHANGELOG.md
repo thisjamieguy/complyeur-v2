@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: ship UX remediation, onboarding, and related app updates [`41792bc`](https://github.com/thisjamieguy/complyeur-v2/commit/41792bc8590242bd0180596d70c9f60c569a88e6)
+- chore(changelog): sync unreleased entries [`1000bd7`](https://github.com/thisjamieguy/complyeur-v2/commit/1000bd7d614fb48c4d367e75bfcae6001d39fbda)
 - chore(changelog): sync unreleased entries [`25f61be`](https://github.com/thisjamieguy/complyeur-v2/commit/25f61be15d2fffea750cfaa4d023844d59bfbb84)
 - feat: add Stripe billing, security hardening, and beta launch fixes [`03451b3`](https://github.com/thisjamieguy/complyeur-v2/commit/03451b3eed631132bc451ffa5b3bdc17a28851c1)
 - perf: improve landing TTFB and reduce hydration [`d5bf3c6`](https://github.com/thisjamieguy/complyeur-v2/commit/d5bf3c60cad1f4ca34110131e4108f1024543e48)
@@ -17,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: sync local changes for landing redirect and stop hook [`ade618d`](https://github.com/thisjamieguy/complyeur-v2/commit/ade618d861ed947e07ef2d0785325dc2360e23ab)
 - chore(changelog): sync unreleased entries [`48dbbb9`](https://github.com/thisjamieguy/complyeur-v2/commit/48dbbb996a300745b3850c298f80da226ab94a31)
 - chore(changelog): sync unreleased entries [`ae5284c`](https://github.com/thisjamieguy/complyeur-v2/commit/ae5284cf500ecda2123c8a4ecb99e626e5a0c3e5)
-- docs: update CLAUDE.md to match actual codebase [`8470eef`](https://github.com/thisjamieguy/complyeur-v2/commit/8470eef445834d6b57a1882cf0b300c3106c6f7f)
-- chore(changelog): sync unreleased entries [`58d7263`](https://github.com/thisjamieguy/complyeur-v2/commit/58d726371b29f62d983d525d4a0072a4aebb5bf3)
 
 ## v1.0.0 - 2026-01-22
 
