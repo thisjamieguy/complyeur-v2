@@ -16,6 +16,7 @@ function getResendClient(): Resend | null {
 
 // Email configuration
 const FROM_EMAIL = process.env.EMAIL_FROM || 'ComplyEur <hello@complyeur.com>'
+const REPLY_TO_EMAIL = process.env.EMAIL_REPLY_TO || 'support@complyeur.com'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://complyeur.com'
 
 interface WaitlistEmailData {
@@ -149,6 +150,7 @@ export async function sendWaitlistEmail(data: WaitlistEmailData): Promise<EmailR
 
     const { data: result, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: data.email,
       subject: "You're on the ComplyEur waitlist!",
       html: generateWaitlistEmailHtml(data),

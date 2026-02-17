@@ -93,6 +93,14 @@ If personal data breach is likely to result in risk to individuals:
 - Notify affected data subjects **without undue delay**
 - Record rationale if notification is not required
 
+GDPR execution checklist:
+1. Record exact awareness timestamp (`T0`) in incident timeline.
+2. Complete initial risk assessment (scope, categories, likely impact).
+3. Decide whether regulator notification is required by `T0 + 48h` to preserve reporting margin.
+4. If UK data subjects are impacted, submit ICO notification before `T0 + 72h`.
+5. Prepare affected-user notice with plain-language impact and remediation guidance.
+6. Save regulator/customer notice content in incident evidence records.
+
 ---
 
 ## 7. Evidence and Audit Trail

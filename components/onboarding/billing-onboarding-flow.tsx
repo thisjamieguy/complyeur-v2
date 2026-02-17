@@ -18,6 +18,7 @@ import {
   type TierSlug,
 } from '@/lib/billing/plans'
 import { cn } from '@/lib/utils'
+import { trackEvent } from '@/lib/analytics/client'
 
 type CheckoutState = 'success' | 'cancelled' | null
 type FlowState =
@@ -52,6 +53,8 @@ export function BillingOnboardingFlow({
   checkoutState,
 }: BillingOnboardingFlowProps) {
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
+  const [promotionCodeEnabled, setPromotionCodeEnabled] = useState(false)
+  const [promotionCode, setPromotionCode] = useState('')
   const [submittingPlan, setSubmittingPlan] = useState<TierSlug | null>(null)
   const [completionPending, setCompletionPending] = useState(false)
   const [statusPollNonce, setStatusPollNonce] = useState(0)
@@ -70,6 +73,21 @@ export function BillingOnboardingFlow({
     if (checkoutState === 'success') return 'payment_finalizing'
     return 'plan_select'
   })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const intentKey = 'complyeur_signup_method'
+    const method = window.localStorage.getItem(intentKey)
+    if (!method) {
+      return
+    }
+
+    trackEvent('sign_up', { method })
+    window.localStorage.removeItem(intentKey)
+  }, [])
 
   const plans = useMemo(
     () =>
@@ -187,9 +205,16 @@ export function BillingOnboardingFlow({
   }, [flowState, pollBillingStatus, statusPollNonce])
 
   const startCheckout = useCallback(async (planSlug: TierSlug) => {
+    const checkoutPromotionCode = promotionCode.trim()
     setStatusError(null)
     setSubmittingPlan(planSlug)
     setFlowState('payment_pending')
+    trackEvent('begin_checkout', {
+      source: 'onboarding',
+      plan: planSlug,
+      billingInterval,
+      hasPromoCode: checkoutPromotionCode.length > 0,
+    })
 
     try {
       const response = await fetch('/api/billing/checkout', {
@@ -201,6 +226,7 @@ export function BillingOnboardingFlow({
           planSlug,
           billingInterval,
           source: 'onboarding',
+          promotionCode: checkoutPromotionCode || undefined,
         }),
       })
 
@@ -221,7 +247,7 @@ export function BillingOnboardingFlow({
       setSubmittingPlan(null)
       setFlowState('plan_select')
     }
-  }, [billingInterval])
+  }, [billingInterval, promotionCode])
 
   async function handleCompleteOnboarding() {
     setCompletionPending(true)
@@ -308,6 +334,32 @@ export function BillingOnboardingFlow({
               </button>
             </div>
 
+            <div>
+              <button
+                type="button"
+                onClick={() => setPromotionCodeEnabled((current) => !current)}
+                className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 hover:underline"
+              >
+                i have a code
+              </button>
+              {promotionCodeEnabled && (
+                <div className="mt-2 max-w-xs">
+                  <label htmlFor="onboarding-promo-code" className="sr-only">
+                    Promotional code
+                  </label>
+                  <input
+                    id="onboarding-promo-code"
+                    type="text"
+                    value={promotionCode}
+                    onChange={(event) => setPromotionCode(event.target.value)}
+                    placeholder="Enter promo code"
+                    autoComplete="off"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="grid gap-4 lg:grid-cols-3">
               {plans.map((plan) => {
                 const price =
@@ -350,7 +402,14 @@ export function BillingOnboardingFlow({
 
                     <button
                       type="button"
-                      onClick={() => startCheckout(plan.slug)}
+                      onClick={() => {
+                        trackEvent('plan_select', {
+                          source: 'onboarding',
+                          plan: plan.slug,
+                          billingInterval,
+                        })
+                        startCheckout(plan.slug)
+                      }}
                       disabled={submittingPlan !== null}
                       className={cn(
                         'mt-5 inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60',

@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
-import { GoogleAnalytics } from "@next/third-parties/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
+import { ConsentAwareGoogleAnalytics } from "@/components/analytics/consent-aware-google-analytics";
 import { defaultMetadata, SITE_URL, X_HANDLE } from "@/lib/metadata";
 import "./globals.css";
 
@@ -119,7 +119,7 @@ export default function RootLayout({
         <Toaster />
         <SpeedInsights />
         {process.env.NODE_ENV === 'production' && (
-          <GoogleAnalytics gaId="G-PKKZZFWD63" />
+          <ConsentAwareGoogleAnalytics gaId="G-PKKZZFWD63" />
         )}
       </body>
     </html>

@@ -332,7 +332,7 @@ This checklist is considered complete when:
 - [ ] Email links work
 - [ ] SPF/DKIM records configured for custom domain
 - [ ] DMARC policy set (even `p=none` initially)
-- [ ] Reply-to goes somewhere monitored
+- [x] Reply-to goes somewhere monitored
 - [ ] Email templates mobile-responsive
 - [ ] Test links on dark mode email clients
 - [ ] Unsubscribe link on any marketing emails
@@ -352,8 +352,8 @@ This checklist is considered complete when:
 
 ### Product Analytics
 
-- [ ] Signup events tracked
-- [ ] Key actions tracked (trip created, employee added)
+- [x] Signup events tracked
+- [x] Key actions tracked (trip created, employee added)
 - [ ] Uptime monitoring active (UptimeRobot, Checkly, etc.)
 
 ### Early Warning Alerts
@@ -374,7 +374,7 @@ This checklist is considered complete when:
 - [ ] Terms of service
 - [ ] Cookie policy
 - [ ] Liability disclaimer: "tracking aid, not legal advice"
-- [ ] DPA template ready for enterprise testers
+- [x] DPA template ready for enterprise testers
 
 ### Data Subject Rights
 
@@ -385,11 +385,11 @@ This checklist is considered complete when:
 
 ### Data Handling
 
-- [ ] Lawful basis identified for data processing
+- [x] Lawful basis identified for data processing
 - [ ] Data retention policy defined
-- [ ] Sub-processors listed (Supabase, Vercel, Stripe)
-- [ ] Data residency documented (which regions?)
-- [ ] Breach notification process defined
+- [x] Sub-processors listed (Supabase, Vercel, Stripe)
+- [x] Data residency documented (which regions?)
+- [x] Breach notification process defined
 - [ ] Data minimisation review (are you storing anything you don't truly need?)
 - [ ] Passport data masking strategy defined (last 4 chars, etc.)
 
@@ -407,7 +407,7 @@ This checklist is considered complete when:
 - [ ] Audit all cookies your app sets
 - [ ] Consent banner if using non-essential cookies
 - [ ] Auth cookies documented as essential
-- [ ] Analytics cookies only fire after consent
+- [x] Analytics cookies only fire after consent
 - [ ] Consent preference persists
 - [ ] Declining cookies doesn't break the app
 

@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/form'
 import { showSuccess, showError } from '@/lib/toast'
 import { FormError } from '@/components/forms'
+import { trackEvent } from '@/lib/analytics/client'
 
 type AddEmployeeFormData = EmployeeFormData
 
@@ -56,6 +57,7 @@ export function AddEmployeeDialog() {
     try {
       await addEmployeeAction(data)
       showSuccess('Employee added successfully')
+      trackEvent('add_employee', { source: 'dialog' })
       window.dispatchEvent(
         new CustomEvent('complyeur:employee-updated', {
           detail: 'Employee added successfully.',

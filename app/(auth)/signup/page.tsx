@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/form'
 import { toast } from 'sonner'
 
+const SIGNUP_INTENT_KEY = 'complyeur_signup_method'
+
 function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -84,6 +86,9 @@ function SignupForm() {
   async function onSubmit(data: EmailSignupInput) {
     setIsLoading(true)
     try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(SIGNUP_INTENT_KEY, 'email')
+      }
       const formData = new FormData()
       formData.append('name', data.name)
       formData.append('email', data.email)
@@ -92,6 +97,9 @@ function SignupForm() {
       formData.append('confirmPassword', data.confirmPassword)
       await signup(formData)
     } catch (error) {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(SIGNUP_INTENT_KEY)
+      }
       toast.error(error instanceof Error ? error.message : 'Signup failed')
     } finally {
       setIsLoading(false)
@@ -101,8 +109,14 @@ function SignupForm() {
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true)
     try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(SIGNUP_INTENT_KEY, 'google')
+      }
       await signInWithGoogle()
     } catch (error) {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(SIGNUP_INTENT_KEY)
+      }
       toast.error(error instanceof Error ? error.message : 'Google sign-in failed')
       setIsGoogleLoading(false)
     }

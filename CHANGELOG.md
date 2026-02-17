@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: complete beta launch audit (sections 5-18) [`e089a06`](https://github.com/thisjamieguy/complyeur-v2/commit/e089a06efa170dc3f9b12d35e64c21dd90ed35af)
+- test(e2e): harden multi-user UX and stabilize suite [`5ebe9c3`](https://github.com/thisjamieguy/complyeur-v2/commit/5ebe9c3d786e73e96cb9ebcfec73680efd7de6e2)
+- fix: sandbox calendar auto-fit with dynamic column width and month headers [`9de3e90`](https://github.com/thisjamieguy/complyeur-v2/commit/9de3e90096b5933f37a018abb9108e1e99d9e21b)
+- chore(changelog): finalize unreleased changelog sync [`2cde438`](https://github.com/thisjamieguy/complyeur-v2/commit/2cde438de5753d1fbece15ef8b7b762ba7adf72f)
 - chore(changelog): sync unreleased entries [`4d8aa5b`](https://github.com/thisjamieguy/complyeur-v2/commit/4d8aa5b86b9f5103fc07d3468f8e03faecb82870)
 - feat: ship UX remediation, onboarding, and related app updates [`41792bc`](https://github.com/thisjamieguy/complyeur-v2/commit/41792bc8590242bd0180596d70c9f60c569a88e6)
 - chore(changelog): sync unreleased entries [`1000bd7`](https://github.com/thisjamieguy/complyeur-v2/commit/1000bd7d614fb48c4d367e75bfcae6001d39fbda)
 - chore(changelog): sync unreleased entries [`25f61be`](https://github.com/thisjamieguy/complyeur-v2/commit/25f61be15d2fffea750cfaa4d023844d59bfbb84)
 - feat: add Stripe billing, security hardening, and beta launch fixes [`03451b3`](https://github.com/thisjamieguy/complyeur-v2/commit/03451b3eed631132bc451ffa5b3bdc17a28851c1)
 - perf: improve landing TTFB and reduce hydration [`d5bf3c6`](https://github.com/thisjamieguy/complyeur-v2/commit/d5bf3c60cad1f4ca34110131e4108f1024543e48)
-- chore(changelog): sync unreleased entries [`41ca9e8`](https://github.com/thisjamieguy/complyeur-v2/commit/41ca9e849f9fa5c5f58907d4125926d9d466e9fb)
-- chore(changelog): sync unreleased entries [`39257af`](https://github.com/thisjamieguy/complyeur-v2/commit/39257af4cc4bb4bbc1ed646d53305e4d101bdfa8)
-- chore: sync local changes for landing redirect and stop hook [`ade618d`](https://github.com/thisjamieguy/complyeur-v2/commit/ade618d861ed947e07ef2d0785325dc2360e23ab)
-- chore(changelog): sync unreleased entries [`48dbbb9`](https://github.com/thisjamieguy/complyeur-v2/commit/48dbbb996a300745b3850c298f80da226ab94a31)
 
 ## v1.0.0 - 2026-01-22
 

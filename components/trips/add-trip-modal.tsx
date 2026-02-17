@@ -16,6 +16,7 @@ import { TripForm, type TripFormValues } from './trip-form'
 import { addTripAction } from '@/app/(dashboard)/actions'
 import { checkTripOverlap } from '@/lib/validations/trip-overlap'
 import { showSuccess, showError } from '@/lib/toast'
+import { trackEvent } from '@/lib/analytics/client'
 
 interface AddTripModalProps {
   employeeId: string
@@ -59,6 +60,7 @@ export function AddTripModal({ employeeId, employeeName }: AddTripModalProps) {
       })
 
       showSuccess('Trip added successfully')
+      trackEvent('add_trip', { source: 'employee_modal' })
       window.dispatchEvent(
         new CustomEvent('complyeur:trip-updated', {
           detail: 'Trip added successfully.',

@@ -23,7 +23,7 @@ export default function PrivacyPage() {
             <h1 className="landing-serif mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
               Privacy Policy
             </h1>
-            <p className="mt-3 text-sm text-slate-500">Last updated: January 9, 2025</p>
+            <p className="mt-3 text-sm text-slate-500">Last updated: February 17, 2026</p>
             <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
               We explain what data we collect, why we collect it, and the controls available to your organization and users.
             </p>
@@ -96,6 +96,25 @@ export default function PrivacyPage() {
           <p className="text-base text-slate-700 leading-relaxed mt-4 font-medium">
             We do not sell, rent, or share your personal data with third parties for marketing purposes.
           </p>
+          <h3 className="text-xl font-semibold text-slate-900 mt-6 mb-3">Legal Bases for Processing (Article 6 GDPR / UK GDPR)</h3>
+          <ul className="text-base text-slate-700 ml-6 list-disc space-y-2">
+            <li>
+              <strong>Contract (Article 6(1)(b)):</strong> to provide account access, compliance calculations,
+              alerts, and paid subscription services.
+            </li>
+            <li>
+              <strong>Legitimate Interests (Article 6(1)(f)):</strong> to secure our platform, prevent abuse,
+              and improve product performance and reliability.
+            </li>
+            <li>
+              <strong>Legal Obligation (Article 6(1)(c)):</strong> to retain records where required for tax,
+              accounting, legal, or regulatory purposes.
+            </li>
+            <li>
+              <strong>Consent (Article 6(1)(a)):</strong> for non-essential cookies and analytics, which you can
+              withdraw at any time through cookie settings.
+            </li>
+          </ul>
         </section>
 
         {/* 4. Data Sharing and Third Parties */}
@@ -122,10 +141,21 @@ export default function PrivacyPage() {
               Only email addresses and notification content are shared with Resend.
             </li>
             <li>
+              <strong>Vercel</strong> - Application hosting, deployment, and edge delivery for the ComplyEur web app.
+              Request metadata and operational logs may be processed for reliability and security.
+            </li>
+            <li>
               <strong>Google Analytics</strong> - Website analytics to understand how users interact
               with our service. This data is anonymized and used only for service improvement.
             </li>
           </ul>
+          <h3 className="text-xl font-semibold text-slate-900 mt-6 mb-3">Data Residency</h3>
+          <p className="text-base text-slate-700 leading-relaxed">
+            Our primary production database is hosted in London (UK). Supporting services may process
+            limited personal data in the UK, EEA, or other countries where our processors operate.
+            Where data is transferred internationally, we rely on appropriate safeguards such as
+            Standard Contractual Clauses and equivalent contractual protections.
+          </p>
         </section>
 
         {/* 5. Data Retention */}
@@ -251,6 +281,12 @@ export default function PrivacyPage() {
           <p className="text-base text-slate-700 leading-relaxed mt-4">
             While we strive to protect your personal information, no method of transmission over
             the Internet or electronic storage is 100% secure. We cannot guarantee absolute security.
+          </p>
+          <p className="text-base text-slate-700 leading-relaxed mt-4">
+            If we become aware of a personal data breach that is likely to result in risk to individuals,
+            we follow our incident response process and notify the relevant supervisory authority (including
+            the ICO for UK data subjects) within 72 hours where required by law, and notify affected
+            individuals without undue delay when legally required.
           </p>
         </section>
 

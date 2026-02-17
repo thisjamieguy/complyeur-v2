@@ -10,6 +10,7 @@ import {
   formatGbpPrice,
 } from '@/lib/billing/plans'
 import { cn } from '@/lib/utils'
+import { trackEvent } from '@/lib/analytics/client'
 
 function formatCap(value: number | null): string {
   if (value === null) return 'Unlimited'
@@ -20,6 +21,8 @@ function PricingPageContent() {
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
   const [submittingPlan, setSubmittingPlan] = useState<TierSlug | null>(null)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [promotionCodeEnabled, setPromotionCodeEnabled] = useState(false)
+  const [promotionCode, setPromotionCode] = useState('')
   const [autoCheckoutAttempted, setAutoCheckoutAttempted] = useState(false)
   const searchParams = useSearchParams()
   const checkoutStatus = searchParams.get('checkout')
@@ -34,11 +37,19 @@ function PricingPageContent() {
 
   const startCheckout = useCallback(async (
     planSlug: TierSlug,
-    requestedInterval?: BillingInterval
+    requestedInterval?: BillingInterval,
+    requestedPromotionCode?: string
   ) => {
     const checkoutInterval = requestedInterval ?? billingInterval
+    const checkoutPromotionCode = (requestedPromotionCode ?? promotionCode).trim()
     setCheckoutError(null)
     setSubmittingPlan(planSlug)
+    trackEvent('begin_checkout', {
+      source: 'pricing',
+      plan: planSlug,
+      billingInterval: checkoutInterval,
+      hasPromoCode: checkoutPromotionCode.length > 0,
+    })
 
     try {
       const response = await fetch('/api/billing/checkout', {
@@ -50,6 +61,7 @@ function PricingPageContent() {
           planSlug,
           billingInterval: checkoutInterval,
           source: 'pricing',
+          promotionCode: checkoutPromotionCode || undefined,
         }),
       })
 
@@ -61,6 +73,9 @@ function PricingPageContent() {
           plan: planSlug,
           billingInterval: checkoutInterval,
         })
+        if (checkoutPromotionCode) {
+          nextParams.set('promoCode', checkoutPromotionCode)
+        }
         setSubmittingPlan(null)
         window.location.assign(`/login?next=${encodeURIComponent(`/pricing?${nextParams.toString()}`)}`)
         return
@@ -79,7 +94,17 @@ function PricingPageContent() {
       setCheckoutError('Unable to start checkout right now. Please try again.')
       setSubmittingPlan(null)
     }
-  }, [billingInterval])
+  }, [billingInterval, promotionCode])
+
+  useEffect(() => {
+    const promoCodeFromUrl = searchParams.get('promoCode')
+    if (!promoCodeFromUrl) {
+      return
+    }
+
+    setPromotionCode((currentValue) => currentValue || promoCodeFromUrl)
+    setPromotionCodeEnabled(true)
+  }, [searchParams])
 
   useEffect(() => {
     const intervalFromUrl = searchParams.get('billingInterval')
@@ -99,6 +124,7 @@ function PricingPageContent() {
 
     const planFromUrl = searchParams.get('plan')
     const intervalFromUrl = searchParams.get('billingInterval')
+    const promoCodeFromUrl = searchParams.get('promoCode')
 
     if (
       !planFromUrl ||
@@ -110,7 +136,7 @@ function PricingPageContent() {
 
     setAutoCheckoutAttempted(true)
     setBillingInterval(intervalFromUrl)
-    void startCheckout(planFromUrl as TierSlug, intervalFromUrl)
+    void startCheckout(planFromUrl as TierSlug, intervalFromUrl, promoCodeFromUrl ?? undefined)
   }, [autoCheckoutAttempted, searchParams, startCheckout])
 
   return (
@@ -183,6 +209,32 @@ function PricingPageContent() {
             </button>
           </div>
 
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setPromotionCodeEnabled((current) => !current)}
+              className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 hover:underline"
+            >
+              i have a code
+            </button>
+            {promotionCodeEnabled && (
+              <div className="mt-2 max-w-xs">
+                <label htmlFor="pricing-promo-code" className="sr-only">
+                  Promotional code
+                </label>
+                <input
+                  id="pricing-promo-code"
+                  type="text"
+                  value={promotionCode}
+                  onChange={(event) => setPromotionCode(event.target.value)}
+                  placeholder="Enter promo code"
+                  autoComplete="off"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                />
+              </div>
+            )}
+          </div>
+
           <div className="mt-8 grid gap-6 lg:grid-cols-3">
             {plans.map((plan) => {
               const price =
@@ -235,7 +287,14 @@ function PricingPageContent() {
 
                   <button
                     type="button"
-                    onClick={() => startCheckout(plan.slug)}
+                    onClick={() => {
+                      trackEvent('plan_select', {
+                        source: 'pricing',
+                        plan: plan.slug,
+                        billingInterval,
+                      })
+                      startCheckout(plan.slug)
+                    }}
                     disabled={submittingPlan !== null}
                     className={cn(
                       'mt-6 inline-flex w-full items-center justify-center rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60',

@@ -13,6 +13,7 @@ import { TripForm, type TripFormValues } from '@/components/trips/trip-form'
 import { addTripAction } from '@/app/(dashboard)/actions'
 import { checkTripOverlap } from '@/lib/validations/trip-overlap'
 import { showSuccess, showError } from '@/lib/toast'
+import { trackEvent } from '@/lib/analytics/client'
 
 interface QuickAddTripModalProps {
   employeeId: string
@@ -62,6 +63,7 @@ export function QuickAddTripModal({
       })
 
       showSuccess('Trip added successfully')
+      trackEvent('add_trip', { source: 'quick_add' })
       onOpenChange(false)
       router.refresh()
     } catch (err) {

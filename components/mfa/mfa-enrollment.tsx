@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useTransition } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Shield, Smartphone, Key, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
@@ -13,6 +14,7 @@ import {
   enrollTotpAction,
   generateBackupCodesAction,
   getMfaStatusAction,
+  unenrollTotpAction,
   verifyBackupCodeAction,
   verifyTotpAction,
 } from '@/lib/actions/mfa'
@@ -153,7 +155,14 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
                 Scan this QR code with Google Authenticator, 1Password, or Authy.
               </div>
               <div className="bg-white p-3 rounded border inline-block">
-                <img src={enrollData.qrCode} alt="MFA QR code" className="h-32 w-32" />
+                <Image
+                  src={enrollData.qrCode}
+                  alt="MFA QR code"
+                  width={128}
+                  height={128}
+                  className="h-32 w-32"
+                  unoptimized
+                />
               </div>
               <div className="text-xs text-slate-500">Secret: {enrollData.secret}</div>
             </div>
@@ -203,6 +212,32 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
               Use Backup Code
             </Button>
           </div>
+
+          <Separator />
+
+          <div className="text-sm text-slate-700">
+            Lost access to your authenticator app? Reset and re-enroll.
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={isPending}
+            onClick={() => {
+              startTransition(async () => {
+                const result = await unenrollTotpAction()
+                if (!result.success) {
+                  toast.error(result.error)
+                  return
+                }
+                toast.info('MFA reset. Enroll again to set up a new authenticator.')
+                setEnrollData(null)
+                setBackupCodes(null)
+                loadStatus()
+              })
+            }}
+          >
+            Reset MFA
+          </Button>
         </div>
       )}
 

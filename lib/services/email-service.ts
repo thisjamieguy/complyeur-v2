@@ -17,6 +17,7 @@ function getResendClient(): Resend | null {
 
 // Email configuration
 const FROM_EMAIL = process.env.EMAIL_FROM || 'ComplyEur Alerts <alerts@complyeur.com>'
+const REPLY_TO_EMAIL = process.env.EMAIL_REPLY_TO || 'support@complyeur.com'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://complyeur.com'
 
 interface AlertEmailData {
@@ -289,6 +290,7 @@ export async function sendAlertEmail(data: AlertEmailData): Promise<EmailResult>
 
     const { data: result, error } = await resend.emails.send({
       from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
       to: data.recipientEmail,
       subject: getAlertSubject(data.alertType, data.employeeName),
       html: generateAlertEmailHtml(data),
