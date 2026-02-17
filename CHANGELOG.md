@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- feat: add Stripe billing, security hardening, and beta launch fixes [`03451b3`](https://github.com/thisjamieguy/complyeur-v2/commit/03451b3eed631132bc451ffa5b3bdc17a28851c1)
 - perf: improve landing TTFB and reduce hydration [`d5bf3c6`](https://github.com/thisjamieguy/complyeur-v2/commit/d5bf3c60cad1f4ca34110131e4108f1024543e48)
 - chore(changelog): sync unreleased entries [`41ca9e8`](https://github.com/thisjamieguy/complyeur-v2/commit/41ca9e849f9fa5c5f58907d4125926d9d466e9fb)
 - chore(changelog): sync unreleased entries [`39257af`](https://github.com/thisjamieguy/complyeur-v2/commit/39257af4cc4bb4bbc1ed646d53305e4d101bdfa8)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs: update CLAUDE.md to match actual codebase [`8470eef`](https://github.com/thisjamieguy/complyeur-v2/commit/8470eef445834d6b57a1882cf0b300c3106c6f7f)
 - chore(changelog): sync unreleased entries [`58d7263`](https://github.com/thisjamieguy/complyeur-v2/commit/58d726371b29f62d983d525d4a0072a4aebb5bf3)
 - docs: update memory files to match actual codebase [`082f719`](https://github.com/thisjamieguy/complyeur-v2/commit/082f71944b12c2c717b4269091f13535d7fe26e8)
-- chore(changelog): settle auto-changelog entries [`cf52edd`](https://github.com/thisjamieguy/complyeur-v2/commit/cf52edddd12619ffeddfb7e38860b1a024841357)
 
 ## v1.0.0 - 2026-01-22
 
