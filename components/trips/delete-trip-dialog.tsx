@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { deleteTripAction } from '@/app/(dashboard)/actions'
+import { addTripAction, deleteTripAction } from '@/app/(dashboard)/actions'
 import { getCountryName } from '@/lib/constants/schengen-countries'
 import { toast } from 'sonner'
 import type { Trip } from '@/types/database-helpers'
@@ -41,12 +41,51 @@ export function DeleteTripDialog({
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
 
+  async function handleUndo() {
+    try {
+      await addTripAction({
+        employee_id: employeeId,
+        country: trip.country,
+        entry_date: trip.entry_date,
+        exit_date: trip.exit_date,
+        purpose: trip.purpose || undefined,
+        job_ref: trip.job_ref || undefined,
+        is_private: trip.is_private ?? false,
+        ghosted: trip.ghosted ?? false,
+      })
+      toast.success('Trip restored.')
+      window.dispatchEvent(
+        new CustomEvent('complyeur:trip-updated', {
+          detail: 'Trip restored successfully.',
+        })
+      )
+      router.refresh()
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Could not restore the deleted trip.'
+      toast.error(message)
+    }
+  }
+
   async function handleDelete() {
     setIsDeleting(true)
 
     try {
       await deleteTripAction(trip.id, employeeId)
-      toast.success('Trip deleted successfully')
+      toast.success('Trip deleted successfully', {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            void handleUndo()
+          },
+        },
+        duration: 7000,
+      })
+      window.dispatchEvent(
+        new CustomEvent('complyeur:trip-updated', {
+          detail: 'Trip deleted successfully.',
+        })
+      )
       onOpenChange(false)
       router.refresh()
     } catch (err) {

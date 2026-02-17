@@ -49,6 +49,7 @@ function PricingPageContent() {
         body: JSON.stringify({
           planSlug,
           billingInterval: checkoutInterval,
+          source: 'pricing',
         }),
       })
 

@@ -154,6 +154,9 @@ export async function generateBackupCodesAction(): Promise<BackupCodesResult> {
   if (!status.hasVerifiedFactor) {
     return { success: false, error: 'Enroll MFA before generating backup codes' }
   }
+  if (status.currentLevel !== 'aal2' && !status.backupSessionValid) {
+    return { success: false, error: 'Verify MFA before generating backup codes' }
+  }
 
   const codes = Array.from({ length: BACKUP_CODE_COUNT }, () => generateBackupCode())
   const inserts = codes.map((code) => ({

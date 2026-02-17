@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -56,6 +56,11 @@ export function AddEmployeeDialog() {
     try {
       await addEmployeeAction(data)
       showSuccess('Employee added successfully')
+      window.dispatchEvent(
+        new CustomEvent('complyeur:employee-updated', {
+          detail: 'Employee added successfully.',
+        })
+      )
       form.reset()
       setOpen(false)
       router.refresh()
@@ -75,6 +80,12 @@ export function AddEmployeeDialog() {
       setFormError(null)
     }
   }
+
+  useEffect(() => {
+    const openHandler = () => setOpen(true)
+    window.addEventListener('complyeur:open-add-employee', openHandler)
+    return () => window.removeEventListener('complyeur:open-add-employee', openHandler)
+  }, [])
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>

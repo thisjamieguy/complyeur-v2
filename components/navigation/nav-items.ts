@@ -16,6 +16,7 @@ export interface NavItem {
   label: string
   icon: LucideIcon
   section: NavSection
+  tourId?: string
 }
 
 export interface NavSectionGroup {
@@ -29,19 +30,61 @@ export interface NavSectionGroup {
  */
 export const navItems: NavItem[] = [
   // Main
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, section: 'Main' },
-  { href: '/calendar', label: 'Calendar', icon: Calendar, section: 'Main' },
+  {
+    href: '/dashboard',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    section: 'Main',
+    tourId: 'tour-nav-dashboard',
+  },
+  {
+    href: '/calendar',
+    label: 'Calendar',
+    icon: Calendar,
+    section: 'Main',
+    tourId: 'tour-nav-calendar',
+  },
 
   // Data
-  { href: '/import', label: 'Import', icon: Upload, section: 'Data' },
-  { href: '/exports', label: 'Exports', icon: Download, section: 'Data' },
+  {
+    href: '/import',
+    label: 'Import',
+    icon: Upload,
+    section: 'Data',
+    tourId: 'tour-nav-import',
+  },
+  {
+    href: '/exports',
+    label: 'Exports',
+    icon: Download,
+    section: 'Data',
+    tourId: 'tour-nav-exports',
+  },
 
   // Tools
-  { href: '/future-job-alerts', label: 'Future Alerts', icon: Bell, section: 'Tools' },
-  { href: '/trip-forecast', label: 'Trip Forecast', icon: TrendingUp, section: 'Tools' },
+  {
+    href: '/future-job-alerts',
+    label: 'Future Alerts',
+    icon: Bell,
+    section: 'Tools',
+    tourId: 'tour-nav-alerts',
+  },
+  {
+    href: '/trip-forecast',
+    label: 'Trip Forecast',
+    icon: TrendingUp,
+    section: 'Tools',
+    tourId: 'tour-nav-forecast',
+  },
 
   // System
-  { href: '/settings', label: 'Settings', icon: Settings, section: 'System' },
+  {
+    href: '/settings',
+    label: 'Settings',
+    icon: Settings,
+    section: 'System',
+    tourId: 'tour-nav-settings',
+  },
 ]
 
 /**

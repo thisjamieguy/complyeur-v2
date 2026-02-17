@@ -72,6 +72,7 @@ export function Sidebar({ user }: SidebarProps) {
                   <li key={item.href}>
                     <Link
                       href={item.href}
+                      data-tour-id={item.tourId}
                       className={cn(
                         'flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[44px] transition-colors duration-150',
                         isActive
@@ -146,6 +147,12 @@ export function Sidebar({ user }: SidebarProps) {
           )}
         </button>
       </div>
+
+      {isOpen && (
+        <div className="px-4 py-2 border-t border-brand-800 text-[11px] text-brand-300">
+          <p>Shortcuts: <kbd className="font-mono">/</kbd> search, <kbd className="font-mono">N</kbd> add employee, <kbd className="font-mono">T</kbd> add trip, <kbd className="font-mono">Alt+D</kbd> dashboard, <kbd className="font-mono">Alt+I</kbd> import, <kbd className="font-mono">Alt+F</kbd> forecast, <kbd className="font-mono">Shift+?</kbd> help</p>
+        </div>
+      )}
 
       {/* User Menu */}
       <div className="px-3 py-3 border-t border-brand-800">

@@ -39,6 +39,13 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
     loadStatus()
   }, [])
 
+  useEffect(() => {
+    if (!backupCodes || !status?.success) return
+    if (status.backupCodesRemaining !== backupCodes.length) {
+      setBackupCodes(null)
+    }
+  }, [backupCodes, status])
+
   const handleEnroll = () => {
     startTransition(async () => {
       const result = await enrollTotpAction()
@@ -67,6 +74,7 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
       toast.success('MFA verified')
       setTotpCode('')
       setEnrollData(null)
+      setBackupCodes(null)
       loadStatus()
     })
   }
@@ -93,6 +101,7 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
       }
       toast.success('Backup code accepted')
       setBackupCode('')
+      setBackupCodes(null)
       loadStatus()
     })
   }
@@ -209,9 +218,19 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
           <div className="text-sm text-slate-600">
             Generate single-use backup codes for account recovery.
           </div>
-          <Button variant="outline" size="sm" onClick={handleGenerateBackupCodes} disabled={isPending}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateBackupCodes}
+            disabled={isPending || !isVerified}
+          >
             {status.backupCodesRemaining > 0 ? 'Regenerate Codes' : 'Generate Codes'}
           </Button>
+          {!isVerified && (
+            <div className="text-xs text-slate-500">
+              Verify MFA in this session before generating or regenerating backup codes.
+            </div>
+          )}
 
           {backupCodes && (
             <div className="mt-3 rounded-lg border bg-slate-50 p-3 text-sm">

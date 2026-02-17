@@ -12,6 +12,7 @@ import { describe, it, expect } from 'vitest';
 import {
   loginSchema,
   signupSchema,
+  emailSignupSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
   getPasswordStrengthFeedback,
@@ -241,6 +242,70 @@ describe('signupSchema', () => {
         expect(result.error.issues.some(i => i.message === 'Passwords do not match')).toBe(true);
       }
     });
+  });
+});
+
+describe('emailSignupSchema', () => {
+  const validEmailSignup = {
+    name: 'Jane Doe',
+    email: 'newuser@example.com',
+    companyName: 'Test Company Ltd',
+    password: 'SecurePass123',
+    confirmPassword: 'SecurePass123',
+  };
+
+  it('accepts valid email signup data', () => {
+    const result = emailSignupSchema.safeParse(validEmailSignup);
+
+    expect(result.success).toBe(true);
+  });
+
+  it('normalizes email to lowercase', () => {
+    const result = emailSignupSchema.safeParse({
+      ...validEmailSignup,
+      email: 'NEWUSER@EXAMPLE.COM',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.email).toBe('newuser@example.com');
+    }
+  });
+
+  it('rejects empty name', () => {
+    const result = emailSignupSchema.safeParse({
+      ...validEmailSignup,
+      name: '',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe('Name is required');
+    }
+  });
+
+  it('rejects invalid company name', () => {
+    const result = emailSignupSchema.safeParse({
+      ...validEmailSignup,
+      companyName: 'Company <script>',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe('Company name contains invalid characters');
+    }
+  });
+
+  it('rejects mismatched passwords', () => {
+    const result = emailSignupSchema.safeParse({
+      ...validEmailSignup,
+      confirmPassword: 'DifferentPass123',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues.some(i => i.message === 'Passwords do not match')).toBe(true);
+    }
   });
 });
 

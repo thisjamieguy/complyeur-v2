@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useDropzone, type FileRejection } from 'react-dropzone';
 import { Upload, File, X, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   MAX_FILE_SIZE,
   ALLOWED_EXTENSIONS,
-  ALLOWED_MIME_TYPES,
   ImportFormat,
 } from '@/types/import';
 
@@ -19,6 +19,7 @@ interface FileDropzoneProps {
 }
 
 export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzoneProps) {
+  const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -174,7 +175,11 @@ export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzon
       )}
 
       <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={() => window.history.back()} disabled={isProcessing}>
+        <Button
+          variant="outline"
+          onClick={() => router.push('/import')}
+          disabled={isProcessing}
+        >
           Back
         </Button>
         <Button onClick={handleUpload} disabled={!selectedFile || isProcessing}>

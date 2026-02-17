@@ -15,7 +15,7 @@ import {
 } from '@/lib/errors'
 import {
   loginSchema,
-  signupSchema,
+  emailSignupSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
 } from '@/lib/validations/auth'
@@ -27,6 +27,17 @@ import {
  */
 function normalizeEmailForAuth(email: string): string {
   return email.toLowerCase().trim()
+}
+
+/**
+ * Splits a full name into first and last name components.
+ * Single-token names are stored in first_name only.
+ */
+function splitFullName(name: string): { firstName: string; lastName: string | null } {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  const firstName = parts[0] ?? ''
+  const lastName = parts.length > 1 ? parts.slice(1).join(' ') : null
+  return { firstName, lastName }
 }
 
 export async function login(formData: FormData) {
@@ -75,35 +86,25 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  // WAITLIST MODE: Block all new signups
-  // Remove this check when ready to accept new users
-  throw new AuthError('New signups are currently disabled. Please join the waitlist.')
-
   const supabase = await createClient()
 
   const rawData = {
+    name: formData.get('name') as string,
     email: formData.get('email') as string,
+    companyName: formData.get('companyName') as string,
     password: formData.get('password') as string,
     confirmPassword: formData.get('confirmPassword') as string,
-    companyName: formData.get('companyName') as string,
-    termsAccepted: formData.get('termsAccepted') === 'true',
   }
 
   // Validate input
-  const result = signupSchema.safeParse(rawData)
+  const result = emailSignupSchema.safeParse(rawData)
   if (!result.success) {
     const errorMessage = result.error?.issues[0]?.message ?? 'Invalid input'
     throw new ValidationError(errorMessage)
   }
 
-  // TypeScript narrowing: after the throw above, result.success is true
-  // so result.data is guaranteed to exist
-  const { email, password, companyName, termsAccepted } = result.data!
-
-  // Ensure terms are accepted (double check on server side)
-  if (!termsAccepted) {
-    throw new ValidationError('You must agree to the Terms of Service and Privacy Policy')
-  }
+  const { name, email, companyName, password } = result.data!
+  const { firstName, lastName } = splitFullName(name)
 
   // Normalize email for Supabase (some instances reject + signs)
   const normalizedEmail = normalizeEmailForAuth(email)
@@ -115,10 +116,8 @@ export async function signup(formData: FormData) {
   })
 
   if (authError) {
-    // TypeScript doesn't narrow correctly here, so use non-null assertion
     const err = authError!
     const errorMessage = err.message ?? ''
-    // Check for specific email validation errors that might need special handling
     if (errorMessage.includes('Email address') && errorMessage.includes('is invalid') && normalizedEmail.includes('+')) {
       throw new AuthError('Email addresses with special characters like "+" may not be supported. Please try using a different email address or contact support.')
     }
@@ -130,12 +129,10 @@ export async function signup(formData: FormData) {
     throw new AuthError('Failed to create user account')
   }
 
-  // TypeScript narrowing workaround
   const user = authData.user!
 
-  // Create the company and profile using the database function
-  // This bypasses RLS during signup since the user isn't fully authenticated yet
-  // Store the terms acceptance timestamp
+  // Create the company and profile using the database function.
+  // Terms are accepted passively on signup page.
   const termsAcceptedAt = new Date().toISOString()
   const fullSignature = await supabase.rpc('create_company_and_profile', {
     user_id: user.id,
@@ -143,8 +140,8 @@ export async function signup(formData: FormData) {
     company_name: companyName,
     user_terms_accepted_at: termsAcceptedAt,
     user_auth_provider: 'email',
-    user_first_name: null,
-    user_last_name: null,
+    user_first_name: firstName,
+    user_last_name: lastName,
   })
 
   let companyId = fullSignature.data
@@ -177,7 +174,6 @@ export async function signup(formData: FormData) {
     .eq('id', user.id)
 
   if (activityError) {
-    // Don't block signup completion if activity tracking columns/migrations are not deployed yet.
     console.warn(
       'Failed to update last activity during signup:',
       activityError?.message ?? 'Unknown error'
@@ -185,7 +181,7 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  redirect('/onboarding')
 }
 
 export async function forgotPassword(formData: FormData) {

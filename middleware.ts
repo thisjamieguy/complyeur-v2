@@ -82,16 +82,18 @@ export async function middleware(request: NextRequest) {
   }
 
   // 2. Auth & Session Management
-  const { supabaseResponse, user } = await updateSession(request)
+  const { supabaseResponse, user, needsOnboarding } = await updateSession(request)
 
   // Public routes that don't require authentication
   const isPublicRoute =
     isPublicMarketingRoute || pathname.startsWith('/api/') || pathname.startsWith('/auth/')
 
-  // Protected routes: everything that isn't public or auth
+  const isOnboardingRoute = pathname.startsWith('/onboarding')
+
+  // Protected routes: everything that isn't public or auth or onboarding
   // This covers all (dashboard) route group pages: /calendar, /import, /settings,
   // /employee, /exports, /gdpr, /trip-forecast, /future-job-alerts, etc.
-  const isProtectedRoute = !isPublicRoute && !isAuthRoute
+  const isProtectedRoute = !isPublicRoute && !isAuthRoute && !isOnboardingRoute
 
   const redirectWithCookies = (url: URL) => {
     const response = NextResponse.redirect(url)
@@ -106,16 +108,20 @@ export async function middleware(request: NextRequest) {
     return redirectWithCookies(new URL('/dashboard', request.url))
   }
 
-  // If user is not authenticated and trying to access protected routes, redirect to landing
-  if (!user && isProtectedRoute) {
+  // If user is not authenticated and trying to access protected or onboarding routes, redirect to landing
+  if (!user && (isProtectedRoute || isOnboardingRoute)) {
     return redirectWithCookies(new URL('/landing', request.url))
   }
 
-  // Redirect all auth routes to landing page (waitlist mode - no signups/logins yet)
-  // TEMPORARILY DISABLED FOR E2E TESTING - uncomment to re-enable waitlist mode
-  // if (!user && isAuthRoute) {
-  //   return redirectWithCookies(new URL('/landing', request.url))
-  // }
+  // Onboarding redirect logic
+  if (user && needsOnboarding && !isOnboardingRoute) {
+    return redirectWithCookies(new URL('/onboarding', request.url))
+  }
+
+  // If user completed onboarding but visits /onboarding, redirect to dashboard
+  if (user && !needsOnboarding && isOnboardingRoute) {
+    return redirectWithCookies(new URL('/dashboard', request.url))
+  }
 
   // Continue with the response
   return supabaseResponse

@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { AuthShell } from '@/components/auth/auth-shell'
 import { Footer } from '@/components/layout/footer'
 import { SkipLink } from '@/components/ui/skip-link'
 
@@ -19,7 +20,7 @@ export default function AuthLayout({
         id="main-content"
         className="relative z-10 flex-1 flex items-center justify-center px-4 py-10"
       >
-        <div className="w-full max-w-md">
+        <AuthShell>
           <div className="text-center mb-8">
             <Image
               src="/images/Icons/02_Logo_Stacked/ComplyEur_Logo_Stacked.svg"
@@ -32,7 +33,7 @@ export default function AuthLayout({
             <p className="text-slate-600">Schengen Compliance Management</p>
           </div>
           {children}
-        </div>
+        </AuthShell>
       </main>
       <div className="relative z-10">
         <Footer />

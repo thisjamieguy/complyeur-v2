@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -59,6 +59,11 @@ export function AddTripModal({ employeeId, employeeName }: AddTripModalProps) {
       })
 
       showSuccess('Trip added successfully')
+      window.dispatchEvent(
+        new CustomEvent('complyeur:trip-updated', {
+          detail: 'Trip added successfully.',
+        })
+      )
       setOpen(false)
       router.refresh()
     } catch (err) {
@@ -75,6 +80,12 @@ export function AddTripModal({ employeeId, employeeName }: AddTripModalProps) {
     setError(null)
     setOpen(false)
   }
+
+  useEffect(() => {
+    const openHandler = () => setOpen(true)
+    window.addEventListener('complyeur:open-add-trip', openHandler)
+    return () => window.removeEventListener('complyeur:open-add-trip', openHandler)
+  }, [])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -77,7 +77,11 @@ export function CompanyFilters({ tiers }: CompanyFiltersProps) {
     searchParams.has('status')
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-3">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+        Use filters to narrow results by tier and status. Clear filters to return to the full company list.
+      </div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <form onSubmit={handleSearch} className="flex gap-2 flex-1 max-w-md">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -138,6 +142,7 @@ export function CompanyFilters({ tiers }: CompanyFiltersProps) {
             <X className="h-4 w-4" />
           </Button>
         )}
+      </div>
       </div>
     </div>
   )

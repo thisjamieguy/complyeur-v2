@@ -19,22 +19,7 @@ const REASON_OPTIONS = [
   'Internal planning',
   'Conference',
 ]
-const DATE_SCENARIOS = [
-  {
-    id: 'warning_a',
-    label: 'Warning A: 10 Feb to 27 Feb',
-    entryDate: '2026-02-10',
-    exitDate: '2026-02-27',
-  },
-  {
-    id: 'warning_b',
-    label: 'Warning B: 22 Feb to 15 Mar',
-    entryDate: '2026-02-22',
-    exitDate: '2026-03-15',
-  },
-] as const
 
-type DateScenarioId = (typeof DATE_SCENARIOS)[number]['id']
 type DemoRiskLevel = 'green' | 'amber' | 'red'
 
 interface SandboxTrip {
@@ -52,7 +37,6 @@ interface FormState {
   entryDate: string
   exitDate: string
   tripReason: string
-  dateScenarioId: DateScenarioId
 }
 
 function addDays(date: Date, days: number): Date {
@@ -107,10 +91,6 @@ function parseInputDate(value: string): Date | null {
   return parsed
 }
 
-function getScenarioById(id: DateScenarioId) {
-  return DATE_SCENARIOS.find((scenario) => scenario.id === id) ?? DATE_SCENARIOS[0]
-}
-
 function getTripRiskLevel(entryDateValue: string, exitDateValue: string): DemoRiskLevel {
   const entryDate = parseInputDate(entryDateValue)
   const exitDate = parseInputDate(exitDateValue)
@@ -136,17 +116,19 @@ function formatDateLabel(value: string): string {
 
 export default function LandingSandboxPage() {
   const nextIdRef = useRef(4)
-  const [referenceDate] = useState(() => new Date())
   const [trips, setTrips] = useState<SandboxTrip[]>(() => createInitialTrips())
   const [error, setError] = useState('')
-  const [formState, setFormState] = useState<FormState>(() => ({
-    dateScenarioId: DATE_SCENARIOS[0].id,
-    employeeName: EMPLOYEE_OPTIONS[0],
-    country: 'DE',
-    entryDate: DATE_SCENARIOS[0].entryDate,
-    exitDate: DATE_SCENARIOS[0].exitDate,
-    tripReason: REASON_OPTIONS[0],
-  }))
+  const [formState, setFormState] = useState<FormState>(() => {
+    const now = new Date()
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    return {
+      employeeName: EMPLOYEE_OPTIONS[0],
+      country: 'DE',
+      entryDate: toDateInputValue(addDays(start, 7)),
+      exitDate: toDateInputValue(addDays(start, 12)),
+      tripReason: REASON_OPTIONS[0],
+    }
+  })
 
   const calendarEmployees = useMemo<DemoCalendarEmployee[]>(() => {
     const grouped = new Map<
@@ -336,44 +318,15 @@ export default function LandingSandboxPage() {
                   </select>
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label htmlFor="dateScenario" className="mb-1 block text-sm font-medium text-slate-700">
-                    Date scenario
-                  </label>
-                  <select
-                    id="dateScenario"
-                    value={formState.dateScenarioId}
-                    onChange={(event) => {
-                      const selectedScenario = getScenarioById(event.target.value as DateScenarioId)
-                      setFormState((prev) => ({
-                        ...prev,
-                        dateScenarioId: selectedScenario.id,
-                        entryDate: selectedScenario.entryDate,
-                        exitDate: selectedScenario.exitDate,
-                      }))
-                    }}
-                    className="h-11 w-full rounded-xl border border-slate-300 px-3 text-slate-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-300/60"
-                  >
-                    {DATE_SCENARIOS.map((scenario) => (
-                      <option key={scenario.id} value={scenario.id}>
-                        {scenario.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Both scenarios are intentionally configured to trigger an instant non-compliant warning.
-                  </p>
-                </div>
-
                 <div>
                   <label htmlFor="entryDate" className="mb-1 block text-sm font-medium text-slate-700">
                     Entry date
                   </label>
                   <input
-                    id="entryDateDisplay"
-                    type="text"
-                    value={formatDateLabel(formState.entryDate)}
-                    readOnly
+                    id="entryDate"
+                    type="date"
+                    value={formState.entryDate}
+                    onChange={(e) => setFormState((prev) => ({ ...prev, entryDate: e.target.value }))}
                     className="h-11 w-full rounded-xl border border-slate-300 px-3 text-slate-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-300/60"
                   />
                 </div>
@@ -383,10 +336,10 @@ export default function LandingSandboxPage() {
                     Exit date
                   </label>
                   <input
-                    id="exitDateDisplay"
-                    type="text"
-                    value={formatDateLabel(formState.exitDate)}
-                    readOnly
+                    id="exitDate"
+                    type="date"
+                    value={formState.exitDate}
+                    onChange={(e) => setFormState((prev) => ({ ...prev, exitDate: e.target.value }))}
                     className="h-11 w-full rounded-xl border border-slate-300 px-3 text-slate-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-300/60"
                   />
                 </div>
@@ -448,9 +401,7 @@ export default function LandingSandboxPage() {
             <BrowserFrame title="sandbox.complyeur.local" showUrlBar>
               <DemoCalendar
                 employees={calendarEmployees}
-                title="Timeline Preview (28-day window)"
-                windowDays={28}
-                referenceDate={referenceDate}
+                title="Timeline Preview"
               />
             </BrowserFrame>
             <div className="mt-4 min-h-[210px] rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -488,7 +439,7 @@ export default function LandingSandboxPage() {
               </div>
             </div>
             <p className="mt-3 text-xs text-slate-500">
-              This demo uses fixed warning date scenarios to showcase immediate risk feedback.
+              Add a trip to see the timeline and compliance status update instantly.
             </p>
           </section>
         </div>

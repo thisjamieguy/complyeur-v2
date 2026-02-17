@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo, useCallback, memo } from 'react'
+import { useState, useMemo, useCallback, memo, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Eye, Plus } from 'lucide-react'
 import {
   Table,
@@ -21,6 +21,8 @@ import { DashboardStats } from './dashboard-stats'
 import { EmployeeSearch } from './employee-search'
 import { QuickAddTripModal } from './quick-add-trip-modal'
 import { Pagination } from '@/components/ui/pagination'
+import { DashboardStatusLegend } from '@/components/compliance/risk-legends'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import type {
   EmployeeCompliance,
   StatusFilter,
@@ -163,6 +165,7 @@ export function ComplianceTable({
   initialSearch: initialSearchProp,
 }: ComplianceTableProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
 
   // Initialize filter from URL or default to 'all'
@@ -172,6 +175,7 @@ export function ComplianceTable({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilter)
   const [sortBy, setSortBy] = useState<SortOption>('days_remaining_asc')
   const [searchQuery, setSearchQuery] = useState(initialSearch)
+  const [inlineMessage, setInlineMessage] = useState<string | null>(null)
 
   // Quick add trip modal state
   const [addTripModal, setAddTripModal] = useState<{
@@ -245,6 +249,34 @@ export function ComplianceTable({
     [router, searchParams]
   )
 
+  const handleResetView = useCallback(() => {
+    setStatusFilter('all')
+    setSortBy('days_remaining_asc')
+    setSearchQuery('')
+    router.push(pathname, { scroll: false })
+  }, [pathname, router])
+
+  useEffect(() => {
+    const employeeUpdatedHandler = (event: Event) => {
+      const customEvent = event as CustomEvent<string>
+      setInlineMessage(customEvent.detail || 'Employee list updated successfully.')
+    }
+    window.addEventListener('complyeur:employee-updated', employeeUpdatedHandler as EventListener)
+    return () => {
+      window.removeEventListener('complyeur:employee-updated', employeeUpdatedHandler as EventListener)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (searchParams.get('focusSearch') === '1') {
+      window.dispatchEvent(new Event('complyeur:focus-dashboard-search'))
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('focusSearch')
+      const query = params.toString()
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    }
+  }, [pathname, router, searchParams])
+
   // Apply filtering and sorting
   const filteredAndSorted = useMemo(() => {
     let result = [...employees]
@@ -301,6 +333,22 @@ export function ComplianceTable({
       {/* Summary stats */}
       <DashboardStats stats={stats} />
 
+      {inlineMessage && (
+        <Alert>
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>{inlineMessage}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setInlineMessage(null)}
+            >
+              Dismiss
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Search, filters and sort controls */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -309,6 +357,15 @@ export function ComplianceTable({
             onChange={handleSearchChange}
             placeholder="Search by name..."
           />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto"
+            onClick={handleResetView}
+          >
+            Reset filters
+          </Button>
         </div>
         <div className="flex flex-col sm:flex-row justify-between gap-4">
           <StatusFilters
@@ -318,6 +375,7 @@ export function ComplianceTable({
           />
           <SortSelect value={sortBy} onValueChange={setSortBy} />
         </div>
+        <DashboardStatusLegend />
       </div>
 
       {/* Desktop table view */}

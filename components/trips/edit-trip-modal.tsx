@@ -65,6 +65,11 @@ export function EditTripModal({
       })
 
       showSuccess('Trip updated successfully')
+      window.dispatchEvent(
+        new CustomEvent('complyeur:trip-updated', {
+          detail: 'Trip updated successfully.',
+        })
+      )
       onOpenChange(false)
       router.refresh()
     } catch (err) {

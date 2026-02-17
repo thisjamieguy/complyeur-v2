@@ -64,6 +64,7 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                data-tour-id={item.tourId}
                 className={cn(
                   'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px]',
                   isActive

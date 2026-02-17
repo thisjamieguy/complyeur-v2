@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SELF_SERVE_PLANS, type BillingInterval } from '@/lib/billing/plans'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
@@ -8,12 +7,16 @@ export const runtime = 'nodejs'
 type CheckoutRequestBody = {
   planSlug?: string
   billingInterval?: BillingInterval
+  source?: CheckoutSource
 }
+
+type CheckoutSource = 'pricing' | 'onboarding'
 
 const VALID_BILLING_INTERVALS = new Set<BillingInterval>(['monthly', 'annual'])
 const VALID_PLAN_SLUGS: ReadonlySet<string> = new Set(
   SELF_SERVE_PLANS.map((plan) => plan.slug)
 )
+const VALID_CHECKOUT_SOURCES = new Set<CheckoutSource>(['pricing', 'onboarding'])
 
 function resolveStripeSecretKey(): string {
   const secretKey = process.env.STRIPE_SECRET_KEY
@@ -51,6 +54,7 @@ export async function POST(request: NextRequest) {
 
   const planSlug = body.planSlug
   const billingInterval = body.billingInterval
+  const source = body.source ?? 'pricing'
 
   if (!planSlug || !VALID_PLAN_SLUGS.has(planSlug)) {
     return NextResponse.json(
@@ -62,6 +66,13 @@ export async function POST(request: NextRequest) {
   if (!billingInterval || !VALID_BILLING_INTERVALS.has(billingInterval)) {
     return NextResponse.json(
       { error: 'Invalid billing interval selected.' },
+      { status: 400 }
+    )
+  }
+
+  if (!VALID_CHECKOUT_SOURCES.has(source)) {
+    return NextResponse.json(
+      { error: 'Invalid checkout source.' },
       { status: 400 }
     )
   }
@@ -79,17 +90,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const admin = createAdminClient()
-    const tierResult = await admin
+    const tierResult = await supabase
       .from('tiers')
-      .select('slug, display_name, is_active, stripe_price_id_monthly, stripe_price_id_annual')
+      .select('slug, is_active, stripe_price_id_monthly, stripe_price_id_annual')
       .eq('slug', planSlug)
       .maybeSingle()
 
     if (tierResult.error) {
-      console.error('[billing/checkout] Failed to read tier:', tierResult.error)
+      console.error('[billing/checkout] Failed to read tier:', {
+        planSlug,
+        error: tierResult.error,
+      })
       return NextResponse.json(
-        { error: 'Unable to start checkout right now. Please try again.' },
+        { error: 'Unable to load billing plan configuration right now. Please try again.' },
         { status: 500 }
       )
     }
@@ -110,11 +123,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const successUrl = new URL('/pricing', request.url)
+    const redirectPath = source === 'onboarding' ? '/onboarding' : '/pricing'
+    const successUrl = new URL(redirectPath, request.url)
     successUrl.searchParams.set('checkout', 'success')
     successUrl.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}')
 
-    const cancelUrl = new URL('/pricing', request.url)
+    const cancelUrl = new URL(redirectPath, request.url)
     cancelUrl.searchParams.set('checkout', 'cancelled')
 
     const stripeBody = new URLSearchParams()
@@ -126,6 +140,7 @@ export async function POST(request: NextRequest) {
     stripeBody.set('allow_promotion_codes', 'true')
     stripeBody.set('metadata[plan_slug]', planSlug)
     stripeBody.set('metadata[billing_interval]', billingInterval)
+    stripeBody.set('metadata[source]', source)
 
     stripeBody.set('client_reference_id', user.id)
 

@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, type ComponentType } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { AlertTriangle, BarChart3, ShieldCheck } from 'lucide-react'
 import { signup, signInWithGoogle } from '../actions'
-import { signupSchema, type SignupInput } from '@/lib/validations/auth'
+import { emailSignupSchema, type EmailSignupInput } from '@/lib/validations/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Form,
   FormControl,
@@ -21,10 +21,6 @@ import {
 } from '@/components/ui/form'
 import { toast } from 'sonner'
 
-/**
- * Google Icon component
- * Using neutral colors per ComplyEur design standards (no Google branding colors)
- */
 function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -41,41 +37,59 @@ function GoogleIcon({ className }: { className?: string }) {
   )
 }
 
+function SignupFeature({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: ComponentType<{ className?: string }>
+  title: string
+  description: string
+}) {
+  return (
+    <div className="rounded-xl border border-white/15 bg-white/5 p-4 backdrop-blur-sm">
+      <div className="mb-2 flex items-center gap-2">
+        <Icon className="h-4 w-4 text-brand-200" />
+        <h3 className="text-sm font-semibold text-white">{title}</h3>
+      </div>
+      <p className="text-sm leading-relaxed text-slate-200">{description}</p>
+    </div>
+  )
+}
+
 function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const searchParams = useSearchParams()
 
-  const form = useForm<SignupInput>({
-    resolver: zodResolver(signupSchema),
+  const form = useForm<EmailSignupInput>({
+    resolver: zodResolver(emailSignupSchema),
     defaultValues: {
+      name: '',
       email: '',
       companyName: '',
       password: '',
       confirmPassword: '',
-      termsAccepted: false,
     },
   })
 
-  // Show error from URL params (e.g., from OAuth callback failures)
   useEffect(() => {
     const error = searchParams.get('error')
     if (error) {
       toast.error(error)
-      // Clear the error from URL without full page reload
       window.history.replaceState({}, '', '/signup')
     }
   }, [searchParams])
 
-  async function onSubmit(data: SignupInput) {
+  async function onSubmit(data: EmailSignupInput) {
     setIsLoading(true)
     try {
       const formData = new FormData()
+      formData.append('name', data.name)
       formData.append('email', data.email)
       formData.append('companyName', data.companyName)
       formData.append('password', data.password)
       formData.append('confirmPassword', data.confirmPassword)
-      formData.append('termsAccepted', String(data.termsAccepted))
       await signup(formData)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Signup failed')
@@ -92,78 +106,45 @@ function SignupForm() {
       toast.error(error instanceof Error ? error.message : 'Google sign-in failed')
       setIsGoogleLoading(false)
     }
-    // Note: Don't set loading to false on success - the redirect will unmount the component
   }
 
   const isAnyLoading = isLoading || isGoogleLoading
 
   return (
-    <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10">
-      <div className="h-1 w-full bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400" />
-      <CardHeader className="pb-4">
-        <p className="inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-700">
-          Account setup
-        </p>
-        <CardTitle asChild>
-          <h1 className="text-2xl">Create your account</h1>
-        </CardTitle>
-        <CardDescription>
-          Set up your workspace and start managing Schengen compliance.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full border-slate-300 bg-white hover:bg-slate-50"
-            onClick={handleGoogleSignIn}
-            disabled={isAnyLoading}
-          >
-            {isGoogleLoading ? (
-              'Redirecting to Google...'
-            ) : (
-              <>
-                <GoogleIcon className="mr-2 h-4 w-4" />
-                Continue with Google
-              </>
-            )}
-          </Button>
-          <p className="mt-2 text-xs text-muted-foreground text-center">
-            By signing up with Google, you agree to our{' '}
-            <Link
-              href="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-700 hover:underline"
-            >
-              Terms
-            </Link>{' '}
-            and{' '}
-            <Link
-              href="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-700 hover:underline"
-            >
-              Privacy Policy
-            </Link>
+    <section className="grid overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10 lg:grid-cols-2">
+      <div className="p-6 sm:p-8 lg:p-10">
+        <div className="mb-8">
+          <p className="inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-700">
+            Get started
           </p>
-        </div>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              Or create account with email
-            </span>
-          </div>
+          <h1 className="mt-3 text-2xl font-semibold text-slate-900">Create your account</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Set up your workspace and start tracking Schengen compliance today.
+          </p>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="Your full name"
+                      autoComplete="name"
+                      required
+                      disabled={isAnyLoading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="email"
@@ -173,7 +154,7 @@ function SignupForm() {
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="name@company.com"
                       autoComplete="email"
                       required
                       disabled={isAnyLoading}
@@ -189,11 +170,11 @@ function SignupForm() {
               name="companyName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Company Name</FormLabel>
+                  <FormLabel>Company</FormLabel>
                   <FormControl>
                     <Input
                       type="text"
-                      placeholder="Enter your company name"
+                      placeholder="Your company name"
                       autoComplete="organization"
                       required
                       disabled={isAnyLoading}
@@ -244,92 +225,133 @@ function SignupForm() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="termsAccepted"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 py-2">
-                  <FormControl>
-                    <Checkbox
-                      id="terms-accepted"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={isAnyLoading}
-                      aria-labelledby="terms-label"
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <label
-                      id="terms-label"
-                      htmlFor="terms-accepted"
-                      className="text-sm font-normal cursor-pointer leading-none"
-                    >
-                      I agree to the{' '}
-                      <Link
-                        href="/terms"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-brand-700 hover:text-brand-800 underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Terms of Service
-                      </Link>{' '}
-                      and{' '}
-                      <Link
-                        href="/privacy"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-brand-700 hover:text-brand-800 underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Privacy Policy
-                      </Link>
-                    </label>
-                    <FormMessage />
-                  </div>
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" disabled={isAnyLoading}>
+            <Button type="submit" className="mt-2 h-11 w-full text-base" disabled={isAnyLoading}>
               {isLoading ? 'Creating account...' : 'Create account'}
             </Button>
           </form>
         </Form>
 
-        <div className="text-center space-y-3">
-          <div className="text-sm text-slate-600">
-            Already have an account?{' '}
-            <Link href="/login" className="text-brand-700 hover:underline">
-              Sign in
-            </Link>
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Or continue with
+          </span>
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 w-full border-slate-300 bg-white text-base hover:bg-slate-50"
+          onClick={handleGoogleSignIn}
+          disabled={isAnyLoading}
+        >
+          {isGoogleLoading ? (
+            'Redirecting to Google...'
+          ) : (
+            <>
+              <GoogleIcon className="mr-2 h-5 w-5" />
+              Continue with Google
+            </>
+          )}
+        </Button>
+
+        <p className="mt-4 text-xs text-slate-500">
+          By signing up, you agree to our{' '}
+          <Link
+            href="/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-700 hover:underline"
+          >
+            Terms
+          </Link>{' '}
+          and{' '}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-700 hover:underline"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
+
+        <p className="mt-4 text-sm text-slate-600">
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-brand-700 hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </div>
+
+      <aside className="relative border-t border-slate-200 bg-slate-900 p-6 sm:p-8 lg:border-l lg:border-t-0 lg:p-10">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-16 right-0 h-52 w-52 rounded-full bg-brand-500/25 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-56 w-56 rounded-full bg-brand-300/15 blur-3xl" />
+        </div>
+        <div className="relative space-y-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-200/90">
+              Compliance-first workflow
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">
+              See risk early and keep your team moving.
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-200">
+              ComplyEur gives your team one place to plan travel, monitor allowance, and export
+              defensible records when it matters.
+            </p>
           </div>
-          <div className="text-xs text-slate-500">
-            Exploring first?{' '}
-            <Link href="/landing" className="font-medium text-brand-700 hover:underline">
-              Visit the landing page
-            </Link>
+
+          <div className="space-y-3">
+            <SignupFeature
+              icon={ShieldCheck}
+              title="90/180 tracking"
+              description="Automatically monitor rolling-day allowances for every traveler."
+            />
+            <SignupFeature
+              icon={AlertTriangle}
+              title="Proactive risk alerts"
+              description="Flag upcoming breaches before plans become expensive mistakes."
+            />
+            <SignupFeature
+              icon={BarChart3}
+              title="Audit-ready exports"
+              description="Generate concise reports for internal checks or external review."
+            />
+          </div>
+
+          <div className="rounded-xl border border-white/15 bg-white/10 p-4">
+            <p className="text-sm font-medium text-white">Built for operational confidence.</p>
+            <p className="mt-1 text-sm text-slate-200">
+              Keep travel decisions, risk visibility, and compliance evidence in one flow.
+            </p>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </aside>
+    </section>
   )
 }
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={
-      <Card className="border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10">
-        <CardHeader>
-          <p className="inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-700">
-            Account setup
-          </p>
-          <CardTitle asChild>
-            <h1 className="text-2xl">Create your account</h1>
-          </CardTitle>
-          <CardDescription>Loading...</CardDescription>
-        </CardHeader>
-      </Card>
-    }>
+    <Suspense
+      fallback={
+        <Card className="border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10">
+          <CardHeader>
+            <p className="inline-flex w-fit items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-brand-700">
+              Get started
+            </p>
+            <CardTitle asChild>
+              <h1 className="text-2xl">Create your account</h1>
+            </CardTitle>
+            <CardDescription>Loading...</CardDescription>
+          </CardHeader>
+        </Card>
+      }
+    >
       <SignupForm />
     </Suspense>
   )

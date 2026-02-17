@@ -66,6 +66,17 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Quick Terms</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-slate-600">
+          <p><strong>Active:</strong> Paying company in good standing.</p>
+          <p><strong>Trial:</strong> Company is within trial period.</p>
+          <p><strong>Suspended:</strong> Access is restricted pending action.</p>
+        </CardContent>
+      </Card>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard

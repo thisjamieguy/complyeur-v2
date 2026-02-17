@@ -7,6 +7,7 @@ import { ComplianceTable } from '@/components/dashboard/compliance-table'
 import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
 import { AlertBanner } from '@/components/alerts/alert-banner'
+import { DashboardTour } from '@/components/onboarding/dashboard-tour'
 import { getUnacknowledgedAlertsAction } from '../actions'
 
 export const dynamic = 'force-dynamic'
@@ -75,7 +76,7 @@ async function AlertSection() {
 }
 
 interface DashboardPageProps {
-  searchParams: Promise<{ page?: string; search?: string }>
+  searchParams: Promise<{ page?: string; search?: string; tour?: string }>
 }
 
 /**
@@ -97,9 +98,25 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const params = await searchParams
   const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
   const search = params.search ?? ''
+  const forceTour = params.tour === '1'
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('dashboard_tour_completed_at')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError) {
+    console.error('[dashboard] Failed to load tour state:', profileError)
+  }
+
+  const shouldAutoStartTour = Boolean(profile && !profile.dashboard_tour_completed_at)
+  const shouldShowTour = forceTour || shouldAutoStartTour
 
   return (
     <div className="space-y-8">
+      {shouldShowTour && <DashboardTour startOpen={true} />}
+
       {/* Alert banner - shows unacknowledged alerts */}
       <Suspense fallback={<AlertSkeleton />}>
         <AlertSection />
@@ -107,7 +124,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+        <div data-tour-id="tour-dashboard-home">
           <h1 className="text-xl sm:text-2xl font-semibold text-brand-900">
             Employee Compliance
           </h1>

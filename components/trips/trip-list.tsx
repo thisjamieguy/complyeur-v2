@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { MoreHorizontal, Pencil, Trash2, ArrowUpDown, UserMinus } from 'lucide-react'
 import {
   Table,
@@ -29,6 +29,8 @@ import {
 } from '@/lib/constants/schengen-countries'
 import { getWindowBounds, parseDateOnlyAsUTC } from '@/lib/compliance'
 import type { Trip, Employee } from '@/types/database-helpers'
+import { TripTypeLegend } from '@/components/compliance/risk-legends'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface TripListProps {
   trips: Trip[]
@@ -48,6 +50,18 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
   const [sortField, setSortField] = useState<SortField>('entry_date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [tripFilter, setTripFilter] = useState<TripFilter>('180')
+  const [inlineMessage, setInlineMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    const tripUpdatedHandler = (event: Event) => {
+      const customEvent = event as CustomEvent<string>
+      setInlineMessage(customEvent.detail || 'Trip list updated successfully.')
+    }
+    window.addEventListener('complyeur:trip-updated', tripUpdatedHandler as EventListener)
+    return () => {
+      window.removeEventListener('complyeur:trip-updated', tripUpdatedHandler as EventListener)
+    }
+  }, [])
 
   const filteredTrips = useMemo(() => {
     if (tripFilter === 'all') return trips
@@ -126,7 +140,7 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
 
   function displayCountry(trip: Trip): string {
     if (trip.is_private) {
-      return 'XX (Private)'
+      return 'Hidden destination'
     }
     return getCountryName(trip.country)
   }
@@ -137,7 +151,18 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
         <p className="text-sm text-gray-500">
           Showing {sortedTrips.length} of {trips.length} trips
         </p>
-        <div className="inline-flex rounded-lg border border-gray-200 p-0.5">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setTripFilter('180')
+              setSortField('entry_date')
+              setSortDirection('desc')
+            }}
+            className="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors"
+          >
+            Reset view
+          </button>
+          <div className="inline-flex rounded-lg border border-gray-200 p-0.5">
           <button
             onClick={() => setTripFilter('180')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
@@ -158,8 +183,31 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
           >
             All time
           </button>
+          </div>
         </div>
       </div>
+
+      <div className="mb-4">
+        <TripTypeLegend />
+      </div>
+
+      {inlineMessage && (
+        <div className="mb-4">
+          <Alert>
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span>{inlineMessage}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setInlineMessage(null)}
+              >
+                Dismiss
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       {sortedTrips.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-slate-50">
@@ -219,12 +267,12 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
                     {getCountryBadge(trip.country, trip.is_private ?? false)}
                     {trip.is_private && (
                       <Badge variant="secondary" className="text-xs">
-                        Private
+                        Private trip
                       </Badge>
                     )}
                     {trip.ghosted && (
                       <Badge variant="outline" className="text-xs">
-                        Excluded
+                        Excluded from compliance
                       </Badge>
                     )}
                   </div>

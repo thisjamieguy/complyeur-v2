@@ -156,6 +156,8 @@ export async function GET(request: Request) {
     }
   }
 
+  let isNewOAuthUser = false
+
   if (isOAuthUser && !existingProfile) {
     const email = user.email || ''
     const companyName = inferCompanyNameFromEmail(email)
@@ -196,6 +198,7 @@ export async function GET(request: Request) {
     }
 
     console.log('Successfully created company for OAuth user:', { companyId })
+    isNewOAuthUser = true
   }
 
   // Update last activity (non-blocking - don't fail auth if this fails)
@@ -209,6 +212,7 @@ export async function GET(request: Request) {
     console.warn('Failed to update last activity after auth callback:', activityError.message)
   }
 
-  // Success - redirect to intended destination
-  return NextResponse.redirect(`${origin}${next}`)
+  // New OAuth users go to onboarding; returning users go to intended destination
+  const destination = isNewOAuthUser ? '/onboarding' : next
+  return NextResponse.redirect(`${origin}${destination}`)
 }

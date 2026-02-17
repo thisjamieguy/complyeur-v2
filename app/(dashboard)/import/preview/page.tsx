@@ -131,12 +131,18 @@ export default function PreviewPage() {
         showSuccess('Import Complete', `Successfully imported ${session.format}`);
         router.push(`/import/success?session=${sessionId}`);
       } else {
-        showError('Import Failed', 'Some records could not be imported');
+        showError(
+          'Import Completed with Issues',
+          'Some rows could not be imported. Review warnings and download the error file.'
+        );
         router.push(`/import/success?session=${sessionId}`);
       }
     } catch (error) {
       console.error('Import error:', error);
-      showError('Import Error', 'An unexpected error occurred during import');
+      showError(
+        'Import Error',
+        'The import could not finish. Retry now or re-upload after fixing validation errors.'
+      );
     } finally {
       setIsImporting(false);
       setImportStage('idle');

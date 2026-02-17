@@ -176,6 +176,20 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                 subscriptionStatus={entitlements?.subscription_status ?? null}
                 hasStripeCustomer={hasStripeCustomer}
               />
+              <div className="bg-white rounded-xl border shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Dashboard Tour
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  Need a refresher on where key features live?
+                </p>
+                <Link
+                  href="/dashboard?tour=1"
+                  className="mt-4 inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-100"
+                >
+                  Replay guided tour
+                </Link>
+              </div>
               <DateFormatPreferences />
               <SecuritySettings />
 

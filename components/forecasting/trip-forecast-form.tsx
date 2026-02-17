@@ -92,7 +92,7 @@ export function TripForecastForm({
       const result = await onCalculate(employeeId, startDate, endDate, country);
       onResult(result);
     } catch {
-      setError('Failed to calculate. Please try again.');
+      setError('We could not calculate this scenario. Check your dates and employee selection, then try again.');
       onResult(null);
     } finally {
       setIsCalculating(false);
@@ -189,6 +189,9 @@ export function TripForecastForm({
           Reset
         </Button>
       </div>
+      <p className="text-xs text-slate-500">
+        Both entry and exit days count toward the 90-day Schengen limit.
+      </p>
     </form>
   );
 }

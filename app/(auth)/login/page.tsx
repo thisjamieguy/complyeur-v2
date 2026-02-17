@@ -76,7 +76,11 @@ function LoginForm() {
       formData.append('redirectTo', redirectTo)
       await login(formData)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Login failed')
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Sign-in failed. Check your credentials or reset your password.'
+      )
     } finally {
       setIsLoading(false)
     }
@@ -198,6 +202,9 @@ function LoginForm() {
             <Link href="/signup" className="text-brand-700 hover:underline py-2">
               Sign up
             </Link>
+          </div>
+          <div className="text-xs text-slate-500">
+            Need help signing in? Use password reset or contact support.
           </div>
           <div className="text-xs text-slate-500 pt-1">
             Exploring first?{' '}

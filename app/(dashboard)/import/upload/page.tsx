@@ -7,7 +7,7 @@ import { FileDropzone } from '@/components/import/FileDropzone';
 import { ColumnMappingUI } from '@/components/import/ColumnMappingUI';
 import { DateFormatConfirmation } from '@/components/import/DateFormatConfirmation';
 import { StepIndicator } from '@/components/import/StepIndicator';
-import type { ImportFormat, MappingState, ParsedRow } from '@/types/import';
+import type { ImportFormat, MappingState } from '@/types/import';
 import { IMPORT_FORMATS } from '@/types/import';
 import { parseFileRaw, parseGanttFromData } from '@/lib/import/parser';
 import { validateRows, getValidationSummary } from '@/lib/import/validator';
@@ -62,7 +62,6 @@ export default function UploadPage() {
 
   // Raw parsed data (before mapping)
   const [rawData, setRawData] = useState<Record<string, unknown>[] | null>(null);
-  const [rawHeaders, setRawHeaders] = useState<string[] | null>(null);
 
   // Column mapping state
   const [mappingState, setMappingState] = useState<MappingState | null>(null);
@@ -158,7 +157,6 @@ export default function UploadPage() {
 
       setProcessingStage('validating');
       setRawData(parseResult.rawData);
-      setRawHeaders(parseResult.rawHeaders);
 
       // Step 3: Load saved mappings and initialize mapping state
       const savedMappings = await loadSavedMappings(format);
@@ -202,7 +200,10 @@ export default function UploadPage() {
       );
     } catch (error) {
       console.error('File processing error:', error);
-      showError('Processing Error', 'An unexpected error occurred while processing the file');
+      showError(
+        'Processing Error',
+        'We could not process this file. Check the template format and try uploading again.'
+      );
       setIsProcessing(false);
       setProcessingStage('idle');
     }
@@ -260,7 +261,10 @@ export default function UploadPage() {
       await completeProcessing(data, state, currentSessionId);
     } catch (error) {
       console.error('Processing error:', error);
-      showError('Processing Error', 'An unexpected error occurred');
+      showError(
+        'Processing Error',
+        'We could not parse date fields. Confirm date columns and try again.'
+      );
       setIsProcessing(false);
       setProcessingStage('idle');
     }
@@ -308,7 +312,10 @@ export default function UploadPage() {
       router.push(`/import/preview?session=${currentSessionId}`);
     } catch (error) {
       console.error('Complete processing error:', error);
-      showError('Processing Error', 'An unexpected error occurred');
+      showError(
+        'Processing Error',
+        'We could not validate this file. Fix highlighted issues and retry.'
+      );
       setIsProcessing(false);
       setProcessingStage('idle');
     }
@@ -346,7 +353,7 @@ export default function UploadPage() {
       await proceedAfterMapping(rawData, mappingState, sessionId);
     } catch (error) {
       console.error('Mapping confirm error:', error);
-      showError('Error', 'Failed to save mapping');
+      showError('Error', 'Failed to save mapping. You can continue without saving this mapping.');
       setIsProcessing(false);
       setProcessingStage('idle');
     }
@@ -372,7 +379,6 @@ export default function UploadPage() {
     setShowMappingUI(false);
     setMappingState(null);
     setRawData(null);
-    setRawHeaders(null);
     setSessionId(null);
   };
 

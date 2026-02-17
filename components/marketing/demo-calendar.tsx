@@ -32,12 +32,12 @@ interface DemoCalendarProps {
   referenceDate?: Date
 }
 
-const DAY_WIDTH = 28
-const DEFAULT_TOTAL_DAYS = 28
-const DEFAULT_TODAY_OFFSET = 14
+const DAY_WIDTH = 44
 const ROW_HEIGHT = 40
 const NAME_WIDTH = 120
 const DAY_MS = 24 * 60 * 60 * 1000
+const BUFFER_DAYS = 2
+const MIN_WINDOW_DAYS = 14
 
 const defaultEmployees: CalendarEmployeeRow[] = [
   {
@@ -67,25 +67,12 @@ const defaultEmployees: CalendarEmployeeRow[] = [
   },
   {
     name: 'Lisa Martinez',
-    trips: [
-      { country: 'DE', startDay: 5, duration: 8, riskLevel: 'red' },
-    ],
+    trips: [{ country: 'DE', startDay: 5, duration: 8, riskLevel: 'red' }],
   },
 ]
 
-function generateDefaultDayLabels(): string[] {
-  const labels: string[] = []
-  const baseDay = 10
-
-  for (let i = 0; i < DEFAULT_TOTAL_DAYS; i++) {
-    const day = ((baseDay + i - 1) % 31) + 1
-    labels.push(day.toString())
-  }
-
-  return labels
-}
-
-const defaultDayLabels = generateDefaultDayLabels()
+const DEFAULT_TOTAL_DAYS = 28
+const DEFAULT_TODAY_OFFSET = 14
 
 const riskStyles = {
   green: 'bg-green-500',
@@ -111,17 +98,86 @@ function parseDateInput(input: Date | string): Date | null {
   return startOfDay(rawDate)
 }
 
-// Simplified illustrative risk mapping for preview mode.
 function getRiskLevelFromDuration(durationDays: number): RiskLevel {
   if (durationDays <= 7) return 'green'
   if (durationDays <= 14) return 'amber'
   return 'red'
 }
 
+function generateDayLabels(windowStartDate: Date, totalDays: number): string[] {
+  return Array.from({ length: totalDays }, (_, i) => {
+    const date = addDays(windowStartDate, i)
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  })
+}
+
+function generateDefaultDayLabels(): string[] {
+  const labels: string[] = []
+  const baseDay = 10
+  for (let i = 0; i < DEFAULT_TOTAL_DAYS; i++) {
+    const day = ((baseDay + i - 1) % 31) + 1
+    labels.push(day.toString())
+  }
+  return labels
+}
+
+const defaultDayLabels = generateDefaultDayLabels()
+
+function computeAutoFitWindow(employees: DemoCalendarEmployee[]): {
+  startDate: Date
+  endDate: Date
+  totalDays: number
+} {
+  let earliest: Date | null = null
+  let latest: Date | null = null
+
+  for (const employee of employees) {
+    for (const trip of employee.trips) {
+      const entry = parseDateInput(trip.entryDate)
+      const exit = parseDateInput(trip.exitDate)
+      if (!entry || !exit || exit < entry) continue
+
+      if (!earliest || entry < earliest) earliest = entry
+      if (!latest || exit > latest) latest = exit
+    }
+  }
+
+  if (!earliest || !latest) {
+    const today = startOfDay(new Date())
+    const halfWindow = Math.floor(MIN_WINDOW_DAYS / 2)
+    return {
+      startDate: addDays(today, -halfWindow),
+      endDate: addDays(today, halfWindow - 1),
+      totalDays: MIN_WINDOW_DAYS,
+    }
+  }
+
+  const bufferedStart = addDays(earliest, -BUFFER_DAYS)
+  const bufferedEnd = addDays(latest, BUFFER_DAYS)
+  const rawDays = diffInDays(bufferedEnd, bufferedStart) + 1
+  const totalDays = Math.max(rawDays, MIN_WINDOW_DAYS)
+
+  if (totalDays > rawDays) {
+    const extra = totalDays - rawDays
+    const padBefore = Math.floor(extra / 2)
+    return {
+      startDate: addDays(bufferedStart, -padBefore),
+      endDate: addDays(bufferedStart, totalDays - padBefore - 1),
+      totalDays,
+    }
+  }
+
+  return {
+    startDate: bufferedStart,
+    endDate: bufferedEnd,
+    totalDays,
+  }
+}
+
 function convertEmployeesForWindow(
   employees: DemoCalendarEmployee[],
-  startDate: Date,
-  endDate: Date
+  windowStartDate: Date,
+  windowEndDate: Date
 ): CalendarEmployeeRow[] {
   return employees.map((employee) => {
     const trips = employee.trips
@@ -134,8 +190,8 @@ function convertEmployeesForWindow(
         }
 
         const fullDuration = diffInDays(exitDate, entryDate) + 1
-        const clippedStart = entryDate < startDate ? startDate : entryDate
-        const clippedEnd = exitDate > endDate ? endDate : exitDate
+        const clippedStart = entryDate < windowStartDate ? windowStartDate : entryDate
+        const clippedEnd = exitDate > windowEndDate ? windowEndDate : exitDate
 
         if (clippedEnd < clippedStart) {
           return null
@@ -143,7 +199,7 @@ function convertEmployeesForWindow(
 
         return {
           country: trip.country.toUpperCase().slice(0, 2),
-          startDay: diffInDays(clippedStart, startDate),
+          startDay: diffInDays(clippedStart, windowStartDate),
           duration: diffInDays(clippedEnd, clippedStart) + 1,
           riskLevel: getRiskLevelFromDuration(fullDuration),
         }
@@ -188,24 +244,33 @@ export function DemoCalendar({
   referenceDate = new Date(),
 }: DemoCalendarProps) {
   const isPropDriven = Array.isArray(employees)
-  const normalizedWindowDays = Math.max(7, Math.floor(windowDays))
-  const centeredTodayOffset = Math.floor(normalizedWindowDays / 2)
-  const normalizedReferenceDate = startOfDay(referenceDate)
-  const windowStartDate = addDays(normalizedReferenceDate, -centeredTodayOffset)
-  const windowEndDate = addDays(windowStartDate, normalizedWindowDays - 1)
+
+  // Auto-fit mode: compute window from trip data
+  const autoFitWindow = isPropDriven ? computeAutoFitWindow(employees) : null
+
+  const windowStartDate = autoFitWindow
+    ? autoFitWindow.startDate
+    : addDays(startOfDay(referenceDate), -Math.floor(Math.max(7, Math.floor(windowDays)) / 2))
+
+  const totalDays = autoFitWindow
+    ? autoFitWindow.totalDays
+    : Math.max(7, Math.floor(windowDays))
+
+  const windowEndDate = addDays(windowStartDate, totalDays - 1)
 
   const dayLabels = isPropDriven
-    ? Array.from({ length: normalizedWindowDays }, (_, index) =>
-        addDays(windowStartDate, index).getDate().toString()
-      )
+    ? generateDayLabels(windowStartDate, totalDays)
     : defaultDayLabels
 
   const rows = isPropDriven
     ? convertEmployeesForWindow(employees, windowStartDate, windowEndDate)
     : defaultEmployees
 
-  const totalDays = isPropDriven ? normalizedWindowDays : DEFAULT_TOTAL_DAYS
-  const todayOffset = isPropDriven ? centeredTodayOffset : DEFAULT_TODAY_OFFSET
+  // Today marker — only show if today falls within the visible window
+  const today = startOfDay(new Date())
+  const todayIndex = diffInDays(today, windowStartDate)
+  const showTodayMarker = todayIndex >= 0 && todayIndex < totalDays
+
   const timelineWidth = totalDays * DAY_WIDTH
 
   return (
@@ -234,16 +299,16 @@ export function DemoCalendar({
         <div className="flex-1 overflow-x-auto">
           <div className="relative" style={{ width: timelineWidth }}>
             <div className="relative flex h-8 border-b border-slate-200 bg-slate-50">
-              {dayLabels.map((day, idx) => (
+              {dayLabels.map((label, idx) => (
                 <div
-                  key={`${day}-${idx}`}
+                  key={`day-${idx}`}
                   className={cn(
-                    'flex shrink-0 items-center justify-center border-r border-slate-100 text-xs',
-                    idx === todayOffset && 'bg-blue-50 font-semibold text-blue-600'
+                    'flex shrink-0 items-center justify-center border-r border-slate-100 text-xs text-slate-500',
+                    showTodayMarker && idx === todayIndex && 'bg-blue-50 font-semibold text-blue-600'
                   )}
                   style={{ width: DAY_WIDTH }}
                 >
-                  {day}
+                  {label}
                 </div>
               ))}
             </div>
@@ -258,7 +323,10 @@ export function DemoCalendar({
                   {dayLabels.map((_, idx) => (
                     <div
                       key={idx}
-                      className={cn('shrink-0 border-r border-slate-50', idx === todayOffset && 'bg-blue-50/50')}
+                      className={cn(
+                        'shrink-0 border-r border-slate-50',
+                        showTodayMarker && idx === todayIndex && 'bg-blue-50/50'
+                      )}
                       style={{ width: DAY_WIDTH }}
                     />
                   ))}
@@ -270,10 +338,12 @@ export function DemoCalendar({
               </div>
             ))}
 
-            <div
-              className="pointer-events-none absolute bottom-0 top-8 z-10 w-0.5 bg-blue-500"
-              style={{ left: todayOffset * DAY_WIDTH + DAY_WIDTH / 2 }}
-            />
+            {showTodayMarker && (
+              <div
+                className="pointer-events-none absolute bottom-0 top-8 z-10 w-0.5 bg-blue-500"
+                style={{ left: todayIndex * DAY_WIDTH + DAY_WIDTH / 2 }}
+              />
+            )}
           </div>
         </div>
       </div>

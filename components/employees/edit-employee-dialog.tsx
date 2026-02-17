@@ -70,6 +70,11 @@ export function EditEmployeeDialog({ employee, open, onOpenChange }: EditEmploye
     try {
       await updateEmployeeAction(employee.id, data)
       showSuccess('Employee updated successfully')
+      window.dispatchEvent(
+        new CustomEvent('complyeur:employee-updated', {
+          detail: 'Employee updated successfully.',
+        })
+      )
       onOpenChange(false)
       router.refresh()
     } catch (error) {

@@ -57,15 +57,15 @@ test.describe('Authentication Performance', () => {
     const uniqueEmail = generateUniqueEmail()
     await page.goto('/signup')
 
+    await page.getByLabel('Name').fill('Performance Test User')
     await page.getByLabel('Email').fill(uniqueEmail)
-    await page.getByLabel('Company Name').fill('Performance Test Company')
+    await page.getByLabel('Company').fill('Performance Test Company')
     await page.locator('input[name="password"]').fill(defaultPassword)
     await page.locator('input[name="confirmPassword"]').fill(defaultPassword)
-    await page.getByRole('checkbox').click()
 
     const startTime = performance.now()
     await page.getByRole('button', { name: /create account/i }).click()
-    await page.waitForURL(/\/dashboard/) // Wait for navigation to the dashboard
+    await page.waitForURL(/\/onboarding/) // Wait for navigation to onboarding
     const duration = performance.now() - startTime
 
     console.log(`Signup performance: ${duration.toFixed(2)} ms`)

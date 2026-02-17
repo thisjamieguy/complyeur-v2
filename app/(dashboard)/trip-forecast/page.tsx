@@ -11,6 +11,7 @@ import { getEmployeesForSelect, getAllTripsGroupedByEmployee } from '@/lib/db';
 import { checkEntitlement } from '@/lib/billing/entitlements';
 import { TripForecastCalculator } from './trip-forecast-calculator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ForecastRiskLegend } from '@/components/compliance/risk-legends';
 
 async function TripForecastContent() {
   const [employees, groupedData] = await Promise.all([
@@ -46,6 +47,19 @@ export default async function TripForecastPage() {
           Test hypothetical trips to check compliance before scheduling.
         </p>
       </div>
+
+      <ForecastRiskLegend />
+
+      <details className="rounded-lg border border-slate-200 bg-white p-4">
+        <summary className="cursor-pointer text-sm font-medium text-slate-800">
+          How this forecast works
+        </summary>
+        <div className="mt-3 space-y-2 text-sm text-slate-600">
+          <p>The calculator checks a proposed trip against the rolling 180-day window.</p>
+          <p>Entry and exit days both count toward the 90-day Schengen limit.</p>
+          <p>Use this before booking to reduce over-limit travel risk.</p>
+        </div>
+      </details>
 
       <Suspense
         fallback={

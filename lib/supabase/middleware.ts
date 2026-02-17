@@ -46,7 +46,7 @@ export async function updateSession(request: NextRequest) {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, company_id, created_at')
+    .select('id, company_id, created_at, onboarding_completed_at')
     .eq('id', user.id)
     .single()
 
@@ -58,36 +58,13 @@ export async function updateSession(request: NextRequest) {
   if (profileError || !profile?.company_id) {
     // Don't sign out new users immediately - give profile creation time to complete
     if (isNewUser) {
-      return { supabaseResponse, user, sessionExpired: false }
+      return { supabaseResponse, user, needsOnboarding: false, sessionExpired: false }
     }
     await supabase.auth.signOut()
-    return { supabaseResponse, user: null, sessionExpired: true }
+    return { supabaseResponse, user: null, needsOnboarding: false, sessionExpired: true }
   }
 
-  // Session timeout check disabled - last_activity_at column not yet deployed
-  // TODO: Re-enable after deploying the last_activity_at migration
-  // const { data: settings } = await supabase
-  //   .from('company_settings')
-  //   .select('session_timeout_minutes')
-  //   .eq('company_id', profile.company_id)
-  //   .single()
-  //
-  // const sessionTimeoutMinutes = settings?.session_timeout_minutes ?? 30
-  // const now = new Date()
-  // const lastActivityAt = profile.last_activity_at ? new Date(profile.last_activity_at) : null
-  //
-  // if (lastActivityAt) {
-  //   const inactivityMs = now.getTime() - lastActivityAt.getTime()
-  //   if (inactivityMs > sessionTimeoutMinutes * 60 * 1000) {
-  //     await supabase.auth.signOut()
-  //     return { supabaseResponse, user: null, sessionExpired: true }
-  //   }
-  // }
-  //
-  // await supabase
-  //   .from('profiles')
-  //   .update({ last_activity_at: now.toISOString() })
-  //   .eq('id', user.id)
+  const needsOnboarding = !profile.onboarding_completed_at
 
-  return { supabaseResponse, user, sessionExpired: false }
+  return { supabaseResponse, user, needsOnboarding, sessionExpired: false }
 }

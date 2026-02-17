@@ -31,6 +31,8 @@ const passwordSchema = z
 
 // Company name pattern: allows letters, numbers, spaces, common business characters
 const companyNamePattern = /^[\p{L}\p{N}\s\-&.,''()]+$/u
+// Full name pattern: allows letters (including accents), spaces, apostrophes, periods, and hyphens
+const fullNamePattern = /^[\p{L}\p{M}\s.'-]+$/u
 
 export const loginSchema = z.object({
   email: z
@@ -77,6 +79,41 @@ export const signupSchema = z
     path: ['confirmPassword'],
   })
 
+export const emailSignupSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1, 'Name is required')
+      .min(2, 'Name must be at least 2 characters')
+      .max(100, 'Name must be less than 100 characters')
+      .trim()
+      .refine((val) => fullNamePattern.test(val), 'Name contains invalid characters'),
+    email: z
+      .string()
+      .min(1, 'Email is required')
+      .email('Please enter a valid email address')
+      .max(254, 'Email must be less than 254 characters')
+      .transform((val) => val.trim().toLowerCase()),
+    companyName: z
+      .string()
+      .min(1, 'Company name is required')
+      .min(2, 'Company name must be at least 2 characters')
+      .max(100, 'Company name must be less than 100 characters')
+      .trim()
+      .refine(
+        (val) => companyNamePattern.test(val),
+        'Company name contains invalid characters'
+      ),
+    password: passwordSchema,
+    confirmPassword: z
+      .string()
+      .min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
+
 export const forgotPasswordSchema = z.object({
   email: z
     .string()
@@ -102,6 +139,7 @@ export type LoginInput = z.infer<typeof loginSchema>
 export type SignupInput = z.infer<typeof signupSchema>
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
+export type EmailSignupInput = z.infer<typeof emailSignupSchema>
 
 /**
  * Get password strength feedback

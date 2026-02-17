@@ -6,6 +6,8 @@ import Image from 'next/image'
 import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context'
 import { Sidebar } from './sidebar'
 import { MobileNav } from '@/components/navigation/mobile-nav'
+import { KeyboardShortcuts } from '@/components/navigation/keyboard-shortcuts'
+import { ShortcutHelpDialog } from '@/components/navigation/shortcut-help-dialog'
 import { Footer } from './footer'
 import type { UserMenuUser } from './user-menu'
 import { cn } from '@/lib/utils'
@@ -64,6 +66,8 @@ function AppShellContent({ children, user }: AppShellProps) {
 export function AppShell({ children, user }: AppShellProps) {
   return (
     <SidebarProvider>
+      <KeyboardShortcuts />
+      <ShortcutHelpDialog />
       <AppShellContent user={user}>{children}</AppShellContent>
     </SidebarProvider>
   )

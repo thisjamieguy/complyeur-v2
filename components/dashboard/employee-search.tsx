@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -29,6 +29,20 @@ export function EmployeeSearch({
 }: EmployeeSearchProps) {
   // Local state for immediate input feedback
   const [localValue, setLocalValue] = useState(value)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    setLocalValue(value)
+  }, [value])
+
+  useEffect(() => {
+    const handleFocus = () => {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }
+    window.addEventListener('complyeur:focus-dashboard-search', handleFocus)
+    return () => window.removeEventListener('complyeur:focus-dashboard-search', handleFocus)
+  }, [])
 
   // Debounced callback for parent updates
   const debouncedOnChange = useDebouncedCallback(
@@ -59,6 +73,8 @@ export function EmployeeSearch({
         aria-hidden="true"
       />
       <Input
+        id="employee-search-input"
+        ref={inputRef}
         type="text"
         value={localValue}
         onChange={handleChange}

@@ -1026,12 +1026,14 @@ export type Database = {
           auth_provider: string | null
           company_id: string | null
           created_at: string | null
+          dashboard_tour_completed_at: string | null
           first_name: string | null
           full_name: string | null
           id: string
           is_superadmin: boolean | null
           last_activity_at: string | null
           last_name: string | null
+          onboarding_completed_at: string | null
           role: string | null
           terms_accepted_at: string | null
           updated_at: string | null
@@ -1040,12 +1042,14 @@ export type Database = {
           auth_provider?: string | null
           company_id?: string | null
           created_at?: string | null
+          dashboard_tour_completed_at?: string | null
           first_name?: string | null
           full_name?: string | null
           id: string
           is_superadmin?: boolean | null
           last_activity_at?: string | null
           last_name?: string | null
+          onboarding_completed_at?: string | null
           role?: string | null
           terms_accepted_at?: string | null
           updated_at?: string | null
@@ -1054,12 +1058,14 @@ export type Database = {
           auth_provider?: string | null
           company_id?: string | null
           created_at?: string | null
+          dashboard_tour_completed_at?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string
           is_superadmin?: boolean | null
           last_activity_at?: string | null
           last_name?: string | null
+          onboarding_completed_at?: string | null
           role?: string | null
           terms_accepted_at?: string | null
           updated_at?: string | null

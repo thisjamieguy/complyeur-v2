@@ -40,6 +40,11 @@ export function EmployeeActions({ employee }: EmployeeActionsProps) {
     try {
       await deleteEmployeeAction(employee.id)
       toast.success('Employee deleted successfully')
+      window.dispatchEvent(
+        new CustomEvent('complyeur:employee-updated', {
+          detail: 'Employee deleted successfully.',
+        })
+      )
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to delete employee')

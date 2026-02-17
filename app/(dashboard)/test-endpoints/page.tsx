@@ -18,6 +18,7 @@ type TestResult = {
 export default function TestEndpointsPage() {
   const [results, setResults] = useState<Record<string, TestResult>>({})
   const [testData, setTestData] = useState({
+    name: 'Test User',
     email: 'test@example.com',
     password: 'TestPassword123!',
     confirmPassword: 'TestPassword123!',
@@ -57,6 +58,7 @@ export default function TestEndpointsPage() {
     updateResult('signup', 'testing', 'Testing signup...')
     try {
       const formData = new FormData()
+      formData.append('name', testData.name)
       formData.append('email', testData.email)
       formData.append('password', testData.password)
       formData.append('confirmPassword', testData.confirmPassword)
@@ -206,6 +208,15 @@ export default function TestEndpointsPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={testData.name}
+                onChange={(e) => setTestData({ ...testData, name: e.target.value })}
+                placeholder="Test User"
+              />
+            </div>
             <div>
               <Label htmlFor="email">Email</Label>
               <Input
@@ -415,4 +426,3 @@ export default function TestEndpointsPage() {
     </div>
   )
 }
-
