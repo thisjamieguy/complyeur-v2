@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: close beta launch blockers and add analytics [`0dcde22`](https://github.com/thisjamieguy/complyeur-v2/commit/0dcde2244270eb13dc04ea1c37d4ab86b9436f78)
 - chore: complete beta launch audit (sections 5-18) [`e089a06`](https://github.com/thisjamieguy/complyeur-v2/commit/e089a06efa170dc3f9b12d35e64c21dd90ed35af)
 - test(e2e): harden multi-user UX and stabilize suite [`5ebe9c3`](https://github.com/thisjamieguy/complyeur-v2/commit/5ebe9c3d786e73e96cb9ebcfec73680efd7de6e2)
 - fix: sandbox calendar auto-fit with dynamic column width and month headers [`9de3e90`](https://github.com/thisjamieguy/complyeur-v2/commit/9de3e90096b5933f37a018abb9108e1e99d9e21b)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): sync unreleased entries [`1000bd7`](https://github.com/thisjamieguy/complyeur-v2/commit/1000bd7d614fb48c4d367e75bfcae6001d39fbda)
 - chore(changelog): sync unreleased entries [`25f61be`](https://github.com/thisjamieguy/complyeur-v2/commit/25f61be15d2fffea750cfaa4d023844d59bfbb84)
 - feat: add Stripe billing, security hardening, and beta launch fixes [`03451b3`](https://github.com/thisjamieguy/complyeur-v2/commit/03451b3eed631132bc451ffa5b3bdc17a28851c1)
-- perf: improve landing TTFB and reduce hydration [`d5bf3c6`](https://github.com/thisjamieguy/complyeur-v2/commit/d5bf3c60cad1f4ca34110131e4108f1024543e48)
 
 ## v1.0.0 - 2026-01-22
 
