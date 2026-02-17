@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore(changelog): sync unreleased entries [`4d8aa5b`](https://github.com/thisjamieguy/complyeur-v2/commit/4d8aa5b86b9f5103fc07d3468f8e03faecb82870)
 - feat: ship UX remediation, onboarding, and related app updates [`41792bc`](https://github.com/thisjamieguy/complyeur-v2/commit/41792bc8590242bd0180596d70c9f60c569a88e6)
 - chore(changelog): sync unreleased entries [`1000bd7`](https://github.com/thisjamieguy/complyeur-v2/commit/1000bd7d614fb48c4d367e75bfcae6001d39fbda)
 - chore(changelog): sync unreleased entries [`25f61be`](https://github.com/thisjamieguy/complyeur-v2/commit/25f61be15d2fffea750cfaa4d023844d59bfbb84)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): sync unreleased entries [`39257af`](https://github.com/thisjamieguy/complyeur-v2/commit/39257af4cc4bb4bbc1ed646d53305e4d101bdfa8)
 - chore: sync local changes for landing redirect and stop hook [`ade618d`](https://github.com/thisjamieguy/complyeur-v2/commit/ade618d861ed947e07ef2d0785325dc2360e23ab)
 - chore(changelog): sync unreleased entries [`48dbbb9`](https://github.com/thisjamieguy/complyeur-v2/commit/48dbbb996a300745b3850c298f80da226ab94a31)
-- chore(changelog): sync unreleased entries [`ae5284c`](https://github.com/thisjamieguy/complyeur-v2/commit/ae5284cf500ecda2123c8a4ecb99e626e5a0c3e5)
 
 ## v1.0.0 - 2026-01-22
 
