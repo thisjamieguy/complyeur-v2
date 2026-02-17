@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
+  try {
   await requireSuperAdmin()
   const supabase = createAdminClient()
 
@@ -145,4 +146,8 @@ export default async function AdminDashboard() {
       </div>
     </div>
   )
+  } catch (err) {
+    console.error('[ADMIN PAGE ERROR]', err)
+    throw err
+  }
 }
