@@ -32,9 +32,9 @@ export default async function DashboardLayout({
 
   if (profileError) {
     if (profileError.code === 'PGRST116') {
-      console.error('[DashboardLayout] User profile not found for authenticated user:', user.id)
+      console.error('[DashboardLayout] User profile not found for authenticated user')
     } else {
-      console.error('[DashboardLayout] Failed to fetch user profile:', profileError)
+      console.error('[DashboardLayout] Failed to fetch user profile:', profileError.message)
     }
   }
 

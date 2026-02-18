@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown processing error'
     await markWebhookEventStatus(admin, event.id, 'failed', message)
-    console.error(`[billing/webhook] Error processing ${event.type}:`, error)
+    console.error(`[billing/webhook] Error processing ${event.type}: ${message}`)
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }
@@ -384,10 +384,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
       : invoice.customer?.id ?? null
 
   console.error(
-    `[billing/webhook] Payment failed for customer ${customerId}, subscription ${subscriptionId}`,
-    {
-      attemptCount: invoice.attempt_count,
-      amountDue: invoice.amount_due,
-    }
+    `[billing/webhook] Payment failed for subscription ${subscriptionId}`,
+    { attemptCount: invoice.attempt_count }
   )
 }

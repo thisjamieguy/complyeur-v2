@@ -90,7 +90,7 @@ export async function updateSession(request: NextRequest) {
       onboarding_completed: !!profile.onboarding_completed_at,
     },
   }).catch((err) => {
-    console.warn('[Middleware] Failed to backfill user_metadata:', err)
+    console.warn('[Middleware] Failed to backfill user_metadata:', err instanceof Error ? err.message : 'Unknown error')
   })
 
   // Site owner always bypasses onboarding

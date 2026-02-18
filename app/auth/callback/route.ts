@@ -87,7 +87,7 @@ export async function GET(request: Request) {
   const errorDescription = searchParams.get('error_description')
 
   if (error) {
-    console.error('Auth callback error:', { error, errorDescription })
+    console.error('[auth/callback] OAuth error:', error)
 
     const userMessage = getOAuthErrorMessage(error, errorDescription)
     return NextResponse.redirect(
@@ -105,7 +105,7 @@ export async function GET(request: Request) {
   const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
 
   if (exchangeError) {
-    console.error('Code exchange error:', exchangeError)
+    console.error('[auth/callback] Code exchange error:', exchangeError.message)
 
     // Check if this is an auth hook rejection
     if (exchangeError.message?.includes('already registered')) {
@@ -138,7 +138,7 @@ export async function GET(request: Request) {
     .maybeSingle()
 
   if (profileResult.error) {
-    console.error('Profile lookup error:', profileResult.error)
+    console.error('[auth/callback] Profile lookup error:', profileResult.error.message)
   }
 
   let existingProfile = profileResult.data
@@ -155,7 +155,7 @@ export async function GET(request: Request) {
     )
 
     if (inviteAcceptError) {
-      console.error('Invite acceptance error during callback:', inviteAcceptError)
+      console.error('[auth/callback] Invite acceptance error:', inviteAcceptError.message)
     } else if (invitedCompanyId) {
       const refreshedProfile = await supabase
         .from('profiles')
@@ -164,7 +164,7 @@ export async function GET(request: Request) {
         .maybeSingle()
 
       if (refreshedProfile.error) {
-        console.error('Profile refresh after invite acceptance failed:', refreshedProfile.error)
+        console.error('[auth/callback] Profile refresh after invite acceptance failed:', refreshedProfile.error.message)
       } else {
         existingProfile = refreshedProfile.data
         // Sync to user_metadata so middleware can skip the profiles query
@@ -181,11 +181,9 @@ export async function GET(request: Request) {
     const email = user.email || ''
     const companyName = inferCompanyNameFromEmail(email)
 
-    console.log('Creating company/profile for new OAuth user:', {
+    console.log('[auth/callback] Creating company/profile for new OAuth user:', {
       userId: user.id,
-      email,
       provider,
-      inferredCompany: companyName
     })
 
     // Extract name from OAuth metadata if available
@@ -206,7 +204,7 @@ export async function GET(request: Request) {
     )
 
     if (createError) {
-      console.error('Failed to create company/profile for OAuth user:', createError)
+      console.error('[auth/callback] Failed to create company/profile for OAuth user:', createError.message)
 
       // Sign out the user to prevent orphaned auth account
       await supabase.auth.signOut()
@@ -216,7 +214,7 @@ export async function GET(request: Request) {
       )
     }
 
-    console.log('Successfully created company for OAuth user:', { companyId })
+    console.log('[auth/callback] Company created for OAuth user')
 
     // Sync to user_metadata so middleware can skip the profiles query
     await supabase.auth.updateUser({

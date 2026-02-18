@@ -76,7 +76,7 @@ async function resolvePromotionCodeId(
   const payload = await response.json() as StripePromotionCodeLookupResponse
 
   if (!response.ok) {
-    console.error('[billing/checkout] Promotion code lookup failed:', payload)
+    console.error('[billing/checkout] Promotion code lookup failed:', payload.error?.message ?? 'Unknown error')
     return {
       promotionCodeId: null,
       error:
@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!stripeResponse.ok || !stripeData.url) {
-      console.error('[billing/checkout] Stripe session creation failed:', stripeData)
+      console.error('[billing/checkout] Stripe session creation failed:', stripeData.error?.message ?? 'Unknown error')
       return NextResponse.json(
         {
           error:

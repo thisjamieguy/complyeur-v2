@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: add complyeur@gmail.com as site owner across all auth checks [`a1d991b`](https://github.com/thisjamieguy/complyeur-v2/commit/a1d991bd1d3e498336e830c9269007cf02726261)
+- chore: sync pending docs and changelog updates [`c3ea064`](https://github.com/thisjamieguy/complyeur-v2/commit/c3ea064b215cbe9f527f25eb7c65342968a1552e)
 - perf: complete phases 7-10 of performance audit (18 fixes) [`bb01a25`](https://github.com/thisjamieguy/complyeur-v2/commit/bb01a25700d3d85d7913c2bdbf693ad5002c4a78)
 - perf: complete phase 6 architecture improvements (10 fixes) [`cb3a479`](https://github.com/thisjamieguy/complyeur-v2/commit/cb3a4793a13db4d8777c6a6e2dc9cbd2a9d31a98)
 - fix(test): update import-api mocks for requireCompanyAccessCached auth flow [`3448119`](https://github.com/thisjamieguy/complyeur-v2/commit/34481193fdf1c32d738cef428854ec3fbc313f3a)
@@ -17,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs: add performance audit report and reference in CLAUDE.md [`f6224b2`](https://github.com/thisjamieguy/complyeur-v2/commit/f6224b20c16564afb57795ed24e9fedee06e3a2c)
 - chore(changelog): sync auto-changelog [`1ed3485`](https://github.com/thisjamieguy/complyeur-v2/commit/1ed34859319484c1c5084a15252a780422780388)
 - fix(test): include nationality_type in employee form validation test [`3e30515`](https://github.com/thisjamieguy/complyeur-v2/commit/3e305152b1cc398ad99dabce61c497af66a26ab2)
-- perf: 6 high-priority performance fixes from audit [`43f6802`](https://github.com/thisjamieguy/complyeur-v2/commit/43f68020420b785efc2b2466b5ca7260e7a968aa)
-- chore: clean up project root — move docs, delete orphaned files, remove clutter [`266520e`](https://github.com/thisjamieguy/complyeur-v2/commit/266520eeae2f0fada1408a110b3b0d5a47b284e9)
 
 ## v1.0.0 - 2026-01-22
 
