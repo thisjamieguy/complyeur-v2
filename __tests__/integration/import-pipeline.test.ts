@@ -421,21 +421,23 @@ backwards@test.com,2025-11-15,2025-11-10,FR`;
       expect(validatedRows[2].errors.some(e => e.message.toLowerCase().includes('before'))).toBe(true);
     });
 
-    it('validates country codes (rejects invalid codes like XX)', async () => {
+    it('validates country codes (accepts any 2-letter code, warns for non-Schengen/EU)', async () => {
       const csv = `email,entry_date,exit_date,country
 valid@test.com,2025-11-01,2025-11-10,FR
-invalid@test.com,2025-11-01,2025-11-10,XX
-another@test.com,2025-11-01,2025-11-10,ZZ`;
+us@test.com,2025-11-01,2025-11-10,US
+other@test.com,2025-11-01,2025-11-10,ZZ`;
 
       const file = createCSVFile(csv);
       const parseResult = await parseFileRaw(file);
       const tripRows = toTripRows(parseResult.rawData!, parseResult.rawHeaders!);
       const validatedRows = await validateRows(tripRows, 'trips');
 
+      // All rows are valid (non-Schengen trips are recorded with a warning)
       expect(validatedRows[0].is_valid).toBe(true);
-      expect(validatedRows[1].is_valid).toBe(false);
-      expect(validatedRows[1].errors.some(e => e.column === 'country')).toBe(true);
-      expect(validatedRows[2].is_valid).toBe(false);
+      expect(validatedRows[1].is_valid).toBe(true);
+      expect(validatedRows[1].warnings.some(w => w.column === 'country')).toBe(true);
+      expect(validatedRows[2].is_valid).toBe(true);
+      expect(validatedRows[2].warnings.some(w => w.column === 'country')).toBe(true);
     });
 
     it('detects duplicate employees by name (returns warning)', async () => {

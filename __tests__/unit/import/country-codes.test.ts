@@ -44,10 +44,20 @@ describe('toCountryCode', () => {
     expect(toCountryCode('United Kingdom')).toBe('GB');
   });
 
-  it('returns null for unknown countries', () => {
+  it('passes through any 2-letter alphabetic code (worldwide ISO coverage)', () => {
+    expect(toCountryCode('US')).toBe('US');
+    expect(toCountryCode('JP')).toBe('JP');
+    expect(toCountryCode('CA')).toBe('CA');
+    expect(toCountryCode('AU')).toBe('AU');
+    expect(toCountryCode('ZW')).toBe('ZW');
+  });
+
+  it('returns null for non-ISO-format strings', () => {
     expect(toCountryCode('Unknown')).toBeNull();
-    expect(toCountryCode('XY')).toBeNull();
     expect(toCountryCode('Atlantis')).toBeNull();
+    expect(toCountryCode('123')).toBeNull();
+    expect(toCountryCode('ABC')).toBeNull();
+    expect(toCountryCode('D3')).toBeNull();
   });
 
   it('returns null for empty or invalid input', () => {
@@ -74,8 +84,15 @@ describe('isValidCountry', () => {
     expect(isValidCountry('FR')).toBe(true);
   });
 
-  it('returns false for invalid countries', () => {
+  it('returns true for any 2-letter alphabetic code', () => {
+    expect(isValidCountry('US')).toBe(true);
+    expect(isValidCountry('JP')).toBe(true);
+    expect(isValidCountry('ZW')).toBe(true);
+  });
+
+  it('returns false for non-ISO-format strings', () => {
     expect(isValidCountry('Unknown')).toBe(false);
-    expect(isValidCountry('XY')).toBe(false);
+    expect(isValidCountry('ABC')).toBe(false);
+    expect(isValidCountry('123')).toBe(false);
   });
 });

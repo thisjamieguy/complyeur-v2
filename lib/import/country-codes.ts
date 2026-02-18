@@ -270,25 +270,20 @@ const COUNTRY_NAME_TO_CODE: Record<string, string> = {
   RUMANÍA: 'RO', // Spanish (with accent)
 };
 
-// Valid 2-letter codes (for pass-through validation)
-const VALID_COUNTRY_CODES = new Set([
-  // Schengen
-  'AT', 'BE', 'HR', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR',
-  'HU', 'IS', 'IT', 'LV', 'LI', 'LT', 'LU', 'MT', 'NL', 'NO',
-  'PL', 'PT', 'SK', 'SI', 'ES', 'SE', 'CH',
-  // Non-Schengen EU
-  'IE', 'CY', 'GB', 'UK', 'BG', 'RO',
-]);
-
 /**
  * Converts a country name or code to its 2-letter ISO code.
  *
- * @param country - Country name ("Germany") or code ("DE")
+ * Accepts any ISO 3166-1 alpha-2 code (2 uppercase letters) as a valid
+ * pass-through, enabling worldwide coverage for tax and audit use cases.
+ * Full country names are resolved via COUNTRY_NAME_TO_CODE.
+ *
+ * @param country - Country name ("Germany") or code ("DE", "US", "JP", ...)
  * @returns 2-letter ISO code or null if not recognized
  *
  * @example
  * toCountryCode("Germany")  // "DE"
  * toCountryCode("DE")       // "DE"
+ * toCountryCode("US")       // "US"
  * toCountryCode("de")       // "DE"
  * toCountryCode("Unknown")  // null
  */
@@ -297,17 +292,17 @@ export function toCountryCode(country: string): string | null {
 
   const normalized = country.trim().toUpperCase();
 
-  // Handle "UK" alias for "GB" (check before general 2-letter code validation)
+  // Handle "UK" alias for "GB"
   if (normalized === 'UK') {
     return 'GB';
   }
 
-  // Already a valid 2-letter code
-  if (normalized.length === 2 && VALID_COUNTRY_CODES.has(normalized)) {
+  // Accept any ISO 3166-1 alpha-2 format: exactly 2 uppercase letters
+  if (/^[A-Z]{2}$/.test(normalized)) {
     return normalized;
   }
 
-  // Look up by name
+  // Look up by full country name (English, French, German, Spanish)
   const code = COUNTRY_NAME_TO_CODE[normalized];
   return code ?? null;
 }

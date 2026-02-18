@@ -318,17 +318,20 @@ function validateTripRow(
         severity: 'error',
       });
     } else if (NON_SCHENGEN_EU.has(countryCode)) {
-      // Non-Schengen trips are valid imports; they are recorded but excluded
-      // from Schengen 90/180 calculations. Surface this in preview as advisory UI.
+      // Non-Schengen EU trips are valid imports; recorded but excluded from
+      // Schengen 90/180 calculations.
       row.country = countryCode;
     } else if (!SCHENGEN_COUNTRIES.has(countryCode)) {
-      errors.push({
+      // Rest-of-world trip (e.g. US, CA, MX, AU) — valid to record for tax
+      // and audit purposes, but does not count towards the 90/180 day limit.
+      warnings.push({
         row: rowNum,
         column: 'country',
-        value: row.country,
-        message: `Unrecognized country: "${row.country}". Use a 2-letter country code (e.g., DE, FR) or country name in English, French, German, or Spanish.`,
-        severity: 'error',
+        value: countryCode,
+        message: `${countryCode} is outside Schengen/EU — trip will be recorded but won't count towards the 90/180 day limit.`,
+        severity: 'warning',
       });
+      row.country = countryCode;
     } else {
       // Valid Schengen country - store the converted code
       row.country = countryCode;
