@@ -179,7 +179,16 @@ vi.mock('@/lib/supabase/admin', () => ({
 }));
 
 vi.mock('@/lib/security/tenant-access', () => ({
-  requireCompanyAccess: vi.fn().mockResolvedValue(undefined),
+  requireCompanyAccess: vi.fn().mockResolvedValue({
+    userId: 'test-user-id',
+    companyId: 'company-123',
+    role: 'user',
+  }),
+  requireCompanyAccessCached: vi.fn().mockResolvedValue({
+    userId: 'test-user-id',
+    companyId: 'company-123',
+    role: 'user',
+  }),
 }));
 
 vi.mock('@/lib/security/mfa', () => ({
@@ -207,6 +216,14 @@ describe('Import API / Server Actions', () => {
     // Reset rate limit mock to allow by default
     const { checkServerActionRateLimit } = await import('@/lib/rate-limit');
     vi.mocked(checkServerActionRateLimit).mockResolvedValue({ allowed: true });
+
+    // Reset tenant-access mock to succeed by default
+    const { requireCompanyAccessCached } = await import('@/lib/security/tenant-access');
+    vi.mocked(requireCompanyAccessCached).mockResolvedValue({
+      userId: 'test-user-id',
+      companyId: 'company-123',
+      role: 'user',
+    });
   });
 
   afterEach(() => {
@@ -239,14 +256,8 @@ describe('Import API / Server Actions', () => {
     });
 
     it('returns error for unauthenticated request', async () => {
-      const { createClient } = await import('@/lib/supabase/server');
-
-      const mockClient = createServerActionMock({
-        user: null,
-        authError: { message: 'Not authenticated' },
-      });
-
-      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+      const { requireCompanyAccessCached } = await import('@/lib/security/tenant-access');
+      vi.mocked(requireCompanyAccessCached).mockRejectedValue(new Error('Not authenticated'));
 
       const { createImportSession } = await import('@/app/(dashboard)/import/actions');
 
@@ -372,14 +383,8 @@ describe('Import API / Server Actions', () => {
     });
 
     it('returns error when user profile not found', async () => {
-      const { createClient } = await import('@/lib/supabase/server');
-
-      const mockClient = createServerActionMock({
-        profile: null,
-        profileError: { message: 'Profile not found' },
-      });
-
-      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+      const { requireCompanyAccessCached } = await import('@/lib/security/tenant-access');
+      vi.mocked(requireCompanyAccessCached).mockRejectedValue(new Error('Profile not found'));
 
       const { createImportSession } = await import('@/app/(dashboard)/import/actions');
 
@@ -389,7 +394,8 @@ describe('Import API / Server Actions', () => {
       const result = await createImportSession(formData);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('User profile not found');
+      // The code catches all requireCompanyAccessCached errors as 'Not authenticated'
+      expect(result.error).toBe('Not authenticated');
     });
 
     it('enforces rate limiting', async () => {
