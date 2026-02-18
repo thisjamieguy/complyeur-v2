@@ -452,6 +452,18 @@ If cascade breaks start happening → full audit before more fixes.
 
 ---
 
+## Key Project Documents
+
+| Document | Location | Purpose |
+|----------|----------|---------|
+| Architecture overview | `memory/ARCHITECTURE.md` | System design, data flow, component structure |
+| Code conventions | `memory/CONVENTIONS.md` | Naming, patterns, style rules |
+| Performance audit | `memory/PERFORMANCE-AUDIT.md` | 60 performance issues with prioritised fix plan (audit date: 2026-02-18) |
+
+To re-run the performance audit, prompt: `Run a full performance audit on the codebase after clearing chat`
+
+---
+
 ## Notes
 - I use OneNote for planning/documentation
 - I prefer visual formats (tables, checklists, diagrams)
