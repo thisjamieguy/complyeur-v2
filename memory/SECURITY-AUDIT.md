@@ -449,12 +449,12 @@ Sends email invites to arbitrary addresses with no rate limit. An authenticated 
 
 ### Phase 1 — Credential Rotation (Do today, before any code changes)
 
-- [ ] Rotate Supabase anon key and service role key
-- [ ] Rotate Supabase database password
-- [ ] Rotate Stripe secret key and webhook signing secret
+- [x] Rotate Supabase anon key and service role key — 2026-02-18
+- [x] Rotate Supabase database password — reset and stored securely locally — 2026-02-18
+- [x] Rotate Stripe secret key and webhook signing secret — 2026-02-18
 - [x] Rotate Upstash Redis REST token — 2026-02-18
 - [x] Rotate Resend API key — 2026-02-18
-- [ ] Rotate Google OAuth client ID and secret
+- [x] Rotate Google OAuth client secret — updated in Google Cloud Console and Supabase Auth provider — 2026-02-18
 - [x] Audit git history — confirmed `.env*` never committed; files gitignored throughout — 2026-02-18
 - [x] Move all production secrets to Vercel environment variables — `.env.production` and `.env.staging` deleted — 2026-02-18
 
