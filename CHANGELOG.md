@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: site owner bypasses onboarding redirect in middleware [`55e77ab`](https://github.com/thisjamieguy/complyeur-v2/commit/55e77ab1bacf28cdd4ac561b47ee7abcf2372b2b)
 - fix: site owner skips onboarding and goes straight to dashboard [`f71c44c`](https://github.com/thisjamieguy/complyeur-v2/commit/f71c44cacc77a47945771cf5fefacffb3cbd51f6)
 - fix: auto-promote site owner to superadmin on Google OAuth sign-in [`c51c484`](https://github.com/thisjamieguy/complyeur-v2/commit/c51c484d26e473da6607a89e16bdd90bde681001)
 - fix: add admin error boundary and server-side error logging [`75a8e3d`](https://github.com/thisjamieguy/complyeur-v2/commit/75a8e3d185cf17e07c4720fb07bb117a809488fc)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: team invites, bulk-delete batching, promo codes, MFA unenroll, and RLS policy [`9918789`](https://github.com/thisjamieguy/complyeur-v2/commit/991878921c5a8ccb3d2704b3571b64a18d9e3e17)
 - chore(changelog): sync auto-changelog [`e413f2c`](https://github.com/thisjamieguy/complyeur-v2/commit/e413f2ca3ebaa8a87c5ab13934423d08624beb86)
 - fix: close beta launch blockers and add analytics [`0dcde22`](https://github.com/thisjamieguy/complyeur-v2/commit/0dcde2244270eb13dc04ea1c37d4ab86b9436f78)
-- chore: complete beta launch audit (sections 5-18) [`e089a06`](https://github.com/thisjamieguy/complyeur-v2/commit/e089a06efa170dc3f9b12d35e64c21dd90ed35af)
 
 ## v1.0.0 - 2026-01-22
 

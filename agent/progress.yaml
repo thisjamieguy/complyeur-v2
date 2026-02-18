@@ -1,0 +1,210 @@
+# Project Progress Tracking
+# ComplyEUR — B2B SaaS for Schengen 90/180-day compliance
+
+project:
+  name: complyeur
+  version: 2.0.0
+  started: 2025-01-01
+  status: in_progress
+  current_milestone: M1
+  description: |
+    ComplyEUR v2.0 — Supabase rebuild. B2B SaaS helping UK companies track
+    employee travel compliance with the EU 90/180-day Schengen visa rule.
+    All core features built. Currently in closed beta, preparing for GA launch.
+
+milestones:
+  - id: M1
+    name: GA Launch Readiness
+    status: in_progress
+    progress: 15
+    started: 2026-02-18
+    completed: null
+    estimated_weeks: 3
+    tasks_completed: 0
+    tasks_total: 23
+    notes: |
+      Feature-complete. This milestone is about testing, hardening, and
+      operational readiness — not new development. See
+      agent/milestones/milestone-1-launch.md for full task breakdown.
+
+tasks:
+  milestone_1:
+    - id: task-e2e-staging
+      name: Run full E2E suite on staging
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 4
+      completed_date: null
+      notes: |
+        Run npm run test:e2e against staging environment. Fix any failures.
+
+    - id: task-stress-test
+      name: Execute stress test on staging
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 3
+      completed_date: null
+      notes: |
+        Run stress test with realistic data volumes. Verify no degradation.
+
+    - id: task-stripe-webhooks
+      name: Test Stripe webhook edge cases
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 3
+      completed_date: null
+      notes: |
+        Test payment failure, subscription change, cancellation, disputed charge
+        scenarios in Stripe sandbox.
+
+    - id: task-rate-limiting
+      name: Extend rate limiting to all server actions
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 4
+      completed_date: null
+      notes: |
+        Currently rate limiting is on auth endpoints. Extend to all
+        server actions and API routes using Upstash Redis.
+
+    - id: task-security-audit
+      name: Final security audit
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 3
+      completed_date: null
+      notes: |
+        Verify RLS policies, CSP headers, no service_role key in client code,
+        multi-tenant isolation, audit logging.
+
+    - id: task-sentry-alerts
+      name: Configure Sentry alerting
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 2
+      completed_date: null
+      notes: |
+        Set up error rate thresholds, new issue notifications, and
+        performance monitoring alerts.
+
+    - id: task-staging-production-sync
+      name: Verify staging matches production config
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 2
+      completed_date: null
+      notes: |
+        Compare env vars, Stripe keys, Supabase project settings
+        between staging and production.
+
+    - id: task-production-migrations
+      name: Push all migrations to production
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 2
+      completed_date: null
+      notes: |
+        Dry-run first, then apply. Follow the staging-first pipeline
+        documented in CLAUDE.md.
+
+    - id: task-landing-page
+      name: Finalise landing page copy
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 4
+      completed_date: null
+      notes: |
+        Review and finalise headline, value proposition, CTAs.
+        Ensure mobile responsiveness.
+
+    - id: task-pricing-review
+      name: Review pricing page against Stripe config
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 2
+      completed_date: null
+      notes: |
+        Confirm tier names, features, and pricing match Stripe products.
+
+    - id: task-legal-pages
+      name: Review privacy policy and terms of service
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 3
+      completed_date: null
+      notes: |
+        Ensure legal pages are accurate, complete, and cover GDPR requirements.
+
+    - id: task-beta-onboarding
+      name: Onboard first beta users
+      status: not_started
+      file: agent/milestones/milestone-1-launch.md
+      estimated_hours: 8
+      completed_date: null
+      notes: |
+        Invite 5-10 companies. Collect structured feedback after 1 week.
+
+documentation:
+  design_documents: 2
+  milestone_documents: 1
+  pattern_documents: 1
+  task_documents: 0
+  command_documents: 11
+  last_updated: 2026-02-18
+
+progress:
+  planning: 90
+  implementation: 95
+  testing: 60
+  documentation: 70
+  overall: 80
+
+recent_work:
+  - date: 2026-02-18
+    description: |
+      Initialised ACP for ComplyEUR project. Replaced template/example content
+      with real project documentation based on full codebase analysis.
+    items:
+      - Removed 7 template files from agent/ directory
+      - Created agent/design/requirements.md with full project requirements
+      - Created agent/milestones/milestone-1-launch.md with 23 pre-launch tasks
+      - Rewrote agent/progress.yaml to reflect actual ComplyEUR project state
+      - Identified project as beta-ready (8.5/10 maturity)
+
+  - date: 2026-02-18
+    description: |
+      Recent commits focused on beta launch blockers and edge cases.
+    items:
+      - Site owner onboarding bypass fix
+      - Google OAuth auto-promotion to superadmin
+      - Admin error boundary and server-side logging
+      - Entitlement sync on admin tier change
+      - Team invites hardening, MFA unenroll, RLS policy fix
+      - Close beta launch blockers and analytics
+
+next_steps:
+  - Run full E2E test suite on staging
+  - Execute stress test with realistic data
+  - Test Stripe webhook edge cases in sandbox
+  - Extend rate limiting to all server actions
+  - Conduct final security audit (RLS, CSP, multi-tenant isolation)
+  - Finalise landing page and go-to-market materials
+  - Onboard first beta users
+
+notes:
+  - All core features are built and functional
+  - 90/180 compliance engine has 5,963+ lines of tests
+  - 13 Supabase migrations deployed (most recent Feb 17-18, 2026)
+  - Public pages exist (about, pricing, privacy, terms, FAQ, contact, accessibility)
+  - Three-environment pipeline in place (local, staging, production)
+  - Dark mode support via next-themes
+  - CookieYes GDPR consent integration
+  - Sentry error tracking integrated
+
+current_blockers: []
+
+team:
+  - role: Founder / Lead Developer
+    name: James Walsh
+    focus: |
+      Beta launch preparation, testing, and go-to-market readiness.
