@@ -44,6 +44,24 @@ export async function updateSession(request: NextRequest) {
     return { supabaseResponse, user, sessionExpired: false }
   }
 
+  // Try to read company_id and onboarding status from user_metadata (set during
+  // auth callback / onboarding completion). This avoids a profiles DB query on
+  // every authenticated request — the data is already available from getUser().
+  const meta = user.user_metadata ?? {}
+  const metaCompanyId = meta.company_id as string | undefined
+  const metaOnboardingCompleted = meta.onboarding_completed as boolean | undefined
+
+  if (metaCompanyId) {
+    // Metadata is present — skip profiles query entirely
+    const SITE_OWNER_EMAIL = 'james.walsh23@outlook.com'
+    const isSiteOwner = user.email?.toLowerCase() === SITE_OWNER_EMAIL
+    const needsOnboarding = !isSiteOwner && metaOnboardingCompleted !== true
+
+    return { supabaseResponse, user, needsOnboarding, sessionExpired: false }
+  }
+
+  // Fallback: metadata not yet set (existing users before this change).
+  // Query profiles and sync metadata for future requests.
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id, company_id, created_at, onboarding_completed_at')
@@ -63,6 +81,17 @@ export async function updateSession(request: NextRequest) {
     await supabase.auth.signOut()
     return { supabaseResponse, user: null, needsOnboarding: false, sessionExpired: true }
   }
+
+  // Backfill user_metadata so subsequent requests skip the profiles query.
+  // Fire-and-forget — don't block the response for this.
+  supabase.auth.updateUser({
+    data: {
+      company_id: profile.company_id,
+      onboarding_completed: !!profile.onboarding_completed_at,
+    },
+  }).catch((err) => {
+    console.warn('[Middleware] Failed to backfill user_metadata:', err)
+  })
 
   // Site owner always bypasses onboarding
   const SITE_OWNER_EMAIL = 'james.walsh23@outlook.com'

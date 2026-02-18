@@ -216,15 +216,22 @@ async function purgeCompanyData(
     if (orphanFetchError) {
       errors.push(`Failed to fetch orphaned employees: ${orphanFetchError.message}`)
     } else if (orphanedEmployees && orphanedEmployees.length > 0) {
-      for (const emp of orphanedEmployees) {
-        // Check if employee has any trips
-        const { count } = await supabase
-          .from('trips')
-          .select('*', { count: 'exact', head: true })
-          .eq('employee_id', emp.id)
+      // Batch trip lookup: single query to find which candidates have trips
+      // Replaces per-employee COUNT(*) N+1 pattern
+      const candidateIds = orphanedEmployees.map((e) => e.id)
+      const { data: employeesHavingTrips } = await supabase
+        .from('trips')
+        .select('employee_id')
+        .in('employee_id', candidateIds)
 
-        // Only delete if truly orphaned (no trips)
-        if (count === 0) {
+      const employeesWithTrips = new Set<string>()
+      for (const row of employeesHavingTrips ?? []) {
+        employeesWithTrips.add(row.employee_id)
+      }
+
+      // Only delete employees with zero trips
+      for (const emp of orphanedEmployees) {
+        if (!employeesWithTrips.has(emp.id)) {
           const result = await hardDeleteEmployee(emp.id, companyId, true)
           if (result.success) {
             employeesDeleted++

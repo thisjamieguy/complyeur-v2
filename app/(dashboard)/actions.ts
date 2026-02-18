@@ -1,5 +1,6 @@
 'use server'
 
+import { after } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -58,13 +59,12 @@ async function runAlertDetection(employeeId: string): Promise<void> {
 }
 
 /**
- * Wrapper for fire-and-forget alert detection with proper error logging
- * Use this instead of .catch(() => {}) to ensure errors are logged
+ * Schedule alert detection to run after the response is sent.
+ * Uses Next.js after() to keep the serverless function alive for the background work,
+ * avoiding the fire-and-forget pattern where promises can be dropped.
  */
 function runAlertDetectionBackground(employeeId: string): void {
-  runAlertDetection(employeeId).catch((error) => {
-    console.error('[AlertDetection] Unexpected error in background task:', error)
-  })
+  after(() => runAlertDetection(employeeId))
 }
 
 /**

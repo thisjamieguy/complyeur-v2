@@ -8,13 +8,18 @@
  * @see EU Regulation 610/2013 (Schengen Borders Code)
  */
 
-import { isValid } from 'date-fns';
+import { isBefore, isValid } from 'date-fns';
 import { normalizeToUTCDate } from './presence-calculator';
 import { daysUsedInWindow, canSafelyEnter } from './window-calculator';
 import { SCHENGEN_DAY_LIMIT, WINDOW_SIZE_DAYS, DEFAULT_COMPLIANCE_START_DATE } from './constants';
 import { InvalidReferenceDateError } from './errors';
 import { addUtcDays, differenceInUtcDays } from './date-utils';
 import type { ComplianceConfig, SafeEntryResult } from './types';
+
+/** Converts a Date to YYYY-MM-DD string key */
+function dateToKey(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
 
 /**
  * Finds the earliest date when an employee can safely enter Schengen.
@@ -53,21 +58,50 @@ export function earliestSafeEntry(
 
   const normalizedToday = normalizeToUTCDate(today);
   const limit = config.limit ?? SCHENGEN_DAY_LIMIT;
+  const complianceStartDate = config.complianceStartDate ?? DEFAULT_COMPLIANCE_START_DATE;
+  const normalizedComplianceStart = normalizeToUTCDate(complianceStartDate);
+
+  // Compute initial count for today's window using string comparison
+  let windowStart = addUtcDays(normalizedToday, -(WINDOW_SIZE_DAYS - 1));
+  if (isBefore(windowStart, normalizedComplianceStart)) {
+    windowStart = normalizedComplianceStart;
+  }
+  const windowStartKey = dateToKey(windowStart);
+  const windowEndKey = dateToKey(normalizedToday);
+
+  let currentCount = 0;
+  for (const dayKey of presence) {
+    if (dayKey >= windowStartKey && dayKey <= windowEndKey) {
+      currentCount++;
+    }
+  }
 
   // Check if already eligible today
-  if (canSafelyEnter(presence, normalizedToday, config)) {
+  if (currentCount <= limit - 1) {
     return null; // Already eligible
   }
 
-  // Search forward up to 180 days (after which all current days would have expired)
+  // Slide window forward day by day (O(WINDOW_SIZE_DAYS) iterations with O(1) per step)
+  let currentDate = normalizedToday;
   for (let daysAhead = 1; daysAhead <= WINDOW_SIZE_DAYS; daysAhead++) {
-    const checkDate = addUtcDays(normalizedToday, daysAhead);
-    const daysUsed = daysUsedInWindow(presence, checkDate, config);
+    // Day falling out of window: the old window start (currentDate - 179)
+    const dayFallingOut = addUtcDays(currentDate, -(WINDOW_SIZE_DAYS - 1));
+    if (!isBefore(dayFallingOut, normalizedComplianceStart) && presence.has(dateToKey(dayFallingOut))) {
+      currentCount--;
+    }
+
+    // Day entering window: nextDate (the new reference date)
+    const nextDate = addUtcDays(currentDate, 1);
+    if (presence.has(dateToKey(nextDate))) {
+      currentCount++;
+    }
 
     // Can enter if <= limit - 1 days used (leaving room for entry day)
-    if (daysUsed <= limit - 1) {
-      return checkDate;
+    if (currentCount <= limit - 1) {
+      return nextDate;
     }
+
+    currentDate = nextDate;
   }
 
   // This shouldn't happen in practice - after 180 days, all current

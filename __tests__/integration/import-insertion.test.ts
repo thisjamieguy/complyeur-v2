@@ -176,6 +176,8 @@ function createComprehensiveMock(options: {
   ['select'].forEach(method => {
     tripsBuilder[method] = vi.fn(() => tripsBuilder);
   });
+  // Batch trip lookup uses .in('employee_id', [...]) instead of .eq()
+  tripsBuilder.in = vi.fn().mockResolvedValue({ data: existingTrips, error: null });
   tripsBuilder.eq = vi.fn().mockResolvedValue({ data: existingTrips, error: null });
 
   // insert() returns a builder with select()

@@ -114,16 +114,16 @@ export function daysUsedInWindow(
     return 0;
   }
 
-  // Count presence days within the window
+  // Convert window boundaries to string keys for efficient comparison.
+  // ISO date strings (YYYY-MM-DD) sort lexicographically in chronological order,
+  // so string comparison replaces Date object allocation + isEqual/isAfter/isBefore.
+  const windowStartKey = dateToKey(windowStart);
+  const windowEndKey = dateToKey(windowEnd);
+
+  // Count presence days within the window using string comparison
   let count = 0;
   for (const dayKey of presence) {
-    const day = new Date(dayKey + 'T00:00:00.000Z');
-
-    // Check if day is within window (inclusive on both ends)
-    if (
-      (isEqual(day, windowStart) || isAfter(day, windowStart)) &&
-      (isEqual(day, windowEnd) || isBefore(day, windowEnd))
-    ) {
+    if (dayKey >= windowStartKey && dayKey <= windowEndKey) {
       count++;
     }
   }

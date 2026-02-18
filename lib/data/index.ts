@@ -11,9 +11,9 @@ export {
   getEmployeesWithTrips,
   getEmployeeComplianceData,
   getEmployeeComplianceDataPaginated,
-  getEmployeeStats,
   getEmployeeById,
   getEmployeeCount,
+  type EmployeeSortOption,
   type PaginationParams,
   type PaginatedEmployeeResult,
 } from './employees'

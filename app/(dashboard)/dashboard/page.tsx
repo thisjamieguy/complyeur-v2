@@ -1,24 +1,26 @@
 import { Suspense } from 'react'
-import nextDynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/server'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
-import { getEmployeeComplianceDataPaginated } from '@/lib/data'
+import { getEmployeeComplianceDataPaginated, type EmployeeSortOption } from '@/lib/data'
 import { getCompanySettings } from '@/lib/actions/settings'
 import { ComplianceTable } from '@/components/dashboard/compliance-table'
 import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
 import { AlertBanner } from '@/components/alerts/alert-banner'
 import { getUnacknowledgedAlertsAction } from '../actions'
-
-const DashboardTour = nextDynamic(
-  () => import('@/components/onboarding/dashboard-tour').then(m => m.DashboardTour),
-  { ssr: false }
-)
+import { DashboardTour } from '@/components/onboarding/dashboard-tour'
 
 export const dynamic = 'force-dynamic'
 
 /** Default page size for employee list */
 const PAGE_SIZE = 25
+
+/** Valid sort values for URL param validation */
+const VALID_SORTS = new Set<EmployeeSortOption>([
+  'days_remaining_asc', 'days_remaining_desc',
+  'name_asc', 'name_desc',
+  'days_used_desc', 'days_used_asc',
+])
 
 /**
  * Skeleton for the alert banner while loading.
@@ -32,37 +34,48 @@ function AlertSkeleton() {
 /**
  * Server component that fetches and displays employee compliance data.
  * Uses company-specific status thresholds for badge colors.
- * Supports pagination via URL params.
+ * Supports server-side pagination and sort via URL params.
  */
 async function EmployeeComplianceList({
   page,
   search,
+  sort,
 }: {
   page: number
   search: string
+  sort: EmployeeSortOption
 }) {
-  // Fetch company settings to get status thresholds
-  const settings = await getCompanySettings()
+  // Fetch settings and employee data in parallel (M-14 optimisation)
+  const [settings, result] = await Promise.all([
+    getCompanySettings(),
+    getEmployeeComplianceDataPaginated(
+      { page, pageSize: PAGE_SIZE, search: search || undefined, sort },
+    ),
+  ])
 
-  // Build thresholds from settings (with defaults)
-  const thresholds = {
-    greenMax: settings?.status_green_max ?? 60,
-    amberMax: settings?.status_amber_max ?? 75,
-    redMax: settings?.status_red_max ?? 89,
-  }
+  // If company has custom thresholds that differ from defaults, re-fetch with them.
+  // Most companies use defaults, so this branch is rarely taken.
+  const hasCustomThresholds = settings &&
+    (settings.status_green_max !== 60 || settings.status_amber_max !== 75 || settings.status_red_max !== 89)
 
-  // Fetch paginated employee data
-  const result = await getEmployeeComplianceDataPaginated(
-    { page, pageSize: PAGE_SIZE, search: search || undefined },
-    thresholds
-  )
+  const finalResult = hasCustomThresholds
+    ? await getEmployeeComplianceDataPaginated(
+        { page, pageSize: PAGE_SIZE, search: search || undefined, sort },
+        {
+          greenMax: settings.status_green_max ?? 60,
+          amberMax: settings.status_amber_max ?? 75,
+          redMax: settings.status_red_max ?? 89,
+        }
+      )
+    : result
 
   return (
     <ComplianceTable
-      employees={result.employees}
-      stats={result.stats}
-      pagination={result.pagination}
+      employees={finalResult.employees}
+      stats={finalResult.stats}
+      pagination={finalResult.pagination}
       initialSearch={search}
+      initialSort={sort}
     />
   )
 }
@@ -81,7 +94,7 @@ async function AlertSection() {
 }
 
 interface DashboardPageProps {
-  searchParams: Promise<{ page?: string; search?: string; tour?: string }>
+  searchParams: Promise<{ page?: string; search?: string; tour?: string; sort?: string }>
 }
 
 /**
@@ -98,6 +111,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const params = await searchParams
   const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
   const search = params.search ?? ''
+  const sort: EmployeeSortOption = VALID_SORTS.has(params.sort as EmployeeSortOption)
+    ? (params.sort as EmployeeSortOption)
+    : 'days_remaining_asc'
   const forceTour = params.tour === '1'
 
   const { data: profile, error: profileError } = await supabase
@@ -136,8 +152,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       </div>
 
       {/* Main content with suspense for streaming */}
-      <Suspense key={`${page}-${search}`} fallback={<DashboardSkeleton />}>
-        <EmployeeComplianceList page={page} search={search} />
+      <Suspense key={`${page}-${search}-${sort}`} fallback={<DashboardSkeleton />}>
+        <EmployeeComplianceList page={page} search={search} sort={sort} />
       </Suspense>
     </div>
   )

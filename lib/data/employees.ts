@@ -23,6 +23,15 @@ import { withDbTiming } from '@/lib/performance'
 import { isExemptFromTracking, type NationalityType } from '@/lib/constants/nationality-types'
 import type { EmployeeCompliance, ComplianceStats } from '@/types/dashboard'
 
+/** Valid sort options for employee compliance table */
+export type EmployeeSortOption =
+  | 'days_remaining_asc'
+  | 'days_remaining_desc'
+  | 'name_asc'
+  | 'name_desc'
+  | 'days_used_desc'
+  | 'days_used_asc'
+
 /**
  * Pagination parameters for employee queries
  */
@@ -30,6 +39,7 @@ export interface PaginationParams {
   page?: number      // 1-indexed, default 1
   pageSize?: number  // default 25
   search?: string    // optional name search (case-insensitive)
+  sort?: EmployeeSortOption  // server-side sort (default: days_remaining_asc)
 }
 
 /**
@@ -276,138 +286,110 @@ export const getEmployeeComplianceData = cache(async (
 })
 
 /**
- * Fetch paginated employee compliance data with optional search.
- * Calculates stats from total count, not just loaded page.
+ * Apply sort to employee compliance data
+ */
+function sortEmployees(
+  employees: EmployeeCompliance[],
+  sort: EmployeeSortOption
+): EmployeeCompliance[] {
+  const sorted = [...employees]
+  switch (sort) {
+    case 'days_remaining_asc':
+      sorted.sort((a, b) => a.days_remaining - b.days_remaining)
+      break
+    case 'days_remaining_desc':
+      sorted.sort((a, b) => b.days_remaining - a.days_remaining)
+      break
+    case 'name_asc':
+      sorted.sort((a, b) => a.name.localeCompare(b.name))
+      break
+    case 'name_desc':
+      sorted.sort((a, b) => b.name.localeCompare(a.name))
+      break
+    case 'days_used_desc':
+      sorted.sort((a, b) => b.days_used - a.days_used)
+      break
+    case 'days_used_asc':
+      sorted.sort((a, b) => a.days_used - b.days_used)
+      break
+  }
+  return sorted
+}
+
+/**
+ * Calculate compliance statistics from employee data
+ */
+function calculateStats(employees: EmployeeCompliance[]): ComplianceStats {
+  let compliant = 0
+  let atRisk = 0
+  let nonCompliant = 0
+  let breach = 0
+  let exempt = 0
+
+  for (const emp of employees) {
+    switch (emp.risk_level) {
+      case 'green': compliant++; break
+      case 'amber': atRisk++; break
+      case 'red': nonCompliant++; break
+      case 'breach': breach++; break
+      case 'exempt': exempt++; break
+    }
+  }
+
+  return {
+    total: employees.length,
+    compliant,
+    at_risk: atRisk,
+    non_compliant: nonCompliant,
+    breach,
+    exempt,
+  }
+}
+
+/**
+ * Fetch paginated employee compliance data with server-side sort, search, and stats.
  *
- * @param params - Pagination and search parameters
+ * Uses the cached `getEmployeeComplianceData()` to fetch all employees once,
+ * then applies search → sort → pagination in memory. This ensures sort works
+ * correctly across all pages (not just the current page) and eliminates the
+ * separate `getEmployeeStats` fetch.
+ *
+ * @param params - Pagination, search, and sort parameters
  * @param statusThresholds - Optional custom status thresholds
  */
 export async function getEmployeeComplianceDataPaginated(
   params: PaginationParams = {},
   statusThresholds?: StatusThresholds
 ): Promise<PaginatedEmployeeResult> {
-  const { page = 1, pageSize = 25, search } = params
-  const thresholds = statusThresholds ?? DEFAULT_STATUS_THRESHOLDS
-  const today = toUTCMidnight(new Date())
+  const { page = 1, pageSize = 25, search, sort = 'days_remaining_asc' } = params
 
   return withDbTiming('getEmployeeComplianceDataPaginated', async () => {
-    const supabase = await createClient()
+    // Fetch all employees with compliance (React.cache deduplicates within request)
+    const allEmployees = await getEmployeeComplianceData(statusThresholds)
 
-    const runQuery = async (includeNationalityType: boolean) => {
-      const selectClause = includeNationalityType
-        ? `
-            id,
-            name,
-            nationality_type,
-            trips (
-              id,
-              country,
-              entry_date,
-              exit_date,
-              ghosted
-            )
-          `
-        : `
-            id,
-            name,
-            trips (
-              id,
-              country,
-              entry_date,
-              exit_date,
-              ghosted
-            )
-          `
-
-      let query = supabase
-        .from('employees')
-        .select(selectClause, { count: 'exact' })
-        .is('deleted_at', null)
-
-      if (search?.trim()) {
-        query = query.ilike('name', `%${search.trim()}%`)
-      }
-
-      const from = (page - 1) * pageSize
-      const to = from + pageSize - 1
-
-      return query.order('name').range(from, to)
-    }
-
-    let { data: employees, error, count } = await runQuery(true)
-
-    if (error && isMissingNationalityTypeColumnError(error)) {
-      console.warn(
-        '[Employees] employees.nationality_type is missing; using legacy paginated fallback'
+    // Apply search filter
+    let filtered = allEmployees
+    if (search?.trim()) {
+      const searchLower = search.trim().toLowerCase()
+      filtered = allEmployees.filter((e) =>
+        e.name.toLowerCase().includes(searchLower)
       )
-      const fallback = await runQuery(false)
-      employees = fallback.data
-      error = fallback.error
-      count = fallback.count
     }
 
-    if (error) {
-      console.error('Error fetching paginated employees:', error)
-      throw new Error('Failed to fetch employees')
-    }
+    // Calculate stats from filtered set (before pagination)
+    const stats = calculateStats(filtered)
 
-    const totalCount = count ?? 0
+    // Apply server-side sort
+    const sorted = sortEmployees(filtered, sort)
+
+    // Paginate
+    const totalCount = sorted.length
     const totalPages = Math.ceil(totalCount / pageSize)
-
-    // Calculate compliance for fetched employees
-    const employeeCompliance = withDefaultNationality(
-      (employees ?? []) as unknown as DbEmployeeWithoutNationality[]
-    ).map((employee) => {
-      const nationalityType = normalizeNationalityType(employee.nationality_type)
-      const exempt = isExemptFromTracking(nationalityType)
-
-      const lastTrip = (employee.trips || [])
-        .filter((trip) => !trip.ghosted)
-        .sort((a, b) => b.exit_date.localeCompare(a.exit_date))[0]
-
-      if (exempt) {
-        return {
-          id: employee.id,
-          name: employee.name,
-          nationality_type: nationalityType,
-          days_used: 0,
-          days_remaining: 90,
-          risk_level: 'exempt' as const,
-          last_trip_date: lastTrip?.exit_date || null,
-          total_trips: (employee.trips || []).filter((t) => !t.ghosted).length,
-          is_compliant: true,
-        }
-      }
-
-      const trips = (employee.trips || [])
-        .filter((trip) => !trip.ghosted && isSchengenCountry(trip.country))
-        .map(toComplianceTrip)
-
-      const compliance = calculateCompliance(trips, {
-        mode: 'audit',
-        referenceDate: today,
-      })
-
-      const riskLevel = getStatusFromDaysUsed(compliance.daysUsed, thresholds)
-
-      return {
-        id: employee.id,
-        name: employee.name,
-        nationality_type: nationalityType,
-        days_used: compliance.daysUsed,
-        days_remaining: compliance.daysRemaining,
-        risk_level: riskLevel,
-        last_trip_date: lastTrip?.exit_date || null,
-        total_trips: (employee.trips || []).filter((t) => !t.ghosted).length,
-        is_compliant: compliance.isCompliant,
-      }
-    })
-
-    // Get stats from ALL employees (not just current page) for accurate dashboard stats
-    const stats = await getEmployeeStats(thresholds, search)
+    const from = (page - 1) * pageSize
+    const pageEmployees = sorted.slice(from, from + pageSize)
 
     return {
-      employees: employeeCompliance,
+      employees: pageEmployees,
       pagination: {
         page,
         pageSize,
@@ -418,129 +400,6 @@ export async function getEmployeeComplianceDataPaginated(
     }
   })
 }
-
-/**
- * Get compliance stats for all employees (used for dashboard summary).
- * Separate from pagination to ensure accurate totals.
- */
-export const getEmployeeStats = cache(async (
-  statusThresholds?: StatusThresholds,
-  search?: string
-): Promise<ComplianceStats> => {
-  return withDbTiming('getEmployeeStats', async () => {
-    const supabase = await createClient()
-    const thresholds = statusThresholds ?? DEFAULT_STATUS_THRESHOLDS
-    const today = toUTCMidnight(new Date())
-
-    const runQuery = async (includeNationalityType: boolean) => {
-      const selectClause = includeNationalityType
-        ? `
-            id,
-            name,
-            nationality_type,
-            trips (
-              id,
-              country,
-              entry_date,
-              exit_date,
-              ghosted
-            )
-          `
-        : `
-            id,
-            name,
-            trips (
-              id,
-              country,
-              entry_date,
-              exit_date,
-              ghosted
-            )
-          `
-
-      let query = supabase
-        .from('employees')
-        .select(selectClause)
-        .is('deleted_at', null)
-
-      if (search?.trim()) {
-        query = query.ilike('name', `%${search.trim()}%`)
-      }
-
-      return query.order('name')
-    }
-
-    let { data: employees, error } = await runQuery(true)
-
-    if (error && isMissingNationalityTypeColumnError(error)) {
-      console.warn(
-        '[Employees] employees.nationality_type is missing; using legacy stats fallback'
-      )
-      const fallback = await runQuery(false)
-      employees = fallback.data
-      error = fallback.error
-    }
-
-    if (error) {
-      console.error('Error fetching employee stats:', error)
-      throw new Error('Failed to fetch employee stats')
-    }
-
-    const allEmployees = withDefaultNationality(
-      (employees ?? []) as unknown as DbEmployeeWithoutNationality[]
-    )
-
-    // Calculate stats
-    let compliant = 0
-    let atRisk = 0
-    let nonCompliant = 0
-    let breach = 0
-    let exempt = 0
-
-    for (const employee of allEmployees) {
-      const nationalityType = normalizeNationalityType(employee.nationality_type)
-      if (isExemptFromTracking(nationalityType)) {
-        exempt++
-        continue
-      }
-
-      const trips = (employee.trips || [])
-        .filter((trip) => !trip.ghosted && isSchengenCountry(trip.country))
-        .map(toComplianceTrip)
-
-      const compliance = calculateCompliance(trips, {
-        mode: 'audit',
-        referenceDate: today,
-      })
-
-      const riskLevel = getStatusFromDaysUsed(compliance.daysUsed, thresholds)
-
-      switch (riskLevel) {
-        case 'green':
-          compliant++
-          break
-        case 'amber':
-          atRisk++
-          break
-        case 'red':
-          nonCompliant++
-          break
-        case 'breach':
-          breach++
-          break
-      }
-    }
-
-    return {
-      total: allEmployees.length,
-      compliant,
-      at_risk: atRisk,
-      non_compliant: nonCompliant,
-      breach,
-      exempt,
-    }
-  })
-})
 
 /**
  * Fetch a single employee with trips.

@@ -167,6 +167,10 @@ export async function GET(request: Request) {
         console.error('Profile refresh after invite acceptance failed:', refreshedProfile.error)
       } else {
         existingProfile = refreshedProfile.data
+        // Sync to user_metadata so middleware can skip the profiles query
+        await supabase.auth.updateUser({
+          data: { company_id: invitedCompanyId, onboarding_completed: false },
+        })
       }
     }
   }
@@ -213,6 +217,12 @@ export async function GET(request: Request) {
     }
 
     console.log('Successfully created company for OAuth user:', { companyId })
+
+    // Sync to user_metadata so middleware can skip the profiles query
+    await supabase.auth.updateUser({
+      data: { company_id: companyId, onboarding_completed: false },
+    })
+
     isNewOAuthUser = true
   }
 
@@ -233,6 +243,9 @@ export async function GET(request: Request) {
 
       if (promoteError) {
         console.error('Failed to auto-promote site owner:', promoteError.message)
+      } else {
+        // Sync to user_metadata so middleware can skip the profiles query
+        await supabase.auth.updateUser({ data: { onboarding_completed: true } })
       }
     } catch (err) {
       console.error('Admin client error during auto-promote:', err)

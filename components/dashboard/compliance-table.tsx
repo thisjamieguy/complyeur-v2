@@ -51,6 +51,8 @@ interface ComplianceTableProps {
   pagination?: PaginationInfo
   /** Current search query (for controlled input) */
   initialSearch?: string
+  /** Current sort from server (synced via URL param) */
+  initialSort?: SortOption
 }
 
 /**
@@ -168,6 +170,7 @@ export function ComplianceTable({
   stats: serverStats,
   pagination,
   initialSearch: initialSearchProp,
+  initialSort: initialSortProp,
 }: ComplianceTableProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -178,7 +181,7 @@ export function ComplianceTable({
     (searchParams.get('status') as StatusFilter) || 'all'
   const initialSearch = initialSearchProp ?? searchParams.get('search') ?? ''
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialFilter)
-  const [sortBy, setSortBy] = useState<SortOption>('days_remaining_asc')
+  const [sortBy, setSortBy] = useState<SortOption>(initialSortProp ?? 'days_remaining_asc')
   const [searchQuery, setSearchQuery] = useState(initialSearch)
   const [inlineMessage, setInlineMessage] = useState<string | null>(null)
 
@@ -258,6 +261,23 @@ export function ComplianceTable({
     [router, searchParams]
   )
 
+  // Handle sort change — push to URL param for server-side sort (M-26)
+  const handleSortChange = useCallback(
+    (sort: SortOption) => {
+      setSortBy(sort)
+      const params = new URLSearchParams(searchParams.toString())
+      if (sort === 'days_remaining_asc') {
+        params.delete('sort')
+      } else {
+        params.set('sort', sort)
+      }
+      // Reset to page 1 when sort changes
+      params.delete('page')
+      router.push(`?${params.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
+
   const handleResetView = useCallback(() => {
     setStatusFilter('all')
     setSortBy('days_remaining_asc')
@@ -286,50 +306,11 @@ export function ComplianceTable({
     }
   }, [pathname, router, searchParams])
 
-  // Apply filtering and sorting
+  // Apply client-side status filter only (sort and search are now server-side via URL params)
   const filteredAndSorted = useMemo(() => {
-    let result = [...employees]
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const searchLower = searchQuery.toLowerCase().trim()
-      result = result.filter((e) =>
-        e.name.toLowerCase().includes(searchLower)
-      )
-    }
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      result = result.filter((e) => e.risk_level === statusFilter)
-    }
-
-    // Note: exempt employees sort to end when sorting by days_remaining_asc
-    // since they have days_remaining=90
-
-    // Apply sort
-    switch (sortBy) {
-      case 'days_remaining_asc':
-        result.sort((a, b) => a.days_remaining - b.days_remaining)
-        break
-      case 'days_remaining_desc':
-        result.sort((a, b) => b.days_remaining - a.days_remaining)
-        break
-      case 'name_asc':
-        result.sort((a, b) => a.name.localeCompare(b.name))
-        break
-      case 'name_desc':
-        result.sort((a, b) => b.name.localeCompare(a.name))
-        break
-      case 'days_used_desc':
-        result.sort((a, b) => b.days_used - a.days_used)
-        break
-      case 'days_used_asc':
-        result.sort((a, b) => a.days_used - b.days_used)
-        break
-    }
-
-    return result
-  }, [employees, searchQuery, statusFilter, sortBy])
+    if (statusFilter === 'all') return employees
+    return employees.filter((e) => e.risk_level === statusFilter)
+  }, [employees, statusFilter])
 
   // Show empty state if no employees at all (check stats.total for accurate count with pagination)
   const totalEmployees = serverStats?.total ?? employees.length
@@ -382,7 +363,7 @@ export function ComplianceTable({
             onFilterChange={handleFilterChange}
             stats={stats}
           />
-          <SortSelect value={sortBy} onValueChange={setSortBy} />
+          <SortSelect value={sortBy} onValueChange={handleSortChange} />
         </div>
         <DashboardStatusLegend />
       </div>

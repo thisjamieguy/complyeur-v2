@@ -1,6 +1,6 @@
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { ArrowLeft, Calendar } from 'lucide-react'
 import { parseISO, format } from 'date-fns'
 import { getEmployeeById, getTripsByEmployeeId, getEmployeesForDropdown } from '@/lib/db'
@@ -10,15 +10,8 @@ import { Button } from '@/components/ui/button'
 import { EmployeeDetailActions } from './employee-detail-actions'
 import { TripList } from '@/components/trips/trip-list'
 
-const AddTripModal = dynamic(
-  () => import('@/components/trips/add-trip-modal').then(m => m.AddTripModal),
-  { ssr: false }
-)
-
-const BulkAddTripsModal = dynamic(
-  () => import('@/components/trips/bulk-add-trips-modal').then(m => m.BulkAddTripsModal),
-  { ssr: false }
-)
+import { AddTripModal } from '@/components/trips/add-trip-modal'
+import { BulkAddTripsModal } from '@/components/trips/bulk-add-trips-modal'
 import { isSchengenCountry } from '@/lib/constants/schengen-countries'
 import { isExemptFromTracking, NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
 import { calculateCompliance, parseDateOnlyAsUTC, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'
@@ -81,12 +74,58 @@ function getStatusBadgeProps(riskLevel: RiskLevel, isCompliant: boolean): {
   }
 }
 
+/**
+ * Skeleton for the trip list while streaming
+ */
+function TripListSkeleton() {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="h-16 bg-slate-100 rounded-lg animate-pulse" />
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Async server component for trip list — streams via Suspense
+ * so the employee header renders immediately.
+ */
+async function TripSection({
+  employeeId,
+  employeeName,
+  nationalityType,
+}: {
+  employeeId: string
+  employeeName: string
+  nationalityType: NationalityType
+}) {
+  const [trips, employeesForReassign] = await Promise.all([
+    getTripsByEmployeeId(employeeId),
+    getEmployeesForDropdown(),
+  ])
+
+  // UK citizens don't need domestic UK trips displayed
+  const displayTrips = nationalityType === 'uk_citizen'
+    ? trips.filter((trip) => trip.country !== 'GB')
+    : trips
+
+  return (
+    <TripList
+      trips={displayTrips}
+      employeeId={employeeId}
+      employeeName={employeeName}
+      employees={employeesForReassign}
+    />
+  )
+}
+
 export default async function EmployeeDetailPage({ params }: EmployeeDetailPageProps) {
   const { id } = await params
-  const [employee, trips, employeesForReassign] = await Promise.all([
+  // Fetch employee first (single row by PK — fast) and trips in parallel
+  const [employee, trips] = await Promise.all([
     getEmployeeById(id),
     getTripsByEmployeeId(id),
-    getEmployeesForDropdown(),
   ])
 
   if (!employee) {
@@ -119,9 +158,6 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
         referenceDate: toUTCMidnight(new Date()),
       })
     : null
-
-  // Recent trips for the summary card (last 5)
-  const recentTrips = displayTrips.slice(0, 5)
 
   return (
     <div className="space-y-6">
@@ -270,6 +306,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
         </Card>
       </div>
 
+      {/* Trip list streams via Suspense — header/cards render immediately */}
       <Card>
         <CardHeader>
           <CardTitle>Travel History</CardTitle>
@@ -278,12 +315,13 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <TripList
-            trips={displayTrips}
-            employeeId={employee.id}
-            employeeName={employee.name}
-            employees={employeesForReassign}
-          />
+          <Suspense fallback={<TripListSkeleton />}>
+            <TripSection
+              employeeId={employee.id}
+              employeeName={employee.name}
+              nationalityType={nationalityType}
+            />
+          </Suspense>
         </CardContent>
       </Card>
     </div>

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix(test): update import-api mocks for requireCompanyAccessCached auth flow [`3448119`](https://github.com/thisjamieguy/complyeur-v2/commit/34481193fdf1c32d738cef428854ec3fbc313f3a)
 - perf: complete phase 5 database optimisation (7 fixes) [`bd104a2`](https://github.com/thisjamieguy/complyeur-v2/commit/bd104a2c020981714c70638c4998e056b6b8ae84)
 - perf: complete phases 1-4 of performance audit (20 fixes) [`2cee929`](https://github.com/thisjamieguy/complyeur-v2/commit/2cee929223a1ce888e9a43d4df9c1297ea8cf263)
 - docs: add performance audit report and reference in CLAUDE.md [`f6224b2`](https://github.com/thisjamieguy/complyeur-v2/commit/f6224b20c16564afb57795ed24e9fedee06e3a2c)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: clean up project root — move docs, delete orphaned files, remove clutter [`266520e`](https://github.com/thisjamieguy/complyeur-v2/commit/266520eeae2f0fada1408a110b3b0d5a47b284e9)
 - chore: add Agent Context Protocol (ACP) with project-specific documentation [`3469235`](https://github.com/thisjamieguy/complyeur-v2/commit/346923564e1c2e582b01d50f8a1a4f823232718f)
 - fix: site owner bypasses onboarding redirect in middleware [`55e77ab`](https://github.com/thisjamieguy/complyeur-v2/commit/55e77ab1bacf28cdd4ac561b47ee7abcf2372b2b)
-- fix: site owner skips onboarding and goes straight to dashboard [`f71c44c`](https://github.com/thisjamieguy/complyeur-v2/commit/f71c44cacc77a47945771cf5fefacffb3cbd51f6)
 
 ## v1.0.0 - 2026-01-22
 

@@ -171,6 +171,9 @@ export async function completeOnboarding() {
     throw new DatabaseError('Failed to complete onboarding')
   }
 
+  // Sync to user_metadata so middleware can skip the profiles query
+  await supabase.auth.updateUser({ data: { onboarding_completed: true } })
+
   revalidatePath('/', 'layout')
   redirect('/dashboard?tour=1')
 }

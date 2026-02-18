@@ -528,9 +528,52 @@ async function insertTrips(
     purpose?: string;
   }[] = [];
 
+  // Pre-collect all unique employee IDs that will be referenced by trip rows
+  // so we can batch-fetch their existing trips in one query (eliminates N+1)
+  const uniqueEmployeeIds = new Set<string>();
+  for (const row of validRows) {
+    if (!isParsedTripRow(row.data)) continue;
+    const tripData = row.data as ParsedTripRow;
+    const normalizedEmail = (tripData.employee_email ?? '').toLowerCase().trim();
+    const hasEmail = normalizedEmail.length > 0;
+    const hasName = !!tripData.employee_name?.trim();
+
+    let empId = hasEmail ? employeeEmailMap.get(normalizedEmail) : undefined;
+    if (!empId && !hasEmail && hasName) {
+      empId = employeeNameMap.get(normalizeName(tripData.employee_name!.trim()));
+    }
+    if (empId) uniqueEmployeeIds.add(empId);
+  }
+
+  // Batch fetch all existing trips for these employees in one query
+  const existingTripsByEmployee = new Map<string, Array<{ company_id: string; entry_date: string; exit_date: string }>>();
+  if (uniqueEmployeeIds.size > 0) {
+    const { data: allExistingTrips, error: batchTripError } = await supabase
+      .from('trips')
+      .select('employee_id, company_id, entry_date, exit_date')
+      .in('employee_id', Array.from(uniqueEmployeeIds));
+
+    if (batchTripError) {
+      errors.push({
+        row: 0,
+        column: '',
+        value: '',
+        message: `Failed to fetch existing trips for duplicate check: ${batchTripError.message}`,
+        severity: 'error',
+      });
+    } else {
+      // Group trips by employee_id, filtered to current company
+      for (const trip of allExistingTrips ?? []) {
+        if (trip.company_id && trip.company_id !== companyId) continue;
+        const list = existingTripsByEmployee.get(trip.employee_id) ?? [];
+        list.push({ company_id: trip.company_id, entry_date: trip.entry_date, exit_date: trip.exit_date });
+        existingTripsByEmployee.set(trip.employee_id, list);
+      }
+    }
+  }
+
   // Track trips we're adding to avoid duplicates within the same import
   const newTripKeys = new Set<string>();
-  const existingTripsByEmployee = new Map<string, Array<{ company_id: string; entry_date: string; exit_date: string }>>();
 
   for (const row of validRows) {
     if (!isParsedTripRow(row.data)) continue;
@@ -589,37 +632,10 @@ async function insertTrips(
     const tripKey = `${employeeId}|${tripData.entry_date}|${tripData.exit_date}`;
 
     const isDuplicateInImport = newTripKeys.has(tripKey);
-    let isDuplicateInDatabase = false;
-
-    if (!isDuplicateInImport) {
-      let existingTripsForEmployee = existingTripsByEmployee.get(employeeId);
-
-      if (!existingTripsForEmployee) {
-        const { data: employeeTrips, error: duplicateLookupError } = await supabase
-          .from('trips')
-          .select('company_id, entry_date, exit_date')
-          .eq('employee_id', employeeId);
-
-        if (duplicateLookupError) {
-          errors.push({
-            row: row.row_number,
-            column: '',
-            value: '',
-            message: `Failed to check duplicate trip: ${duplicateLookupError.message}`,
-            severity: 'error',
-          });
-          tripsSkipped++;
-          continue;
-        }
-
-        existingTripsForEmployee = (employeeTrips ?? []).filter((existingTrip) => (!existingTrip.company_id || existingTrip.company_id === companyId));
-        existingTripsByEmployee.set(employeeId, existingTripsForEmployee);
-      }
-
-      isDuplicateInDatabase = existingTripsForEmployee.some((existingTrip) =>
+    const isDuplicateInDatabase = !isDuplicateInImport &&
+      (existingTripsByEmployee.get(employeeId) ?? []).some((existingTrip) =>
         existingTrip.entry_date === tripData.entry_date && existingTrip.exit_date === tripData.exit_date
       );
-    }
 
     if (isDuplicateInImport || isDuplicateInDatabase) {
       warnings.push({
