@@ -5,7 +5,7 @@ import type { MetadataRoute } from 'next'
  *
  * What it does:
  * - Allows crawling of public marketing/legal pages
- * - Blocks crawling of authenticated dashboard routes, API endpoints, and admin areas
+ * - Blocks crawling of authenticated/app-only routes and test/preview pages
  * - References the sitemap for page discovery
  *
  * Why it matters:
@@ -13,60 +13,94 @@ import type { MetadataRoute } from 'next'
  * - Improves crawl efficiency by focusing on public content
  * - Required for proper SEO hygiene
  */
+const DEFAULT_SITE_ORIGIN = 'https://complyeur.com'
+
+function getSiteOrigin(): string {
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    DEFAULT_SITE_ORIGIN
+
+  try {
+    return new URL(configuredUrl).origin
+  } catch {
+    return DEFAULT_SITE_ORIGIN
+  }
+}
+
+const PRIVATE_ROUTE_PATTERNS = [
+  '/admin',
+  '/admin/*',
+  '/dashboard',
+  '/dashboard/*',
+  '/onboarding',
+  '/onboarding/*',
+  '/employee',
+  '/employee/*',
+  '/import',
+  '/import/*',
+  '/exports',
+  '/exports/*',
+  '/calendar',
+  '/calendar/*',
+  '/settings',
+  '/settings/*',
+  '/gdpr',
+  '/gdpr/*',
+  '/trip-forecast',
+  '/trip-forecast/*',
+  '/future-job-alerts',
+  '/future-job-alerts/*',
+  '/mfa',
+  '/mfa/*',
+  '/api',
+  '/api/*',
+  '/auth/callback',
+  '/auth/callback/*',
+  '/test-endpoints',
+  '/test-endpoints/*',
+]
+
+const NON_INDEXABLE_UTILITY_ROUTES = [
+  '/login',
+  '/login/*',
+  '/signup',
+  '/signup/*',
+  '/forgot-password',
+  '/forgot-password/*',
+  '/reset-password',
+  '/reset-password/*',
+  '/unsubscribe',
+  '/unsubscribe/*',
+]
+
+const PREVIEW_ROUTE_PATTERNS = [
+  '/landing-v2',
+  '/landing-v2/*',
+  '/landing-v3',
+  '/landing-v3/*',
+  '/landing-sandbox',
+  '/landing-sandbox/*',
+  '/landing/sandbox',
+  '/landing/sandbox/*',
+]
+
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://complyeur.com'
+  const siteOrigin = getSiteOrigin()
 
   return {
     rules: [
       {
         userAgent: '*',
-        allow: [
-          '/',
-          '/login',
-          '/signup',
-          '/privacy',
-          '/terms',
-          '/accessibility',
-          '/forgot-password',
-          '/about',
-          '/contact',
-          '/pricing',
-          '/faq',
-        ],
+        allow: '/',
         disallow: [
-          '/dashboard',
-          '/dashboard/*',
-          '/admin',
-          '/admin/*',
-          '/api',
-          '/api/*',
-          '/settings',
-          '/settings/*',
-          '/employee',
-          '/employee/*',
-          '/import',
-          '/import/*',
-          '/exports',
-          '/exports/*',
-          '/calendar',
-          '/calendar/*',
-          '/gdpr',
-          '/gdpr/*',
-          '/trip-forecast',
-          '/trip-forecast/*',
-          '/future-job-alerts',
-          '/future-job-alerts/*',
-          '/test-endpoints',
-          '/test-endpoints/*',
-          '/mfa',
-          '/mfa/*',
-          '/unsubscribe',
-          '/unsubscribe/*',
-          '/reset-password',
-          '/reset-password/*',
+          ...PRIVATE_ROUTE_PATTERNS,
+          ...NON_INDEXABLE_UTILITY_ROUTES,
+          ...PREVIEW_ROUTE_PATTERNS,
         ],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: [`${siteOrigin}/sitemap.xml`],
+    host: siteOrigin,
   }
 }

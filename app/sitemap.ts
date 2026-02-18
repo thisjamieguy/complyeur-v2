@@ -18,68 +18,105 @@ import type { MetadataRoute } from 'next'
  * - Don't include dynamic user-specific pages
  * - Keep lastModified dates reasonably accurate
  */
+const DEFAULT_SITE_ORIGIN = 'https://complyeur.com'
+const LEGAL_PAGES_LAST_MODIFIED = new Date('2025-01-01')
+
+type SitemapChangeFrequency = NonNullable<MetadataRoute.Sitemap[number]['changeFrequency']>
+
+interface PublicSitemapPage {
+  path: `/${string}`
+  changeFrequency: SitemapChangeFrequency
+  priority: number
+  lastModified: Date
+}
+
+function getSiteOrigin(): string {
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    DEFAULT_SITE_ORIGIN
+
+  try {
+    return new URL(configuredUrl).origin
+  } catch {
+    return DEFAULT_SITE_ORIGIN
+  }
+}
+
+function getDeploymentLastModified(): Date {
+  const commitDate = process.env.VERCEL_GIT_COMMIT_DATE
+  if (!commitDate) {
+    return new Date()
+  }
+
+  const parsed = new Date(commitDate)
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed
+}
+
+function toAbsoluteUrl(siteOrigin: string, path: `/${string}`): string {
+  return new URL(path, `${siteOrigin}/`).toString()
+}
+
+const deploymentLastModified = getDeploymentLastModified()
+
+const PUBLIC_SITEMAP_PAGES: PublicSitemapPage[] = [
+  {
+    path: '/landing',
+    lastModified: deploymentLastModified,
+    changeFrequency: 'weekly',
+    priority: 1.0,
+  },
+  {
+    path: '/pricing',
+    lastModified: deploymentLastModified,
+    changeFrequency: 'weekly',
+    priority: 0.9,
+  },
+  {
+    path: '/faq',
+    lastModified: deploymentLastModified,
+    changeFrequency: 'monthly',
+    priority: 0.8,
+  },
+  {
+    path: '/about',
+    lastModified: deploymentLastModified,
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  },
+  {
+    path: '/contact',
+    lastModified: deploymentLastModified,
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  },
+  {
+    path: '/privacy',
+    lastModified: LEGAL_PAGES_LAST_MODIFIED,
+    changeFrequency: 'yearly',
+    priority: 0.5,
+  },
+  {
+    path: '/terms',
+    lastModified: LEGAL_PAGES_LAST_MODIFIED,
+    changeFrequency: 'yearly',
+    priority: 0.5,
+  },
+  {
+    path: '/accessibility',
+    lastModified: LEGAL_PAGES_LAST_MODIFIED,
+    changeFrequency: 'yearly',
+    priority: 0.4,
+  },
+]
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://complyeur.com'
+  const siteOrigin = getSiteOrigin()
 
-  // Current date for pages that change frequently
-  const now = new Date()
-
-  // Static date for legal pages (update when content changes)
-  const legalPagesDate = new Date('2025-01-01')
-
-  return [
-    // Landing page - main entry point during waitlist mode
-    {
-      url: `${baseUrl}/landing`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 1.0,
-    },
-    // Note: /login, /signup, /forgot-password redirect to /landing during waitlist mode
-    // They will be added back when registration opens
-    // Legal and informational pages
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: legalPagesDate,
-      changeFrequency: 'yearly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/terms`,
-      lastModified: legalPagesDate,
-      changeFrequency: 'yearly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/accessibility`,
-      lastModified: legalPagesDate,
-      changeFrequency: 'yearly',
-      priority: 0.4,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/pricing`,
-      lastModified: now,
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    // FAQ page - high-value content for user questions
-    {
-      url: `${baseUrl}/faq`,
-      lastModified: now,
-      changeFrequency: 'monthly',
-      priority: 0.8,
-    },
-  ]
+  return PUBLIC_SITEMAP_PAGES.map((page) => ({
+    url: toAbsoluteUrl(siteOrigin, page.path),
+    lastModified: page.lastModified,
+    changeFrequency: page.changeFrequency,
+    priority: page.priority,
+  }))
 }

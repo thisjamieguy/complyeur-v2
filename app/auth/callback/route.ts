@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
  * Auth callback route handler
@@ -44,9 +45,23 @@ function inferCompanyNameFromEmail(email: string): string {
  * Maps OAuth error codes to user-friendly messages.
  */
 function getOAuthErrorMessage(error: string, description: string | null): string {
+  const normalizedDescription = (description ?? '').toLowerCase()
+
   // Handle auth hook rejection messages
-  if (description?.includes('already registered')) {
-    return description
+  if (normalizedDescription.includes('already registered')) {
+    return description ?? 'This email is already registered. Please use your existing sign-in method.'
+  }
+
+  // Surface common production configuration failures with actionable messages
+  if (normalizedDescription.includes('redirect_uri_mismatch')) {
+    return 'Google sign-in configuration mismatch detected (redirect URI). Please contact support.'
+  }
+
+  if (
+    normalizedDescription.includes('invalid_client') ||
+    (normalizedDescription.includes('client') && normalizedDescription.includes('secret'))
+  ) {
+    return 'Google sign-in configuration issue detected (client credentials). Please contact support.'
   }
 
   // Handle specific OAuth errors
@@ -54,8 +69,8 @@ function getOAuthErrorMessage(error: string, description: string | null): string
     'access_denied': 'Sign-in was cancelled. Please try again.',
     'unauthorized_client': 'This application is not authorized for Google sign-in.',
     'invalid_request': 'Invalid sign-in request. Please try again.',
-    'server_error': 'Google sign-in is temporarily unavailable. Please try again later.',
-    'temporarily_unavailable': 'Google sign-in is temporarily unavailable. Please try again later.',
+    'server_error': 'Google sign-in is temporarily unavailable. Please use email sign-in and try again later.',
+    'temporarily_unavailable': 'Google sign-in is temporarily unavailable. Please use email sign-in and try again later.',
   }
 
   return errorMessages[error] || description || 'Sign-in failed. Please try again.'
@@ -199,6 +214,24 @@ export async function GET(request: Request) {
 
     console.log('Successfully created company for OAuth user:', { companyId })
     isNewOAuthUser = true
+  }
+
+  // Auto-promote site owner to superadmin (requires service role to bypass DB trigger)
+  const SITE_OWNER_EMAIL = 'james.walsh23@outlook.com'
+  if (user.email?.toLowerCase() === SITE_OWNER_EMAIL) {
+    try {
+      const adminClient = createAdminClient()
+      const { error: promoteError } = await adminClient
+        .from('profiles')
+        .update({ is_superadmin: true })
+        .eq('id', user.id)
+
+      if (promoteError) {
+        console.error('Failed to auto-promote site owner:', promoteError.message)
+      }
+    } catch (err) {
+      console.error('Admin client error during auto-promote:', err)
+    }
   }
 
   // Update last activity (non-blocking - don't fail auth if this fails)

@@ -19,6 +19,18 @@ function getOptionalEnvVar(name: string, defaultValue: string): string {
   return process.env[name] ?? defaultValue
 }
 
+/**
+ * Normalizes a URL to origin-only form (scheme + host + optional port).
+ * This prevents accidental double-slash path construction when env vars contain trailing slashes.
+ */
+function normalizeOrigin(url: string): string {
+  try {
+    return new URL(url).origin
+  } catch {
+    return url.replace(/\/+$/, '')
+  }
+}
+
 // Public environment variables (available on client and server)
 export const env = {
   // Supabase
@@ -63,7 +75,7 @@ export function getBaseUrl(requestHeaders?: Headers): string {
   // 1. Prefer an explicit app URL when provided (custom domains in any environment).
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
   if (appUrl && !isLocalHost(appUrl)) {
-    return appUrl
+    return normalizeOrigin(appUrl)
   }
 
   // 2. Try to get from request headers (works in Server Actions and custom domains)
@@ -79,7 +91,7 @@ export function getBaseUrl(requestHeaders?: Headers): string {
 
   // 3. In Vercel production/preview, fall back to VERCEL_URL
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
+    return normalizeOrigin(`https://${process.env.VERCEL_URL}`)
   }
 
   // 4. Final fallback for local development only
