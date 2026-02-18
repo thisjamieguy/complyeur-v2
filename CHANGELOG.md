@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
-- perf: complete phases 7-10 of performance audit (18 fixes) [`7356a44`](https://github.com/thisjamieguy/complyeur-v2/commit/7356a447cac78ed3e23efb279e0d72fe2f8007b5)
+- perf: complete phases 7-10 of performance audit (18 fixes) [`bb01a25`](https://github.com/thisjamieguy/complyeur-v2/commit/bb01a25700d3d85d7913c2bdbf693ad5002c4a78)
 - perf: complete phase 6 architecture improvements (10 fixes) [`cb3a479`](https://github.com/thisjamieguy/complyeur-v2/commit/cb3a4793a13db4d8777c6a6e2dc9cbd2a9d31a98)
 - fix(test): update import-api mocks for requireCompanyAccessCached auth flow [`3448119`](https://github.com/thisjamieguy/complyeur-v2/commit/34481193fdf1c32d738cef428854ec3fbc313f3a)
 - perf: complete phase 5 database optimisation (7 fixes) [`bd104a2`](https://github.com/thisjamieguy/complyeur-v2/commit/bd104a2c020981714c70638c4998e056b6b8ae84)
