@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- perf: 6 high-priority performance fixes from audit [`43f6802`](https://github.com/thisjamieguy/complyeur-v2/commit/43f68020420b785efc2b2466b5ca7260e7a968aa)
 - chore: clean up project root — move docs, delete orphaned files, remove clutter [`266520e`](https://github.com/thisjamieguy/complyeur-v2/commit/266520eeae2f0fada1408a110b3b0d5a47b284e9)
 - chore: add Agent Context Protocol (ACP) with project-specific documentation [`3469235`](https://github.com/thisjamieguy/complyeur-v2/commit/346923564e1c2e582b01d50f8a1a4f823232718f)
 - fix: site owner bypasses onboarding redirect in middleware [`55e77ab`](https://github.com/thisjamieguy/complyeur-v2/commit/55e77ab1bacf28cdd4ac561b47ee7abcf2372b2b)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: sync entitlements on admin tier change with confirmation dialog [`3467d8c`](https://github.com/thisjamieguy/complyeur-v2/commit/3467d8c66d591cda2182883e35849f35de16eed1)
 - chore(changelog): sync auto-changelog [`fea752b`](https://github.com/thisjamieguy/complyeur-v2/commit/fea752be4adc567de8d32e09af480838ab5bc004)
 - chore(changelog): sync auto-changelog [`2ad78fc`](https://github.com/thisjamieguy/complyeur-v2/commit/2ad78fc6cec4a38f86e04e18246181c6839be9b5)
-- fix: team invites, bulk-delete batching, promo codes, MFA unenroll, and RLS policy [`9918789`](https://github.com/thisjamieguy/complyeur-v2/commit/991878921c5a8ccb3d2704b3571b64a18d9e3e17)
 
 ## v1.0.0 - 2026-01-22
 

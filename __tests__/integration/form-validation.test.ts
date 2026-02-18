@@ -33,7 +33,7 @@ describe('Employee form validation', () => {
       ];
 
       validNames.forEach(name => {
-        const result = employeeSchema.safeParse({ name });
+        const result = employeeSchema.safeParse({ name, nationality_type: 'uk_citizen' });
         expect(result.success).toBe(true);
       });
     });
