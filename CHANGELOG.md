@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: site owner skips onboarding and goes straight to dashboard [`f71c44c`](https://github.com/thisjamieguy/complyeur-v2/commit/f71c44cacc77a47945771cf5fefacffb3cbd51f6)
 - fix: auto-promote site owner to superadmin on Google OAuth sign-in [`c51c484`](https://github.com/thisjamieguy/complyeur-v2/commit/c51c484d26e473da6607a89e16bdd90bde681001)
 - fix: add admin error boundary and server-side error logging [`75a8e3d`](https://github.com/thisjamieguy/complyeur-v2/commit/75a8e3d185cf17e07c4720fb07bb117a809488fc)
 - fix: sync entitlements on admin tier change with confirmation dialog [`3467d8c`](https://github.com/thisjamieguy/complyeur-v2/commit/3467d8c66d591cda2182883e35849f35de16eed1)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): sync auto-changelog [`e413f2c`](https://github.com/thisjamieguy/complyeur-v2/commit/e413f2ca3ebaa8a87c5ab13934423d08624beb86)
 - fix: close beta launch blockers and add analytics [`0dcde22`](https://github.com/thisjamieguy/complyeur-v2/commit/0dcde2244270eb13dc04ea1c37d4ab86b9436f78)
 - chore: complete beta launch audit (sections 5-18) [`e089a06`](https://github.com/thisjamieguy/complyeur-v2/commit/e089a06efa170dc3f9b12d35e64c21dd90ed35af)
-- test(e2e): harden multi-user UX and stabilize suite [`5ebe9c3`](https://github.com/thisjamieguy/complyeur-v2/commit/5ebe9c3d786e73e96cb9ebcfec73680efd7de6e2)
 
 ## v1.0.0 - 2026-01-22
 

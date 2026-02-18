@@ -64,7 +64,10 @@ export async function updateSession(request: NextRequest) {
     return { supabaseResponse, user: null, needsOnboarding: false, sessionExpired: true }
   }
 
-  const needsOnboarding = !profile.onboarding_completed_at
+  // Site owner always bypasses onboarding
+  const SITE_OWNER_EMAIL = 'james.walsh23@outlook.com'
+  const isSiteOwner = user.email?.toLowerCase() === SITE_OWNER_EMAIL
+  const needsOnboarding = !isSiteOwner && !profile.onboarding_completed_at
 
   return { supabaseResponse, user, needsOnboarding, sessionExpired: false }
 }
