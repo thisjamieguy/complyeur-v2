@@ -251,12 +251,14 @@ export async function getImportSession(sessionId: string): Promise<ImportSession
 
 export async function getRecentImportSessions(limit = 10): Promise<ImportSession[]> {
   try {
+    const { companyId } = await requireCompanyAccessCached();
     const supabase = await createClient();
 
     // Exclude heavy JSONB columns (parsed_data, validation_errors) for listing
     const { data, error } = await supabase
       .from('import_sessions')
       .select('id, company_id, user_id, format, status, file_name, file_size, total_rows, valid_rows, error_rows, result, created_at, completed_at')
+      .eq('company_id', companyId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -293,12 +295,14 @@ export async function getImportSessionsPaginated(
   perPage = 20
 ): Promise<PaginatedImportSessions> {
   try {
+    const { companyId } = await requireCompanyAccessCached();
     const supabase = await createClient();
 
     // Get total count
     const { count, error: countError } = await supabase
       .from('import_sessions')
       .select('*', { count: 'exact', head: true })
+      .eq('company_id', companyId)
       .in('status', ['completed', 'failed']);
 
     if (countError) {
@@ -314,6 +318,7 @@ export async function getImportSessionsPaginated(
     const { data, error } = await supabase
       .from('import_sessions')
       .select('id, company_id, user_id, format, status, file_name, file_size, total_rows, valid_rows, error_rows, result, created_at, completed_at, validation_errors')
+      .eq('company_id', companyId)
       .in('status', ['completed', 'failed'])
       .order('created_at', { ascending: false })
       .range(offset, offset + perPage - 1);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { timingSafeEqual } from 'crypto'
 
 /**
  * CRON Endpoint Authentication - Fail-Closed Implementation
@@ -170,18 +171,8 @@ export function withCronAuth(
  * Returns true if strings are equal, false otherwise.
  */
 function constantTimeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    // Still do some work to avoid length-based timing leaks
-    let result = 0
-    for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ a.charCodeAt(i)
-    }
-    return false
-  }
-
-  let result = 0
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
-  }
-  return result === 0
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return timingSafeEqual(bufA, bufB)
 }

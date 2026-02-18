@@ -25,12 +25,7 @@ import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 export async function getEmployeesForGdpr(): Promise<
   Array<{ id: string; name: string; isAnonymized: boolean }>
 > {
-  let ctx
-  try {
-    ctx = await requireCompanyAccessCached()
-  } catch {
-    return []
-  }
+  const ctx = await requireCompanyAccessCached()
 
   if (!isOwnerOrAdmin(ctx.role)) {
     return []
@@ -322,18 +317,13 @@ export async function getGdprAuditLogAction(options?: {
     createdAt: string
   }>
 > {
-  const supabase = await createClient()
+  const { companyId, role } = await requireCompanyAccessCached()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id, role')
-    .single()
-
-  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
+  if (!isOwnerOrAdmin(role)) {
     return []
   }
 
-  return getGdprAuditLog(profile.company_id, options)
+  return getGdprAuditLog(companyId, options)
 }
 
 /**
@@ -347,12 +337,10 @@ export async function getRetentionStatsAction(): Promise<RetentionStats | null> 
  * Checks if the current user is an owner or admin.
  */
 export async function isAdmin(): Promise<boolean> {
-  const supabase = await createClient()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .single()
-
-  return isOwnerOrAdmin(profile?.role)
+  try {
+    const { role } = await requireCompanyAccessCached()
+    return isOwnerOrAdmin(role)
+  } catch {
+    return false
+  }
 }

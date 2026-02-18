@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getBaseUrl } from '@/lib/env'
 import { validateRedirectUrl } from '@/lib/utils/redirect'
+import { rateLimit } from '@/lib/rate-limit'
 import {
   AuthError,
   ValidationError,
@@ -41,6 +42,11 @@ function splitFullName(name: string): { firstName: string; lastName: string | nu
 }
 
 export async function login(formData: FormData) {
+  const requestHeaders = await headers()
+  const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const rl = await rateLimit(ip, 'auth')
+  if (!rl.success) throw new AuthError('Too many login attempts. Please wait a moment and try again.')
+
   const supabase = await createClient()
   const redirectTo = validateRedirectUrl(formData.get('redirectTo') as string | null)
 
@@ -86,6 +92,11 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
+  const requestHeaders = await headers()
+  const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const rl = await rateLimit(ip, 'auth')
+  if (!rl.success) throw new AuthError('Too many signup attempts. Please wait a moment and try again.')
+
   const supabase = await createClient()
 
   const rawData = {
@@ -185,8 +196,12 @@ export async function signup(formData: FormData) {
 }
 
 export async function forgotPassword(formData: FormData) {
-  const supabase = await createClient()
   const requestHeaders = await headers()
+  const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const rl = await rateLimit(ip, 'password-reset')
+  if (!rl.success) throw new AuthError('Too many password reset attempts. Please wait an hour before trying again.')
+
+  const supabase = await createClient()
   const baseUrl = getBaseUrl(requestHeaders)
 
   const rawData = {
@@ -217,6 +232,11 @@ export async function forgotPassword(formData: FormData) {
 }
 
 export async function resetPassword(formData: FormData) {
+  const requestHeaders = await headers()
+  const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const rl = await rateLimit(ip, 'password-reset')
+  if (!rl.success) throw new AuthError('Too many password reset attempts. Please wait an hour before trying again.')
+
   const supabase = await createClient()
 
   const rawData = {
@@ -265,8 +285,12 @@ export async function logout() {
  * @param redirectTo - Optional path to redirect to after successful auth (must be relative)
  */
 export async function signInWithGoogle(redirectTo?: string) {
-  const supabase = await createClient()
   const requestHeaders = await headers()
+  const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '127.0.0.1'
+  const rl = await rateLimit(ip, 'auth')
+  if (!rl.success) throw new AuthError('Too many sign-in attempts. Please wait a moment and try again.')
+
+  const supabase = await createClient()
   const baseUrl = getBaseUrl(requestHeaders)
 
   // Validate redirectTo to prevent open redirect attacks
