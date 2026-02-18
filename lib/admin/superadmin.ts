@@ -1,4 +1,4 @@
-const FALLBACK_SUPERADMIN_EMAILS = ['james.walsh23@outlook.com'] as const
+const FALLBACK_SUPERADMIN_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com'] as const
 
 function normalizeEmail(email: string | null | undefined): string {
   return (email ?? '').trim().toLowerCase()

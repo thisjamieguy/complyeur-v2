@@ -228,8 +228,8 @@ export async function GET(request: Request) {
 
   // Auto-promote site owner to superadmin and skip onboarding
   // Requires service role to bypass the prevent_restricted_profile_updates trigger
-  const SITE_OWNER_EMAIL = 'james.walsh23@outlook.com'
-  const isSiteOwner = user.email?.toLowerCase() === SITE_OWNER_EMAIL
+  const SITE_OWNER_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
+  const isSiteOwner = SITE_OWNER_EMAILS.includes(user.email?.toLowerCase() ?? '')
   if (isSiteOwner) {
     try {
       const adminClient = createAdminClient()

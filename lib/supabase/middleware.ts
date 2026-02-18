@@ -53,8 +53,8 @@ export async function updateSession(request: NextRequest) {
 
   if (metaCompanyId) {
     // Metadata is present — skip profiles query entirely
-    const SITE_OWNER_EMAIL = 'james.walsh23@outlook.com'
-    const isSiteOwner = user.email?.toLowerCase() === SITE_OWNER_EMAIL
+    const SITE_OWNER_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
+    const isSiteOwner = SITE_OWNER_EMAILS.includes(user.email?.toLowerCase() ?? '')
     const needsOnboarding = !isSiteOwner && metaOnboardingCompleted !== true
 
     return { supabaseResponse, user, needsOnboarding, sessionExpired: false }
@@ -94,8 +94,8 @@ export async function updateSession(request: NextRequest) {
   })
 
   // Site owner always bypasses onboarding
-  const SITE_OWNER_EMAIL = 'james.walsh23@outlook.com'
-  const isSiteOwner = user.email?.toLowerCase() === SITE_OWNER_EMAIL
+  const SITE_OWNER_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
+  const isSiteOwner = SITE_OWNER_EMAILS.includes(user.email?.toLowerCase() ?? '')
   const needsOnboarding = !isSiteOwner && !profile.onboarding_completed_at
 
   return { supabaseResponse, user, needsOnboarding, sessionExpired: false }

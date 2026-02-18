@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 
-const ADMIN_PANEL_ALLOWED_EMAIL = 'james.walsh23@outlook.com'
+const ADMIN_PANEL_ALLOWED_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
 
 function normalizeEmail(email: string | null | undefined): string {
   return (email ?? '').trim().toLowerCase()
@@ -44,7 +44,7 @@ export async function requireSuperAdmin() {
     redirect('/login?redirect=/admin')
   }
 
-  if (normalizeEmail(user.email) !== ADMIN_PANEL_ALLOWED_EMAIL) {
+  if (!ADMIN_PANEL_ALLOWED_EMAILS.includes(normalizeEmail(user.email))) {
     redirect('/dashboard')
   }
 

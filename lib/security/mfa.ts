@@ -4,7 +4,7 @@ import type { createClient } from '@/lib/supabase/server'
 
 export const MFA_BACKUP_SESSION_COOKIE = 'mfa_backup_session'
 const MFA_BACKUP_SESSION_TTL_HOURS = 12
-const DEFAULT_MFA_REQUIRED_EMAILS = ['james.walsh23@outlook.com']
+const DEFAULT_MFA_REQUIRED_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
 
 export type MfaStatus = {
   currentLevel: 'aal1' | 'aal2' | null
