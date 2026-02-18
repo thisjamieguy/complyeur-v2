@@ -153,18 +153,22 @@ async function sendAlertEmails(
     recipientCount: recipients.length,
   })
 
-  for (const recipient of recipients) {
-    // Create notification log entry
-    const log = await createNotificationLog({
-      alert_id: alert.id,
-      employee_id: context.employeeId,
-      notification_type: alertType,
-      recipient_email: recipient.email,
-      subject: `[${alertType.charAt(0).toUpperCase() + alertType.slice(1)}] ${context.employeeName} - Schengen Compliance Alert`,
-      status: 'pending',
-    })
+  // Create all notification logs in parallel
+  const logs = await Promise.all(
+    recipients.map(recipient =>
+      createNotificationLog({
+        alert_id: alert.id,
+        employee_id: context.employeeId,
+        notification_type: alertType,
+        recipient_email: recipient.email,
+        subject: `[${alertType.charAt(0).toUpperCase() + alertType.slice(1)}] ${context.employeeName} - Schengen Compliance Alert`,
+        status: 'pending',
+      }).then(log => ({ log, recipient }))
+    )
+  )
 
-    // Send email (fire-and-forget style, but log result)
+  // Fire off all emails in parallel (non-blocking)
+  for (const { log, recipient } of logs) {
     sendAlertEmail({
       employeeName: context.employeeName,
       daysUsed,

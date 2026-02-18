@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- chore: clean up project root — move docs, delete orphaned files, remove clutter [`266520e`](https://github.com/thisjamieguy/complyeur-v2/commit/266520eeae2f0fada1408a110b3b0d5a47b284e9)
 - chore: add Agent Context Protocol (ACP) with project-specific documentation [`3469235`](https://github.com/thisjamieguy/complyeur-v2/commit/346923564e1c2e582b01d50f8a1a4f823232718f)
 - fix: site owner bypasses onboarding redirect in middleware [`55e77ab`](https://github.com/thisjamieguy/complyeur-v2/commit/55e77ab1bacf28cdd4ac561b47ee7abcf2372b2b)
 - fix: site owner skips onboarding and goes straight to dashboard [`f71c44c`](https://github.com/thisjamieguy/complyeur-v2/commit/f71c44cacc77a47945771cf5fefacffb3cbd51f6)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore(changelog): sync auto-changelog [`fea752b`](https://github.com/thisjamieguy/complyeur-v2/commit/fea752be4adc567de8d32e09af480838ab5bc004)
 - chore(changelog): sync auto-changelog [`2ad78fc`](https://github.com/thisjamieguy/complyeur-v2/commit/2ad78fc6cec4a38f86e04e18246181c6839be9b5)
 - fix: team invites, bulk-delete batching, promo codes, MFA unenroll, and RLS policy [`9918789`](https://github.com/thisjamieguy/complyeur-v2/commit/991878921c5a8ccb3d2704b3571b64a18d9e3e17)
-- chore(changelog): sync auto-changelog [`e413f2c`](https://github.com/thisjamieguy/complyeur-v2/commit/e413f2ca3ebaa8a87c5ab13934423d08624beb86)
 
 ## v1.0.0 - 2026-01-22
 

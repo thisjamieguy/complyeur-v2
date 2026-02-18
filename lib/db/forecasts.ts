@@ -109,7 +109,8 @@ export async function getAllTripsGroupedByEmployee(): Promise<
     .from('employees')
     .select('id, name')
     .eq('company_id', companyId)
-    .order('name', { ascending: true });
+    .order('name', { ascending: true })
+    .limit(1000);
 
   if (employeesError) {
     console.error('Error fetching employees:', employeesError);
@@ -121,7 +122,8 @@ export async function getAllTripsGroupedByEmployee(): Promise<
     .from('trips')
     .select('*')
     .eq('company_id', companyId)
-    .order('entry_date', { ascending: true });
+    .order('entry_date', { ascending: true })
+    .limit(10000);
 
   if (tripsError) {
     console.error('Error fetching trips:', tripsError);

@@ -78,6 +78,8 @@ export function batchCalculateCompliance(
  * Creates an internal cache that persists for the lifetime of the
  * memoized function instance.
  */
+const MAX_CACHE_SIZE = 500
+
 export function createComplianceCalculator() {
   const cache = new Map<string, ComplianceResult>()
 
@@ -91,12 +93,23 @@ export function createComplianceCalculator() {
 
     const cached = cache.get(cacheKey)
     if (cached) {
+      // Move to end for LRU refresh
+      cache.delete(cacheKey)
+      cache.set(cacheKey, cached)
       return cached
     }
 
     const result = calculateCompliance(trips, config)
-    cache.set(cacheKey, result)
 
+    // Evict oldest entry if at capacity
+    if (cache.size >= MAX_CACHE_SIZE) {
+      const firstKey = cache.keys().next().value
+      if (firstKey !== undefined) {
+        cache.delete(firstKey)
+      }
+    }
+
+    cache.set(cacheKey, result)
     return result
   }
 }

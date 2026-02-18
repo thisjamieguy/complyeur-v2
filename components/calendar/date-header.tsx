@@ -85,11 +85,12 @@ export const DateHeader = memo(function DateHeader({
 
       {/* Row 2: Day-of-week single letters */}
       <div className="flex border-t border-slate-100">
-        {dates.map((date, index) => {
+        {dates.map((date) => {
+          const dateKey = format(date, 'yyyy-MM-dd')
           const isWeekendDay = isWeekend(date)
           return (
             <div
-              key={index}
+              key={dateKey}
               className={cn(
                 'shrink-0 flex items-center justify-center bg-slate-50',
                 isWeekendDay && 'bg-slate-100/60'
@@ -111,12 +112,13 @@ export const DateHeader = memo(function DateHeader({
 
       {/* Row 3: Date numbers */}
       <div className="flex border-t border-slate-100">
-        {dates.map((date, index) => {
+        {dates.map((date) => {
+          const dateKey = format(date, 'yyyy-MM-dd')
           const isCurrentDay = isToday(date)
           const isWeekendDay = isWeekend(date)
           return (
             <div
-              key={index}
+              key={dateKey}
               className={cn(
                 'shrink-0 flex items-center justify-center',
                 !isCurrentDay && !isWeekendDay && 'bg-white',

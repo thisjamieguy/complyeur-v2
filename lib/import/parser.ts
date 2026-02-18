@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import { read, utils } from 'xlsx';
 import {
   ImportFormat,
   ParsedEmployeeRow,
@@ -72,7 +72,7 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
     const buffer = await file.arrayBuffer();
 
     // Parse workbook
-    const workbook = XLSX.read(buffer, {
+    const workbook = read(buffer, {
       type: 'array',
       cellDates: true,
       dateNF: 'yyyy-mm-dd',
@@ -87,7 +87,7 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
     const sheet = workbook.Sheets[sheetName];
 
     // Convert to JSON with headers
-    const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+    const jsonData = utils.sheet_to_json<Record<string, unknown>>(sheet, {
       defval: '',
       raw: false,
     });
@@ -173,7 +173,7 @@ export async function parseFileRaw(file: File): Promise<RawParseResult> {
     const buffer = await file.arrayBuffer();
 
     // Parse workbook
-    const workbook = XLSX.read(buffer, {
+    const workbook = read(buffer, {
       type: 'array',
       cellDates: true,
       dateNF: 'yyyy-mm-dd',
@@ -188,7 +188,7 @@ export async function parseFileRaw(file: File): Promise<RawParseResult> {
     const sheet = workbook.Sheets[sheetName];
 
     // Convert to JSON with headers
-    const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+    const jsonData = utils.sheet_to_json<Record<string, unknown>>(sheet, {
       defval: '',
       raw: false,
     });
@@ -391,7 +391,7 @@ function formatDateValue(value: string): string {
 function parseGanttFromData(buffer: ArrayBuffer): ParseResult {
   try {
     // Parse workbook to get raw 2D array
-    const workbook = XLSX.read(buffer, {
+    const workbook = read(buffer, {
       type: 'array',
       cellDates: false, // Keep dates as strings for Gantt parsing
       raw: true,
@@ -405,7 +405,7 @@ function parseGanttFromData(buffer: ArrayBuffer): ParseResult {
     const sheet = workbook.Sheets[sheetName];
 
     // Convert to 2D array (including headers)
-    const data = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    const data = utils.sheet_to_json<unknown[]>(sheet, {
       header: 1,
       defval: '',
       raw: true,

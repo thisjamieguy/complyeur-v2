@@ -17,16 +17,18 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, user.email)
+  const [mfa, { data: profile, error: profileError }] = await Promise.all([
+    enforceMfaForPrivilegedUser(supabase, user.id, user.email),
+    supabase
+      .from('profiles')
+      .select('role, is_superadmin, first_name, last_name')
+      .eq('id', user.id)
+      .single(),
+  ])
+
   if (!mfa.ok) {
     redirect('/mfa')
   }
-
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('role, is_superadmin, first_name, last_name')
-    .eq('id', user.id)
-    .single()
 
   if (profileError) {
     if (profileError.code === 'PGRST116') {

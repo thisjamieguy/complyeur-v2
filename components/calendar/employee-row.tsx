@@ -27,7 +27,7 @@ export const EmployeeRow = memo(function EmployeeRow({
         const trip = employee.dayMap.get(key)
         return (
           <DayCell
-            key={index}
+            key={key}
             trip={trip}
             date={date}
             dayWidth={dayWidth}
