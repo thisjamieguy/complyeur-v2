@@ -216,14 +216,19 @@ export async function GET(request: Request) {
     isNewOAuthUser = true
   }
 
-  // Auto-promote site owner to superadmin (requires service role to bypass DB trigger)
+  // Auto-promote site owner to superadmin and skip onboarding
+  // Requires service role to bypass the prevent_restricted_profile_updates trigger
   const SITE_OWNER_EMAIL = 'james.walsh23@outlook.com'
-  if (user.email?.toLowerCase() === SITE_OWNER_EMAIL) {
+  const isSiteOwner = user.email?.toLowerCase() === SITE_OWNER_EMAIL
+  if (isSiteOwner) {
     try {
       const adminClient = createAdminClient()
       const { error: promoteError } = await adminClient
         .from('profiles')
-        .update({ is_superadmin: true })
+        .update({
+          is_superadmin: true,
+          onboarding_completed_at: new Date().toISOString(),
+        })
         .eq('id', user.id)
 
       if (promoteError) {
@@ -245,7 +250,11 @@ export async function GET(request: Request) {
     console.warn('Failed to update last activity after auth callback:', activityError.message)
   }
 
-  // New OAuth users go to onboarding; returning users go to intended destination
-  const destination = isNewOAuthUser ? '/onboarding' : next
+  // Site owner skips onboarding; new OAuth users go to onboarding; returning users go to intended destination
+  const destination = isSiteOwner
+    ? '/dashboard'
+    : isNewOAuthUser
+      ? '/onboarding'
+      : next
   return NextResponse.redirect(`${origin}${destination}`)
 }
