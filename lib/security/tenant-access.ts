@@ -1,4 +1,5 @@
-import type { createClient } from '@/lib/supabase/server'
+import { cache } from 'react'
+import { createClient } from '@/lib/supabase/server'
 import { AuthError, DatabaseError } from '@/lib/errors'
 
 export type CompanyAccessContext = {
@@ -59,3 +60,18 @@ export async function requireCompanyAccess(
     isSuperadmin,
   }
 }
+
+/**
+ * Cached version of requireCompanyAccess for server components and server actions.
+ * Creates its own Supabase client so React.cache() can deduplicate within a request.
+ * Use this when you don't need the supabase client for subsequent queries in the same scope.
+ */
+export const requireCompanyAccessCached = cache(
+  async (
+    targetCompanyId?: string,
+    options: CompanyAccessOptions = {}
+  ): Promise<CompanyAccessContext> => {
+    const supabase = await createClient()
+    return requireCompanyAccess(supabase, targetCompanyId, options)
+  }
+)

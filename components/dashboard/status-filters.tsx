@@ -1,5 +1,6 @@
 'use client'
 
+import { memo, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import type { StatusFilter, ComplianceStats } from '@/types/dashboard'
 
@@ -20,7 +21,7 @@ interface FilterButtonProps {
   onClick: () => void
 }
 
-function FilterButton({ label, count, isActive, onClick }: Omit<FilterButtonProps, 'filter'>) {
+const FilterButton = memo(function FilterButton({ label, count, isActive, onClick }: Omit<FilterButtonProps, 'filter'>) {
   return (
     <button
       type="button"
@@ -38,18 +39,18 @@ function FilterButton({ label, count, isActive, onClick }: Omit<FilterButtonProp
       {label} ({count})
     </button>
   )
-}
+})
 
 /**
  * Status filter buttons for the dashboard.
  * Allows filtering employees by compliance status: All, Compliant, At Risk, Non-Compliant, Breach.
  */
-export function StatusFilters({
+export const StatusFilters = memo(function StatusFilters({
   activeFilter,
   onFilterChange,
   stats,
 }: StatusFiltersProps) {
-  const filters: { filter: StatusFilter; label: string; count: number }[] = [
+  const filters = useMemo<{ filter: StatusFilter; label: string; count: number }[]>(() => [
     { filter: 'all', label: 'All', count: stats.total },
     { filter: 'green', label: 'Compliant', count: stats.compliant },
     { filter: 'amber', label: 'At Risk', count: stats.at_risk },
@@ -58,7 +59,7 @@ export function StatusFilters({
     ...(stats.exempt > 0
       ? [{ filter: 'exempt' as StatusFilter, label: 'Exempt', count: stats.exempt }]
       : []),
-  ]
+  ], [stats])
 
   return (
     <div
@@ -77,4 +78,4 @@ export function StatusFilters({
       ))}
     </div>
   )
-}
+})

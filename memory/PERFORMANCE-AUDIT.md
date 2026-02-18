@@ -473,46 +473,46 @@ Fixes are grouped into phases. Each phase builds on the previous and can be veri
 
 These require minimal code changes and have immediate, measurable impact.
 
-- [ ] **H-15** — CookieYes `beforeInteractive` -> `afterInteractive` (5 min)
-- [ ] **H-18** — Fragment `key` fix in ValidationTable (10 min)
-- [ ] **L-07** — Remove no-op `revalidatePath('/calendar')` (5 min)
-- [ ] **L-08** — Remove production `console.log` in calendar page (5 min)
-- [ ] **M-19** — Pre-partition `COUNTRY_LIST` at module level (15 min)
-- [ ] **M-25** — Fix `index` as key in ValidationTable cells (15 min)
-- [ ] **L-10** — Fix `index` as key in GDPR consequence list (5 min)
+- [x] **H-15** — CookieYes `beforeInteractive` -> `afterInteractive` (5 min) ✅ *Done 2026-02-18*
+- [x] **H-18** — Fragment `key` fix in ValidationTable (10 min) ✅ *Done 2026-02-18*
+- [x] **L-07** — Remove no-op `revalidatePath('/calendar')` (5 min) ✅ *Done 2026-02-18*
+- [x] **L-08** — Remove production `console.log` in calendar page (5 min) ✅ *Done 2026-02-18*
+- [x] **M-19** — Pre-partition `COUNTRY_LIST` at module level (15 min) ✅ *Done 2026-02-18*
+- [x] **M-25** — Fix `index` as key in ValidationTable cells (15 min) ✅ *Done 2026-02-18*
+- [x] **L-10** — Fix `index` as key in GDPR consequence list (5 min) ✅ *Done 2026-02-18*
 
 ### Phase 2 — Caching Layer (2-4 hours total)
 
 These eliminate the most pervasive source of redundant database calls.
 
-- [ ] **H-01** — Cache `requireCompanyAccess` with `React.cache()`
-- [ ] **H-04** — Consolidate and cache `getCompanySettings`
-- [ ] **H-05** — Rewrite `checkEntitlement` to use cached bulk fetch
-- [ ] **H-13** — Create cached profile fetcher for server actions
-- [ ] **H-11** — Remove redundant `auth.getUser()` from dashboard page
+- [x] **H-01** — Cache `requireCompanyAccess` with `React.cache()` ✅ *Done 2026-02-18 — added `requireCompanyAccessCached` in `lib/security/tenant-access.ts`*
+- [x] **H-04** — Consolidate and cache `getCompanySettings` ✅ *Done 2026-02-18 — wrapped in `cache()` in `lib/db/alerts.ts`, `lib/actions/settings.ts` now delegates*
+- [x] **H-05** — Rewrite `checkEntitlement` to use cached bulk fetch ✅ *Done 2026-02-18 — `lib/billing/entitlements.ts` rewired to cached bulk fetch*
+- [x] **H-13** — Create cached profile fetcher for server actions ✅ *Done 2026-02-18 — 5 files migrated to `requireCompanyAccessCached()`*
+- [x] **H-11** — Remove redundant `auth.getUser()` from dashboard page ✅ *Done 2026-02-18 — uses `requireCompanyAccessCached()` now*
 
 ### Phase 3 — Bundle Optimisation (2-4 hours total)
 
 These reduce the amount of JavaScript shipped to the client.
 
-- [ ] **H-14** — Dynamic import for `xlsx` in upload page
-- [ ] **H-16** — Add `next/dynamic` for GanttChart, modals, DashboardTour, GDPR components
-- [ ] **H-17** — Split PDF generator out of exports barrel
-- [ ] **M-16** — Remove `Geist_Mono` from root layout
-- [ ] **M-17** — Move logo preloads to route-specific layouts
-- [ ] **M-18** — Direct imports instead of barrels in performance-critical paths
+- [x] **H-14** — Dynamic import for `xlsx` in upload page ✅ *Done 2026-02-18 — `await import('@/lib/import/parser')` in event handlers*
+- [x] **H-16** — Add `next/dynamic` for GanttChart, modals, DashboardTour, GDPR components ✅ *Done 2026-02-18 — dynamic imports in calendar-view, dashboard page, compliance-table, employee detail; removed unused GDPR imports from server page*
+- [x] **H-17** — Split PDF generator out of exports barrel ✅ *Done 2026-02-18 — removed from `lib/exports/index.ts`, direct import in `app/actions/exports.ts`*
+- [x] **M-16** — Remove `Geist_Mono` from root layout ✅ *Done 2026-02-18 — removed font import, CSS variable, and body class; Tailwind `font-mono` uses system stack*
+- [x] **M-17** — Move logo preloads to route-specific layouts ✅ *Done 2026-02-18 — removed manual `<link rel="preload">` from root layout; route layouts already use `<Image priority>`*
+- [x] **M-18** — Direct imports instead of barrels in performance-critical paths ✅ *Done 2026-02-18 — verified barrel files are unused; all consumers already use direct imports*
 
 ### Phase 4 — React Component Performance (2-3 hours total)
 
 These reduce unnecessary re-renders in high-frequency components.
 
-- [ ] **H-19** — Pre-compute calendar `isToday`/`isWeekend` per-date
-- [ ] **H-20** — Fix `EmployeeCard` memo breakage
-- [ ] **M-20** — Memoise `sortedTrips` in TripList
-- [ ] **M-21** — Add `memo()` to `TripCardMobile`
-- [ ] **M-22** — Memoise `StatusFilters` and `FilterButton`
-- [ ] **M-23** — Extract `onOpenChange` to `useCallback`
-- [ ] **M-24** — Pre-compute DateHeader cell flags
+- [x] **H-19** — Pre-compute calendar `isToday`/`isWeekend` per-date ✅ *Done 2026-02-18 — `DateMeta[]` computed once in `GanttChart`, passed to `EmployeeRow` + `DateHeader`*
+- [x] **H-20** — Fix `EmployeeCard` memo breakage ✅ *Done 2026-02-18 — stable callback via `onOpenAddTrip` prop*
+- [x] **M-20** — Memoise `sortedTrips` in TripList ✅ *Done 2026-02-18 — wrapped in `useMemo`; ISO string comparison instead of `new Date()`*
+- [x] **M-21** — Add `memo()` to `TripCardMobile` ✅ *Done 2026-02-18*
+- [x] **M-22** — Memoise `StatusFilters` and `FilterButton` ✅ *Done 2026-02-18 — both wrapped in `memo()`; `filters` array in `useMemo`*
+- [x] **M-23** — Extract `onOpenChange` to `useCallback` ✅ *Done 2026-02-18 — `handleAddTripOpenChange` stable callback*
+- [x] **M-24** — Pre-compute DateHeader cell flags ✅ *Done 2026-02-18 — uses `DateMeta` from `GanttChart` (same as H-19)*
 
 ### Phase 5 — Database Optimisation (2-4 hours total)
 
@@ -565,7 +565,9 @@ Confirm the plan shows `Index Scan` rather than `Seq Scan`.
 
 ## 8. Previously Completed Fixes
 
-The following issues were identified in an earlier audit pass and have already been resolved (commit `43f6802`):
+The following issues were identified in earlier audit passes and have already been resolved:
+
+### Batch 1 (commit `43f6802`)
 
 | Fix | Description | Commit |
 |-----|-------------|--------|
@@ -575,6 +577,74 @@ The following issues were identified in an earlier audit pass and have already b
 | Alert email N+1 loop | Batched notification log creation with `Promise.all()` | `43f6802` |
 | Unbounded forecast queries | Added `.limit(1000)` on employees and `.limit(10000)` on trips | `43f6802` |
 | Unbounded compliance cache | Added LRU eviction with `MAX_CACHE_SIZE = 500` | `43f6802` |
+
+### Batch 2 (2026-02-18 — performance audit critical fixes)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| H-15 | CookieYes `beforeInteractive` → `afterInteractive` | `app/layout.tsx` |
+| H-18 | Fragment `key` fix in ValidationTable `.map()` | `components/import/ValidationTable.tsx` |
+| M-25 | Stable cell keys in ValidationTable (`row.row_number-col-idx`) | `components/import/ValidationTable.tsx` |
+| L-07 | Removed no-op `revalidatePath('/calendar')` | `app/(dashboard)/actions.ts` |
+| L-08 | Removed production `console.log` in calendar page | `app/(dashboard)/calendar/page.tsx` |
+| H-01 | Added `requireCompanyAccessCached` with `React.cache()` | `lib/security/tenant-access.ts` |
+| H-04 | Consolidated & cached `getCompanySettings` (single source of truth) | `lib/db/alerts.ts`, `lib/actions/settings.ts` |
+| H-05 | Rewrote `checkEntitlement` to use cached bulk fetch | `lib/billing/entitlements.ts` |
+| H-11 | Dashboard page uses `requireCompanyAccessCached()` instead of redundant `auth.getUser()` | `app/(dashboard)/dashboard/page.tsx` |
+| H-14 | Dynamic import for `xlsx` (~500KB saved from client bundle) | `app/(dashboard)/import/upload/page.tsx` |
+| H-17 | Removed PDF exports from barrel file; direct import in server action | `lib/exports/index.ts`, `app/actions/exports.ts` |
+| H-20 | Fixed `EmployeeCard` memo breakage from inline closure | `components/dashboard/compliance-table.tsx` |
+
+### Batch 3 (2026-02-18 — phases 1-2 completion)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| M-19 | Pre-partitioned `COUNTRY_LIST` at module level (3 filters → 0 per render) | `components/trips/country-select.tsx` |
+| L-10 | Fixed `index` as key in GDPR consequence list — use `consequence` string | `components/gdpr/confirm-destructive-action.tsx` |
+| H-13 | Migrated 5 server action files to `requireCompanyAccessCached()` | `app/(dashboard)/actions.ts`, `app/(dashboard)/gdpr/actions.ts`, `app/(dashboard)/import/actions.ts`, `lib/actions/settings.ts`, `lib/data/compliance-snapshots.ts` |
+
+### Batch 4 (2026-02-18 — phase 3 bundle optimisation)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| H-16 | Added `next/dynamic` for GanttChart, MobileCalendarView, QuickAddTripModal, DashboardTour, AddTripModal, BulkAddTripsModal; removed unused GDPR imports from server page | `components/calendar/calendar-view.tsx`, `app/(dashboard)/dashboard/page.tsx`, `components/dashboard/compliance-table.tsx`, `app/(dashboard)/employee/[id]/page.tsx`, `app/(dashboard)/gdpr/page.tsx` |
+| M-16 | Removed `Geist_Mono` font from root layout — saves a Google Font download on every page | `app/layout.tsx` |
+| M-17 | Removed manual `<link rel="preload">` for logos from root layout — route layouts already use `<Image priority>` | `app/layout.tsx` |
+| M-18 | Verified barrel files (`calendar/index.ts`, `trips/index.ts`) are unused — all consumers already use direct imports | No changes needed |
+
+### Batch 5 (2026-02-18 — phase 4 React component performance)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| H-19 | Pre-computed `DateMeta[]` once in `GanttChart` (`useMemo`) — eliminates O(employees x dates) `isToday`/`isWeekend`/`format` calls | `components/calendar/gantt-chart.tsx`, `components/calendar/employee-row.tsx` |
+| M-24 | `DateHeader` now consumes pre-computed `DateMeta` — removes per-cell `isToday`/`isWeekend`/`format` in 2 render loops | `components/calendar/date-header.tsx` |
+| M-20 | Wrapped `sortedTrips` in `useMemo`; replaced `new Date()` comparisons with ISO string comparison | `components/trips/trip-list.tsx` |
+| M-21 | Wrapped `TripCardMobile` in `memo()` to prevent re-renders on modal toggle | `components/trips/trip-card-mobile.tsx` |
+| M-22 | Wrapped `StatusFilters` and `FilterButton` in `memo()`; `filters` array in `useMemo` | `components/dashboard/status-filters.tsx` |
+| M-23 | Extracted inline `onOpenChange` lambda to stable `handleAddTripOpenChange` `useCallback` | `components/dashboard/compliance-table.tsx` |
+
+---
+
+## 9. Remaining Work Summary
+
+**HIGH priority remaining (5 items):**
+
+- H-02 — Move `profiles` query out of middleware (JWT metadata)
+- H-03 — Replace `getEmployeeStats` with DB aggregate / `unstable_cache`
+- H-06 — Move alert detection to background job
+- H-07 — Batch GDPR retention cron queries (N+1)
+- H-08 — Batch import inserter trip lookups (N+1)
+- H-09, H-10 — Missing composite indexes on `alerts` and `trips` tables
+
+**MEDIUM priority remaining (8 items):**
+
+- M-01 through M-29 (minus completed M-16, M-17, M-18, M-19, M-20, M-21, M-22, M-23, M-24, M-25) — see Section 4 for details
+
+**LOW priority remaining (8 items):**
+
+- L-01 through L-11 (minus completed L-07, L-08, L-10) — see Section 5 for details
+
+**To continue:** Open this file, scan the checkboxes in Section 6, and pick the next unchecked items to implement.
 
 ---
 

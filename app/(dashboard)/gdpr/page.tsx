@@ -1,12 +1,7 @@
 import { redirect } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Shield, Download, Trash2, EyeOff, Clock, FileText } from 'lucide-react'
-import { DsarExportButton } from '@/components/gdpr/dsar-export-button'
-import { DeleteButton } from '@/components/gdpr/delete-button'
-import { AnonymizeButton } from '@/components/gdpr/anonymize-button'
-import { DeletedEmployeesTable } from '@/components/gdpr/deleted-employees-table'
-import { AuditLogTable } from '@/components/gdpr/audit-log-table'
+import { Shield, FileText } from 'lucide-react'
 import {
   getEmployeesForGdpr,
   getDeletedEmployeesAction,

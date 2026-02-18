@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { ArrowLeft, Calendar } from 'lucide-react'
 import { parseISO, format } from 'date-fns'
 import { getEmployeeById, getTripsByEmployeeId, getEmployees } from '@/lib/db'
@@ -7,9 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmployeeDetailActions } from './employee-detail-actions'
-import { AddTripModal } from '@/components/trips/add-trip-modal'
-import { BulkAddTripsModal } from '@/components/trips/bulk-add-trips-modal'
 import { TripList } from '@/components/trips/trip-list'
+
+const AddTripModal = dynamic(
+  () => import('@/components/trips/add-trip-modal').then(m => m.AddTripModal),
+  { ssr: false }
+)
+
+const BulkAddTripsModal = dynamic(
+  () => import('@/components/trips/bulk-add-trips-modal').then(m => m.BulkAddTripsModal),
+  { ssr: false }
+)
 import { isSchengenCountry } from '@/lib/constants/schengen-countries'
 import { isExemptFromTracking, NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
 import { calculateCompliance, parseDateOnlyAsUTC, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'

@@ -35,6 +35,7 @@ import type { TripCreateInput, TripUpdate, CompanySettingsUpdate, NotificationPr
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 import { hasPermission, PERMISSIONS, type Permission } from '@/lib/permissions'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 
 /**
  * Helper to run alert detection after trip changes
@@ -73,7 +74,6 @@ function runAlertDetectionBackground(employeeId: string): void {
  */
 function revalidateTripData(employeeId?: string): void {
   revalidatePath('/dashboard')
-  revalidatePath('/calendar')
   if (employeeId) {
     revalidatePath(`/employee/${employeeId}`)
   }
@@ -83,32 +83,18 @@ async function enforceMutationAccess(
   permission: Permission,
   actionName: string
 ): Promise<{ userId: string }> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+  const ctx = await requireCompanyAccessCached()
 
-  if (authError || !user) {
-    throw new Error('Not authenticated')
-  }
-
-  const rateLimit = await checkServerActionRateLimit(user.id, actionName)
+  const rateLimit = await checkServerActionRateLimit(ctx.userId, actionName)
   if (!rateLimit.allowed) {
     throw new Error(rateLimit.error ?? 'Rate limit exceeded')
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (profileError || !profile?.role || !hasPermission(profile.role, permission)) {
+  if (!ctx.role || !hasPermission(ctx.role, permission)) {
     throw new Error('Forbidden')
   }
 
-  return { userId: user.id }
+  return { userId: ctx.userId }
 }
 
 export async function addEmployeeAction(formData: { name: string; nationality_type?: string }) {

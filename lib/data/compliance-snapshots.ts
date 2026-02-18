@@ -15,6 +15,7 @@
 
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import {
   calculateCompliance,
   isSchengenCountry,
@@ -164,28 +165,15 @@ export async function rebuildCompanySnapshots(
  */
 export const getDashboardSummary = cache(async () => {
   return withDbTiming('getDashboardSummary', async () => {
+    const ctx = await requireCompanyAccessCached()
     const supabase = await createClient()
-
-    // Get user's company ID
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('company_id')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.company_id) throw new Error('No company found')
 
     // Calculate summary from employees and trips (live)
     // After migration, this can use the get_dashboard_summary RPC
     const { data: employees } = await supabase
       .from('employees')
       .select('id')
-      .eq('company_id', profile.company_id)
+      .eq('company_id', ctx.companyId)
       .is('deleted_at', null)
 
     const { data: recentTrips } = await supabase
@@ -204,7 +192,7 @@ export const getDashboardSummary = cache(async () => {
         )
       `
       )
-      .eq('employees.company_id', profile.company_id)
+      .eq('employees.company_id', ctx.companyId)
       .eq('ghosted', false)
       .order('entry_date', { ascending: false })
       .limit(5)

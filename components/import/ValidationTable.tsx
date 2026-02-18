@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { CheckCircle2, AlertCircle, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   Table,
@@ -114,9 +114,8 @@ export function ValidationTable({
               const isExpandable = hasErrors;
 
               return (
-                <>
+                <Fragment key={row.row_number}>
                   <TableRow
-                    key={row.row_number}
                     className={`
                       ${!row.is_valid ? 'bg-red-50' : row.warnings.length > 0 ? 'bg-amber-50' : ''}
                       ${isExpandable ? 'cursor-pointer hover:bg-slate-50' : ''}
@@ -128,7 +127,7 @@ export function ValidationTable({
                     </TableCell>
                     <TableCell>{getStatusIcon(row)}</TableCell>
                     {getRowData(row).map((value, idx) => (
-                      <TableCell key={idx} className="max-w-[200px] truncate">
+                      <TableCell key={`${row.row_number}-col-${idx}`} className="max-w-[200px] truncate">
                         {value || <span className="text-slate-400 italic">Empty</span>}
                       </TableCell>
                     ))}
@@ -168,7 +167,7 @@ export function ValidationTable({
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               );
             })}
           </TableBody>

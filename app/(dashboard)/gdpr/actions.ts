@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/server'
 import { employeeIdSchema } from '@/lib/validations/gdpr'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { isOwnerOrAdmin } from '@/lib/permissions'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 
 /**
  * Gets all employees for the GDPR tools page.
@@ -24,16 +25,18 @@ import { isOwnerOrAdmin } from '@/lib/permissions'
 export async function getEmployeesForGdpr(): Promise<
   Array<{ id: string; name: string; isAnonymized: boolean }>
 > {
-  const supabase = await createClient()
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id, role')
-    .single()
-
-  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
+  let ctx
+  try {
+    ctx = await requireCompanyAccessCached()
+  } catch {
     return []
   }
+
+  if (!isOwnerOrAdmin(ctx.role)) {
+    return []
+  }
+
+  const supabase = await createClient()
 
   // First try with GDPR columns (deleted_at, anonymized_at)
   let employees: { id: string; name: string; anonymized_at?: string | null }[] | null = null
@@ -42,7 +45,7 @@ export async function getEmployeesForGdpr(): Promise<
   const result = await supabase
     .from('employees')
     .select('id, name, anonymized_at, deleted_at')
-    .eq('company_id', profile.company_id)
+    .eq('company_id', ctx.companyId)
     .is('deleted_at', null)
     .order('name')
 
@@ -52,7 +55,7 @@ export async function getEmployeesForGdpr(): Promise<
     const fallback = await supabase
       .from('employees')
       .select('id, name')
-      .eq('company_id', profile.company_id)
+      .eq('company_id', ctx.companyId)
       .order('name')
 
     employees = fallback.data

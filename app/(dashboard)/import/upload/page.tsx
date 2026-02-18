@@ -9,7 +9,8 @@ import { DateFormatConfirmation } from '@/components/import/DateFormatConfirmati
 import { StepIndicator } from '@/components/import/StepIndicator';
 import type { ImportFormat, MappingState } from '@/types/import';
 import { IMPORT_FORMATS } from '@/types/import';
-import { parseFileRaw, parseGanttFromData } from '@/lib/import/parser';
+// parseFileRaw and parseGanttFromData are dynamically imported in handleFileSelect
+// to avoid bundling xlsx (~500KB) on initial page load
 import { validateRows, getValidationSummary } from '@/lib/import/validator';
 import {
   initializeMappingState,
@@ -118,6 +119,7 @@ export default function UploadPage() {
       // Special handling for Gantt/Schedule format
       if (format === 'gantt') {
         const buffer = await file.arrayBuffer();
+        const { parseGanttFromData } = await import('@/lib/import/parser');
         const ganttResult = parseGanttFromData(buffer);
 
         if (!ganttResult.success || !ganttResult.data) {
@@ -146,6 +148,7 @@ export default function UploadPage() {
       }
 
       // Step 2: Parse file raw (without strict validation)
+      const { parseFileRaw } = await import('@/lib/import/parser');
       const parseResult = await parseFileRaw(file);
 
       if (!parseResult.success || !parseResult.rawData || !parseResult.rawHeaders) {

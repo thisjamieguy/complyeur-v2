@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { MoreHorizontal, Pencil, Trash2, UserMinus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -63,7 +64,7 @@ function displayCountry(trip: Trip): string {
   return getCountryName(trip.country)
 }
 
-export function TripCardMobile({
+export const TripCardMobile = memo(function TripCardMobile({
   trip,
   onEdit,
   onDelete,
@@ -155,4 +156,4 @@ export function TripCardMobile({
       </div>
     </div>
   )
-}
+})

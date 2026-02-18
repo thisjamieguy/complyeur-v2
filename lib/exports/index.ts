@@ -49,11 +49,5 @@ export {
   isPotentialCsvInjection,
 } from './sanitize'
 
-// PDF functionality
-export {
-  generateIndividualPdf,
-  generateSummaryPdf,
-  getCompliancePdfFilename,
-  generateFutureAlertsPdf,
-  getFutureAlertsPdfFilename,
-} from './pdf-generator'
+// PDF functions: import directly from '@/lib/exports/pdf-generator'
+// to avoid pulling @react-pdf/renderer into unrelated module graphs.

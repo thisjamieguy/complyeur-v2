@@ -1,5 +1,6 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 
 /**
  * Entitlement flag names — must match column names in company_entitlements table
@@ -15,32 +16,12 @@ export type EntitlementFlag =
   | 'can_audit_logs'
 
 /**
- * Check if the current user's company has a specific entitlement.
- * Server-side only — uses Supabase server client with RLS.
- *
- * Returns true if the entitlement is granted, false otherwise.
+ * Cached bulk fetch of all entitlements for the current user's company.
+ * Deduplicated within a single request via React.cache().
  */
-export async function checkEntitlement(flag: EntitlementFlag): Promise<boolean> {
+const getCompanyEntitlementsCached = cache(async () => {
+  const { companyId } = await requireCompanyAccessCached()
   const supabase = await createClient()
-  const { companyId } = await requireCompanyAccess(supabase)
-
-  const { data: entitlements } = await supabase
-    .from('company_entitlements')
-    .select(flag)
-    .eq('company_id', companyId)
-    .single()
-
-  if (!entitlements) return false
-  return (entitlements as Record<string, boolean | null>)[flag] ?? false
-}
-
-/**
- * Get all entitlements for the current user's company.
- * Useful for rendering plan info or gating multiple features at once.
- */
-export async function getCompanyEntitlements() {
-  const supabase = await createClient()
-  const { companyId } = await requireCompanyAccess(supabase)
 
   const { data, error } = await supabase
     .from('company_entitlements')
@@ -48,9 +29,27 @@ export async function getCompanyEntitlements() {
     .eq('company_id', companyId)
     .single()
 
-  if (error || !data) {
-    return null
-  }
-
+  if (error || !data) return null
   return data
+})
+
+/**
+ * Check if the current user's company has a specific entitlement.
+ * Server-side only — uses Supabase server client with RLS.
+ *
+ * Uses cached bulk fetch — multiple calls within one request produce only 1 DB query.
+ */
+export async function checkEntitlement(flag: EntitlementFlag): Promise<boolean> {
+  const entitlements = await getCompanyEntitlementsCached()
+  if (!entitlements) return false
+  return (entitlements as unknown as Record<string, boolean | null>)[flag] ?? false
+}
+
+/**
+ * Get all entitlements for the current user's company.
+ * Useful for rendering plan info or gating multiple features at once.
+ * Uses the same cached query as checkEntitlement.
+ */
+export async function getCompanyEntitlements() {
+  return getCompanyEntitlementsCached()
 }

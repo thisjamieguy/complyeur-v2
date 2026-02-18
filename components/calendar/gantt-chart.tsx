@@ -1,13 +1,23 @@
 'use client'
 
-import { memo, useRef, useEffect } from 'react'
+import { memo, useMemo, useRef, useEffect } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { isToday } from 'date-fns'
+import { format, isToday, isWeekend } from 'date-fns'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { DateHeader } from './date-header'
 import { EmployeeRow } from './employee-row'
 import { GRID_ROW_HEIGHT } from './day-cell'
 import type { ProcessedEmployee } from './types'
+
+/** Pre-computed metadata for each date column — avoids O(employees x dates) calls */
+export interface DateMeta {
+  date: Date
+  key: string        // 'yyyy-MM-dd'
+  isWeekend: boolean
+  isToday: boolean
+  dayOfWeek: string  // single letter (M, T, W, ...)
+  dayOfMonth: string // 1-31
+}
 
 /** Width of each day column in pixels */
 const DAY_WIDTH = 32
@@ -88,6 +98,20 @@ export const GanttChart = memo(function GanttChart({
     }
   }, [dates])
 
+  // Pre-compute per-date flags once — O(dates) instead of O(employees x dates)
+  const dateMeta: DateMeta[] = useMemo(
+    () =>
+      dates.map((date) => ({
+        date,
+        key: format(date, 'yyyy-MM-dd'),
+        isWeekend: isWeekend(date),
+        isToday: isToday(date),
+        dayOfWeek: format(date, 'EEEEE'),
+        dayOfMonth: format(date, 'd'),
+      })),
+    [dates]
+  )
+
   const totalWidth = dates.length * DAY_WIDTH
   const totalHeight = virtualizer.getTotalSize()
 
@@ -143,7 +167,7 @@ export const GanttChart = memo(function GanttChart({
         <ScrollArea className="w-full whitespace-nowrap rounded-br-xl">
           <div style={{ width: totalWidth }}>
             {/* 3-row date header */}
-            <DateHeader dates={dates} dayWidth={DAY_WIDTH} />
+            <DateHeader dateMeta={dateMeta} dayWidth={DAY_WIDTH} />
 
             {/* Virtualized grid rows */}
             <div
@@ -165,7 +189,7 @@ export const GanttChart = memo(function GanttChart({
                     >
                       <EmployeeRow
                         employee={employee}
-                        dates={dates}
+                        dateMeta={dateMeta}
                         dayWidth={DAY_WIDTH}
                       />
                     </div>

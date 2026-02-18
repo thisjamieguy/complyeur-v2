@@ -26,13 +26,8 @@ import { differenceInUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 import {
   generateComplianceCsv,
   getComplianceCsvFilename,
-  generateIndividualPdf,
-  generateSummaryPdf,
-  getCompliancePdfFilename,
   generateFutureAlertsCsv,
   getFutureAlertsCsvFilename,
-  generateFutureAlertsPdf,
-  getFutureAlertsPdfFilename,
   riskLevelToStatus,
   forecastRiskToStatus,
   type ExportOptions,
@@ -43,6 +38,14 @@ import {
   type PdfMetadata,
   type FutureAlertExportRow,
 } from '@/lib/exports'
+// PDF — direct import avoids pulling @react-pdf/renderer into barrel consumers
+import {
+  generateIndividualPdf,
+  generateSummaryPdf,
+  getCompliancePdfFilename,
+  generateFutureAlertsPdf,
+  getFutureAlertsPdfFilename,
+} from '@/lib/exports/pdf-generator'
 import { getCountryName } from '@/lib/constants/schengen-countries'
 import { calculateFutureJobCompliance } from '@/lib/services/forecast-service'
 import type { ForecastTrip } from '@/types/forecast'

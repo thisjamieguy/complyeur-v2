@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import type { Json } from '@/types/database';
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
-import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { requireCompanyAccess, requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { validateRows } from '@/lib/import/validator'
 import {
   ImportFormat,
@@ -135,44 +135,31 @@ async function checkBulkImportEntitlement(
 
 export async function createImportSession(formData: FormData): Promise<UploadResult> {
   try {
-    const supabase = await createClient();
     const isDev = process.env.NODE_ENV !== 'production';
 
-    // Get current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // Auth + profile via cached fetcher (deduplicated within request)
+    let ctx
+    try {
+      ctx = await requireCompanyAccessCached()
+    } catch {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const rateLimit = await checkServerActionRateLimit(user.id, 'createImportSession')
+    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'createImportSession')
     if (!rateLimit.allowed) {
       return { success: false, error: rateLimit.error };
     }
 
-    // Get user's company
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('company_id, role')
-      .eq('id', user.id)
-      .single();
+    const supabase = await createClient();
 
-    if (profileError || !profile?.company_id) {
-      return { success: false, error: 'User profile not found' };
-    }
-
-    await requireCompanyAccess(supabase, profile.company_id)
-
-    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, user.email)
+    const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId, undefined)
     if (mfa?.ok === false) {
       return { success: false, error: 'MFA required. Complete setup or verification to continue.' }
     }
 
     // Check entitlements - users must have bulk import enabled on their plan
     if (!isDev) {
-      const canBulkImport = await checkBulkImportEntitlement(profile.company_id, false)
+      const canBulkImport = await checkBulkImportEntitlement(ctx.companyId, false)
       if (!canBulkImport) {
         return {
           success: false,
@@ -203,8 +190,8 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
     const { data: session, error: insertError } = await supabase
       .from('import_sessions')
       .insert({
-        company_id: profile.company_id,
-        user_id: user.id,
+        company_id: ctx.companyId,
+        user_id: ctx.userId,
         format,
         status: 'pending' as ImportStatus,
         file_name: file.name,

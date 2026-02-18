@@ -24,6 +24,13 @@ import {
   isNonSchengenEU,
 } from '@/lib/constants/schengen-countries'
 
+// Pre-partitioned at module level — runs once instead of 3x filter per render
+const SCHENGEN_COUNTRIES = COUNTRY_LIST.filter((c) => isSchengenCountry(c.code))
+const NON_SCHENGEN_EU_COUNTRIES = COUNTRY_LIST.filter((c) => isNonSchengenEU(c.code))
+const OTHER_COUNTRIES = COUNTRY_LIST.filter(
+  (c) => !isSchengenCountry(c.code) && !isNonSchengenEU(c.code)
+)
+
 interface CountrySelectProps {
   value: string
   onValueChange: (value: string) => void
@@ -69,9 +76,7 @@ export function CountrySelect({
           <CommandList>
             <CommandEmpty>No country found.</CommandEmpty>
             <CommandGroup heading="Schengen Countries">
-              {COUNTRY_LIST.filter((country) =>
-                isSchengenCountry(country.code)
-              ).map((country) => (
+              {SCHENGEN_COUNTRIES.map((country) => (
                 <CommandItem
                   key={country.code}
                   value={`${country.name} ${country.code}`}
@@ -94,9 +99,7 @@ export function CountrySelect({
               ))}
             </CommandGroup>
             <CommandGroup heading="EU (Non-Schengen)">
-              {COUNTRY_LIST.filter((country) =>
-                isNonSchengenEU(country.code)
-              ).map((country) => (
+              {NON_SCHENGEN_EU_COUNTRIES.map((country) => (
                 <CommandItem
                   key={country.code}
                   value={`${country.name} ${country.code}`}
@@ -119,11 +122,7 @@ export function CountrySelect({
               ))}
             </CommandGroup>
             <CommandGroup heading="Other Countries">
-              {COUNTRY_LIST.filter(
-                (country) =>
-                  !isSchengenCountry(country.code) &&
-                  !isNonSchengenEU(country.code)
-              ).map((country) => (
+              {OTHER_COUNTRIES.map((country) => (
                 <CommandItem
                   key={country.code}
                   value={`${country.name} ${country.code}`}

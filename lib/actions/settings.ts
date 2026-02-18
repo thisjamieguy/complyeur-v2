@@ -4,8 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { settingsSchema } from '@/lib/validations/settings'
 import type { CompanySettings, UpdateSettingsInput } from '@/lib/types/settings'
+import { DEFAULT_SETTINGS } from '@/lib/types/settings'
 import { hasPermission, PERMISSIONS } from '@/lib/permissions'
-import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
+import { getCompanySettings as getSettingsFromDb } from '@/lib/db/alerts'
 
 interface ActionResult<T = void> {
   success: boolean
@@ -14,77 +16,38 @@ interface ActionResult<T = void> {
 }
 
 /**
- * Get company settings for the current user's company
+ * Get company settings for the current user's company.
+ * Delegates to the cached canonical implementation in lib/db/alerts.ts.
+ * Applies defaults for nullable DB columns to match the app-level CompanySettings type.
  */
 export async function getCompanySettings(): Promise<CompanySettings | null> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  // Get user's company_id from profiles
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.company_id) return null
-
-  const { data, error } = await supabase
-    .from('company_settings')
-    .select('*')
-    .eq('company_id', profile.company_id)
-    .single()
-
-  if (error) {
-    // If no settings exist, return defaults
-    if (error.code === 'PGRST116') {
-      return {
-        company_id: profile.company_id,
-        retention_months: 36,
-        session_timeout_minutes: 30,
-        risk_threshold_green: 30,
-        risk_threshold_amber: 10,
-        status_green_max: 60,
-        status_amber_max: 75,
-        status_red_max: 89,
-        future_job_warning_threshold: 80,
-        notify_70_days: true,
-        notify_85_days: true,
-        notify_90_days: true,
-        weekly_digest: false,
-        custom_alert_threshold: null,
-        warning_threshold: 70,
-        critical_threshold: 85,
-        email_notifications: true,
-        warning_email_enabled: true,
-        urgent_email_enabled: true,
-        breach_email_enabled: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
+  try {
+    const data = await getSettingsFromDb()
+    return {
+      ...data,
+      retention_months: data.retention_months ?? DEFAULT_SETTINGS.retention_months,
+      session_timeout_minutes: data.session_timeout_minutes ?? DEFAULT_SETTINGS.session_timeout_minutes,
+      risk_threshold_green: data.risk_threshold_green ?? DEFAULT_SETTINGS.risk_threshold_green,
+      risk_threshold_amber: data.risk_threshold_amber ?? DEFAULT_SETTINGS.risk_threshold_amber,
+      status_green_max: data.status_green_max ?? DEFAULT_SETTINGS.status_green_max,
+      status_amber_max: data.status_amber_max ?? DEFAULT_SETTINGS.status_amber_max,
+      status_red_max: data.status_red_max ?? DEFAULT_SETTINGS.status_red_max,
+      future_job_warning_threshold: data.future_job_warning_threshold ?? DEFAULT_SETTINGS.future_job_warning_threshold,
+      notify_70_days: data.notify_70_days ?? DEFAULT_SETTINGS.notify_70_days,
+      notify_85_days: data.notify_85_days ?? DEFAULT_SETTINGS.notify_85_days,
+      notify_90_days: data.notify_90_days ?? DEFAULT_SETTINGS.notify_90_days,
+      weekly_digest: data.weekly_digest ?? DEFAULT_SETTINGS.weekly_digest,
+      custom_alert_threshold: data.custom_alert_threshold ?? DEFAULT_SETTINGS.custom_alert_threshold,
+      warning_threshold: data.warning_threshold ?? DEFAULT_SETTINGS.warning_threshold,
+      critical_threshold: data.critical_threshold ?? DEFAULT_SETTINGS.critical_threshold,
+      email_notifications: data.email_notifications ?? DEFAULT_SETTINGS.email_notifications,
+      warning_email_enabled: data.warning_email_enabled ?? DEFAULT_SETTINGS.warning_email_enabled,
+      urgent_email_enabled: data.urgent_email_enabled ?? DEFAULT_SETTINGS.urgent_email_enabled,
+      breach_email_enabled: data.breach_email_enabled ?? DEFAULT_SETTINGS.breach_email_enabled,
     }
-    console.error('Error fetching settings:', error)
+  } catch {
     return null
   }
-
-  // Return with defaults for any missing new columns
-  return {
-    ...data,
-    session_timeout_minutes: data.session_timeout_minutes ?? 30,
-    risk_threshold_green: data.risk_threshold_green ?? 30,
-    risk_threshold_amber: data.risk_threshold_amber ?? 10,
-    status_green_max: data.status_green_max ?? 60,
-    status_amber_max: data.status_amber_max ?? 75,
-    status_red_max: data.status_red_max ?? 89,
-    future_job_warning_threshold: data.future_job_warning_threshold ?? 80,
-    notify_70_days: data.notify_70_days ?? true,
-    notify_85_days: data.notify_85_days ?? true,
-    notify_90_days: data.notify_90_days ?? true,
-    weekly_digest: data.weekly_digest ?? false,
-    custom_alert_threshold: data.custom_alert_threshold ?? null,
-  } as CompanySettings
 }
 
 /**
@@ -94,30 +57,19 @@ export async function getCompanySettings(): Promise<CompanySettings | null> {
 export async function updateCompanySettings(
   input: UpdateSettingsInput
 ): Promise<ActionResult> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  let ctx
+  try {
+    ctx = await requireCompanyAccessCached()
+  } catch {
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Get user's company_id and verify admin role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.company_id) {
-    return { success: false, error: 'Company not found' }
-  }
-
-  await requireCompanyAccess(supabase, profile.company_id)
-
   // Check permission
-  if (!hasPermission(profile.role, PERMISSIONS.SETTINGS_UPDATE)) {
+  if (!ctx.role || !hasPermission(ctx.role, PERMISSIONS.SETTINGS_UPDATE)) {
     return { success: false, error: 'Only owners and admins can update settings' }
   }
+
+  const supabase = await createClient()
 
   // Validate input
   const currentSettings = await getCompanySettings()
@@ -159,7 +111,7 @@ export async function updateCompanySettings(
       ...input,
       updated_at: new Date().toISOString(),
     })
-    .eq('company_id', profile.company_id)
+    .eq('company_id', ctx.companyId)
 
   if (error) {
     console.error('Error updating settings:', error)
@@ -175,38 +127,24 @@ export async function updateCompanySettings(
  * Check if user has permission to view settings
  */
 export async function canViewSettings(): Promise<boolean> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.role) return false
-
-  return hasPermission(profile.role, PERMISSIONS.SETTINGS_VIEW)
+  try {
+    const ctx = await requireCompanyAccessCached()
+    if (!ctx.role) return false
+    return hasPermission(ctx.role, PERMISSIONS.SETTINGS_VIEW)
+  } catch {
+    return false
+  }
 }
 
 /**
  * Check if user has permission to update settings
  */
 export async function canUpdateSettings(): Promise<boolean> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.role) return false
-
-  return hasPermission(profile.role, PERMISSIONS.SETTINGS_UPDATE)
+  try {
+    const ctx = await requireCompanyAccessCached()
+    if (!ctx.role) return false
+    return hasPermission(ctx.role, PERMISSIONS.SETTINGS_UPDATE)
+  } catch {
+    return false
+  }
 }

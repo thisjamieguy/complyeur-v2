@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import {
   startOfDay,
   addDays,
@@ -20,9 +21,17 @@ import {
 } from '@/lib/compliance'
 import { differenceInUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 import { RangeSelector } from './range-selector'
-import { GanttChart } from './gantt-chart'
-import { MobileCalendarView } from './mobile-calendar-view'
 import type { ProcessedTrip, ProcessedEmployee } from './types'
+
+const GanttChart = dynamic(
+  () => import('./gantt-chart').then(m => m.GanttChart),
+  { ssr: false, loading: () => <div className="h-96 animate-pulse bg-slate-100 rounded-lg" /> }
+)
+
+const MobileCalendarView = dynamic(
+  () => import('./mobile-calendar-view').then(m => m.MobileCalendarView),
+  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-slate-100 rounded-lg" /> }
+)
 
 /** Days to look back from today */
 const DAYS_BACK = 200

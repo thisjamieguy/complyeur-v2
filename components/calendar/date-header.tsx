@@ -1,11 +1,12 @@
 'use client'
 
 import { memo, useMemo } from 'react'
-import { format, getISOWeek, isToday, isWeekend } from 'date-fns'
+import { getISOWeek } from 'date-fns'
 import { cn } from '@/lib/utils'
+import type { DateMeta } from './gantt-chart'
 
 interface DateHeaderProps {
-  dates: Date[]
+  dateMeta: DateMeta[]
   dayWidth: number
 }
 
@@ -20,9 +21,11 @@ interface WeekSpan {
  * Row 1: ISO week numbers (W1, W2, ...) spanning 7 columns each
  * Row 2: Day-of-week single letters (M, T, W, T, F, S, S)
  * Row 3: Date numbers (1-31) with today highlight
+ *
+ * Receives pre-computed dateMeta to avoid per-cell isToday/isWeekend/format calls.
  */
 export const DateHeader = memo(function DateHeader({
-  dates,
+  dateMeta,
   dayWidth,
 }: DateHeaderProps) {
   // Calculate week spans for the top row
@@ -33,9 +36,9 @@ export const DateHeader = memo(function DateHeader({
     let currentStart = 0
     let currentSpan = 0
 
-    dates.forEach((date, index) => {
-      const week = getISOWeek(date)
-      const year = date.getFullYear()
+    dateMeta.forEach((dm, index) => {
+      const week = getISOWeek(dm.date)
+      const year = dm.date.getFullYear()
 
       if (week !== currentWeek || year !== currentYear) {
         if (currentWeek !== null) {
@@ -64,7 +67,7 @@ export const DateHeader = memo(function DateHeader({
     }
 
     return spans
-  }, [dates])
+  }, [dateMeta])
 
   return (
     <div className="sticky top-0 z-20 bg-white border-b border-slate-200">
@@ -85,61 +88,52 @@ export const DateHeader = memo(function DateHeader({
 
       {/* Row 2: Day-of-week single letters */}
       <div className="flex border-t border-slate-100">
-        {dates.map((date) => {
-          const dateKey = format(date, 'yyyy-MM-dd')
-          const isWeekendDay = isWeekend(date)
-          return (
-            <div
-              key={dateKey}
+        {dateMeta.map((dm) => (
+          <div
+            key={dm.key}
+            className={cn(
+              'shrink-0 flex items-center justify-center bg-slate-50',
+              dm.isWeekend && 'bg-slate-100/60'
+            )}
+            style={{ width: dayWidth, height: 20 }}
+          >
+            <span
               className={cn(
-                'shrink-0 flex items-center justify-center bg-slate-50',
-                isWeekendDay && 'bg-slate-100/60'
+                'text-[10px]',
+                dm.isWeekend ? 'text-slate-300' : 'text-slate-400'
               )}
-              style={{ width: dayWidth, height: 20 }}
             >
-              <span
-                className={cn(
-                  'text-[10px]',
-                  isWeekendDay ? 'text-slate-300' : 'text-slate-400'
-                )}
-              >
-                {format(date, 'EEEEE')}
-              </span>
-            </div>
-          )
-        })}
+              {dm.dayOfWeek}
+            </span>
+          </div>
+        ))}
       </div>
 
       {/* Row 3: Date numbers */}
       <div className="flex border-t border-slate-100">
-        {dates.map((date) => {
-          const dateKey = format(date, 'yyyy-MM-dd')
-          const isCurrentDay = isToday(date)
-          const isWeekendDay = isWeekend(date)
-          return (
-            <div
-              key={dateKey}
+        {dateMeta.map((dm) => (
+          <div
+            key={dm.key}
+            className={cn(
+              'shrink-0 flex items-center justify-center',
+              !dm.isToday && !dm.isWeekend && 'bg-white',
+              !dm.isToday && dm.isWeekend && 'bg-slate-50/60',
+              dm.isToday && 'bg-blue-50'
+            )}
+            style={{ width: dayWidth, height: 24 }}
+          >
+            <span
               className={cn(
-                'shrink-0 flex items-center justify-center',
-                !isCurrentDay && !isWeekendDay && 'bg-white',
-                !isCurrentDay && isWeekendDay && 'bg-slate-50/60',
-                isCurrentDay && 'bg-blue-50'
+                'text-xs',
+                dm.isToday
+                  ? 'text-blue-600 font-semibold'
+                  : 'text-slate-500'
               )}
-              style={{ width: dayWidth, height: 24 }}
             >
-              <span
-                className={cn(
-                  'text-xs',
-                  isCurrentDay
-                    ? 'text-blue-600 font-semibold'
-                    : 'text-slate-500'
-                )}
-              >
-                {format(date, 'd')}
-              </span>
-            </div>
-          )
-        })}
+              {dm.dayOfMonth}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   )

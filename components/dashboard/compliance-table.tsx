@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, memo, useEffect } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Eye, Plus } from 'lucide-react'
 import {
@@ -19,8 +20,12 @@ import { SortSelect } from './sort-select'
 import { EmptyState } from './empty-state'
 import { DashboardStats } from './dashboard-stats'
 import { EmployeeSearch } from './employee-search'
-import { QuickAddTripModal } from './quick-add-trip-modal'
 import { Pagination } from '@/components/ui/pagination'
+
+const QuickAddTripModal = dynamic(
+  () => import('./quick-add-trip-modal').then(m => m.QuickAddTripModal),
+  { ssr: false }
+)
 import { DashboardStatusLegend } from '@/components/compliance/risk-legends'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import type {
@@ -80,10 +85,10 @@ function calculateStats(employees: EmployeeCompliance[]): ComplianceStats {
  */
 const EmployeeCard = memo(function EmployeeCard({
   employee,
-  onAddTrip,
+  onOpenAddTrip,
 }: {
   employee: EmployeeCompliance
-  onAddTrip: () => void
+  onOpenAddTrip: (employeeId: string, employeeName: string) => void
 }) {
   const isExempt = employee.risk_level === 'exempt'
 
@@ -103,7 +108,7 @@ const EmployeeCard = memo(function EmployeeCard({
             className="h-8 w-8"
             onClick={(e) => {
               e.stopPropagation()
-              onAddTrip()
+              onOpenAddTrip(employee.id, employee.name)
             }}
           >
             <Plus className="h-4 w-4" />
@@ -195,6 +200,10 @@ export function ComplianceTable({
   const closeAddTripModal = useCallback(() => {
     setAddTripModal({ open: false, employeeId: '', employeeName: '' })
   }, [])
+
+  const handleAddTripOpenChange = useCallback((open: boolean) => {
+    if (!open) closeAddTripModal()
+  }, [closeAddTripModal])
 
   // Use server stats if provided (for accurate totals with pagination),
   // otherwise calculate from current employees (backward compatible)
@@ -488,7 +497,7 @@ export function ComplianceTable({
             <EmployeeCard
               key={employee.id}
               employee={employee}
-              onAddTrip={() => openAddTripModal(employee.id, employee.name)}
+              onOpenAddTrip={openAddTripModal}
             />
           ))
         )}
@@ -509,9 +518,7 @@ export function ComplianceTable({
         employeeId={addTripModal.employeeId}
         employeeName={addTripModal.employeeName}
         open={addTripModal.open}
-        onOpenChange={(open) => {
-          if (!open) closeAddTripModal()
-        }}
+        onOpenChange={handleAddTripOpenChange}
       />
     </div>
   )

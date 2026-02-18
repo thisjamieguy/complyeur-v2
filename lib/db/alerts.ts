@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { DatabaseError, NotFoundError } from '@/lib/errors'
@@ -320,9 +321,10 @@ export async function markAlertEmailSent(alertId: string): Promise<void> {
 // ============================================================================
 
 /**
- * Get company settings (creates default if not exists)
+ * Get company settings (creates default if not exists).
+ * Wrapped in React.cache() — deduplicated within a single request.
  */
-export async function getCompanySettings(): Promise<CompanySettings> {
+export const getCompanySettings = cache(async (): Promise<CompanySettings> => {
   const supabase = await createClient()
   const { companyId } = await getAuthenticatedUserCompany(supabase)
 
@@ -363,7 +365,7 @@ export async function getCompanySettings(): Promise<CompanySettings> {
   }
 
   return data
-}
+})
 
 /**
  * Update company settings

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- docs: add performance audit report and reference in CLAUDE.md [`f6224b2`](https://github.com/thisjamieguy/complyeur-v2/commit/f6224b20c16564afb57795ed24e9fedee06e3a2c)
 - chore(changelog): sync auto-changelog [`1ed3485`](https://github.com/thisjamieguy/complyeur-v2/commit/1ed34859319484c1c5084a15252a780422780388)
 - fix(test): include nationality_type in employee form validation test [`3e30515`](https://github.com/thisjamieguy/complyeur-v2/commit/3e305152b1cc398ad99dabce61c497af66a26ab2)
 - perf: 6 high-priority performance fixes from audit [`43f6802`](https://github.com/thisjamieguy/complyeur-v2/commit/43f68020420b785efc2b2466b5ca7260e7a968aa)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: site owner skips onboarding and goes straight to dashboard [`f71c44c`](https://github.com/thisjamieguy/complyeur-v2/commit/f71c44cacc77a47945771cf5fefacffb3cbd51f6)
 - fix: auto-promote site owner to superadmin on Google OAuth sign-in [`c51c484`](https://github.com/thisjamieguy/complyeur-v2/commit/c51c484d26e473da6607a89e16bdd90bde681001)
 - fix: add admin error boundary and server-side error logging [`75a8e3d`](https://github.com/thisjamieguy/complyeur-v2/commit/75a8e3d185cf17e07c4720fb07bb117a809488fc)
-- fix: sync entitlements on admin tier change with confirmation dialog [`3467d8c`](https://github.com/thisjamieguy/complyeur-v2/commit/3467d8c66d591cda2182883e35849f35de16eed1)
 
 ## v1.0.0 - 2026-01-22
 

@@ -1,14 +1,19 @@
 import { Suspense } from 'react'
-import { redirect } from 'next/navigation'
+import nextDynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/server'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { getEmployeeComplianceDataPaginated } from '@/lib/data'
 import { getCompanySettings } from '@/lib/actions/settings'
 import { ComplianceTable } from '@/components/dashboard/compliance-table'
 import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
 import { AlertBanner } from '@/components/alerts/alert-banner'
-import { DashboardTour } from '@/components/onboarding/dashboard-tour'
 import { getUnacknowledgedAlertsAction } from '../actions'
+
+const DashboardTour = nextDynamic(
+  () => import('@/components/onboarding/dashboard-tour').then(m => m.DashboardTour),
+  { ssr: false }
+)
 
 export const dynamic = 'force-dynamic'
 
@@ -85,14 +90,9 @@ interface DashboardPageProps {
  * Supports server-side pagination via URL params.
  */
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  // Layout already validates auth — use cached access to avoid duplicate queries
+  const { userId } = await requireCompanyAccessCached()
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
 
   // Parse pagination params from URL
   const params = await searchParams
@@ -103,7 +103,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('dashboard_tour_completed_at')
-    .eq('id', user.id)
+    .eq('id', userId)
     .single()
 
   if (profileError) {

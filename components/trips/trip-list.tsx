@@ -84,16 +84,19 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
     )
   }
 
-  const sortedTrips = [...filteredTrips].sort((a, b) => {
-    let comparison = 0
-    if (sortField === 'entry_date') {
-      comparison =
-        new Date(a.entry_date).getTime() - new Date(b.entry_date).getTime()
-    } else if (sortField === 'travel_days') {
-      comparison = (a.travel_days ?? 0) - (b.travel_days ?? 0)
-    }
-    return sortDirection === 'asc' ? comparison : -comparison
-  })
+  const sortedTrips = useMemo(() => {
+    const sorted = [...filteredTrips].sort((a, b) => {
+      let comparison = 0
+      if (sortField === 'entry_date') {
+        // ISO date strings (yyyy-MM-dd) sort lexicographically — no Date allocation needed
+        comparison = a.entry_date < b.entry_date ? -1 : a.entry_date > b.entry_date ? 1 : 0
+      } else if (sortField === 'travel_days') {
+        comparison = (a.travel_days ?? 0) - (b.travel_days ?? 0)
+      }
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+    return sorted
+  }, [filteredTrips, sortField, sortDirection])
 
   function handleSort(field: SortField) {
     if (sortField === field) {

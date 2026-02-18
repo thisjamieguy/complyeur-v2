@@ -124,8 +124,8 @@ export function ConfirmDestructiveAction({
                   <div className="space-y-2">
                     <p className="font-medium text-slate-700">This action:</p>
                     <ul className="list-disc list-inside space-y-1 text-slate-600">
-                      {consequences.map((consequence, index) => (
-                        <li key={index}>{consequence}</li>
+                      {consequences.map((consequence) => (
+                        <li key={consequence}>{consequence}</li>
                       ))}
                     </ul>
                   </div>
