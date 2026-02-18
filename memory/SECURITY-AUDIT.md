@@ -7,7 +7,7 @@
 | **Codebase** | ComplyEur v2.0 — Next.js + Supabase SaaS |
 | **Branch** | `main` |
 | **Commit** | `bb01a25` — perf: complete phases 7-10 of performance audit |
-| **Status** | Open — 0 of 37 findings resolved |
+| **Status** | In Progress — 16 of 37 findings resolved |
 
 ---
 
@@ -452,22 +452,22 @@ Sends email invites to arbitrary addresses with no rate limit. An authenticated 
 - [ ] Rotate Supabase anon key and service role key
 - [ ] Rotate Supabase database password
 - [ ] Rotate Stripe secret key and webhook signing secret
-- [ ] Rotate Upstash Redis REST token
-- [ ] Rotate Resend API key
+- [x] Rotate Upstash Redis REST token — 2026-02-18
+- [x] Rotate Resend API key — 2026-02-18
 - [ ] Rotate Google OAuth client ID and secret
-- [ ] Audit git history for any accidental commits: `git log -p --all -S "sk_test_"`, `git log -p --all -S "whsec_"`, etc.
-- [ ] Move all production secrets to Vercel environment variables — remove `.env.production` from local repo
+- [x] Audit git history — confirmed `.env*` never committed; files gitignored throughout — 2026-02-18
+- [x] Move all production secrets to Vercel environment variables — `.env.production` and `.env.staging` deleted — 2026-02-18
 
 ---
 
 ### Phase 2 — Critical Auth & Data Isolation (This week, highest urgency)
 
-- [ ] **C-06** Fix broken comparison logic in `constantTimeCompare()` — `lib/security/cron-auth.ts:177` — use `crypto.timingSafeEqual()`
-- [ ] **C-02** Add `requireCompanyAccessCached()` + `company_id` filter to `getRecentImportSessions()` — `import/actions.ts:252`
-- [ ] **C-03** Add `requireCompanyAccessCached()` + `company_id` filter to `getImportSessionsPaginated()` — `import/actions.ts:291`
+- [x] **C-06** Fix broken `constantTimeCompare()` — replaced with `crypto.timingSafeEqual` — commit `aac1f39` 2026-02-18
+- [x] **C-02** Add `requireCompanyAccessCached()` + `company_id` filter to `getRecentImportSessions()` — commit `aac1f39` 2026-02-18
+- [x] **C-03** Add `requireCompanyAccessCached()` + `company_id` filter to `getImportSessionsPaginated()` — commit `aac1f39` 2026-02-18
 - [ ] **C-10** Remove hardcoded email auto-promotion from `app/auth/callback/route.ts:231` — set `is_superadmin` manually via migration
-- [ ] **C-04** Add `.eq('id', user.id)` to `.single()` calls in `getGdprAuditLogAction()` and `isAdmin()` — `gdpr/actions.ts:325, 349`
-- [ ] **C-05** Remove silent `return []` from `getEmployeesForGdpr()` — throw `AuthError` — `gdpr/actions.ts:28`
+- [x] **C-04** Replaced unscoped `.single()` in `getGdprAuditLogAction()` and `isAdmin()` with `requireCompanyAccessCached()` — commit `aac1f39` 2026-02-18
+- [x] **C-05** Removed silent `return []` from `getEmployeesForGdpr()` — auth failures now propagate — commit `aac1f39` 2026-02-18
 - [ ] **C-08** Add `requireCompanyAccessCached()` to `getDeletedEmployees()` — `lib/gdpr/soft-delete.ts:397`
 - [ ] **C-09** Add `requireCompanyAccessCached()` to `getRetentionStats()` — `lib/gdpr/retention.ts:289`
 
@@ -475,11 +475,11 @@ Sends email invites to arbitrary addresses with no rate limit. An authenticated 
 
 ### Phase 3 — Rate Limiting & MFA Gaps (This week)
 
-- [ ] **C-11** Add `checkServerActionRateLimit()` to `login()` — `app/(auth)/actions.ts:43`
-- [ ] **C-11** Add `checkServerActionRateLimit()` to `signup()` — `app/(auth)/actions.ts:88`
-- [ ] **C-11** Add `checkServerActionRateLimit()` to `forgotPassword()` — `app/(auth)/actions.ts:187`
-- [ ] **C-11** Add `checkServerActionRateLimit()` to `resetPassword()` — `app/(auth)/actions.ts:219`
-- [ ] **C-11** Add `checkServerActionRateLimit()` to `signInWithGoogle()` — `app/(auth)/actions.ts:267`
+- [x] **C-11** Add IP-based rate limiting to `login()` — commit `aac1f39` 2026-02-18
+- [x] **C-11** Add IP-based rate limiting to `signup()` — commit `aac1f39` 2026-02-18
+- [x] **C-11** Add IP-based rate limiting to `forgotPassword()` — commit `aac1f39` 2026-02-18
+- [x] **C-11** Add IP-based rate limiting to `resetPassword()` — commit `aac1f39` 2026-02-18
+- [x] **C-11** Add IP-based rate limiting to `signInWithGoogle()` — commit `aac1f39` 2026-02-18
 - [ ] **H-07** Add `checkServerActionRateLimit()` to `updateTeamMemberRole()`, `removeTeamMember()`, `transferOwnership()`, `revokeInvite()` — `settings/team/actions.ts`
 - [ ] **H-08** Add `checkServerActionRateLimit()` to `anonymizeEmployeeGdpr()` — `gdpr/actions.ts:273`
 - [ ] **H-09** Add `enforceMfaForPrivilegedUser()` to all 5 team management actions — `settings/team/actions.ts`
@@ -501,8 +501,8 @@ Sends email invites to arbitrary addresses with no rate limit. An authenticated 
 - [ ] **H-01** Add `requireCompanyAccessCached()` to all 6 delegation-only server actions
 - [ ] **H-02** Add Zod UUID validation to `employeeId` path param — `dsar/[employeeId]/route.ts:29`
 - [ ] **H-05** Replace raw `error.message` in health endpoint with fixed string — `api/health/route.ts:31`
-- [ ] **H-06** Remove `email` from `console.log` in auth callback — `auth/callback/route.ts:184`
-- [ ] **M-01** Add RLS + deny-all policy to `stripe_webhook_events` table — new migration required
+- [x] **H-06** Remove `email` from `console.log` in auth callback — `auth/callback/route.ts:184` — commit `c4c016e` 2026-02-18
+- [x] **M-01** Add RLS + deny-all policy to `stripe_webhook_events` table — applied via SQL Editor to production — 2026-02-18
 - [ ] **M-02 / M-03** Replace `error.message` with `getDatabaseErrorMessage()` in 10 admin action functions
 - [ ] **M-04** Replace silent empty-data returns with thrown `AuthError` in bulk-delete functions
 - [ ] **M-05** Add `requireCompanyAccessCached()` to `submitFeedbackAction()` before insert
@@ -572,7 +572,7 @@ These areas were audited and found to be correctly implemented — no changes ne
 | Stripe webhook signature verification | Raw body + `constructWebhookEvent()` before any event processing |
 | Open redirect protection | `validateRedirectUrl()` used in both `login()` and `signInWithGoogle()` |
 | RLS on all 25 tables | Fully enabled; `get_current_user_company_id()` with `SECURITY DEFINER` + locked `search_path` |
-| `rls_auto_enable()` event trigger | Present and active — new tables automatically get RLS |
+| `rls_auto_enable()` event trigger | Function existed but event trigger was missing — created and applied to production 2026-02-18 |
 | Rate limit fail-closed | Production rejects all requests if Upstash is unavailable |
 | MFA enforcement on admin panel | `enforceMfaForPrivilegedUser()` in `lib/admin/auth.ts` |
 | DSAR export auth and isolation | `requireAdminAccess()` enforced; company isolation correct |
@@ -590,4 +590,19 @@ These areas were audited and found to be correctly implemented — no changes ne
 
 > Items are moved here from the phase checklists once the fix lands. Include commit hash and date.
 
-*No fixes applied yet — audit completed 2026-02-18.*
+| Ref | Fix Applied | Commit | Date |
+|-----|------------|--------|------|
+| Phase 1 | `.env.production` + `.env.staging` deleted; all secrets moved to Vercel | — | 2026-02-18 |
+| Phase 1 | Resend API key rotated and updated in Vercel | — | 2026-02-18 |
+| Phase 1 | Upstash Redis REST token rotated and updated in Vercel; quote marks removed from `UPSTASH_REDIS_REST_URL` value | — | 2026-02-18 |
+| Phase 1 | Git history confirmed clean — `.env*` never committed | — | 2026-02-18 |
+| M-01 | `stripe_webhook_events` RLS enabled via SQL Editor on production; deny-all by default (service role only access) | `c4c016e` | 2026-02-18 |
+| — | `rls_auto_enable` event trigger created and applied to production | applied via SQL Editor | 2026-02-18 |
+| H-06 | `email` removed from OAuth callback console.log; all high/medium-risk console statements sanitised to `.message` only | `c4c016e` | 2026-02-18 |
+| — | `complyeur@gmail.com` added as site owner across all 5 auth check locations | `a1d991b` | 2026-02-18 |
+| C-02 | `getRecentImportSessions()` scoped to `companyId` with `requireCompanyAccessCached()` | `aac1f39` | 2026-02-18 |
+| C-03 | `getImportSessionsPaginated()` scoped to `companyId` with `requireCompanyAccessCached()` | `aac1f39` | 2026-02-18 |
+| C-04 | Replaced unscoped `.single()` in `getGdprAuditLogAction()` and `isAdmin()` with `requireCompanyAccessCached()` | `aac1f39` | 2026-02-18 |
+| C-05 | Removed silent `return []` from `getEmployeesForGdpr()` — auth failures now propagate | `aac1f39` | 2026-02-18 |
+| C-06 | `constantTimeCompare()` replaced with `crypto.timingSafeEqual` — XOR bug eliminated | `aac1f39` | 2026-02-18 |
+| C-11 | IP-based rate limiting added to all 5 auth actions (login, signup, forgotPassword, resetPassword, signInWithGoogle) | `aac1f39` | 2026-02-18 |
