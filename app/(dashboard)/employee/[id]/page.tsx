@@ -3,7 +3,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { ArrowLeft, Calendar } from 'lucide-react'
 import { parseISO, format } from 'date-fns'
-import { getEmployeeById, getTripsByEmployeeId, getEmployees } from '@/lib/db'
+import { getEmployeeById, getTripsByEmployeeId, getEmployeesForDropdown } from '@/lib/db'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -83,18 +83,15 @@ function getStatusBadgeProps(riskLevel: RiskLevel, isCompliant: boolean): {
 
 export default async function EmployeeDetailPage({ params }: EmployeeDetailPageProps) {
   const { id } = await params
-  const [employee, trips, allEmployees] = await Promise.all([
+  const [employee, trips, employeesForReassign] = await Promise.all([
     getEmployeeById(id),
     getTripsByEmployeeId(id),
-    getEmployees(),
+    getEmployeesForDropdown(),
   ])
 
   if (!employee) {
     notFound()
   }
-
-  // Simplified employee list for reassignment (just id and name)
-  const employeesForReassign = allEmployees.map(e => ({ id: e.id, name: e.name }))
 
   const nationalityType = (employee.nationality_type ?? 'uk_citizen') as NationalityType
   const exempt = isExemptFromTracking(nationalityType)

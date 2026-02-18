@@ -45,6 +45,30 @@ export async function getEmployees(): Promise<Employee[]> {
 }
 
 /**
+ * Get lightweight employee list for dropdowns (reassignment, etc.)
+ * Only fetches id and name with a safety limit.
+ */
+export async function getEmployeesForDropdown(): Promise<{ id: string; name: string }[]> {
+  const supabase = await createClient()
+  const { companyId } = await requireCompanyAccess(supabase)
+
+  const { data, error } = await supabase
+    .from('employees')
+    .select('id, name')
+    .eq('company_id', companyId)
+    .is('deleted_at', null)
+    .order('name', { ascending: true })
+    .limit(500)
+
+  if (error) {
+    console.error('Error fetching employees for dropdown:', error)
+    throw new DatabaseError('Failed to fetch employees')
+  }
+
+  return data ?? []
+}
+
+/**
  * Get single employee by ID
  */
 export async function getEmployeeById(id: string): Promise<Employee | null> {

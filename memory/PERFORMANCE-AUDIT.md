@@ -518,13 +518,13 @@ These reduce unnecessary re-renders in high-frequency components.
 
 These improve query performance and add safety limits.
 
-- [ ] **H-09** — Add composite index on `alerts(employee_id, alert_type, resolved)`
-- [ ] **H-10** — Add composite index on `trips(employee_id, entry_date, exit_date)`
-- [ ] **M-09** — Add trigram index for employee name search
-- [ ] **M-10** — Add index on `trips(company_id, entry_date)`
-- [ ] **M-05** — Add `.limit(500)` to `getTripsByEmployeeId`
-- [ ] **M-06** — Add `.limit(100)` to `getAlertsByEmployeeId`
-- [ ] **M-07** — Narrow `getEmployees` to `select('id, name')` with `.limit(500)`
+- [x] **H-09** — Add composite index on `alerts(employee_id, alert_type, resolved)` ✅ *Done 2026-02-18 — partial index WHERE resolved = false*
+- [x] **H-10** — Add composite index on `trips(employee_id, entry_date, exit_date)` ✅ *Already existed as `idx_trips_employee_date_range`*
+- [x] **M-09** — Add trigram index for employee name search ✅ *Done 2026-02-18 — `pg_trgm` extension + gin index WHERE deleted_at IS NULL*
+- [x] **M-10** — Add index on `trips(company_id, entry_date)` ✅ *Done 2026-02-18 — partial index WHERE ghosted = false*
+- [x] **M-05** — Add `.limit(500)` to `getTripsByEmployeeId` ✅ *Done 2026-02-18*
+- [x] **M-06** — Add `.limit(100)` to `getAlertsByEmployeeId` ✅ *Done 2026-02-18*
+- [x] **M-07** — Narrow `getEmployees` to `select('id, name')` with `.limit(500)` ✅ *Done 2026-02-18 — new `getEmployeesForDropdown()` function*
 
 ### Phase 6 — Architecture Improvements (1-2 days total)
 
@@ -623,6 +623,18 @@ The following issues were identified in earlier audit passes and have already be
 | M-22 | Wrapped `StatusFilters` and `FilterButton` in `memo()`; `filters` array in `useMemo` | `components/dashboard/status-filters.tsx` |
 | M-23 | Extracted inline `onOpenChange` lambda to stable `handleAddTripOpenChange` `useCallback` | `components/dashboard/compliance-table.tsx` |
 
+### Batch 6 (2026-02-18 — phase 5 database optimisation)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| H-09 | Added partial composite index `idx_alerts_employee_type_resolved` on `alerts(employee_id, alert_type, resolved) WHERE resolved = false` | `supabase/migrations/20260218123154_add_performance_indexes.sql` |
+| H-10 | Already existed as `idx_trips_employee_date_range` — no change needed | N/A |
+| M-09 | Enabled `pg_trgm` extension; added GIN trigram index `idx_employees_name_trgm` on `employees(name) WHERE deleted_at IS NULL` | `supabase/migrations/20260218123154_add_performance_indexes.sql` |
+| M-10 | Added partial composite index `idx_trips_company_entry_date` on `trips(company_id, entry_date) WHERE ghosted = false` | `supabase/migrations/20260218123154_add_performance_indexes.sql` |
+| M-05 | Added `.limit(500)` to `getTripsByEmployeeId` to prevent unbounded fetches | `lib/db/trips.ts` |
+| M-06 | Added `.limit(100)` to `getAlertsByEmployeeId` to prevent unbounded fetches | `lib/db/alerts.ts` |
+| M-07 | Created `getEmployeesForDropdown()` returning only `id, name` with `.limit(500)` for reassignment dropdown | `lib/db/employees.ts`, `app/(dashboard)/employee/[id]/page.tsx` |
+
 ---
 
 ## 9. Remaining Work Summary
@@ -634,11 +646,10 @@ The following issues were identified in earlier audit passes and have already be
 - H-06 — Move alert detection to background job
 - H-07 — Batch GDPR retention cron queries (N+1)
 - H-08 — Batch import inserter trip lookups (N+1)
-- H-09, H-10 — Missing composite indexes on `alerts` and `trips` tables
 
-**MEDIUM priority remaining (8 items):**
+**MEDIUM priority remaining (5 items):**
 
-- M-01 through M-29 (minus completed M-16, M-17, M-18, M-19, M-20, M-21, M-22, M-23, M-24, M-25) — see Section 4 for details
+- M-01 through M-29 (minus completed M-05, M-06, M-07, M-09, M-10, M-16, M-17, M-18, M-19, M-20, M-21, M-22, M-23, M-24, M-25) — see Section 4 for details
 
 **LOW priority remaining (8 items):**
 

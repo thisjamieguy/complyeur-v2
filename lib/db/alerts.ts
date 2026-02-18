@@ -112,6 +112,7 @@ export async function getAlertsByEmployeeId(employeeId: string): Promise<Alert[]
     .select('*')
     .eq('employee_id', employeeId)
     .order('created_at', { ascending: false })
+    .limit(100)
 
   if (error) {
     console.error('Error fetching employee alerts:', error)

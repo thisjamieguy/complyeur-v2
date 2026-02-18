@@ -52,6 +52,7 @@ export async function getTripsByEmployeeId(employeeId: string): Promise<Trip[]> 
     .select('*')
     .eq('employee_id', employeeId)
     .order('entry_date', { ascending: false })
+    .limit(500)
 
   if (error) {
     console.error('Error fetching trips:', error)

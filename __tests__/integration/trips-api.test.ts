@@ -466,7 +466,8 @@ describe('Trips API - CRUD Operations', () => {
       const tripsChain = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockResolvedValue({
           data: mockTrips,
           error: null,
         }),
