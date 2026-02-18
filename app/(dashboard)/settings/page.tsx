@@ -11,6 +11,7 @@ import { getCompanySettings, canViewSettings, canUpdateSettings } from '@/lib/ac
 import { getNotificationPreferencesAction } from '../actions'
 import { getCompanyEntitlements } from '@/lib/billing/entitlements'
 import { BillingSection } from '@/components/settings/billing-section'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { createClient } from '@/lib/supabase/server'
 import type { NotificationPreferences } from '@/types/database-helpers'
 import { cn } from '@/lib/utils'
@@ -95,36 +96,18 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   let hasStripeCustomer = false
 
   if (activeSection === 'general') {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { companyId } = await requireCompanyAccessCached()
 
-    const [settingsResult, prefsResult, entitlementsResult] = await Promise.all([
+    const [settingsResult, prefsResult, entitlementsResult, companyResult] = await Promise.all([
       getCompanySettings(),
       getUserPreferencesWithFallback(),
       getCompanyEntitlements(),
+      createClient().then(s => s.from('companies').select('stripe_customer_id').eq('id', companyId).single()),
     ])
     settings = settingsResult
     userPreferences = prefsResult
     entitlements = entitlementsResult
-
-    // Check if company has a Stripe customer ID (for "Manage Billing" button)
-    if (user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single()
-
-      if (profile?.company_id) {
-        const { data: company } = await supabase
-          .from('companies')
-          .select('stripe_customer_id')
-          .eq('id', profile.company_id)
-          .single()
-
-        hasStripeCustomer = !!company?.stripe_customer_id
-      }
-    }
+    hasStripeCustomer = !!companyResult.data?.stripe_customer_id
   }
 
   return (

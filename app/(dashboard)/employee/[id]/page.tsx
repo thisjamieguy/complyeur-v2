@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { ArrowLeft, Calendar } from 'lucide-react'
 import { parseISO, format } from 'date-fns'
 import { getEmployeeById, getTripsByEmployeeId, getEmployeesForDropdown } from '@/lib/db'
@@ -10,8 +11,12 @@ import { Button } from '@/components/ui/button'
 import { EmployeeDetailActions } from './employee-detail-actions'
 import { TripList } from '@/components/trips/trip-list'
 
-import { AddTripModal } from '@/components/trips/add-trip-modal'
-import { BulkAddTripsModal } from '@/components/trips/bulk-add-trips-modal'
+const AddTripModal = dynamic(
+  () => import('@/components/trips/add-trip-modal').then(mod => ({ default: mod.AddTripModal })),
+)
+const BulkAddTripsModal = dynamic(
+  () => import('@/components/trips/bulk-add-trips-modal').then(mod => ({ default: mod.BulkAddTripsModal })),
+)
 import { isSchengenCountry } from '@/lib/constants/schengen-countries'
 import { isExemptFromTracking, NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
 import { calculateCompliance, parseDateOnlyAsUTC, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'
@@ -95,15 +100,14 @@ async function TripSection({
   employeeId,
   employeeName,
   nationalityType,
+  trips,
 }: {
   employeeId: string
   employeeName: string
   nationalityType: NationalityType
+  trips: Awaited<ReturnType<typeof getTripsByEmployeeId>>
 }) {
-  const [trips, employeesForReassign] = await Promise.all([
-    getTripsByEmployeeId(employeeId),
-    getEmployeesForDropdown(),
-  ])
+  const employeesForReassign = await getEmployeesForDropdown()
 
   // UK citizens don't need domestic UK trips displayed
   const displayTrips = nationalityType === 'uk_citizen'
@@ -320,6 +324,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
               employeeId={employee.id}
               employeeName={employee.name}
               nationalityType={nationalityType}
+              trips={trips}
             />
           </Suspense>
         </CardContent>

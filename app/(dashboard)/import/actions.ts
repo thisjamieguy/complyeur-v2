@@ -220,27 +220,17 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
 
 export async function getImportSession(sessionId: string): Promise<ImportSession | null> {
   try {
+    // Auth + company via cached fetcher (deduplicated within request)
+    const { companyId } = await requireCompanyAccessCached();
+
     const supabase = await createClient();
-
-    // SECURITY: Get user's company for defense-in-depth validation
-    // Even though RLS filters by company, we explicitly validate here
-    // to prevent any potential RLS bypass
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('company_id')
-      .single();
-
-    if (profileError || !profile?.company_id) {
-      console.error('Could not determine user company');
-      return null;
-    }
 
     // Query with explicit company_id filter (defense-in-depth)
     const { data, error } = await supabase
       .from('import_sessions')
       .select('*')
       .eq('id', sessionId)
-      .eq('company_id', profile.company_id)  // SECURITY: Explicit company check
+      .eq('company_id', companyId)  // SECURITY: Explicit company check
       .single();
 
     if (error) {
@@ -263,9 +253,10 @@ export async function getRecentImportSessions(limit = 10): Promise<ImportSession
   try {
     const supabase = await createClient();
 
+    // Exclude heavy JSONB columns (parsed_data, validation_errors) for listing
     const { data, error } = await supabase
       .from('import_sessions')
-      .select('*')
+      .select('id, company_id, user_id, format, status, file_name, file_size, total_rows, valid_rows, error_rows, result, created_at, completed_at')
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -274,7 +265,11 @@ export async function getRecentImportSessions(limit = 10): Promise<ImportSession
       return [];
     }
 
-    return (data ?? []).map(dbRowToImportSession);
+    return (data ?? []).map(row => dbRowToImportSession({
+      ...row,
+      parsed_data: null,
+      validation_errors: [] as unknown as Json,
+    }));
   } catch (error) {
     console.error('Get sessions error:', error);
     return [];
@@ -318,7 +313,7 @@ export async function getImportSessionsPaginated(
     // Get paginated data (only completed/failed sessions for history)
     const { data, error } = await supabase
       .from('import_sessions')
-      .select('*')
+      .select('id, company_id, user_id, format, status, file_name, file_size, total_rows, valid_rows, error_rows, result, created_at, completed_at, validation_errors')
       .in('status', ['completed', 'failed'])
       .order('created_at', { ascending: false })
       .range(offset, offset + perPage - 1);
@@ -329,7 +324,7 @@ export async function getImportSessionsPaginated(
     }
 
     return {
-      sessions: (data ?? []).map(dbRowToImportSession),
+      sessions: (data ?? []).map(row => dbRowToImportSession({ ...row, parsed_data: null })),
       total,
       page,
       perPage,
@@ -454,13 +449,11 @@ export async function executeImport(
   duplicateOptions: DuplicateOptions = DEFAULT_DUPLICATE_OPTIONS
 ): Promise<ImportResult> {
   try {
-    const supabase = await createClient()
-    const isDev = process.env.NODE_ENV !== 'production'
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    // Auth + profile via cached fetcher (deduplicated within request)
+    let ctx
+    try {
+      ctx = await requireCompanyAccessCached()
+    } catch {
       return {
         success: false,
         employees_created: 0,
@@ -480,7 +473,9 @@ export async function executeImport(
       }
     }
 
-    const rateLimit = await checkServerActionRateLimit(user.id, 'executeImport')
+    const supabase = await createClient()
+
+    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'executeImport')
     if (!rateLimit.allowed) {
       return {
         success: false,
@@ -501,13 +496,7 @@ export async function executeImport(
       }
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, user.email)
+    const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId, undefined)
     if (mfa?.ok === false) {
       return {
         success: false,
@@ -719,17 +708,10 @@ export async function loadSavedMappings(
   format?: ImportFormat
 ): Promise<SavedColumnMapping[]> {
   try {
-    const supabase = await createClient();
+    // Auth via cached fetcher (deduplicated within request)
+    await requireCompanyAccessCached();
 
-    // Get current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.error('Not authenticated');
-      return [];
-    }
+    const supabase = await createClient();
 
     // Query column_mappings (RLS will filter by company)
     let query = supabase.from('column_mappings').select('*');
@@ -783,37 +765,17 @@ export async function saveColumnMapping(
       return null;
     }
 
+    // Auth + company via cached fetcher (deduplicated within request)
+    const { userId, companyId } = await requireCompanyAccessCached();
+
     const supabase = await createClient();
-
-    // Get current user and company
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.error('Not authenticated');
-      return null;
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('company_id')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError || !profile?.company_id) {
-      console.error('User profile not found');
-      return null;
-    }
-
-    await requireCompanyAccess(supabase, profile.company_id)
 
     // Insert the mapping
     const { data, error } = await supabase
       .from('column_mappings')
       .insert({
-        company_id: profile.company_id,
-        created_by: user.id,
+        company_id: companyId,
+        created_by: userId,
         name: validationResult.data.name,
         description: validationResult.data.description || null,
         format: validationResult.data.format,

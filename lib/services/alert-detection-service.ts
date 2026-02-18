@@ -254,8 +254,32 @@ export async function detectAndProcessAlerts(
     }
   }
 
-  // Create alerts for each crossed threshold (duplicate prevention handled in createAlert)
-  for (const alertType of thresholdsCrossed) {
+  // Pre-fetch all active (unresolved) alert types for this employee in one query
+  // to avoid N+1 hasActiveAlertOfType calls inside createAlert
+  const { data: existingAlerts } = await supabase
+    .from('alerts')
+    .select('alert_type')
+    .eq('employee_id', context.employeeId)
+    .eq('resolved', false)
+
+  const existingAlertTypes = new Set(
+    (existingAlerts ?? []).map(a => a.alert_type)
+  )
+
+  // Only create alerts for thresholds that don't already have an active alert
+  const newThresholds = thresholdsCrossed.filter(t => !existingAlertTypes.has(t))
+
+  // Log skipped thresholds
+  const skipped = thresholdsCrossed.filter(t => existingAlertTypes.has(t))
+  if (skipped.length > 0) {
+    logger.info('[AlertDetection] Alert already exists for thresholds', {
+      skipped,
+      employeeName: context.employeeName,
+    })
+  }
+
+  // Create alerts for each new threshold
+  for (const alertType of newThresholds) {
     const threshold =
       alertType === 'breach'
         ? 90

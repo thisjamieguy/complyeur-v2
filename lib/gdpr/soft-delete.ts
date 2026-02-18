@@ -113,7 +113,7 @@ export async function softDeleteEmployee(
     // Get employee (RLS ensures company isolation)
     const { data: employee, error: employeeError } = await supabase
       .from('employees')
-      .select('*')
+      .select('id, name, company_id, deleted_at')
       .eq('id', employeeId)
       .single()
 
@@ -125,7 +125,7 @@ export async function softDeleteEmployee(
       }
     }
 
-    const employeeCompanyId = (employee as Record<string, unknown>).company_id as string | null
+    const employeeCompanyId = employee.company_id as string | null
     if (!employeeCompanyId) {
       return {
         success: false,
@@ -137,7 +137,7 @@ export async function softDeleteEmployee(
     await requireCompanyAccess(supabase, employeeCompanyId)
 
     // Check if already deleted
-    if ((employee as Record<string, unknown>).deleted_at) {
+    if (employee.deleted_at) {
       return {
         success: false,
         error: 'Employee is already marked for deletion',

@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
-import { createClient } from '@/lib/supabase/server'
+import nextDynamic from 'next/dynamic'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
+import { getDashboardTourState } from '@/lib/db/profiles'
 import { getEmployeeComplianceDataPaginated, type EmployeeSortOption } from '@/lib/data'
 import { getCompanySettings } from '@/lib/actions/settings'
 import { ComplianceTable } from '@/components/dashboard/compliance-table'
@@ -8,7 +9,10 @@ import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
 import { AlertBanner } from '@/components/alerts/alert-banner'
 import { getUnacknowledgedAlertsAction } from '../actions'
-import { DashboardTour } from '@/components/onboarding/dashboard-tour'
+
+const DashboardTour = nextDynamic(
+  () => import('@/components/onboarding/dashboard-tour').then(mod => ({ default: mod.DashboardTour })),
+)
 
 export const dynamic = 'force-dynamic'
 
@@ -105,7 +109,6 @@ interface DashboardPageProps {
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   // Layout already validates auth — use cached access to avoid duplicate queries
   const { userId } = await requireCompanyAccessCached()
-  const supabase = await createClient()
 
   // Parse pagination params from URL
   const params = await searchParams
@@ -116,17 +119,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     : 'days_remaining_asc'
   const forceTour = params.tour === '1'
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('dashboard_tour_completed_at')
-    .eq('id', userId)
-    .single()
-
-  if (profileError) {
-    console.error('[dashboard] Failed to load tour state:', profileError)
-  }
-
-  const shouldAutoStartTour = Boolean(profile && !profile.dashboard_tour_completed_at)
+  // Cached fetcher — deduplicated within this request
+  const tourCompletedAt = await getDashboardTourState(userId)
+  const shouldAutoStartTour = !tourCompletedAt
   const shouldShowTour = forceTour || shouldAutoStartTour
 
   return (

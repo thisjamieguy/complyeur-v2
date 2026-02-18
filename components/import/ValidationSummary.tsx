@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { CheckCircle2, AlertCircle, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { ValidationSummary as ValidationSummaryType } from '@/types/import';
 
@@ -8,7 +9,7 @@ interface ValidationSummaryProps {
 }
 
 export function ValidationSummary({ summary }: ValidationSummaryProps) {
-  const cards = [
+  const cards = useMemo(() => [
     {
       label: 'Total Rows',
       value: summary.total,
@@ -41,7 +42,7 @@ export function ValidationSummary({ summary }: ValidationSummaryProps) {
       textColor: summary.warnings > 0 ? 'text-amber-700' : 'text-slate-600',
       iconColor: summary.warnings > 0 ? 'text-amber-500' : 'text-slate-400',
     },
-  ];
+  ], [summary.total, summary.valid, summary.errors, summary.warnings]);
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

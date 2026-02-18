@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { AlertTriangle, AlertCircle, XCircle, X, ChevronRight, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,9 @@ import type { AlertWithEmployee, AlertType } from '@/types/database-helpers'
 interface AlertBannerProps {
   alerts: AlertWithEmployee[]
 }
+
+/** Severity order for determining banner color (highest severity first) */
+const SEVERITY_ORDER: AlertType[] = ['breach', 'urgent', 'warning']
 
 const alertConfig: Record<AlertType, {
   icon: typeof AlertTriangle
@@ -107,17 +110,16 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
   const [localAlerts, setLocalAlerts] = useState(alerts)
   const [isLoading, setIsLoading] = useState(false)
 
+  // Find the most severe alert type to determine banner color
+  const highestSeverity = useMemo(() => localAlerts.reduce((highest, alert) => {
+    const currentIndex = SEVERITY_ORDER.indexOf(alert.alert_type as AlertType)
+    const highestIndex = SEVERITY_ORDER.indexOf(highest)
+    return currentIndex < highestIndex ? (alert.alert_type as AlertType) : highest
+  }, 'warning' as AlertType), [localAlerts])
+
   if (localAlerts.length === 0) {
     return null
   }
-
-  // Find the most severe alert type to determine banner color
-  const highestSeverity = localAlerts.reduce((highest, alert) => {
-    const severityOrder: AlertType[] = ['breach', 'urgent', 'warning']
-    const currentIndex = severityOrder.indexOf(alert.alert_type as AlertType)
-    const highestIndex = severityOrder.indexOf(highest)
-    return currentIndex < highestIndex ? (alert.alert_type as AlertType) : highest
-  }, 'warning' as AlertType)
 
   const config = alertConfig[highestSeverity]
   const Icon = config.icon

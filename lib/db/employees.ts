@@ -35,6 +35,7 @@ export async function getEmployees(): Promise<Employee[]> {
     .select('*')
     .eq('company_id', companyId)
     .order('name', { ascending: true })
+    .limit(1000)
 
   if (error) {
     console.error('Error fetching employees:', error)

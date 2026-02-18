@@ -151,13 +151,14 @@ async function purgeCompanyData(
   const softDeleteCutoff = subDays(now, RECOVERY_PERIOD_DAYS)
 
   try {
-    // 1. Delete expired trips
+    // 1. Delete expired trips (process in batches of 1000)
     // Find trips where exit_date is older than retention period
     const { data: expiredTrips, error: tripFetchError } = await supabase
       .from('trips')
       .select('id')
       .eq('company_id', companyId)
       .lt('exit_date', format(retentionCutoff, 'yyyy-MM-dd'))
+      .limit(1000)
 
     if (tripFetchError) {
       errors.push(`Failed to fetch expired trips: ${tripFetchError.message}`)

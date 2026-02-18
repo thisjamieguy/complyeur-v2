@@ -1,7 +1,22 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { DatabaseError, NotFoundError } from '@/lib/errors'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { Profile, ProfileWithCompany, ProfileUpdate } from '@/types/database-helpers'
+
+/**
+ * Get whether the user has completed the dashboard tour.
+ * Wrapped in React.cache() — deduplicated within a single request.
+ */
+export const getDashboardTourState = cache(async (userId: string): Promise<string | null> => {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('profiles')
+    .select('dashboard_tour_completed_at')
+    .eq('id', userId)
+    .single()
+  return data?.dashboard_tour_completed_at ?? null
+})
 
 /**
  * Get the current user's profile with company data
@@ -111,6 +126,7 @@ export async function getCompanyProfiles(companyId: string): Promise<Profile[]> 
     .select('*')
     .eq('company_id', companyId)
     .order('created_at', { ascending: true })
+    .limit(200)
 
   if (error) {
     console.error('Error fetching company profiles:', error)

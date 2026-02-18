@@ -9,14 +9,105 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { isAfter, isBefore, isEqual, isValid } from 'date-fns';
 import {
-  computeComplianceVector,
   computeComplianceVectorOptimized,
   computeMonthCompliance,
   computeYearCompliance,
 } from '../compliance-vector';
+import { presenceDays, normalizeToUTCDate } from '../presence-calculator';
+import { getRiskLevel } from '../risk-calculator';
+import {
+  DEFAULT_COMPLIANCE_START_DATE,
+  DEFAULT_RISK_THRESHOLDS,
+  SCHENGEN_DAY_LIMIT,
+  WINDOW_SIZE_DAYS,
+} from '../constants';
 import { InvalidReferenceDateError } from '../errors';
+import { addUtcDays } from '../date-utils';
 import type { Trip, ComplianceConfig, DailyCompliance } from '../types';
+
+/**
+ * Original O(n*d) compliance vector function, retained as a local test helper
+ * for comparison against the optimized sliding-window version.
+ */
+function computeComplianceVector(
+  trips: readonly Trip[],
+  startDate: Date,
+  endDate: Date,
+  config: ComplianceConfig
+): DailyCompliance[] {
+  // Validate dates
+  if (!startDate || !(startDate instanceof Date) || !isValid(startDate)) {
+    throw new InvalidReferenceDateError(startDate, 'Start date must be a valid Date object');
+  }
+  if (!endDate || !(endDate instanceof Date) || !isValid(endDate)) {
+    throw new InvalidReferenceDateError(endDate, 'End date must be a valid Date object');
+  }
+  if (isAfter(startDate, endDate)) {
+    throw new InvalidReferenceDateError(startDate, 'Start date must be before or equal to end date');
+  }
+
+  const normalizedStart = normalizeToUTCDate(startDate);
+  const normalizedEnd = normalizeToUTCDate(endDate);
+  const limit = config.limit ?? SCHENGEN_DAY_LIMIT;
+  const thresholds = config.thresholds ?? DEFAULT_RISK_THRESHOLDS;
+
+  // Step 1: Compute presence days once (O(n) where n = total trip days)
+  const presence = presenceDays(trips, config);
+
+  // Step 2: Sort presence days for efficient window operations
+  const sortedPresence = Array.from(presence).sort();
+
+  // Step 3: Build an optimized lookup structure
+  const result: DailyCompliance[] = [];
+
+  // Convert sorted presence to Date objects for comparison
+  const presenceDates = sortedPresence.map(key => new Date(key + 'T00:00:00.000Z'));
+
+  // Initialize the window count for the first reference date
+  const complianceStartDate = config.complianceStartDate ?? DEFAULT_COMPLIANCE_START_DATE;
+  const normalizedComplianceStart = normalizeToUTCDate(complianceStartDate);
+
+  // For each reference date, count days in window [refDate - 179, refDate]
+  let currentDate = normalizedStart;
+
+  while (!isAfter(currentDate, normalizedEnd)) {
+    let windowStart = addUtcDays(currentDate, -(WINDOW_SIZE_DAYS - 1));
+    const windowEnd = currentDate;
+
+    // Respect compliance start date
+    if (isBefore(windowStart, normalizedComplianceStart)) {
+      windowStart = normalizedComplianceStart;
+    }
+
+    // Count presence days in window
+    let count = 0;
+    if (!isBefore(windowEnd, normalizedComplianceStart)) {
+      for (const presenceDate of presenceDates) {
+        if (
+          (isEqual(presenceDate, windowStart) || isAfter(presenceDate, windowStart)) &&
+          (isEqual(presenceDate, windowEnd) || isBefore(presenceDate, windowEnd))
+        ) {
+          count++;
+        }
+      }
+    }
+
+    const daysRemaining = limit - count;
+
+    result.push({
+      date: new Date(currentDate),
+      daysUsed: count,
+      daysRemaining,
+      riskLevel: getRiskLevel(daysRemaining, thresholds),
+    });
+
+    currentDate = addUtcDays(currentDate, 1);
+  }
+
+  return result;
+}
 
 // Helper to create a trip
 function createTrip(

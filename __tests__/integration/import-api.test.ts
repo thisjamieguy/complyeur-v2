@@ -583,14 +583,9 @@ describe('Import API / Server Actions', () => {
   // ============================================================================
   describe('executeImport', () => {
     it('returns error when not authenticated', async () => {
-      const { createClient } = await import('@/lib/supabase/server');
+      const { requireCompanyAccessCached } = await import('@/lib/security/tenant-access');
 
-      const mockClient = createServerActionMock({
-        user: null,
-        authError: { message: 'Not authenticated' },
-      });
-
-      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+      vi.mocked(requireCompanyAccessCached).mockRejectedValueOnce(new Error('Unauthorized'));
 
       const { executeImport } = await import('@/app/(dashboard)/import/actions');
 
@@ -866,14 +861,9 @@ describe('Import API / Server Actions', () => {
 
     describe('saveColumnMapping', () => {
       it('returns null when not authenticated', async () => {
-        const { createClient } = await import('@/lib/supabase/server');
+        const { requireCompanyAccessCached } = await import('@/lib/security/tenant-access');
 
-        const mockClient = createServerActionMock({
-          user: null,
-          authError: { message: 'Not authenticated' },
-        });
-
-        vi.mocked(createClient).mockResolvedValue(mockClient as never);
+        vi.mocked(requireCompanyAccessCached).mockRejectedValueOnce(new Error('Unauthorized'));
 
         const { saveColumnMapping } = await import('@/app/(dashboard)/import/actions');
 

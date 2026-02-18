@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { MoreHorizontal, Pencil, Trash2, ArrowUpDown, UserMinus } from 'lucide-react'
 import {
   Table,
@@ -63,6 +63,10 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
     }
   }, [])
 
+  const handleEditOpenChange = useCallback((open: boolean) => { if (!open) setEditingTrip(null) }, [])
+  const handleDeleteOpenChange = useCallback((open: boolean) => { if (!open) setDeletingTrip(null) }, [])
+  const handleReassignOpenChange = useCallback((open: boolean) => { if (!open) setReassigningTrip(null) }, [])
+
   const filteredTrips = useMemo(() => {
     if (tripFilter === 'all') return trips
     const { windowStart, windowEnd } = getWindowBounds(new Date())
@@ -72,17 +76,6 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
         parseDateOnlyAsUTC(trip.entry_date) <= windowEnd
     )
   }, [trips, tripFilter])
-
-  if (trips.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-slate-50">
-        <p className="text-sm text-gray-500">No trips recorded yet</p>
-        <p className="text-xs text-gray-400 mt-1">
-          Add a trip to start tracking Schengen compliance
-        </p>
-      </div>
-    )
-  }
 
   const sortedTrips = useMemo(() => {
     const sorted = [...filteredTrips].sort((a, b) => {
@@ -97,6 +90,17 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
     })
     return sorted
   }, [filteredTrips, sortField, sortDirection])
+
+  if (trips.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-slate-50">
+        <p className="text-sm text-gray-500">No trips recorded yet</p>
+        <p className="text-xs text-gray-400 mt-1">
+          Add a trip to start tracking Schengen compliance
+        </p>
+      </div>
+    )
+  }
 
   function handleSort(field: SortField) {
     if (sortField === field) {
@@ -348,7 +352,7 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
           employeeId={employeeId}
           employeeName={employeeName}
           open={!!editingTrip}
-          onOpenChange={(open) => !open && setEditingTrip(null)}
+          onOpenChange={handleEditOpenChange}
         />
       )}
 
@@ -357,14 +361,14 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
           trip={deletingTrip}
           employeeId={employeeId}
           open={!!deletingTrip}
-          onOpenChange={(open) => !open && setDeletingTrip(null)}
+          onOpenChange={handleDeleteOpenChange}
         />
       )}
 
       {reassigningTrip && (
         <ReassignTripDialog
           open={!!reassigningTrip}
-          onOpenChange={(open) => !open && setReassigningTrip(null)}
+          onOpenChange={handleReassignOpenChange}
           trip={reassigningTrip}
           currentEmployeeId={employeeId}
           currentEmployeeName={employeeName}

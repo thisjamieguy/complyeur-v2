@@ -26,51 +26,50 @@ export default async function CompaniesPage({
   const offset = (page - 1) * perPage
 
   // Build query for companies with entitlements
+  // Use !inner join when filtering by tier/status so DB handles filtering before pagination
+  const hasEntitlementFilter = (params.tier && params.tier !== 'all') || (params.status && params.status !== 'all')
+  const entitlementJoin = hasEntitlementFilter ? 'company_entitlements!inner(*)' : 'company_entitlements(*)'
+
   let query = supabase
     .from('companies')
     .select(`
       *,
-      company_entitlements(*),
+      ${entitlementJoin},
       profiles(count),
       employees(count)
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
-    .range(offset, offset + perPage - 1)
 
   // Apply search filter
   if (params.search) {
     query = query.or(`name.ilike.%${params.search}%,slug.ilike.%${params.search}%`)
   }
 
-  const { data: companies, count } = await query
-
-  // Filter by tier and status in memory (since we're joining)
-  // In production, you might want to use a database view or function for this
-  let filteredCompanies = companies || []
-
+  // Apply tier filter at DB level
   if (params.tier && params.tier !== 'all') {
-    filteredCompanies = filteredCompanies.filter(
-      c => c.company_entitlements?.tier_slug === params.tier
-    )
+    query = query.eq('company_entitlements.tier_slug', params.tier)
   }
 
+  // Apply status filter at DB level
   if (params.status && params.status !== 'all') {
-    filteredCompanies = filteredCompanies.filter(c => {
-      const ent = c.company_entitlements
-      if (!ent) return false
-
-      switch (params.status) {
-        case 'suspended':
-          return ent.is_suspended === true
-        case 'trial':
-          return ent.is_trial === true && !ent.is_suspended
-        case 'active':
-          return !ent.is_trial && !ent.is_suspended
-        default:
-          return true
-      }
-    })
+    switch (params.status) {
+      case 'suspended':
+        query = query.eq('company_entitlements.is_suspended', true)
+        break
+      case 'trial':
+        query = query.eq('company_entitlements.is_trial', true).eq('company_entitlements.is_suspended', false)
+        break
+      case 'active':
+        query = query.eq('company_entitlements.is_trial', false).eq('company_entitlements.is_suspended', false)
+        break
+    }
   }
+
+  // Apply pagination after all filters for correct count
+  query = query.range(offset, offset + perPage - 1)
+
+  const { data: companies, count } = await query
+  const filteredCompanies = companies || []
 
   // Fetch tiers for filter dropdown
   const { data: tiers } = await supabase

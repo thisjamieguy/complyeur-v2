@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- perf: complete phases 7-10 of performance audit (18 fixes) [`7356a44`](https://github.com/thisjamieguy/complyeur-v2/commit/7356a447cac78ed3e23efb279e0d72fe2f8007b5)
+- perf: complete phase 6 architecture improvements (10 fixes) [`cb3a479`](https://github.com/thisjamieguy/complyeur-v2/commit/cb3a4793a13db4d8777c6a6e2dc9cbd2a9d31a98)
 - fix(test): update import-api mocks for requireCompanyAccessCached auth flow [`3448119`](https://github.com/thisjamieguy/complyeur-v2/commit/34481193fdf1c32d738cef428854ec3fbc313f3a)
 - perf: complete phase 5 database optimisation (7 fixes) [`bd104a2`](https://github.com/thisjamieguy/complyeur-v2/commit/bd104a2c020981714c70638c4998e056b6b8ae84)
 - perf: complete phases 1-4 of performance audit (20 fixes) [`2cee929`](https://github.com/thisjamieguy/complyeur-v2/commit/2cee929223a1ce888e9a43d4df9c1297ea8cf263)
@@ -17,8 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix(test): include nationality_type in employee form validation test [`3e30515`](https://github.com/thisjamieguy/complyeur-v2/commit/3e305152b1cc398ad99dabce61c497af66a26ab2)
 - perf: 6 high-priority performance fixes from audit [`43f6802`](https://github.com/thisjamieguy/complyeur-v2/commit/43f68020420b785efc2b2466b5ca7260e7a968aa)
 - chore: clean up project root — move docs, delete orphaned files, remove clutter [`266520e`](https://github.com/thisjamieguy/complyeur-v2/commit/266520eeae2f0fada1408a110b3b0d5a47b284e9)
-- chore: add Agent Context Protocol (ACP) with project-specific documentation [`3469235`](https://github.com/thisjamieguy/complyeur-v2/commit/346923564e1c2e582b01d50f8a1a4f823232718f)
-- fix: site owner bypasses onboarding redirect in middleware [`55e77ab`](https://github.com/thisjamieguy/complyeur-v2/commit/55e77ab1bacf28cdd4ac561b47ee7abcf2372b2b)
 
 ## v1.0.0 - 2026-01-22
 

@@ -18,14 +18,14 @@ interface FilterButtonProps {
   label: string
   count: number
   isActive: boolean
-  onClick: () => void
+  onFilterChange: (filter: StatusFilter) => void
 }
 
-const FilterButton = memo(function FilterButton({ label, count, isActive, onClick }: Omit<FilterButtonProps, 'filter'>) {
+const FilterButton = memo(function FilterButton({ filter, label, count, isActive, onFilterChange }: FilterButtonProps) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={() => onFilterChange(filter)}
       className={cn(
         'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2',
@@ -59,7 +59,7 @@ export const StatusFilters = memo(function StatusFilters({
     ...(stats.exempt > 0
       ? [{ filter: 'exempt' as StatusFilter, label: 'Exempt', count: stats.exempt }]
       : []),
-  ], [stats])
+  ], [stats.total, stats.compliant, stats.at_risk, stats.non_compliant, stats.breach, stats.exempt])
 
   return (
     <div
@@ -70,10 +70,11 @@ export const StatusFilters = memo(function StatusFilters({
       {filters.map(({ filter, label, count }) => (
         <FilterButton
           key={filter}
+          filter={filter}
           label={label}
           count={count}
           isActive={activeFilter === filter}
-          onClick={() => onFilterChange(filter)}
+          onFilterChange={onFilterChange}
         />
       ))}
     </div>

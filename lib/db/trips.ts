@@ -331,15 +331,9 @@ function checkOverlap(
   newExitDate: string,
   existingTrips: TripDateRange[]
 ): { hasOverlap: true; message: string } | null {
-  const newEntry = new Date(newEntryDate)
-  const newExit = new Date(newExitDate)
-
   for (const trip of existingTrips) {
-    const tripStart = new Date(trip.entry_date)
-    const tripEnd = new Date(trip.exit_date)
-
-    // Overlap exists if: newEntry <= tripEnd AND newExit >= tripStart
-    if (newEntry <= tripEnd && newExit >= tripStart) {
+    // ISO date strings (YYYY-MM-DD) sort lexicographically — no Date allocation needed
+    if (newEntryDate <= trip.exit_date && newExitDate >= trip.entry_date) {
       const start = formatDate(trip.entry_date)
       const end = formatDate(trip.exit_date)
       return {
@@ -502,10 +496,10 @@ export async function reassignTrip(tripId: string, newEmployeeId: string): Promi
   // Verify auth and get company
   const { companyId } = await getAuthenticatedUserCompany(supabase)
 
-  // Get the existing trip
+  // Get the existing trip (only fields needed for ownership check + overlap validation)
   const { data: trip, error: tripError } = await supabase
     .from('trips')
-    .select('*')
+    .select('id, company_id, entry_date, exit_date')
     .eq('id', tripId)
     .single()
 

@@ -232,31 +232,19 @@ interface BulkTripResult {
 export async function bulkAddTripsAction(
   trips: BulkTripInput[]
 ): Promise<BulkTripResult> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-  if (authError || !user) {
-    return { success: false, created: 0, errors: [{ index: 0, message: 'Not authenticated' }] }
-  }
+  const ctx = await requireCompanyAccessCached()
 
-  const rateLimit = await checkServerActionRateLimit(user.id, 'bulkAddTripsAction')
+  const rateLimit = await checkServerActionRateLimit(ctx.userId, 'bulkAddTripsAction')
   if (!rateLimit.allowed) {
     return { success: false, created: 0, errors: [{ index: 0, message: rateLimit.error ?? 'Rate limit exceeded' }] }
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!hasPermission(profile?.role, PERMISSIONS.TRIPS_CREATE)) {
+  if (!hasPermission(ctx.role, PERMISSIONS.TRIPS_CREATE)) {
     return { success: false, created: 0, errors: [{ index: 0, message: 'Forbidden' }] }
   }
 
-  const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, user.email)
+  const supabase = await createClient()
+  const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId)
   if (mfa?.ok === false) {
     return { success: false, created: 0, errors: [{ index: 0, message: 'MFA required. Complete setup or verification to continue.' }] }
   }

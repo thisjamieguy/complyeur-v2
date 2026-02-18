@@ -156,7 +156,6 @@ export {
 // ============================================================================
 
 export {
-  computeComplianceVector,
   computeComplianceVectorOptimized,
   computeMonthCompliance,
   computeYearCompliance,

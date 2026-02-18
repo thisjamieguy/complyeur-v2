@@ -8,9 +8,8 @@
  * @version 2025-01-07
  */
 
-import { isAfter, isBefore, isEqual, isValid } from 'date-fns';
+import { isAfter, isBefore, isValid } from 'date-fns';
 import { presenceDays, normalizeToUTCDate } from './presence-calculator';
-import { daysUsedInWindow } from './window-calculator';
 import { getRiskLevel } from './risk-calculator';
 import {
   DEFAULT_COMPLIANCE_START_DATE,
@@ -20,115 +19,7 @@ import {
 } from './constants';
 import { InvalidReferenceDateError } from './errors';
 import { addUtcDays } from './date-utils';
-import type { Trip, ComplianceConfig, DailyCompliance, RiskThresholds } from './types';
-
-/**
- * Computes compliance status for every day in a date range.
- *
- * This function is optimized for calendar views. Instead of calling
- * daysUsedInWindow() for each day (O(n x d)), it uses a sliding window
- * approach that achieves O(n + d) complexity.
- *
- * @param trips - All trips for the employee
- * @param startDate - First date of range to compute
- * @param endDate - Last date of range to compute
- * @param config - Compliance configuration
- * @returns Array of daily compliance statuses
- *
- * @throws InvalidReferenceDateError if dates are invalid
- *
- * @example
- * // Compute full year for calendar view
- * const vector = computeComplianceVector(
- *   trips,
- *   new Date('2025-01-01'),
- *   new Date('2025-12-31'),
- *   { mode: 'audit', referenceDate: new Date('2025-12-31') }
- * );
- * // Returns 365 DailyCompliance objects in ~O(n + 365) time
- */
-export function computeComplianceVector(
-  trips: readonly Trip[],
-  startDate: Date,
-  endDate: Date,
-  config: ComplianceConfig
-): DailyCompliance[] {
-  // Validate dates
-  if (!startDate || !(startDate instanceof Date) || !isValid(startDate)) {
-    throw new InvalidReferenceDateError(startDate, 'Start date must be a valid Date object');
-  }
-  if (!endDate || !(endDate instanceof Date) || !isValid(endDate)) {
-    throw new InvalidReferenceDateError(endDate, 'End date must be a valid Date object');
-  }
-  if (isAfter(startDate, endDate)) {
-    throw new InvalidReferenceDateError(startDate, 'Start date must be before or equal to end date');
-  }
-
-  const normalizedStart = normalizeToUTCDate(startDate);
-  const normalizedEnd = normalizeToUTCDate(endDate);
-  const limit = config.limit ?? SCHENGEN_DAY_LIMIT;
-  const thresholds = config.thresholds ?? DEFAULT_RISK_THRESHOLDS;
-
-  // Step 1: Compute presence days once (O(n) where n = total trip days)
-  const presence = presenceDays(trips, config);
-
-  // Step 2: Sort presence days for efficient window operations
-  const sortedPresence = Array.from(presence).sort();
-
-  // Step 3: Build an optimized lookup structure
-  // For each day in the range, we need to know how many presence days
-  // fall within the 180-day window ending the day before.
-  const result: DailyCompliance[] = [];
-
-  // Convert sorted presence to Date objects for comparison
-  const presenceDates = sortedPresence.map(key => new Date(key + 'T00:00:00.000Z'));
-
-  // Initialize the window count for the first reference date
-  const complianceStartDate = config.complianceStartDate ?? DEFAULT_COMPLIANCE_START_DATE;
-  const normalizedComplianceStart = normalizeToUTCDate(complianceStartDate);
-
-  // For each reference date, count days in window [refDate - 179, refDate]
-  let currentDate = normalizedStart;
-
-  while (!isAfter(currentDate, normalizedEnd)) {
-    // Calculate window boundaries for this reference date
-    // Window: [refDate - 179, refDate] = 180 days inclusive of reference date
-    let windowStart = addUtcDays(currentDate, -(WINDOW_SIZE_DAYS - 1));
-    const windowEnd = currentDate;
-
-    // Respect compliance start date
-    if (isBefore(windowStart, normalizedComplianceStart)) {
-      windowStart = normalizedComplianceStart;
-    }
-
-    // Count presence days in window using binary search for efficiency
-    let count = 0;
-    if (!isBefore(windowEnd, normalizedComplianceStart)) {
-      // Use linear scan for correctness (binary search optimization possible for larger datasets)
-      for (const presenceDate of presenceDates) {
-        if (
-          (isEqual(presenceDate, windowStart) || isAfter(presenceDate, windowStart)) &&
-          (isEqual(presenceDate, windowEnd) || isBefore(presenceDate, windowEnd))
-        ) {
-          count++;
-        }
-      }
-    }
-
-    const daysRemaining = limit - count;
-
-    result.push({
-      date: new Date(currentDate),
-      daysUsed: count,
-      daysRemaining,
-      riskLevel: getRiskLevel(daysRemaining, thresholds),
-    });
-
-    currentDate = addUtcDays(currentDate, 1);
-  }
-
-  return result;
-}
+import type { Trip, ComplianceConfig, DailyCompliance } from './types';
 
 /**
  * Optimized version using incremental sliding window.

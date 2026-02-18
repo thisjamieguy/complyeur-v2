@@ -261,24 +261,30 @@ async function insertEmployees(
     }
   }
 
-  // Update existing employees
-  for (const emp of employeesToUpdate) {
-    const { error: updateError } = await supabase
-      .from('employees')
-      .update({ name: emp.name })
-      .eq('id', emp.id);
+  // Batch update existing employees
+  if (employeesToUpdate.length > 0) {
+    const updateResults = await Promise.all(
+      employeesToUpdate.map(emp =>
+        supabase
+          .from('employees')
+          .update({ name: emp.name })
+          .eq('id', emp.id)
+      )
+    )
 
-    if (updateError) {
-      console.error('Failed to update employee:', updateError);
-      errors.push({
-        row: emp.rowNum,
-        column: '',
-        value: '',
-        message: `Failed to update employee: ${updateError.message}`,
-        severity: 'error',
-      });
-    } else {
-      employeesUpdated++;
+    for (let i = 0; i < updateResults.length; i++) {
+      if (updateResults[i].error) {
+        console.error('Failed to update employee:', updateResults[i].error)
+        errors.push({
+          row: employeesToUpdate[i].rowNum,
+          column: '',
+          value: '',
+          message: `Failed to update employee: ${updateResults[i].error!.message}`,
+          severity: 'error',
+        })
+      } else {
+        employeesUpdated++
+      }
     }
   }
 
@@ -450,27 +456,32 @@ async function insertTrips(
 
   // Restore soft-deleted employees
   if (employeesToRestore.length > 0) {
-    console.log('[TripImport] Restoring soft-deleted employees:', employeesToRestore.length);
-    for (const emp of employeesToRestore) {
-      const { error: restoreError } = await supabase
-        .from('employees')
-        .update({ deleted_at: null, name: emp.name })
-        .eq('id', emp.id);
+    console.log('[TripImport] Restoring soft-deleted employees:', employeesToRestore.length)
+    const restoreResults = await Promise.all(
+      employeesToRestore.map(emp =>
+        supabase
+          .from('employees')
+          .update({ deleted_at: null, name: emp.name })
+          .eq('id', emp.id)
+      )
+    )
 
-      if (restoreError) {
-        console.error('[TripImport] Failed to restore employee:', restoreError);
+    for (let i = 0; i < restoreResults.length; i++) {
+      const emp = employeesToRestore[i]
+      if (restoreResults[i].error) {
+        console.error('[TripImport] Failed to restore employee:', restoreResults[i].error)
         errors.push({
           row: 0,
           column: '',
           value: emp.email,
-          message: `Failed to restore employee ${emp.email}: ${restoreError.message}`,
+          message: `Failed to restore employee ${emp.email}: ${restoreResults[i].error!.message}`,
           severity: 'error',
-        });
+        })
       } else {
-        employeesCreated++;
-        employeeEmailMap.set(emp.email.toLowerCase().trim(), emp.id);
+        employeesCreated++
+        employeeEmailMap.set(emp.email.toLowerCase().trim(), emp.id)
         if (emp.name) {
-          employeeNameMap.set(normalizeName(emp.name), emp.id);
+          employeeNameMap.set(normalizeName(emp.name), emp.id)
         }
         warnings.push({
           row: 0,
@@ -478,7 +489,7 @@ async function insertTrips(
           value: emp.email,
           message: `Restored previously deleted employee: ${emp.email}`,
           severity: 'warning',
-        });
+        })
       }
     }
   }

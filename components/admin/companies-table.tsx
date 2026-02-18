@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { formatDistanceToNow, parseISO } from 'date-fns'
@@ -95,9 +96,9 @@ export function CompaniesTable({
 }: CompaniesTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const tierDisplayNameBySlug = new Map(
+  const tierDisplayNameBySlug = useMemo(() => new Map(
     tiers.map((tier) => [tier.slug, tier.display_name] as const)
-  )
+  ), [tiers])
 
   const navigateToPage = (page: number) => {
     const params = new URLSearchParams(searchParams.toString())

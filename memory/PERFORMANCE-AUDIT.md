@@ -530,16 +530,16 @@ These improve query performance and add safety limits.
 
 These are larger refactors with the highest long-term payoff.
 
-- [ ] **H-02** — Move `profiles` query out of middleware (JWT metadata)
-- [ ] **H-03** — Replace `getEmployeeStats` with DB aggregate / `unstable_cache`
-- [ ] **H-06** — Move alert detection to background job (`waitUntil` / DB trigger / Edge Function)
-- [ ] **H-07** — Batch GDPR retention cron queries
-- [ ] **H-08** — Batch import inserter trip lookups
-- [ ] **M-13** — Add Suspense streaming to employee detail page
-- [ ] **M-14** — Parallelise settings + employee data in dashboard
-- [ ] **M-26** — Move compliance table sort to server-side
-- [ ] **M-28** — Replace `Date` allocations in `daysUsedInWindow` with string comparison
-- [ ] **M-29** — Optimise `earliestSafeEntry` to use compliance vector
+- [x] **H-02** — Move `profiles` query out of middleware (JWT metadata) ✅ *Done 2026-02-18 — read company_id + onboarding from user_metadata; backfill on first fallback hit*
+- [x] **H-03** — Replace `getEmployeeStats` with DB aggregate / `unstable_cache` ✅ *Done 2026-02-18 — dead code removed; M-26 refactor computes stats inline from cached data*
+- [x] **H-06** — Move alert detection to background job (`waitUntil` / DB trigger / Edge Function) ✅ *Done 2026-02-18 — replaced fire-and-forget with Next.js `after()` from `next/server`*
+- [x] **H-07** — Batch GDPR retention cron queries ✅ *Done 2026-02-18 — single `.in()` query replaces per-employee COUNT(*) N+1*
+- [x] **H-08** — Batch import inserter trip lookups ✅ *Done 2026-02-18 — pre-fetch all existing trips with `.in()` before insertion loop*
+- [x] **M-13** — Add Suspense streaming to employee detail page ✅ *Done 2026-02-18 — TripSection async component streamed via Suspense*
+- [x] **M-14** — Parallelise settings + employee data in dashboard ✅ *Done 2026-02-18 — Promise.all for concurrent fetch; re-fetch only if custom thresholds*
+- [x] **M-26** — Move compliance table sort to server-side ✅ *Done 2026-02-18 — sort via URL params on full dataset before pagination*
+- [x] **M-28** — Replace `Date` allocations in `daysUsedInWindow` with string comparison ✅ *Done 2026-02-18 — ISO string comparison (YYYY-MM-DD sorts lexicographically)*
+- [x] **M-29** — Optimise `earliestSafeEntry` to use compliance vector ✅ *Done 2026-02-18 — O(n+d) sliding window replaces O(n*d) repeated calls*
 
 ---
 
@@ -635,27 +635,333 @@ The following issues were identified in earlier audit passes and have already be
 | M-06 | Added `.limit(100)` to `getAlertsByEmployeeId` to prevent unbounded fetches | `lib/db/alerts.ts` |
 | M-07 | Created `getEmployeesForDropdown()` returning only `id, name` with `.limit(500)` for reassignment dropdown | `lib/db/employees.ts`, `app/(dashboard)/employee/[id]/page.tsx` |
 
+### Batch 7 (2026-02-18 — phase 7 remaining MEDIUM + LOW)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| M-01 | Pre-fetch all active alert types for employee in one query before creation loop; skip existing types in-memory | `lib/services/alert-detection-service.ts` |
+| M-03 | Already fixed by H-01 — `enforceMutationAccess` uses `requireCompanyAccessCached()` | N/A |
+| M-04 | Already fixed by H-01/H-13 — remaining import action calls use targeted authorization (legitimate) | N/A |
+| M-08 | Added `.limit(1000)` to expired trips fetch in GDPR retention cron | `lib/gdpr/retention.ts` |
+| M-11 | Moved tier/status filters to DB-level query before pagination; uses `!inner` join when filtering | `app/admin/companies/page.tsx` |
+| M-27 | Added `@deprecated` JSDoc to `computeComplianceVector`; no production callers | `lib/compliance/compliance-vector.ts` |
+| L-01 | Narrowed `reassignTrip` initial select to `id, company_id, entry_date, exit_date` | `lib/db/trips.ts` |
+| L-04 | Already fixed by H-01 — both functions use `requireCompanyAccessCached()` | N/A |
+| L-05 | Excluded `parsed_data` and `validation_errors` from listing query; defaults to null/[] | `app/(dashboard)/import/actions.ts` |
+| L-06 | Added `.limit(200)` to `getCompanyProfiles` | `lib/db/profiles.ts` |
+| L-11 | Moved `severityOrder` to module-scope `SEVERITY_ORDER` constant | `components/alerts/alert-banner.tsx` |
+
+### Batch 8 (2026-02-18 — phase 7 cache consistency)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| N-08 | Replaced raw `getUser()` + profiles query with `requireCompanyAccessCached()` in `bulkAddTripsAction` | `app/(dashboard)/actions.ts` |
+| N-09 | Replaced uncached profiles query with `requireCompanyAccessCached()` in `getImportSession` | `app/(dashboard)/import/actions.ts` |
+| N-10 | Replaced 3-step serial auth (getUser → profiles → requireCompanyAccess) with single `requireCompanyAccessCached()` in `executeImport`, `loadSavedMappings`, `saveColumnMapping` | `app/(dashboard)/import/actions.ts` |
+| N-23 | Refactored `getAuthenticatedUserCompany()` to use `requireCompanyAccessCached()` — all alert/settings/notification functions benefit automatically | `lib/db/alerts.ts` |
+| N-06 | Created `getDashboardTourState()` cached fetcher; removed direct `createClient` + profiles query from dashboard page | `lib/db/profiles.ts`, `app/(dashboard)/dashboard/page.tsx` |
+| N-07 | Replaced serial `getUser()` → profiles → companies waterfall with `requireCompanyAccessCached()` + `Promise.all` for Stripe check | `app/(dashboard)/settings/page.tsx` |
+
+### Batch 9 (2026-02-18 — phase 8 React memo fixes)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| N-01 | Fixed `FilterButton` memo breakage — pass `filter` + `onFilterChange` props instead of inline `onClick` closure; primitive field dependencies for `useMemo` | `components/dashboard/status-filters.tsx` |
+| N-02 | Added 3 stable `useCallback` hooks for modal `onOpenChange` handlers; moved `sortedTrips` useMemo above early return to fix Rules of Hooks | `components/trips/trip-list.tsx` |
+| N-12 | Wrapped `highestSeverity` reduce in `useMemo([localAlerts])`; placed above conditional early returns | `components/alerts/alert-banner.tsx` |
+| N-13 | Wrapped `cards` array in `useMemo` with primitive field dependencies `[summary.total, summary.valid, summary.errors, summary.warnings]` | `components/import/ValidationSummary.tsx` |
+| N-14 | Wrapped `new Map(...)` in `useMemo([tiers])` | `components/admin/companies-table.tsx` |
+
+### Batch 10 (2026-02-18 — phase 9 database cleanup)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| N-04 | Added `.limit(500)` to `getEmployeesForSelect()` | `lib/db/forecasts.ts` |
+| N-20 | Replaced `select('*')` with explicit column list excluding `parsed_data` JSONB; consolidated auth to `requireCompanyAccessCached()` | `app/(dashboard)/import/actions.ts` |
+| N-21 | Added `.limit(1000)` to `getEmployees()` | `lib/db/employees.ts` |
+| N-19 | Narrowed select from `'*'` to `'id, name, company_id, deleted_at'`; removed `Record<string, unknown>` casts | `lib/gdpr/soft-delete.ts` |
+| N-25 | Replaced `new Date()` in `checkOverlap` with ISO string comparison (lexicographic) | `lib/db/trips.ts` |
+| N-03 | Batched employee name updates with `Promise.all()` instead of sequential for loop | `lib/import/inserter.ts` |
+| N-16 | Batched employee restoration with `Promise.all()` instead of sequential for loop | `lib/import/inserter.ts` |
+| N-29 | Fixed double trip fetch — trips fetched once in parent, passed as prop to `TripSection` | `app/(dashboard)/employee/[id]/page.tsx` |
+
+### Batch 11 (2026-02-18 — phase 10 cleanup & bundle)
+
+| Fix | Description | Files Changed |
+|-----|-------------|---------------|
+| N-11 | Dynamic import for `DashboardTour` (aliased as `nextDynamic` to avoid conflict with `export const dynamic`) | `app/(dashboard)/dashboard/page.tsx` |
+| N-27 | Dynamic imports for `AddTripModal` and `BulkAddTripsModal` | `app/(dashboard)/employee/[id]/page.tsx` |
+| N-05 | Deleted entire `lib/data/compliance-snapshots.ts` (dead code, `SNAPSHOTS_ENABLED = false`, no imports) | Deleted `lib/data/compliance-snapshots.ts` |
+| N-24 | Removed deprecated `computeComplianceVector` (~70 lines) from production; added as local test helper with required imports | `lib/compliance/compliance-vector.ts`, `lib/compliance/index.ts`, `lib/compliance/__tests__/compliance-vector.test.ts` |
+| N-26 | Deleted unreferenced design source PNGs (`LIGHT MODE.png`, `DARK MODE.png`) | Deleted `public/images/Icons/07_Source_Files/` |
+
 ---
 
 ## 9. Remaining Work Summary
 
-**HIGH priority remaining (5 items):**
+**ALL PHASES COMPLETE (1-10)** ✅
 
-- H-02 — Move `profiles` query out of middleware (JWT metadata)
-- H-03 — Replace `getEmployeeStats` with DB aggregate / `unstable_cache`
-- H-06 — Move alert detection to background job
-- H-07 — Batch GDPR retention cron queries (N+1)
-- H-08 — Batch import inserter trip lookups (N+1)
+**HIGH priority: 20/20 COMPLETE** ✅ (Phases 1-6)
+**MEDIUM priority: 26/29 COMPLETE** ✅ (Phases 1-10)
+**LOW priority: 8/11 COMPLETE** ✅ (Phases 1-10)
+**Re-audit (N-series): 29 items — 24 implemented + 5 deferred** ✅
 
-**MEDIUM priority remaining (5 items):**
+**Deferred MEDIUM (3 items — with justification):**
 
-- M-01 through M-29 (minus completed M-05, M-06, M-07, M-09, M-10, M-16, M-17, M-18, M-19, M-20, M-21, M-22, M-23, M-24, M-25) — see Section 4 for details
+| Ref  | Status   | Justification                                                                                                                     |
+| ---- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| M-02 | Deferred | CRON job; per-employee audit logging makes batching impractical; low user impact                                                  |
+| M-12 | Deferred | Compliance data needs freshness; `force-dynamic` is correct for real-time data; caching would risk showing stale compliance status |
+| M-15 | Deferred | Root URL redirect; minimal impact; middleware already handles most routing                                                        |
 
-**LOW priority remaining (8 items):**
+**Deferred LOW (3 items — with justification):**
 
-- L-01 through L-11 (minus completed L-07, L-08, L-10) — see Section 5 for details
+| Ref  | Status   | Justification                                                                                              |
+| ---- | -------- | ---------------------------------------------------------------------------------------------------------- |
+| L-02 | Deferred | `getCompanyById` returns `Company` type requiring all fields; single-row fetch; negligible overhead        |
+| L-03 | Deferred | `getActiveAlerts` returns `AlertWithEmployee` type; component uses multiple fields; narrowing breaks typing |
+| L-09 | Deferred | Shadcn UI files; audit explicitly says these can be left as-is                                             |
 
-**To continue:** Open this file, scan the checkboxes in Section 6, and pick the next unchecked items to implement.
+**Deferred N-series (5 items — with justification):**
+
+| Ref  | Status   | Justification                                                                    |
+| ---- | -------- | -------------------------------------------------------------------------------- |
+| N-15 | Deferred | Skeleton keys; identical static items; no reorder risk                           |
+| N-17 | Deferred | Race condition on `times_used` counter; cosmetic field; no data corruption risk   |
+| N-18 | Deferred | GDPR cron; background job; acceptable latency                                    |
+| N-22 | Deferred | GDPR stats page; infrequent access; admin-only                                   |
+| N-28 | Deferred | Small dialog in client component; marginal bundle saving                          |
+
+---
+
+## 10. Phase 6 Completion Log
+
+| Item | What was done | Files changed |
+|------|--------------|---------------|
+| H-02 | Read `company_id` + `onboarding_completed` from `user_metadata` in middleware; set during auth callback and onboarding; backfill on first fallback hit for existing users | `lib/supabase/middleware.ts`, `app/auth/callback/route.ts`, `app/(onboarding)/onboarding/actions.ts` |
+| H-03 | Removed dead `getEmployeeStats` function — M-26 refactor already replaced it with inline `calculateStats()` from cached `getEmployeeComplianceData()` | `lib/data/employees.ts`, `lib/data/index.ts` |
+| H-06 | Replaced fire-and-forget `runAlertDetectionBackground` with Next.js `after()` from `next/server` | `app/(dashboard)/actions.ts` |
+| H-07 | Single `.in('employee_id', candidateIds)` query replaces per-employee `COUNT(*)` N+1 in GDPR retention orphan check | `lib/gdpr/retention.ts` |
+| H-08 | Pre-fetch all existing trips for unique employee IDs in one `.in()` query before insertion loop | `lib/import/inserter.ts` |
+| M-13 | Created `TripSection` async server component streamed via `<Suspense>` — header + cards render immediately | `app/(dashboard)/employee/[id]/page.tsx` |
+| M-14 | `Promise.all` for parallel settings + employee data fetch; re-fetch with custom thresholds only if non-default | `app/(dashboard)/dashboard/page.tsx` |
+| M-26 | Server-side sort via URL `sort` param on full dataset before pagination; client pushes sort to URL | `lib/data/employees.ts`, `components/dashboard/compliance-table.tsx`, `app/(dashboard)/dashboard/page.tsx` |
+| M-28 | ISO string comparison (`dayKey >= windowStartKey`) replaces `new Date()` + `isEqual/isAfter/isBefore` in counting loop | `lib/compliance/window-calculator.ts` |
+| M-29 | O(n+d) sliding window: compute initial count once, slide forward with O(1) add/remove per step | `lib/compliance/safe-entry.ts` |
+
+---
+
+## 11. Re-Audit Results (2026-02-18)
+
+**Triggered by:** Section 7 Verification Protocol — all 60 original items complete.
+
+### Verification Protocol
+
+| Step | Result |
+|------|--------|
+| `npm run typecheck` | PASS — clean, no errors |
+| `npm run test` | PASS — 964 passed, 16 skipped (tenant isolation — expected) |
+| `npm run build` | PASS — all 53 routes generated, compiled in 7.5s, no build errors |
+| Smoke test (7 public pages) | PASS — all pages render, zero JS errors, only cosmetic Next.js Image warnings |
+
+### Previous Fix Verification
+
+All **53 implemented fixes** were verified by 4 parallel analysis agents:
+
+| Audit Domain | Fixes Checked | Result |
+|---|---|---|
+| React Component Performance | 11 | 11/11 confirmed |
+| Database & API Patterns | 15 | 15/15 confirmed |
+| Bundle Size & Imports | 8 | 8/8 confirmed |
+| Server-Side & Caching | 19 | 19/19 confirmed |
+| **Total** | **53** | **53/53 confirmed — no regressions** |
+
+### New Issues Found
+
+**28 new issues** identified (0 HIGH, 11 MEDIUM, 17 LOW). These are net-new findings not present in the original audit.
+
+---
+
+#### New MEDIUM Priority (11)
+
+| Ref | Category | File | Issue | Fix |
+|-----|----------|------|-------|-----|
+| N-01 | React | `components/dashboard/status-filters.tsx:76` | Inline `onClick={() => onFilterChange(filter)}` defeats `FilterButton` `memo()` | Bind inside `FilterButton` (pass `filter` + stable `onFilterChange` as props) |
+| N-02 | React | `components/trips/trip-list.tsx:351,357,363` | Three inline modal `onOpenChange` closures — will defeat `memo()` if modals are memoised | Extract each to a stable `useCallback` |
+| N-03 | N+1 Query | `lib/import/inserter.ts:265-282` | Per-row UPDATE inside loop for employee name updates | Batch via `upsert` with `onConflict: 'id'` |
+| N-04 | Unbounded | `lib/db/forecasts.ts:160-178` | `getEmployeesForSelect` has no `.limit()` | Add `.limit(500)` matching `getEmployeesForDropdown` pattern |
+| N-05 | Dead Code | `lib/data/compliance-snapshots.ts` | Entire file is dead code (`SNAPSHOTS_ENABLED = false`); duplicates compliance calculation from `lib/data/employees.ts` | Delete file or enable snapshots |
+| N-06 | Redundant Query | `app/(dashboard)/dashboard/page.tsx:119` | Uncached `profiles` query for `dashboard_tour_completed_at` after `requireCompanyAccessCached()` already queried profiles | Add field to layout's existing profiles query or extend cached context |
+| N-07 | Waterfall | `app/(dashboard)/settings/page.tsx:98-127` | Serial profiles + companies waterfall for Stripe check after `Promise.all` | Use `companyId` from cached access; include Stripe lookup in `Promise.all` |
+| N-08 | Missing Cache | `app/(dashboard)/actions.ts:235-257` | `bulkAddTripsAction` bypasses `requireCompanyAccessCached` — raw `getUser()` + profiles query | Replace with `requireCompanyAccessCached()` |
+| N-09 | Missing Cache | `app/(dashboard)/import/actions.ts:229` | `getImportSession` uses uncached direct profiles query | Replace with `requireCompanyAccessCached()` |
+| N-10 | Missing Cache | `app/(dashboard)/import/actions.ts:796` | `saveColumnMapping`/`loadSavedMappings`/`executeImport` have 3-step serial auth (getUser → profiles → requireCompanyAccess) | Replace with single `requireCompanyAccessCached()` call |
+| N-11 | Bundle | `app/(dashboard)/dashboard/page.tsx:11` | `DashboardTour` statically imported — only shown once per user ever | Convert to `next/dynamic` with `{ ssr: false }` |
+
+---
+
+#### New LOW Priority (17)
+
+| Ref | Category | File | Issue | Fix |
+|-----|----------|------|-------|-----|
+| N-12 | React | `components/alerts/alert-banner.tsx:118` | `highestSeverity` reduce computed inline every render | Wrap in `useMemo([localAlerts])` |
+| N-13 | React | `components/import/ValidationSummary.tsx:11` | `cards` array recreated every render | Wrap in `useMemo([summary])` |
+| N-14 | React | `components/admin/companies-table.tsx:98` | `new Map(...)` for tier names created every render | Wrap in `useMemo([tiers])` |
+| N-15 | React | `app/(dashboard)/employee/[id]/page.tsx:84` | Skeleton uses `index` as key in `.map()` | Use `key={`skeleton-${i}`}` or explicit elements |
+| N-16 | N+1 Query | `lib/import/inserter.ts:454-483` | Per-row UPDATE for employee restoration during import | Batch via `upsert` with `onConflict: 'id'` |
+| N-17 | Race Condition | `app/(dashboard)/import/actions.ts:892-929` | `incrementMappingUsage` read-then-write (2 round-trips, race under concurrency) | Use DB-side `times_used + 1` via RPC or raw SQL |
+| N-18 | N+1 Query | `lib/gdpr/retention.ts:186-205` | `hardDeleteEmployee` called per-employee in retention loop (3 queries each) | Batch deletes; acceptable for cron but slow for large purges |
+| N-19 | Over-fetch | `lib/gdpr/soft-delete.ts:114-127` | `softDeleteEmployee` uses `select('*')` when only 4 fields needed | Narrow to `select('id, name, company_id, deleted_at')` |
+| N-20 | Over-fetch | `app/(dashboard)/import/actions.ts:326` | `getImportSessionsPaginated` uses `select('*')` — fetches heavy `parsed_data` JSONB | Use explicit column list excluding `parsed_data` |
+| N-21 | Unbounded | `lib/db/employees.ts:29-45` | `getEmployees()` has no `.limit()` — potentially unused but exported | Add `.limit(1000)` or remove if unused |
+| N-22 | Waterfall | `lib/gdpr/retention.ts:293` | `getRetentionStats` runs 4+ sequential queries | Wrap stat queries in `Promise.all()` |
+| N-23 | Missing Cache | `lib/db/alerts.ts` | Alert CRUD functions use uncached `requireCompanyAccess` throughout | Refactor `getAuthenticatedUserCompany` to use cached variant |
+| N-24 | Dead Code Risk | `lib/compliance/compliance-vector.ts:87` | Deprecated O(n*d) `computeComplianceVector` still in production file | Move to `__tests__` helper or delete |
+| N-25 | Date Safety | `lib/db/trips.ts:334` | `checkOverlap` uses `new Date()` for comparisons — timezone risk per CLAUDE.md | Use ISO string comparison (lexicographic) |
+| N-26 | Dead Assets | `public/images/Icons/07_Source_Files/*.png` | Unreferenced design source PNGs served publicly | Delete if unused |
+| N-27 | Bundle | `app/(dashboard)/employee/[id]/page.tsx:13-14` | `AddTripModal` + `BulkAddTripsModal` statically imported (interaction-only) | Convert to `next/dynamic` |
+| N-28 | Bundle | `app/(dashboard)/employee/[id]/employee-detail-actions.tsx:19` | `EditEmployeeDialog` statically imported in client component | Low priority — convert to `next/dynamic` |
+
+---
+
+### Recommended Implementation Order (New Issues)
+
+#### Phase 7 — Cache Consistency ✅ COMPLETE
+
+Migrate remaining uncached auth patterns to `requireCompanyAccessCached()`:
+
+- [x] **N-08** — `bulkAddTripsAction` in `app/(dashboard)/actions.ts`
+- [x] **N-09** — `getImportSession` in `app/(dashboard)/import/actions.ts`
+- [x] **N-10** — `saveColumnMapping` / `loadSavedMappings` / `executeImport` in `app/(dashboard)/import/actions.ts`
+- [x] **N-23** — Alert CRUD in `lib/db/alerts.ts`
+- [x] **N-06** — Dashboard tour profiles query
+- [x] **N-07** — Settings page Stripe waterfall
+
+#### Phase 8 — React Memo Fixes ✅ COMPLETE
+
+- [x] **N-01** — `FilterButton` inline closure
+- [x] **N-02** — Trip list modal `onOpenChange` closures
+- [x] **N-12** — `highestSeverity` useMemo
+- [x] **N-13** — ValidationSummary `cards` useMemo
+- [x] **N-14** — Companies table `Map` useMemo
+
+#### Phase 9 — Database Cleanup ✅ COMPLETE
+
+- [x] **N-04** — Add `.limit(500)` to `getEmployeesForSelect`
+- [x] **N-20** — Narrow `getImportSessionsPaginated` select
+- [x] **N-21** — Add `.limit(1000)` to `getEmployees()`
+- [x] **N-19** — Narrow `softDeleteEmployee` select
+- [x] **N-25** — Replace `new Date()` in `checkOverlap` with string comparison
+- [x] **N-03** — Batch employee updates in import inserter
+- [x] **N-16** — Batch employee restoration in import inserter
+- [x] **N-29** — Fix double trip fetch on employee detail page
+
+#### Phase 10 — Cleanup & Bundle ✅ COMPLETE
+
+- [x] **N-11** — Dynamic import for `DashboardTour`
+- [x] **N-27** — Dynamic import for employee detail modals
+- [x] **N-05** — Delete `compliance-snapshots.ts` (dead code)
+- [x] **N-24** — Move deprecated compliance vector to test helper
+- [x] **N-26** — Delete unreferenced design source PNGs
+
+#### Deferred (low impact, acceptable as-is)
+
+| Ref | Justification |
+|-----|---------------|
+| N-15 | Skeleton keys; identical static items; no reorder risk |
+| N-17 | Race condition on `times_used` counter; cosmetic field; no data corruption risk |
+| N-18 | GDPR cron; background job; acceptable latency |
+| N-22 | GDPR stats page; infrequent access; admin-only |
+| N-28 | Small dialog in client component; marginal bundle saving |
+
+---
+
+## 12. Second Re-Audit (2026-02-18, post-Phase 7)
+
+**Triggered by:** Section 7 Verification Protocol after Phase 7 completion.
+
+### Verification Protocol (Automated)
+
+| Step | Result | Evidence |
+|------|--------|----------|
+| `npm run typecheck` | PASS | Clean exit, zero errors |
+| `npm run test` | PASS | 964 passed, 16 skipped (tenant isolation — expected) |
+| `npm run build` | PASS | 53 routes, compiled in 7.5s, exit 0 |
+
+### Manual Smoke Test (via Playwright)
+
+| Page | Status | Notes |
+|------|--------|-------|
+| `/login` | PASS | Login form with email/password, Google OAuth, forgot password link |
+| `/signup` | PASS | Full signup form with all fields, marketing sidebar |
+| `/pricing` | PASS | 3 tiers (Basic/Pro/Pro+), monthly/annual toggle, promo code |
+| `/faq` | PASS | 8 categories of accordion FAQ items |
+| `/about` | PASS | All sections render (What We Do, 90/180 Rule, Who We Help, How It Works) |
+| `/privacy` | PASS | 10-section privacy policy (last updated Feb 17, 2026) |
+| `/terms` | PASS | 12-section terms of service (last updated Feb 6, 2026) |
+
+**Console errors:** Zero JavaScript errors across all 7 pages.
+**Console warnings:** Next.js Image aspect ratio warnings on logo SVGs (cosmetic only).
+
+### Phase 7 Fix Verification
+
+All 6 Phase 7 items confirmed in source code:
+
+| Ref | File | Verification |
+|-----|------|-------------|
+| N-08 | `app/(dashboard)/actions.ts:235` | `requireCompanyAccessCached()` replaces raw `getUser()` + profiles |
+| N-09 | `app/(dashboard)/import/actions.ts:224` | `requireCompanyAccessCached()` replaces uncached profiles query |
+| N-10 | `app/(dashboard)/import/actions.ts:455,712,769` | All 3 functions use single `requireCompanyAccessCached()` call |
+| N-23 | `lib/db/alerts.ts:30` | `getAuthenticatedUserCompany` delegates to `requireCompanyAccessCached()` |
+| N-06 | `lib/db/profiles.ts:11` | `getDashboardTourState` wrapped in `React.cache()` |
+| N-07 | `app/(dashboard)/settings/page.tsx:99-106` | `requireCompanyAccessCached()` + `Promise.all` for all 4 fetches |
+
+### Phases 1-6 Spot-Check (no regressions)
+
+| Phase | Items Checked | Result |
+|-------|--------------|--------|
+| Phase 1 (Quick Wins) | L-07 (revalidatePath removed), L-08 (console.log removed) | Confirmed |
+| Phase 2 (Caching) | H-01 (requireCompanyAccessCached), H-04 (getCompanySettings cached), H-05 (checkEntitlement), H-11 (dashboard auth), H-13 (5 server actions) | Confirmed |
+| Phase 3 (Bundle) | H-14 (xlsx dynamic), H-17 (PDF barrel), M-16 (Geist_Mono removed) | Confirmed |
+| Phase 4 (React) | H-19 (DateMeta), H-20 (EmployeeCard memo), M-20 (sortedTrips useMemo), M-21 (TripCardMobile memo), M-22 (StatusFilters memo), M-23 (onOpenChange useCallback) | Confirmed |
+| Phase 5 (Database) | M-05 (.limit(500) trips), M-06 (.limit(100) alerts), L-01 (reassignTrip narrow select), L-06 (.limit(200) profiles) | Confirmed |
+| Phase 6 (Architecture) | H-06 (after()), H-07 (batch retention), M-01 (pre-fetch alert types), M-08 (.limit(1000) expired trips), M-11 (DB-level filters), M-13 (Suspense TripSection), L-11 (SEVERITY_ORDER constant) | Confirmed |
+
+### New Issue Found
+
+**1 new MEDIUM issue** identified during this re-audit:
+
+| Ref | Category | File | Issue | Fix |
+|-----|----------|------|-------|-----|
+| N-29 | Redundant Query | `app/(dashboard)/employee/[id]/page.tsx:126-129 + 103` | `getTripsByEmployeeId(id)` called TWICE per page load: once in outer `EmployeeDetailPage` (for compliance calculation) and again inside `TripSection` (for TripList). Since `getTripsByEmployeeId` is not cached with `React.cache()`, both trigger separate DB queries. | Pass `trips` as prop to `TripSection`, or cache `getTripsByEmployeeId` with `React.cache()` |
+
+### Phases 8-10 Status — ALL COMPLETE ✅
+
+All 18 items implemented in commit `7356a44`.
+
+#### Phase 8 — React Memo Fixes ✅
+- [x] **N-01** — `FilterButton` inline closure (`status-filters.tsx`)
+- [x] **N-02** — Trip list modal `onOpenChange` closures (`trip-list.tsx`)
+- [x] **N-12** — `highestSeverity` useMemo (`alert-banner.tsx`)
+- [x] **N-13** — ValidationSummary `cards` useMemo (`ValidationSummary.tsx`)
+- [x] **N-14** — Companies table `Map` useMemo (`companies-table.tsx`)
+
+#### Phase 9 — Database Cleanup ✅
+- [x] **N-04** — `.limit(500)` on `getEmployeesForSelect` (`forecasts.ts`)
+- [x] **N-20** — Narrow `getImportSessionsPaginated` select (`import/actions.ts`)
+- [x] **N-21** — `.limit(1000)` on `getEmployees()` (`employees.ts`)
+- [x] **N-19** — Narrow `softDeleteEmployee` select (`soft-delete.ts`)
+- [x] **N-25** — Replace `new Date()` in `checkOverlap` with ISO string comparison (`trips.ts`)
+- [x] **N-03** — Batch employee updates in import inserter (`inserter.ts`)
+- [x] **N-16** — Batch employee restoration in import inserter (`inserter.ts`)
+- [x] **N-29** — Fix double trip fetch on employee detail page (`employee/[id]/page.tsx`)
+
+#### Phase 10 — Cleanup & Bundle ✅
+- [x] **N-11** — Dynamic import for `DashboardTour` (`dashboard/page.tsx`)
+- [x] **N-27** — Dynamic import for employee detail modals (`employee/[id]/page.tsx`)
+- [x] **N-05** — Deleted `compliance-snapshots.ts` (dead code)
+- [x] **N-24** — Moved deprecated `computeComplianceVector` to test helper (`compliance-vector.ts`)
+- [x] **N-26** — Deleted unreferenced design source PNGs (`public/images/Icons/07_Source_Files/`)
 
 ---
 

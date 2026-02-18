@@ -165,7 +165,8 @@ export async function getEmployeesForSelect(): Promise<ForecastEmployee[]> {
     .from('employees')
     .select('id, name')
     .eq('company_id', companyId)
-    .order('name', { ascending: true });
+    .order('name', { ascending: true })
+    .limit(500);
 
   if (error) {
     console.error('Error fetching employees:', error);

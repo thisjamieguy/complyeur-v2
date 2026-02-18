@@ -2,7 +2,7 @@ import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { DatabaseError, NotFoundError } from '@/lib/errors'
-import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { requireCompanyAccess, requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import type {
   Alert,
   AlertInsert,
@@ -23,12 +23,11 @@ interface AuthContext {
 }
 
 /**
- * Verify user is authenticated and get their company_id
+ * Verify user is authenticated and get their company_id.
+ * Uses the cached variant — deduplicated within a single server request.
  */
-async function getAuthenticatedUserCompany(
-  supabase: Awaited<ReturnType<typeof createClient>>
-): Promise<AuthContext> {
-  const { userId, companyId } = await requireCompanyAccess(supabase)
+async function getAuthenticatedUserCompany(): Promise<AuthContext> {
+  const { userId, companyId } = await requireCompanyAccessCached()
   return { userId, companyId }
 }
 
@@ -41,7 +40,7 @@ async function getAuthenticatedUserCompany(
  */
 export async function getActiveAlerts(): Promise<AlertWithEmployee[]> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   const { data, error } = await supabase
     .from('alerts')
@@ -67,7 +66,7 @@ export async function getActiveAlerts(): Promise<AlertWithEmployee[]> {
  */
 export async function getUnacknowledgedAlerts(): Promise<AlertWithEmployee[]> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   const { data, error } = await supabase
     .from('alerts')
@@ -94,7 +93,7 @@ export async function getUnacknowledgedAlerts(): Promise<AlertWithEmployee[]> {
  */
 export async function getAlertsByEmployeeId(employeeId: string): Promise<Alert[]> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   // Verify employee belongs to company
   const { data: employee } = await supabase
@@ -130,7 +129,7 @@ export async function hasActiveAlertOfType(
   alertType: AlertType
 ): Promise<boolean> {
   const supabase = await createClient()
-  await getAuthenticatedUserCompany(supabase)
+  await getAuthenticatedUserCompany()
 
   const { data, error } = await supabase
     .from('alerts')
@@ -154,7 +153,7 @@ export async function hasActiveAlertOfType(
  */
 export async function createAlert(alert: Omit<AlertInsert, 'company_id'>): Promise<Alert | null> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   // Check for existing active alert of same type
   const exists = await hasActiveAlertOfType(alert.employee_id, alert.alert_type as AlertType)
@@ -185,7 +184,7 @@ export async function createAlert(alert: Omit<AlertInsert, 'company_id'>): Promi
  */
 export async function acknowledgeAlert(alertId: string): Promise<Alert> {
   const supabase = await createClient()
-  const { userId, companyId } = await getAuthenticatedUserCompany(supabase)
+  const { userId, companyId } = await getAuthenticatedUserCompany()
 
   // Verify alert belongs to company
   const { data: existing } = await supabase
@@ -222,7 +221,7 @@ export async function acknowledgeAlert(alertId: string): Promise<Alert> {
  */
 export async function resolveAlert(alertId: string): Promise<Alert> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   // Verify alert belongs to company
   const { data: existing } = await supabase
@@ -258,7 +257,7 @@ export async function resolveAlert(alertId: string): Promise<Alert> {
  */
 export async function resolveAlertsForEmployee(employeeId: string): Promise<number> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   // Verify employee belongs to company
   const { data: employee } = await supabase
@@ -327,7 +326,7 @@ export async function markAlertEmailSent(alertId: string): Promise<void> {
  */
 export const getCompanySettings = cache(async (): Promise<CompanySettings> => {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   const { data, error } = await supabase
     .from('company_settings')
@@ -375,7 +374,7 @@ export async function updateCompanySettings(
   updates: CompanySettingsUpdate
 ): Promise<CompanySettings> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   // Ensure settings exist first
   await getCompanySettings()
@@ -409,7 +408,7 @@ export async function createNotificationLog(
   log: Omit<NotificationLogInsert, 'company_id'>
 ): Promise<NotificationLog> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   const { data, error } = await supabase
     .from('notification_log')
@@ -467,7 +466,7 @@ export async function updateNotificationLogStatus(
  */
 export async function getNotificationLogs(limit = 50): Promise<NotificationLog[]> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   const { data, error } = await supabase
     .from('notification_log')
@@ -493,7 +492,7 @@ export async function getNotificationLogs(limit = 50): Promise<NotificationLog[]
  */
 export async function getNotificationPreferences(): Promise<NotificationPreferences> {
   const supabase = await createClient()
-  const { userId, companyId } = await getAuthenticatedUserCompany(supabase)
+  const { userId, companyId } = await getAuthenticatedUserCompany()
 
   const { data, error } = await supabase
     .from('notification_preferences')
@@ -538,7 +537,7 @@ export async function updateNotificationPreferences(
   updates: NotificationPreferencesUpdate
 ): Promise<NotificationPreferences> {
   const supabase = await createClient()
-  const { userId } = await getAuthenticatedUserCompany(supabase)
+  const { userId } = await getAuthenticatedUserCompany()
 
   // Ensure preferences exist first
   await getNotificationPreferences()
@@ -568,7 +567,7 @@ export async function getNotificationRecipients(
   notificationType: 'warning' | 'urgent' | 'breach'
 ): Promise<Array<{ email: string; userId: string; unsubscribeToken: string }>> {
   const supabase = await createClient()
-  const { companyId } = await getAuthenticatedUserCompany(supabase)
+  const { companyId } = await getAuthenticatedUserCompany()
 
   // Batch fetch: Get all profiles with their notification preferences in a single query
   const { data: profilesWithPrefs, error } = await supabase
