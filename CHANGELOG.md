@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- docs: mark Phase 1 credential rotation fully complete [`b4faf8e`](https://github.com/thisjamieguy/complyeur-v2/commit/b4faf8edd341b5af248f3e75acf5a3865ded5347)
 - docs: update security audit — 16 of 37 findings resolved [`7de4485`](https://github.com/thisjamieguy/complyeur-v2/commit/7de4485242f921c899b094e37e5821d7bf665cbb)
 - fix: resolve 5 critical security findings before production launch [`aac1f39`](https://github.com/thisjamieguy/complyeur-v2/commit/aac1f393e26fb7c1e7f486de0e648e39472bb289)
 - fix: enable RLS on stripe_webhook_events and sanitise server logs [`c4c016e`](https://github.com/thisjamieguy/complyeur-v2/commit/c4c016eeb15f9e8b7984eb72b60e64a88cf8290c)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - perf: complete phase 6 architecture improvements (10 fixes) [`cb3a479`](https://github.com/thisjamieguy/complyeur-v2/commit/cb3a4793a13db4d8777c6a6e2dc9cbd2a9d31a98)
 - fix(test): update import-api mocks for requireCompanyAccessCached auth flow [`3448119`](https://github.com/thisjamieguy/complyeur-v2/commit/34481193fdf1c32d738cef428854ec3fbc313f3a)
 - perf: complete phase 5 database optimisation (7 fixes) [`bd104a2`](https://github.com/thisjamieguy/complyeur-v2/commit/bd104a2c020981714c70638c4998e056b6b8ae84)
-- perf: complete phases 1-4 of performance audit (20 fixes) [`2cee929`](https://github.com/thisjamieguy/complyeur-v2/commit/2cee929223a1ce888e9a43d4df9c1297ea8cf263)
 
 ## v1.0.0 - 2026-01-22
 

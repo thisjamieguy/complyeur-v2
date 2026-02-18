@@ -7,7 +7,7 @@
 | **Codebase** | ComplyEur v2.0 — Next.js + Supabase SaaS |
 | **Branch** | `main` |
 | **Commit** | `bb01a25` — perf: complete phases 7-10 of performance audit |
-| **Status** | In Progress — 16 of 37 findings resolved |
+| **Status** | In Progress — 20 of 37 findings resolved |
 
 ---
 
@@ -593,8 +593,12 @@ These areas were audited and found to be correctly implemented — no changes ne
 | Ref | Fix Applied | Commit | Date |
 |-----|------------|--------|------|
 | Phase 1 | `.env.production` + `.env.staging` deleted; all secrets moved to Vercel | — | 2026-02-18 |
+| Phase 1 | Supabase anon key + service role key rotated and updated in Vercel | — | 2026-02-18 |
+| Phase 1 | Supabase database password rotated; stored securely; added `SUPABASE_DB_PASSWORD` to Vercel | — | 2026-02-18 |
+| Phase 1 | Stripe secret key + webhook signing secret rotated and updated in Vercel | — | 2026-02-18 |
 | Phase 1 | Resend API key rotated and updated in Vercel | — | 2026-02-18 |
 | Phase 1 | Upstash Redis REST token rotated and updated in Vercel; quote marks removed from `UPSTASH_REDIS_REST_URL` value | — | 2026-02-18 |
+| Phase 1 | Google OAuth client secret rotated in Google Cloud Console and updated in Supabase Auth provider + Vercel | — | 2026-02-18 |
 | Phase 1 | Git history confirmed clean — `.env*` never committed | — | 2026-02-18 |
 | M-01 | `stripe_webhook_events` RLS enabled via SQL Editor on production; deny-all by default (service role only access) | `c4c016e` | 2026-02-18 |
 | — | `rls_auto_enable` event trigger created and applied to production | applied via SQL Editor | 2026-02-18 |
