@@ -7,18 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/thisjamieguy/complyeur-v2/compare/v1.0.0...HEAD)
 
+### Merged
+
+- Add comprehensive penetration testing checklist for ComplyEur [`#10`](https://github.com/thisjamieguy/complyeur-v2/pull/10)
+
 ### Commits
 
+- fix(security): remediate CEUR-PT-001..006 findings [`b8f2771`](https://github.com/thisjamieguy/complyeur-v2/commit/b8f2771d84fb936e262563ffea66aed3ac60c7d1)
+- docs: add comprehensive penetration testing checklist for ethical hacker review [`96c780f`](https://github.com/thisjamieguy/complyeur-v2/commit/96c780f45fe6338e45046ea5e1908c195a886030)
+- docs: update changelog [`2247638`](https://github.com/thisjamieguy/complyeur-v2/commit/22476388e31432c20ef1daaad98e16d0ed3080f6)
+- fix(security): complete phase 2 auth and tenant isolation [`58fde92`](https://github.com/thisjamieguy/complyeur-v2/commit/58fde9280e5220e3eba295a07bb4ad52d037d7aa)
 - fix: move cron-auth import to Node.js-only runtime to fix edge middleware crash [`1e5934c`](https://github.com/thisjamieguy/complyeur-v2/commit/1e5934ca02934488982f09cc5b0d0b38b1175de6)
 - fix: accept all ISO country codes in import — non-Schengen trips now warn instead of error [`16f3bc4`](https://github.com/thisjamieguy/complyeur-v2/commit/16f3bc46aa29fc5d15f37ccd464d4e81583c8fe0)
 - docs: mark Phase 1 credential rotation fully complete [`4204bf3`](https://github.com/thisjamieguy/complyeur-v2/commit/4204bf34eaa9ff4c4bf501733f4f419ca24d3f4e)
 - docs: mark Phase 1 credential rotation fully complete [`b4faf8e`](https://github.com/thisjamieguy/complyeur-v2/commit/b4faf8edd341b5af248f3e75acf5a3865ded5347)
 - docs: update security audit — 16 of 37 findings resolved [`7de4485`](https://github.com/thisjamieguy/complyeur-v2/commit/7de4485242f921c899b094e37e5821d7bf665cbb)
 - fix: resolve 5 critical security findings before production launch [`aac1f39`](https://github.com/thisjamieguy/complyeur-v2/commit/aac1f393e26fb7c1e7f486de0e648e39472bb289)
-- fix: enable RLS on stripe_webhook_events and sanitise server logs [`c4c016e`](https://github.com/thisjamieguy/complyeur-v2/commit/c4c016eeb15f9e8b7984eb72b60e64a88cf8290c)
-- fix: add complyeur@gmail.com as site owner across all auth checks [`a1d991b`](https://github.com/thisjamieguy/complyeur-v2/commit/a1d991bd1d3e498336e830c9269007cf02726261)
-- chore: sync pending docs and changelog updates [`c3ea064`](https://github.com/thisjamieguy/complyeur-v2/commit/c3ea064b215cbe9f527f25eb7c65342968a1552e)
-- perf: complete phases 7-10 of performance audit (18 fixes) [`bb01a25`](https://github.com/thisjamieguy/complyeur-v2/commit/bb01a25700d3d85d7913c2bdbf693ad5002c4a78)
 
 ## v1.0.0 - 2026-01-22
 

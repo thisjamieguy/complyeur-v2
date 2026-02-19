@@ -1,1 +1,5 @@
-pnpm exec auto-changelog && git add CHANGELOG.md
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Do not mutate CHANGELOG.md in post-commit.
+# Generate changelog intentionally via `pnpm changelog` when preparing releases/docs.
