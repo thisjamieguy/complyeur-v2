@@ -43,6 +43,7 @@ next-env.d.ts
 
 # Local Claude settings
 .claude/settings.local.json
+.claude/worktrees/
 
 # IDE/Editor
 .vscode/
