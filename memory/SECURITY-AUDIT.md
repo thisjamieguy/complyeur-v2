@@ -7,7 +7,7 @@
 | **Codebase** | ComplyEur v2.0 — Next.js + Supabase SaaS |
 | **Branch** | `main` |
 | **Commit** | `bb01a25` — perf: complete phases 7-10 of performance audit |
-| **Status** | In Progress — 20 of 37 findings resolved |
+| **Status** | In Progress — 23 of 37 findings resolved |
 
 ---
 
@@ -462,14 +462,14 @@ Sends email invites to arbitrary addresses with no rate limit. An authenticated 
 
 ### Phase 2 — Critical Auth & Data Isolation (This week, highest urgency)
 
-- [x] **C-06** Fix broken `constantTimeCompare()` — replaced with `crypto.timingSafeEqual` — commit `aac1f39` 2026-02-18
+- [x] **C-06** Fix broken `constantTimeCompare()` — now uses edge-runtime-safe constant-time byte comparison — commits `aac1f39` + pending 2026-02-19 commit
 - [x] **C-02** Add `requireCompanyAccessCached()` + `company_id` filter to `getRecentImportSessions()` — commit `aac1f39` 2026-02-18
 - [x] **C-03** Add `requireCompanyAccessCached()` + `company_id` filter to `getImportSessionsPaginated()` — commit `aac1f39` 2026-02-18
-- [ ] **C-10** Remove hardcoded email auto-promotion from `app/auth/callback/route.ts:231` — set `is_superadmin` manually via migration
+- [x] **C-10** Removed hardcoded email auto-promotion from `app/auth/callback/route.ts`; `is_superadmin` now manual-only via profile update/migration — pending 2026-02-19 commit
 - [x] **C-04** Replaced unscoped `.single()` in `getGdprAuditLogAction()` and `isAdmin()` with `requireCompanyAccessCached()` — commit `aac1f39` 2026-02-18
 - [x] **C-05** Removed silent `return []` from `getEmployeesForGdpr()` — auth failures now propagate — commit `aac1f39` 2026-02-18
-- [ ] **C-08** Add `requireCompanyAccessCached()` to `getDeletedEmployees()` — `lib/gdpr/soft-delete.ts:397`
-- [ ] **C-09** Add `requireCompanyAccessCached()` to `getRetentionStats()` — `lib/gdpr/retention.ts:289`
+- [x] **C-08** Added `requireCompanyAccessCached()` + `company_id` filter to `getDeletedEmployees()` — pending 2026-02-19 commit
+- [x] **C-09** Replaced unscoped profile lookup in `getRetentionStats()` with `requireCompanyAccessCached()` — pending 2026-02-19 commit
 
 ---
 
@@ -608,5 +608,9 @@ These areas were audited and found to be correctly implemented — no changes ne
 | C-03 | `getImportSessionsPaginated()` scoped to `companyId` with `requireCompanyAccessCached()` | `aac1f39` | 2026-02-18 |
 | C-04 | Replaced unscoped `.single()` in `getGdprAuditLogAction()` and `isAdmin()` with `requireCompanyAccessCached()` | `aac1f39` | 2026-02-18 |
 | C-05 | Removed silent `return []` from `getEmployeesForGdpr()` — auth failures now propagate | `aac1f39` | 2026-02-18 |
-| C-06 | `constantTimeCompare()` replaced with `crypto.timingSafeEqual` — XOR bug eliminated | `aac1f39` | 2026-02-18 |
+| C-06 | `constantTimeCompare()` XOR bug eliminated | `aac1f39` | 2026-02-18 |
+| C-06 | Follow-up: `constantTimeCompare()` changed to edge-runtime-safe constant-time byte comparison (removed Node `crypto` import) | pending 2026-02-19 commit | 2026-02-19 |
+| C-08 | Added `requireCompanyAccessCached()` + explicit `company_id` filter in `getDeletedEmployees()` | pending 2026-02-19 commit | 2026-02-19 |
+| C-09 | Replaced unscoped profile read in `getRetentionStats()` with `requireCompanyAccessCached()` tenant context | pending 2026-02-19 commit | 2026-02-19 |
+| C-10 | Removed hardcoded owner-email auto-promotion path in auth callback | pending 2026-02-19 commit | 2026-02-19 |
 | C-11 | IP-based rate limiting added to all 5 auth actions (login, signup, forgotPassword, resetPassword, signInWithGoogle) | `aac1f39` | 2026-02-18 |

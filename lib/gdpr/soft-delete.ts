@@ -26,7 +26,7 @@ import {
   type HardDeleteDetails,
 } from './audit'
 import { RECOVERY_PERIOD_DAYS } from './constants'
-import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { requireCompanyAccess, requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { isOwnerOrAdmin } from '@/lib/permissions'
 
 // Re-export for convenience
@@ -396,10 +396,12 @@ export interface DeletedEmployee {
  */
 export async function getDeletedEmployees(): Promise<DeletedEmployee[]> {
   const supabase = await createClient()
+  const { companyId } = await requireCompanyAccessCached()
 
   const { data: employees, error } = await supabase
     .from('employees')
     .select('id, name, deleted_at')
+    .eq('company_id', companyId)
     .not('deleted_at', 'is', null)
     .order('deleted_at', { ascending: false })
 

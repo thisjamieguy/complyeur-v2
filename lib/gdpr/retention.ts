@@ -16,6 +16,7 @@
 
 import { subMonths, subDays, format } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { logGdprAction, type AutoPurgeDetails } from './audit'
 import { hardDeleteEmployee, RECOVERY_PERIOD_DAYS } from './soft-delete'
 
@@ -288,22 +289,13 @@ export interface RetentionStats {
 
 export async function getRetentionStats(): Promise<RetentionStats | null> {
   const supabase = await createClient()
-
-  // Get user's company
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id')
-    .single()
-
-  if (!profile?.company_id) {
-    return null
-  }
+  const { companyId } = await requireCompanyAccessCached()
 
   // Get retention setting
   const { data: settings } = await supabase
     .from('company_settings')
     .select('retention_months')
-    .eq('company_id', profile.company_id)
+    .eq('company_id', companyId)
     .single()
 
   const retentionMonths = settings?.retention_months ?? 36
@@ -316,14 +308,14 @@ export async function getRetentionStats(): Promise<RetentionStats | null> {
   const { count: expiringCount } = await supabase
     .from('trips')
     .select('*', { count: 'exact', head: true })
-    .eq('company_id', profile.company_id)
+    .eq('company_id', companyId)
     .lt('exit_date', format(retentionCutoff, 'yyyy-MM-dd'))
 
   // Count trips expiring soon (within next 30 days of retention limit)
   const { count: expiringSoonCount } = await supabase
     .from('trips')
     .select('*', { count: 'exact', head: true })
-    .eq('company_id', profile.company_id)
+    .eq('company_id', companyId)
     .gte('exit_date', format(retentionCutoff, 'yyyy-MM-dd'))
     .lt('exit_date', format(soonCutoff, 'yyyy-MM-dd'))
 
@@ -332,7 +324,7 @@ export async function getRetentionStats(): Promise<RetentionStats | null> {
   const { count: pendingCount } = await supabase
     .from('employees')
     .select('*', { count: 'exact', head: true })
-    .eq('company_id', profile.company_id)
+    .eq('company_id', companyId)
     .not('deleted_at', 'is', null)
     .lt('deleted_at', softDeleteCutoff.toISOString())
 
@@ -340,7 +332,7 @@ export async function getRetentionStats(): Promise<RetentionStats | null> {
   const { data: oldestTrip } = await supabase
     .from('trips')
     .select('exit_date')
-    .eq('company_id', profile.company_id)
+    .eq('company_id', companyId)
     .order('exit_date', { ascending: true })
     .limit(1)
     .single()

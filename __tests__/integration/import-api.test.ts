@@ -957,6 +957,7 @@ describe('Import API / Server Actions', () => {
         // Create mock with count and range support
         const sessionsBuilder: Record<string, Mock> = {};
         sessionsBuilder.select = vi.fn().mockReturnValue(sessionsBuilder);
+        sessionsBuilder.eq = vi.fn().mockReturnValue(sessionsBuilder);
         sessionsBuilder.in = vi.fn().mockReturnValue(sessionsBuilder);
         sessionsBuilder.order = vi.fn().mockReturnValue(sessionsBuilder);
         sessionsBuilder.range = vi.fn().mockResolvedValue({ data: sessions, error: null });
@@ -964,6 +965,7 @@ describe('Import API / Server Actions', () => {
         // Count query mock
         const countBuilder: Record<string, Mock> = {};
         countBuilder.select = vi.fn().mockReturnValue(countBuilder);
+        countBuilder.eq = vi.fn().mockReturnValue(countBuilder);
         countBuilder.in = vi.fn().mockResolvedValue({ count: 25, error: null });
 
         let callCount = 0;

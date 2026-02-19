@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
  * Auth callback route handler
@@ -224,32 +223,6 @@ export async function GET(request: Request) {
     isNewOAuthUser = true
   }
 
-  // Auto-promote site owner to superadmin and skip onboarding
-  // Requires service role to bypass the prevent_restricted_profile_updates trigger
-  const SITE_OWNER_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
-  const isSiteOwner = SITE_OWNER_EMAILS.includes(user.email?.toLowerCase() ?? '')
-  if (isSiteOwner) {
-    try {
-      const adminClient = createAdminClient()
-      const { error: promoteError } = await adminClient
-        .from('profiles')
-        .update({
-          is_superadmin: true,
-          onboarding_completed_at: new Date().toISOString(),
-        })
-        .eq('id', user.id)
-
-      if (promoteError) {
-        console.error('Failed to auto-promote site owner:', promoteError.message)
-      } else {
-        // Sync to user_metadata so middleware can skip the profiles query
-        await supabase.auth.updateUser({ data: { onboarding_completed: true } })
-      }
-    } catch (err) {
-      console.error('Admin client error during auto-promote:', err)
-    }
-  }
-
   // Update last activity (non-blocking - don't fail auth if this fails)
   const { error: activityError } = await supabase
     .from('profiles')
@@ -261,11 +234,9 @@ export async function GET(request: Request) {
     console.warn('Failed to update last activity after auth callback:', activityError.message)
   }
 
-  // Site owner skips onboarding; new OAuth users go to onboarding; returning users go to intended destination
-  const destination = isSiteOwner
-    ? '/dashboard'
-    : isNewOAuthUser
-      ? '/onboarding'
-      : next
+  // New OAuth users go to onboarding; returning users go to intended destination.
+  const destination = isNewOAuthUser
+    ? '/onboarding'
+    : next
   return NextResponse.redirect(`${origin}${destination}`)
 }
