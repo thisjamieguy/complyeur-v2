@@ -56,44 +56,28 @@ if (!isValidUrl) {
 export type Env = typeof env
 
 /**
- * Checks if a hostname represents a local development environment.
- */
-function isLocalHost(host: string): boolean {
-  const localPatterns = ['localhost', '127.0.0.1', '0.0.0.0', '::1']
-  const lowerHost = host.toLowerCase()
-  return localPatterns.some(pattern => lowerHost.includes(pattern))
-}
-
-/**
  * Gets the base URL dynamically based on the environment.
- * For Server Actions: pass headers to extract the host from the request.
- * Falls back to VERCEL_URL for Vercel deployments, then NEXT_PUBLIC_APP_URL.
+ * Auth links must be generated from canonical deployment configuration and
+ * must never trust request Host/X-Forwarded-Host headers.
  *
- * @param requestHeaders - Headers from the incoming request (from next/headers)
+ * Resolution order:
+ * 1. NEXT_PUBLIC_APP_URL (canonical)
+ * 2. VERCEL_URL (preview/production fallback)
+ * 3. localhost (development fallback)
+ *
+ * @param _requestHeaders - kept for backward compatibility with existing call sites
  */
-export function getBaseUrl(requestHeaders?: Headers): string {
-  // 1. Prefer an explicit app URL when provided (custom domains in any environment).
+export function getBaseUrl(_requestHeaders?: Headers): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
-  if (appUrl && !isLocalHost(appUrl)) {
+  if (appUrl) {
     return normalizeOrigin(appUrl)
   }
 
-  // 2. Try to get from request headers (works in Server Actions and custom domains)
-  if (requestHeaders) {
-    const host = requestHeaders.get('x-forwarded-host') || requestHeaders.get('host')
-    const protocol = requestHeaders.get('x-forwarded-proto') || 'https'
-
-    // Only use header-based URL if it's not a local address
-    if (host && !isLocalHost(host)) {
-      return `${protocol}://${host}`
-    }
-  }
-
-  // 3. In Vercel production/preview, fall back to VERCEL_URL
+  // In Vercel production/preview, fall back to VERCEL_URL.
   if (process.env.VERCEL_URL) {
     return normalizeOrigin(`https://${process.env.VERCEL_URL}`)
   }
 
-  // 4. Final fallback for local development only
+  // Final fallback for local development only.
   return 'http://localhost:3000'
 }

@@ -7,13 +7,13 @@
 **Target Executed:** Local running instance (`http://127.0.0.1:3000`) and repository codebase
 
 ## Executive Summary
-This execution wave validated high-priority controls from the approved penetration plan and identified **6 confirmed findings**:
+This execution wave validated high-priority controls from the approved penetration plan and identified **8 confirmed findings**:
 
 - **1 High**
-- **3 Medium**
+- **5 Medium**
 - **2 Low**
 
-The strongest positive signal is that **multi-tenant dashboard isolation E2E passed** and direct probes for common misconfigurations (`/.git`, `/.env`, `/_next/data/...`) returned non-exposed results. The largest risk identified is **incomplete MFA enforcement for privileged users**, where privileged access can be obtained without MFA unless the email is explicitly hardcoded in an allowlist.
+The strongest positive signal is that core auth/session controls in checklist §1.1 now have explicit execution evidence, including token rotation/reuse protections and server-side logout invalidation. The primary remaining gap is **signup enumeration parity** (existing email remains distinguishable from new email), plus blocked app-layer brute-force/password-reset rate-limit validation in local dev due missing Upstash configuration.
 
 ---
 
@@ -28,6 +28,8 @@ All findings from this execution wave (high, medium, and low) have been remediat
 | CEUR-PT-004 | Medium | Remediated | Production CSP moved to nonce-based middleware policy and no longer uses unsafe script directives. |
 | CEUR-PT-005 | Low | Remediated | Framework `X-Powered-By` header disabled in Next.js runtime configuration. |
 | CEUR-PT-006 | Low | Remediated | Request-size limits aligned with shared endpoint-aware policy (default 1MB, import 10MB) and regression tests added. |
+| CEUR-PT-007 | Medium | Remediated | Canonical auth link origin enforcement now ignores request Host/X-Forwarded-Host and uses configured environment origin only. |
+| CEUR-PT-008 | Medium | Remediated | Supabase auth password policy hardened to minimum 8 characters plus mixed-case/digit complexity. |
 
 ### Remediation Evidence (Code)
 - CEUR-PT-001:
@@ -64,12 +66,19 @@ All findings from this execution wave (high, medium, and low) have been remediat
   - `app/(dashboard)/import/actions.ts:76`
   - `__tests__/unit/request-limits.test.ts:10`
   - `__tests__/unit/middleware-body-limit.test.ts:46`
+- CEUR-PT-007:
+  - `lib/env.ts:64`
+  - `app/(auth)/actions.ts:213`
+  - `app/(auth)/actions.ts:302`
+  - `__tests__/unit/env-base-url.test.ts:1`
+- CEUR-PT-008:
+  - `supabase/config.toml:174`
+  - `__tests__/unit/supabase-auth-config.test.ts:1`
 
 ### Post-Remediation Verification Evidence
 - `pnpm typecheck` -> passed
-- `pnpm test` -> **81 passed / 2 skipped test files**; **1948 passed / 32 skipped tests**
-- `pnpm test:e2e:multi-user` -> **1 passed**
-- `pnpm test:e2e:dashboard` -> **19 skipped** (existing environment/login gating behavior)
+- `pnpm test` -> **83 passed / 2 skipped test files**; **1952 passed / 32 skipped tests**
+- `pnpm test:regression` -> **3 passed / 12 skipped**
 - Additional targeted regression checks added and executed:
   - `__tests__/unit/csp.test.ts`
   - `__tests__/unit/health-route.test.ts`
@@ -77,6 +86,8 @@ All findings from this execution wave (high, medium, and low) have been remediat
   - `__tests__/unit/client-ip.test.ts`
   - `__tests__/unit/request-limits.test.ts`
   - `__tests__/unit/middleware-body-limit.test.ts`
+  - `__tests__/unit/env-base-url.test.ts`
+  - `__tests__/unit/supabase-auth-config.test.ts`
 
 ### Execution Environment Note
 Direct ad-hoc local `curl` probes from separate shell contexts were blocked by sandbox socket restrictions (`listen EPERM` on local bind for stand-alone probe servers). Equivalent endpoint/header assertions were captured in deterministic automated tests above.
@@ -99,6 +110,16 @@ Direct ad-hoc local `curl` probes from separate shell contexts were blocked by s
 - `pnpm test:e2e:dashboard` -> executed, all tests skipped (environment/login condition)
 - Header and endpoint probes via `curl` (`/login`, `/auth/callback`, `/api/health`, `/api/billing/checkout`, `/api/gdpr/cron/retention`, `/.git/config`, `/.env`, `/_next/data/...`)
 - `pnpm security:check` / `pnpm audit` -> npm audit upstream API 500 (scan blocked)
+- `pnpm typecheck` -> passed (Phase 1.1 rerun)
+- `pnpm test:regression` -> 3 passed / 12 skipped (includes Phase 1-2 auth/foundation checks)
+- Local Supabase auth probe (elevated local-network execution):
+  - login enumeration: identical invalid-email/wrong-password errors
+  - signup enumeration: existing email distinguishable (`User already registered`)
+  - weak password probe: initially accepted before remediation, rejected after config hardening + restart
+  - session fixation/refresh/concurrency/logout probes: all expected controls observed
+- Local Mailpit recovery-token probe (elevated local-network execution):
+  - first recovery-link use: `303` with token payload (`expires_in=3600`)
+  - second reuse of same link: `303` with `error_code=otp_expired`
 
 ---
 
@@ -199,6 +220,35 @@ Direct ad-hoc local `curl` probes from separate shell contexts were blocked by s
 
 ---
 
+### CEUR-PT-007 - Medium - Auth Link Origin Trusted Request Host Headers
+**Affected controls:** Checklist §1.1 (password reset/invite link poisoning)  
+**Evidence (pre-remediation):**
+- `lib/env.ts` used `x-forwarded-host` / `host` fallback when deriving base URL.
+- `app/(auth)/actions.ts:231` and `app/(auth)/actions.ts:310` used that base URL for auth redirect links.
+
+**Impact:** Under misconfiguration or header trust mistakes, attacker-controlled host headers could influence reset/OAuth link origin.
+
+**Remediation implemented:**
+- `lib/env.ts` now resolves base URL from canonical environment configuration only (`NEXT_PUBLIC_APP_URL` -> `VERCEL_URL` -> localhost fallback), without header-derived origin fallback.
+- Regression coverage added in `__tests__/unit/env-base-url.test.ts`.
+
+---
+
+### CEUR-PT-008 - Medium - Provider-Level Password Policy Too Weak
+**Affected controls:** Checklist §1.1 (password complexity enforcement)  
+**Evidence (pre-remediation):**
+- `supabase/config.toml` had `minimum_password_length = 6` and empty `password_requirements`.
+- Local auth probe created a user successfully with weak password (`weak12`).
+
+**Impact:** Direct auth endpoint usage could bypass stricter UI validation and accept low-entropy credentials.
+
+**Remediation implemented:**
+- `supabase/config.toml` updated to `minimum_password_length = 8` and `password_requirements = "lower_upper_letters_digits"`.
+- Regression coverage added in `__tests__/unit/supabase-auth-config.test.ts`.
+- Local Supabase restart + probe re-run confirms weak password signup now fails.
+
+---
+
 ## Passed / No-Finding Checks (Executed)
 - `/_next/data` probe returned `404` (no direct data route exposure observed in executed path).
 - `/.git/config` and `/.env` returned `404`.
@@ -206,6 +256,13 @@ Direct ad-hoc local `curl` probes from separate shell contexts were blocked by s
 - CORS checks on billing endpoint did not return permissive `Access-Control-Allow-Origin`.
 - `auth/callback?next=//evil.com` redirected to local login, not external domain.
 - `pnpm test:e2e:multi-user` passed (`users can only see employees from their own company`).
+- Login enumeration probe: wrong-password and non-existent-email attempts both returned `Invalid login credentials`.
+- Forgot-password enumeration probe: existing and non-existing emails both returned success/no-error.
+- Session fixation probe: re-login issued different access/refresh tokens.
+- Session refresh probe: refresh succeeded, refresh token rotated, and session expiry returned `expires_in=3600`.
+- Concurrent session probe: two clients received distinct access/refresh token pairs.
+- Logout completeness probe: post-logout refresh on second client failed with `Invalid Refresh Token: Refresh Token Not Found`.
+- Password reset token probe: first recovery link use succeeded, second use returned `error_code=otp_expired`.
 
 ---
 
@@ -214,6 +271,8 @@ Direct ad-hoc local `curl` probes from separate shell contexts were blocked by s
 - P1/P2 checks around MFA, header posture, endpoint exposure, cron auth, and tenant isolation E2E.
 
 ### Not fully executed yet
+- Signup enumeration parity remediation (existing email remains distinguishable from new signup response path).
+- App-layer auth brute-force and password-reset rate-limit runtime verification (blocked locally due missing Upstash config in dev-mode fail-open path).
 - Full multi-role privilege matrix in live environment (Owner/Admin/Manager/Viewer across 2+ companies)
 - Race-condition and controlled disruptive windows
 - End-to-end PostgREST traversal tests against target Supabase project
@@ -226,18 +285,19 @@ Direct ad-hoc local `curl` probes from separate shell contexts were blocked by s
 - Dependency audit rerun at `2026-02-19T23:16:38Z` (`pnpm security:check` -> `pnpm audit`) returned the same upstream failure: `ERR_PNPM_AUDIT_BAD_RESPONSE` with `{"error":"Internal Server Error"}` from `https://registry.npmjs.org/-/npm/v1/security/audits`.
 - A non-elevated retry in the restricted shell context failed earlier at `2026-02-19T23:14:24Z` with DNS resolution error (`ENOTFOUND registry.npmjs.org`).
 - `npm audit` fallback could not run due absence of `package-lock.json` (project uses `pnpm-lock.yaml`).
+- At `2026-02-19T23:53:17Z`, `pnpm test:regression` webserver logs reported: `[RateLimit] Upstash not configured. Rate limiting disabled (dev mode).` This blocked local runtime verification of app-layer `10 req/min` auth and `5 req/hour` password-reset limits.
+- Non-escalated local probe attempts initially failed with socket policy (`connect EPERM 127.0.0.1:54321`), then were re-run with elevated local-network access for deterministic Supabase/Mailpit evidence.
 
 ---
 
 ## Recommended Remediation Priority
-1. **Immediate (P1):** CEUR-PT-001 (role-based MFA enforcement)
-2. **Short term (P2):** CEUR-PT-002, CEUR-PT-003, CEUR-PT-004
-3. **Hardening (P3):** CEUR-PT-005, CEUR-PT-006
+1. **Immediate (P1):** Signup enumeration parity in email/password registration flow.
+2. **Short term (P2):** Execute app-layer auth/password-reset rate-limit controls in an environment with Upstash configured.
+3. **Hardening (P3):** Continue remaining checklist backlog outside §1.1.
 
 ---
 
 ## Verification Snapshot
 - `pnpm typecheck` -> **passed**
-- `pnpm test` -> **81 passed / 2 skipped test files**; **1948 passed / 32 skipped tests**
-- `pnpm test:e2e:multi-user` -> **1 passed**
-- `pnpm test:e2e:dashboard` -> **19 skipped**
+- `pnpm test` -> **83 passed / 2 skipped test files**; **1952 passed / 32 skipped tests**
+- `pnpm test:regression` -> **3 passed / 12 skipped**
