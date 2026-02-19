@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Commits
 
+- fix: accept all ISO country codes in import — non-Schengen trips now warn instead of error [`16f3bc4`](https://github.com/thisjamieguy/complyeur-v2/commit/16f3bc46aa29fc5d15f37ccd464d4e81583c8fe0)
 - docs: mark Phase 1 credential rotation fully complete [`4204bf3`](https://github.com/thisjamieguy/complyeur-v2/commit/4204bf34eaa9ff4c4bf501733f4f419ca24d3f4e)
 - docs: mark Phase 1 credential rotation fully complete [`b4faf8e`](https://github.com/thisjamieguy/complyeur-v2/commit/b4faf8edd341b5af248f3e75acf5a3865ded5347)
 - docs: update security audit — 16 of 37 findings resolved [`7de4485`](https://github.com/thisjamieguy/complyeur-v2/commit/7de4485242f921c899b094e37e5821d7bf665cbb)
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - chore: sync pending docs and changelog updates [`c3ea064`](https://github.com/thisjamieguy/complyeur-v2/commit/c3ea064b215cbe9f527f25eb7c65342968a1552e)
 - perf: complete phases 7-10 of performance audit (18 fixes) [`bb01a25`](https://github.com/thisjamieguy/complyeur-v2/commit/bb01a25700d3d85d7913c2bdbf693ad5002c4a78)
 - perf: complete phase 6 architecture improvements (10 fixes) [`cb3a479`](https://github.com/thisjamieguy/complyeur-v2/commit/cb3a4793a13db4d8777c6a6e2dc9cbd2a9d31a98)
-- fix(test): update import-api mocks for requireCompanyAccessCached auth flow [`3448119`](https://github.com/thisjamieguy/complyeur-v2/commit/34481193fdf1c32d738cef428854ec3fbc313f3a)
 
 ## v1.0.0 - 2026-01-22
 
