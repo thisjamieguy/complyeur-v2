@@ -61,6 +61,7 @@ export default defineConfig({
     env: {
       ...process.env,
       CRON_SECRET: process.env.CRON_SECRET ?? 'playwright-cron-secret',
+      DISABLE_MFA_FOR_E2E: 'true',
     },
   },
 });

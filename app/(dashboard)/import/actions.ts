@@ -152,7 +152,10 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
 
     const supabase = await createClient();
 
-    const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId, undefined)
+    const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId, {
+      role: ctx.role,
+      isSuperadmin: ctx.isSuperadmin,
+    })
     if (mfa?.ok === false) {
       return { success: false, error: 'MFA required. Complete setup or verification to continue.' }
     }
@@ -501,7 +504,10 @@ export async function executeImport(
       }
     }
 
-    const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId, undefined)
+    const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId, {
+      role: ctx.role,
+      isSuperadmin: ctx.isSuperadmin,
+    })
     if (mfa?.ok === false) {
       return {
         success: false,

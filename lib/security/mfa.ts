@@ -4,7 +4,6 @@ import type { createClient } from '@/lib/supabase/server'
 
 export const MFA_BACKUP_SESSION_COOKIE = 'mfa_backup_session'
 const MFA_BACKUP_SESSION_TTL_HOURS = 12
-const DEFAULT_MFA_REQUIRED_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
 
 export type MfaStatus = {
   currentLevel: 'aal1' | 'aal2' | null
@@ -21,17 +20,19 @@ export function hashSecret(value: string): string {
   return createHash('sha256').update(value).digest('hex')
 }
 
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase()
+export interface MfaEnforcementContext {
+  userEmail?: string | null
+  role?: string | null
+  isSuperadmin?: boolean | null
 }
 
-function getMfaRequiredEmails(): Set<string> {
-  return new Set(DEFAULT_MFA_REQUIRED_EMAILS.map((email) => normalizeEmail(email)))
-}
-
-export function isMfaRequiredForEmail(email: string | null | undefined): boolean {
-  if (!email) return false
-  return getMfaRequiredEmails().has(normalizeEmail(email))
+export function shouldEnforceMfaForRole(
+  role: string | null | undefined,
+  isSuperadmin: boolean | null | undefined
+): boolean {
+  if (isSuperadmin === true) return true
+  const normalizedRole = role?.trim().toLowerCase()
+  return normalizedRole === 'owner' || normalizedRole === 'admin'
 }
 
 export async function getMfaStatusForUser(
@@ -64,18 +65,36 @@ export async function getMfaStatusForUser(
 export async function enforceMfaForPrivilegedUser(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
-  userEmail?: string | null
+  context: MfaEnforcementContext = {}
 ): Promise<MfaEnforcementResult> {
-  let email = userEmail ?? null
+  const bypassMfaForE2E =
+    process.env.NODE_ENV !== 'production' &&
+    process.env.DISABLE_MFA_FOR_E2E === 'true'
 
-  if (!email) {
-    const { data: { user }, error } = await supabase.auth.getUser()
-    if (!error) {
-      email = user?.email ?? null
-    }
+  if (bypassMfaForE2E) {
+    return { ok: true }
   }
 
-  if (!isMfaRequiredForEmail(email)) {
+  let role = context.role
+  let isSuperadmin = context.isSuperadmin
+
+  if (role === undefined || isSuperadmin === undefined) {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role, is_superadmin')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (error || !profile) {
+      // Fail closed when we cannot determine privilege context.
+      return { ok: false, reason: 'verify' }
+    }
+
+    role = profile.role
+    isSuperadmin = profile.is_superadmin
+  }
+
+  if (!shouldEnforceMfaForRole(role, isSuperadmin)) {
     return { ok: true }
   }
 

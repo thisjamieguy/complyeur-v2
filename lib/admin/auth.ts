@@ -61,7 +61,10 @@ export async function requireSuperAdmin() {
     redirect('/dashboard')
   }
 
-  const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, user.email)
+  const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, {
+    userEmail: user.email,
+    isSuperadmin: profile.is_superadmin,
+  })
   if (!mfa.ok) {
     redirect('/mfa')
   }

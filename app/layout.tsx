@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { headers } from "next/headers";
 import { Geist } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
@@ -24,11 +25,13 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = defaultMetadata;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const requestHeaders = await headers()
+  const nonce = requestHeaders.get('x-nonce') ?? undefined
   const xProfileUrl = `https://x.com/${X_HANDLE.replace(/^@/, '')}`
 
   return (
@@ -40,6 +43,7 @@ export default function RootLayout({
             id="cookieyes"
             src="https://cdn-cookieyes.com/client_data/8c2e311aa3e53bd1fc42091adb588e5c/script.js"
             strategy="afterInteractive"
+            nonce={nonce}
           />
         )}
       </head>
@@ -50,6 +54,7 @@ export default function RootLayout({
         {/* JSON-LD Structured Data for SEO - safe static content */}
         <script
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify([
               {

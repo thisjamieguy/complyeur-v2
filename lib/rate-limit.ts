@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import { getTrustedClientIpFromHeaders } from '@/lib/security/client-ip'
 
 /**
  * Distributed Rate Limiter using Upstash Redis
@@ -72,17 +73,6 @@ export interface RateLimitResult {
 }
 
 /**
- * Get client IP from request headers
- */
-function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-    request.headers.get('x-real-ip') ??
-    '127.0.0.1'
-  )
-}
-
-/**
  * Check rate limit for a request
  *
  * FAIL-CLOSED BEHAVIOR:
@@ -151,14 +141,48 @@ export async function rateLimit(
     }
   }
 
-  const result = await limiter.limit(identifier)
+  try {
+    const result = await limiter.limit(identifier)
 
-  return {
-    success: result.success,
-    limit: result.limit,
-    remaining: result.remaining,
-    reset: result.reset,
-    limiterUnavailable: false, // Explicitly set to false for successful checks
+    return {
+      success: result.success,
+      limit: result.limit,
+      remaining: result.remaining,
+      reset: result.reset,
+      limiterUnavailable: false, // Explicitly set to false for successful checks
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+
+    // FAIL-CLOSED in production if the backing rate limiter becomes unavailable
+    if (isProduction) {
+      console.error(
+        '[RateLimit] CRITICAL: Upstash rate limit check failed in production. ' +
+        'Rejecting request for SOC 2 compliance.',
+        errorMessage
+      )
+      return {
+        success: false,
+        limit: 60,
+        remaining: 0,
+        reset: Date.now() + 60000,
+        limiterUnavailable: true,
+      }
+    }
+
+    // FAIL-OPEN in development/test so local auth and API flows remain usable
+    console.warn(
+      '[RateLimit] Upstash rate limit check failed in development. ' +
+      'Allowing request (dev mode).',
+      errorMessage
+    )
+    return {
+      success: true,
+      limit: 60,
+      remaining: 60,
+      reset: Date.now() + 60000,
+      limiterUnavailable: false,
+    }
   }
 }
 
@@ -171,7 +195,9 @@ export async function rateLimit(
  * - 503 response: Rate limiter unavailable (fail-closed in production)
  */
 export async function checkRateLimit(request: NextRequest): Promise<NextResponse | null> {
-  const ip = getClientIp(request)
+  const ip =
+    getTrustedClientIpFromHeaders(request.headers, { fallbackIp: '127.0.0.1' }) ??
+    '127.0.0.1'
   const pathname = request.nextUrl.pathname
 
   // Determine rate limit type based on route

@@ -244,7 +244,10 @@ export async function bulkAddTripsAction(
   }
 
   const supabase = await createClient()
-  const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId)
+  const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId, {
+    role: ctx.role,
+    isSuperadmin: ctx.isSuperadmin,
+  })
   if (mfa?.ok === false) {
     return { success: false, created: 0, errors: [{ index: 0, message: 'MFA required. Complete setup or verification to continue.' }] }
   }

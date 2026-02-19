@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { buildContentSecurityPolicy, createCspNonce } from '@/lib/security/csp'
+import {
+  formatMaxRequestBodyError,
+  getMaxRequestBodyBytesForPath,
+} from '@/lib/constants/request-limits'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -10,6 +15,16 @@ export async function middleware(request: NextRequest) {
   const isStaticAssetRequest = /\.[^/]+$/.test(pathname)
   if (isStaticAssetRequest) {
     return NextResponse.next()
+  }
+
+  const nonce = createCspNonce()
+  const cspHeader = buildContentSecurityPolicy(nonce)
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+
+  const withSecurityHeaders = (response: NextResponse): NextResponse => {
+    response.headers.set('Content-Security-Policy', cspHeader)
+    return response
   }
 
   const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
@@ -34,55 +49,64 @@ export async function middleware(request: NextRequest) {
 
   // Legacy landing variant route: always promote traffic to current landing page.
   if (pathname === '/landing-v2') {
-    return NextResponse.redirect(new URL('/landing', request.url))
+    return withSecurityHeaders(NextResponse.redirect(new URL('/landing', request.url)))
   }
 
   // 1a. Maintenance Mode - block mutations when enabled
   const isMaintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true'
   if (isMaintenanceMode && request.method !== 'GET' && request.method !== 'HEAD') {
-    return NextResponse.json(
-      { error: 'Service is temporarily under maintenance. Please try again shortly.' },
-      { status: 503 }
+    return withSecurityHeaders(
+      NextResponse.json(
+        { error: 'Service is temporarily under maintenance. Please try again shortly.' },
+        { status: 503 }
+      )
     )
   }
 
-  // 1b. Body size limit - reject oversized requests (1MB)
-  const MAX_BODY_SIZE = 1 * 1024 * 1024 // 1MB
+  // 1b. Body size limit - endpoint-aware request caps
+  const maxBodySize = getMaxRequestBodyBytesForPath(pathname)
   const contentLength = request.headers.get('content-length')
-  if (contentLength && parseInt(contentLength, 10) > MAX_BODY_SIZE) {
-    return NextResponse.json(
-      { error: 'Request body too large. Maximum size is 1MB.' },
-      { status: 413 }
+  if (contentLength && parseInt(contentLength, 10) > maxBodySize) {
+    return withSecurityHeaders(
+      NextResponse.json(
+        { error: formatMaxRequestBodyError(maxBodySize) },
+        { status: 413 }
+      )
     )
   }
 
   // 1c. Rate Limiting - applies to API routes, auth form submissions, and public form POSTs
   // Uses Upstash Redis for distributed rate limiting in serverless environments
-  // Excluded: health endpoint (monitoring), auth/callback (OAuth redirects from providers)
-  const isHealthEndpoint = pathname === '/api/health'
+  // Excluded: auth/callback (OAuth redirects from providers)
   const isAuthCallback = pathname.startsWith('/auth/callback')
   const isAuthPage = pathname.startsWith('/login') ||
       pathname.startsWith('/signup') || pathname.startsWith('/forgot-password') ||
       pathname.startsWith('/reset-password') || pathname.startsWith('/auth/')
   const isPostToPublicForm = isPublicMarketingRoute && request.method === 'POST'
-  const shouldRateLimit = !isHealthEndpoint && !isAuthCallback && (
+  const shouldRateLimit = !isAuthCallback && (
     pathname.startsWith('/api/') ||
     (isAuthPage && request.method === 'POST') ||
     isPostToPublicForm
   )
   if (shouldRateLimit) {
     const rateLimitResponse = await checkRateLimit(request)
-    if (rateLimitResponse) return rateLimitResponse
+    if (rateLimitResponse) return withSecurityHeaders(rateLimitResponse)
   }
 
   // Public marketing routes do not require per-request Supabase auth hydration.
   // Skipping this avoids an external call on every anonymous landing-page request.
   if (isPublicMarketingRoute) {
-    return NextResponse.next()
+    return withSecurityHeaders(
+      NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      })
+    )
   }
 
   // 2. Auth & Session Management
-  const { supabaseResponse, user, needsOnboarding } = await updateSession(request)
+  const { supabaseResponse, user, needsOnboarding } = await updateSession(request, requestHeaders)
 
   // Public routes that don't require authentication
   const isPublicRoute =
@@ -100,7 +124,7 @@ export async function middleware(request: NextRequest) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       response.cookies.set(cookie)
     })
-    return response
+    return withSecurityHeaders(response)
   }
 
   // If user is authenticated and trying to access auth routes, redirect to dashboard
@@ -124,7 +148,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Continue with the response
-  return supabaseResponse
+  return withSecurityHeaders(supabaseResponse)
 }
 
 export const config = {

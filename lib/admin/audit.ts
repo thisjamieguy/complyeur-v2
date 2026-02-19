@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { headers } from 'next/headers'
+import { getTrustedClientIpFromHeaders } from '@/lib/security/client-ip'
 
 interface AuditLogParams {
   adminUserId: string
@@ -23,9 +24,9 @@ export async function logAdminAction(params: AuditLogParams): Promise<void> {
     const headersList = await headers()
 
     // Extract IP address from headers
-    const ipAddress = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-                      headersList.get('x-real-ip') ||
-                      null
+    const ipAddress = getTrustedClientIpFromHeaders(headersList, {
+      fallbackIp: null,
+    })
 
     const userAgent = headersList.get('user-agent') || null
 

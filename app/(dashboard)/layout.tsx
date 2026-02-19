@@ -18,7 +18,9 @@ export default async function DashboardLayout({
   }
 
   const [mfa, { data: profile, error: profileError }] = await Promise.all([
-    enforceMfaForPrivilegedUser(supabase, user.id, user.email),
+    enforceMfaForPrivilegedUser(supabase, user.id, {
+      userEmail: user.email,
+    }),
     supabase
       .from('profiles')
       .select('role, is_superadmin, first_name, last_name')

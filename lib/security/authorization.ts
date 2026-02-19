@@ -50,9 +50,14 @@ async function getAuthProfile(
 
 async function enforceMfaIfRequired(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  user: { id: string; email?: string | null }
+  user: { id: string; email?: string | null },
+  profile: AuthProfile
 ): Promise<Pick<AuthGuardFailure, 'error' | 'status' | 'mfaReason'> | null> {
-  const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, user.email)
+  const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, {
+    userEmail: user.email,
+    role: profile.role,
+    isSuperadmin: profile.is_superadmin,
+  })
   if (mfa.ok) return null
 
   return {
@@ -75,7 +80,7 @@ export async function requirePermission(
     return { allowed: false, status: 403, error: 'Forbidden' }
   }
 
-  const mfaFailure = await enforceMfaIfRequired(supabase, user)
+  const mfaFailure = await enforceMfaIfRequired(supabase, user, profile)
   if (mfaFailure) {
     return { allowed: false, ...mfaFailure }
   }
@@ -105,7 +110,7 @@ export async function requireAdminAccess(
     return { allowed: false, status: 403, error: 'Forbidden' }
   }
 
-  const mfaFailure = await enforceMfaIfRequired(supabase, user)
+  const mfaFailure = await enforceMfaIfRequired(supabase, user, profile)
   if (mfaFailure) {
     return { allowed: false, ...mfaFailure }
   }
