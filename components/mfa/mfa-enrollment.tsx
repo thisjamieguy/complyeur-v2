@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useTransition } from 'react'
+import Image from 'next/image'
 import { Shield, Smartphone, Key, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -159,12 +160,13 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
                 Scan this QR code with Google Authenticator, 1Password, or Authy.
               </div>
               <div className="bg-white p-3 rounded border inline-block">
-                <img
+                <Image
                   src={enrollData.qrCode}
                   alt="MFA QR code"
                   width={128}
                   height={128}
                   className="h-32 w-32"
+                  unoptimized
                 />
               </div>
               <div className="text-xs text-slate-500">Secret: {enrollData.secret}</div>
