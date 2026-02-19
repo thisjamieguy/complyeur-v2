@@ -223,6 +223,8 @@ Direct ad-hoc local `curl` probes from separate shell contexts were blocked by s
 
 ## Tooling and Scan Constraints
 - `pnpm audit` failed due npm audit endpoint upstream 500 (`ERR_PNPM_AUDIT_BAD_RESPONSE`), so dependency vulnerability output is incomplete in this run.
+- Dependency audit rerun at `2026-02-19T23:16:38Z` (`pnpm security:check` -> `pnpm audit`) returned the same upstream failure: `ERR_PNPM_AUDIT_BAD_RESPONSE` with `{"error":"Internal Server Error"}` from `https://registry.npmjs.org/-/npm/v1/security/audits`.
+- A non-elevated retry in the restricted shell context failed earlier at `2026-02-19T23:14:24Z` with DNS resolution error (`ENOTFOUND registry.npmjs.org`).
 - `npm audit` fallback could not run due absence of `package-lock.json` (project uses `pnpm-lock.yaml`).
 
 ---
