@@ -57,11 +57,21 @@ function LoginForm() {
   // Show error from URL params (e.g., from OAuth callback failures)
   useEffect(() => {
     const error = searchParams.get('error')
-    if (error) {
-      toast.error(error)
-      // Clear the error from URL without full page reload
+    const signup = searchParams.get('signup')
+
+    if (error || signup) {
       const params = new URLSearchParams(searchParams.toString())
+
+      if (error) {
+        toast.error(error)
+      }
+      if (signup === 'check-email') {
+        toast.success('If the signup details were valid, your account is ready. Sign in to continue.')
+      }
+
+      // Clear transient URL flags without full page reload.
       params.delete('error')
+      params.delete('signup')
       const nextUrl = params.toString() ? `/login?${params.toString()}` : '/login'
       window.history.replaceState({}, '', nextUrl)
     }

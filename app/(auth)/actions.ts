@@ -22,6 +22,17 @@ import {
   resetPasswordSchema,
 } from '@/lib/validations/auth'
 
+const SIGNUP_PARITY_REDIRECT = '/login?signup=check-email'
+
+function isExistingAccountErrorMessage(message: string): boolean {
+  const normalized = message.toLowerCase()
+  return (
+    normalized.includes('already registered') ||
+    normalized.includes('already been registered') ||
+    normalized.includes('already exists')
+  )
+}
+
 /**
  * Normalizes email address for Supabase auth
  * Some Supabase instances reject emails with + signs even though they're valid
@@ -137,6 +148,9 @@ export async function signup(formData: FormData) {
   if (authError) {
     const err = authError!
     const errorMessage = err.message ?? ''
+    if (isExistingAccountErrorMessage(errorMessage)) {
+      redirect(SIGNUP_PARITY_REDIRECT)
+    }
     if (errorMessage.includes('Email address') && errorMessage.includes('is invalid') && normalizedEmail.includes('+')) {
       throw new AuthError('Email addresses with special characters like "+" may not be supported. Please try using a different email address or contact support.')
     }
@@ -144,8 +158,10 @@ export async function signup(formData: FormData) {
     throw new AuthError(getAuthErrorMessage(err))
   }
 
-  if (!authData.user) {
-    throw new AuthError('Failed to create user account')
+  // Supabase can return obfuscated user data when an account already exists and
+  // anti-enumeration protections are enabled. Treat this as a parity-success path.
+  if (!authData.user || authData.user.identities?.length === 0) {
+    redirect(SIGNUP_PARITY_REDIRECT)
   }
 
   const user = authData.user!
@@ -199,8 +215,12 @@ export async function signup(formData: FormData) {
     )
   }
 
+  // Keep signup response parity between existing and new accounts.
+  // New users are redirected to login after account provisioning.
+  await supabase.auth.signOut({ scope: 'local' })
+
   revalidatePath('/', 'layout')
-  redirect('/onboarding')
+  redirect(SIGNUP_PARITY_REDIRECT)
 }
 
 export async function forgotPassword(formData: FormData) {

@@ -16,7 +16,7 @@ import { getTrustedClientIpFromHeaders } from '@/lib/security/client-ip'
  *
  * FAIL-CLOSED BEHAVIOR (SOC 2 CC6/A1):
  * - Production: If Upstash is not configured, requests are REJECTED (503)
- * - Development: If Upstash is not configured, requests are ALLOWED (for local dev)
+ * - Development/Test: If Upstash is not configured, requests are locally rate-limited in-memory
  */
 
 // Check if Upstash is configured
@@ -72,6 +72,58 @@ export interface RateLimitResult {
   limiterUnavailable?: boolean
 }
 
+type RateLimitType = 'api' | 'auth' | 'password-reset'
+
+const LOCAL_LIMITS: Record<RateLimitType, number> = {
+  api: 60,
+  auth: 10,
+  'password-reset': 5,
+}
+
+const LOCAL_WINDOWS_MS: Record<RateLimitType, number> = {
+  api: 60_000,
+  auth: 60_000,
+  'password-reset': 3_600_000,
+}
+
+interface LocalRateLimitEntry {
+  count: number
+  windowStart: number
+}
+
+const localRateLimitStore = new Map<string, LocalRateLimitEntry>()
+let localFallbackNoticeLogged = false
+
+function runLocalRateLimit(identifier: string, type: RateLimitType): RateLimitResult {
+  const now = Date.now()
+  const limit = LOCAL_LIMITS[type]
+  const windowMs = LOCAL_WINDOWS_MS[type]
+  const key = `${type}:${identifier}`
+  const existing = localRateLimitStore.get(key)
+
+  if (!existing || now >= existing.windowStart + windowMs) {
+    localRateLimitStore.set(key, { count: 1, windowStart: now })
+    return {
+      success: true,
+      limit,
+      remaining: Math.max(limit - 1, 0),
+      reset: now + windowMs,
+      limiterUnavailable: false,
+    }
+  }
+
+  existing.count += 1
+  const success = existing.count <= limit
+
+  return {
+    success,
+    limit,
+    remaining: Math.max(limit - existing.count, 0),
+    reset: existing.windowStart + windowMs,
+    limiterUnavailable: false,
+  }
+}
+
 /**
  * Check rate limit for a request
  *
@@ -83,12 +135,12 @@ export interface RateLimitResult {
  */
 export async function rateLimit(
   identifier: string,
-  type: 'api' | 'auth' | 'password-reset' = 'api'
+  type: RateLimitType = 'api'
 ): Promise<RateLimitResult> {
   const isProduction = process.env.NODE_ENV === 'production'
 
   // FAIL-CLOSED in production: Reject requests if rate limiter is unavailable
-  // FAIL-OPEN in development: Allow requests for local dev
+  // Development/Test fallback: enforce in-memory local rate limits
   if (!redis) {
     if (isProduction) {
       console.error(
@@ -104,17 +156,13 @@ export async function rateLimit(
         limiterUnavailable: true,
       }
     } else {
-      console.warn(
-        '[RateLimit] Upstash not configured. Rate limiting disabled (dev mode). ' +
-        'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to enable.'
-      )
-      return {
-        success: true,
-        limit: 60,
-        remaining: 60,
-        reset: Date.now() + 60000,
-        limiterUnavailable: false,
+      if (!localFallbackNoticeLogged) {
+        console.warn(
+          '[RateLimit] Upstash not configured. Using in-memory local rate limiting fallback for development/test.'
+        )
+        localFallbackNoticeLogged = true
       }
+      return runLocalRateLimit(identifier, type)
     }
   }
 
