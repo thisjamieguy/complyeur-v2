@@ -7,17 +7,17 @@
 **Target Executed:** Local running instance (`http://127.0.0.1:3000`) and repository codebase
 
 ## Executive Summary
-This execution wave validated high-priority controls from the approved penetration plan and identified **9 confirmed findings**:
+This execution wave validated high-priority controls from the approved penetration plan and identified **11 confirmed findings**:
 
 - **1 High**
-- **6 Medium**
+- **8 Medium**
 - **2 Low**
 
 The strongest positive signal is that checklist §1.1 controls are now fully executed with explicit evidence, including signup enumeration parity, password complexity hardening, session/token lifecycle checks, and enforceable local auth/password-reset rate-limit verification.
 
 ---
 
-## Remediation Status Update (Final - February 19, 2026)
+## Remediation Status Update (Final + OAuth Addendum Through February 23, 2026)
 All findings from this execution wave (high, medium, and low) have been remediated in code and re-verified.
 
 | Finding ID | Severity | Status | Remediation outcome |
@@ -31,6 +31,8 @@ All findings from this execution wave (high, medium, and low) have been remediat
 | CEUR-PT-007 | Medium | Remediated | Canonical auth link origin enforcement now ignores request Host/X-Forwarded-Host and uses configured environment origin only. |
 | CEUR-PT-008 | Medium | Remediated | Supabase auth password policy hardened to minimum 8 characters plus mixed-case/digit complexity. |
 | CEUR-PT-009 | Medium | Remediated | Signup flow now returns a parity-safe post-signup path for both existing and newly created accounts to reduce enumeration signal. |
+| CEUR-PT-010 | Medium | Remediated | Google OAuth provider nonce validation re-enabled (`skip_nonce_check=false`) with regression assertion coverage. |
+| CEUR-PT-011 | Medium | Remediated | Supabase auth cookie policy hardened to `HttpOnly` + `SameSite=Lax`; sign-out path moved to server action. |
 
 ### Remediation Evidence (Code)
 - CEUR-PT-001:
@@ -81,6 +83,15 @@ All findings from this execution wave (high, medium, and low) have been remediat
   - `app/(auth)/actions.ts:218`
   - `app/(auth)/login/page.tsx:57`
   - `__tests__/unit/actions/auth-signup.test.ts:1`
+- CEUR-PT-010:
+  - `supabase/config.toml:319`
+  - `__tests__/unit/supabase-auth-config.test.ts:1`
+- CEUR-PT-011:
+  - `lib/supabase/cookie-options.ts:1`
+  - `lib/supabase/server.ts:1`
+  - `lib/supabase/middleware.ts:1`
+  - `components/layout/user-menu.tsx:1`
+  - `__tests__/unit/supabase-cookie-options.test.ts:1`
 
 ### Post-Remediation Verification Evidence
 - `pnpm typecheck` -> passed
@@ -330,3 +341,51 @@ Direct ad-hoc local `curl` probes from separate shell contexts were blocked by s
 - `pnpm typecheck` -> **passed**
 - `pnpm test` -> **84 passed / 2 skipped test files**; **1956 passed / 32 skipped tests**
 - `pnpm test:regression` -> **3 passed / 12 skipped**
+
+---
+
+## Addendum - Phase 1.2 OAuth (Google) Continuation (February 23, 2026)
+
+### Scope Executed
+- OAuth account linking behavior (`auth-hook-prevent-linking`)
+- OAuth state/CSRF callback handling
+- OAuth PKCE/nonce enforcement checks
+- OAuth scope minimization
+- OAuth/session token storage hardening validation
+- Company-name inference control analysis
+
+### Findings Added In This Addendum
+
+#### CEUR-PT-010 - Medium - Google OAuth nonce validation was disabled in auth provider config
+**Affected control:** Checklist §1.2 (OAuth PKCE/nonce enforcement)  
+**Evidence (pre-remediation):**
+- `supabase/config.toml` had `skip_nonce_check = true` under `[auth.external.google]`
+- OAuth authorize probe showed no nonce enforcement signal before hardening
+
+**Remediation implemented:**
+- Set `skip_nonce_check = false` for Google provider.
+- Added regression assertion in `__tests__/unit/supabase-auth-config.test.ts`.
+
+#### CEUR-PT-011 - Medium - Supabase auth cookie defaults were not explicitly hardened for HttpOnly storage
+**Affected control:** Checklist §1.2 (OAuth token storage)  
+**Evidence (pre-remediation):**
+- `@supabase/ssr` defaults include `httpOnly: false` (library source/changelog).
+- App did not override cookie options in server/middleware Supabase clients.
+
+**Remediation implemented:**
+- Added centralized secure cookie policy: `lib/supabase/cookie-options.ts` (`httpOnly: true`, `sameSite: 'lax'`, `secure` in production).
+- Wired policy into `lib/supabase/server.ts` and `lib/supabase/middleware.ts`.
+- Removed browser Supabase sign-out dependency in `components/layout/user-menu.tsx` and switched to server action logout path.
+- Added regression coverage in `__tests__/unit/supabase-cookie-options.test.ts`.
+
+### Phase 1.2 No-Finding Checks (Executed)
+- `2026-02-23T21:32:10Z`: `before_identity_linked` hook payload to `/functions/v1/auth-hook-prevent-linking` returned `{"decision":"reject",...}` (account-linking deny path observed).
+- `2026-02-23T21:31:25Z`: Supabase Google authorize redirect contained CSRF `state` and minimal scope `email profile`.
+- `2026-02-23T21:31:25Z` + callback probe logs: replaying callback with forged code failed exchange (`PKCE code verifier not found in storage`) and redirected to `/login?error=Authentication failed...`.
+- Company-name inference path reviewed in app + SQL trigger flows; tenant takeover was not reproduced because slug collisions are deconflicted (`company_slug || '-' || uuid-suffix`) in `create_company_and_profile`.
+
+### Phase 1.2 Verification Commands (Fresh)
+- `pnpm test __tests__/unit/supabase-auth-config.test.ts __tests__/unit/supabase-cookie-options.test.ts` -> **2 files passed / 3 tests passed**
+- `pnpm typecheck` -> **passed**
+- `pnpm playwright test e2e/performance/auth-flow.spec.ts` -> **1 passed / 1 skipped**
+- `pnpm test` -> **failed (2 tests timed out)** in `lib/compliance/__tests__/load-test.test.ts` and duplicated `.claude/worktrees/festive-jones/.../load-test.test.ts` (`processes 500,000+ days correctly against oracle`, 5000ms timeout). No failures were in OAuth/auth modules touched in this phase.

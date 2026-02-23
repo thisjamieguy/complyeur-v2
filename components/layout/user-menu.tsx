@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LogOut, Settings, ChevronUp } from 'lucide-react'
 import {
@@ -12,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { createClient } from '@/lib/supabase/client'
+import { logout } from '@/app/(auth)/actions'
 import { cn } from '@/lib/utils'
 import { getRoleLabel } from '@/lib/permissions'
 
@@ -29,7 +28,6 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user, collapsed = false }: UserMenuProps) {
-  const router = useRouter()
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   const displayName = user.full_name || user.email
@@ -40,9 +38,7 @@ export function UserMenu({ user, collapsed = false }: UserMenuProps) {
 
     setIsSigningOut(true)
     try {
-      const supabase = createClient()
-      await supabase.auth.signOut()
-      router.push('/login')
+      await logout()
     } catch (error) {
       console.error('Sign out error:', error)
       setIsSigningOut(false)

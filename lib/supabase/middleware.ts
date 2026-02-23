@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { env } from '@/lib/env'
+import { SUPABASE_COOKIE_OPTIONS } from '@/lib/supabase/cookie-options'
 import type { User } from '@supabase/supabase-js'
 
 function inferCompanyNameFromEmail(email: string): string {
@@ -146,6 +147,7 @@ export async function updateSession(
           )
         },
       },
+      cookieOptions: SUPABASE_COOKIE_OPTIONS,
     }
   )
 

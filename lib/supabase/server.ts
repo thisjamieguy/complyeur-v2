@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { env } from '@/lib/env'
+import { SUPABASE_COOKIE_OPTIONS } from '@/lib/supabase/cookie-options'
 import type { Database } from '@/types/database'
 
 export async function createClient() {
@@ -25,6 +26,7 @@ export async function createClient() {
           }
         },
       },
+      cookieOptions: SUPABASE_COOKIE_OPTIONS,
     }
   )
 }
