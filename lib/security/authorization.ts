@@ -23,7 +23,7 @@ export type AuthGuardFailure = {
   allowed: false
   status: number
   error: string
-  mfaReason?: 'enroll' | 'verify'
+  mfaReason?: 'enroll' | 'verify' | 'backup_codes'
 }
 
 export type AuthGuardResult = AuthGuardSuccess | AuthGuardFailure
@@ -60,9 +60,14 @@ async function enforceMfaIfRequired(
   })
   if (mfa.ok) return null
 
+  const message =
+    mfa.reason === 'backup_codes'
+      ? 'Backup codes are required. Generate and save backup recovery codes to continue.'
+      : 'MFA required. Complete setup or verification to continue.'
+
   return {
     status: 403,
-    error: 'MFA required. Complete setup or verification to continue.',
+    error: message,
     mfaReason: mfa.reason,
   }
 }

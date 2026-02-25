@@ -14,7 +14,7 @@ export type MfaStatus = {
 
 export type MfaEnforcementResult =
   | { ok: true }
-  | { ok: false; reason: 'enroll' | 'verify' }
+  | { ok: false; reason: 'enroll' | 'verify' | 'backup_codes' }
 
 export function hashSecret(value: string): string {
   return createHash('sha256').update(value).digest('hex')
@@ -51,7 +51,10 @@ export async function getMfaStatusForUser(
     }
   }
 
-  const hasVerifiedFactor = assurance.nextLevel === 'aal2'
+  const { data: factorsData } = await supabase.auth.mfa.listFactors()
+  const hasVerifiedFactor = Boolean(
+    factorsData?.all?.some((factor) => factor.status === 'verified')
+  )
   const backupSessionValid = await hasValidBackupSession(supabase, userId, hasVerifiedFactor)
 
   return {
@@ -67,9 +70,11 @@ export async function enforceMfaForPrivilegedUser(
   userId: string,
   context: MfaEnforcementContext = {}
 ): Promise<MfaEnforcementResult> {
+  // Keep local/dev behavior aligned with production by default.
+  // MFA bypass is only allowed for explicitly tagged automated test runs.
   const bypassMfaForE2E =
-    process.env.NODE_ENV !== 'production' &&
-    process.env.DISABLE_MFA_FOR_E2E === 'true'
+    process.env.DISABLE_MFA_FOR_E2E === 'true' &&
+    process.env.MFA_BYPASS_CONTEXT === 'playwright'
 
   if (bypassMfaForE2E) {
     return { ok: true }
@@ -104,11 +109,21 @@ export async function enforceMfaForPrivilegedUser(
     return { ok: false, reason: 'enroll' }
   }
 
-  if (status.currentLevel === 'aal2' || status.backupSessionValid) {
-    return { ok: true }
+  if (status.currentLevel !== 'aal2' && !status.backupSessionValid) {
+    return { ok: false, reason: 'verify' }
   }
 
-  return { ok: false, reason: 'verify' }
+  const { count: remainingBackupCodes, error: backupCodeCountError } = await supabase
+    .from('mfa_backup_codes')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .is('used_at', null)
+
+  if (backupCodeCountError || !remainingBackupCodes || remainingBackupCodes < 1) {
+    return { ok: false, reason: 'backup_codes' }
+  }
+
+  return { ok: true }
 }
 
 export async function setBackupSessionCookie(token: string): Promise<void> {

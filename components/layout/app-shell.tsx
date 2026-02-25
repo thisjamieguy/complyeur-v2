@@ -8,6 +8,7 @@ import { Sidebar } from './sidebar'
 import { MobileNav } from '@/components/navigation/mobile-nav'
 import { KeyboardShortcuts } from '@/components/navigation/keyboard-shortcuts'
 import { ShortcutHelpDialog } from '@/components/navigation/shortcut-help-dialog'
+import { MfaBackupCodesWarning } from '@/components/mfa/mfa-backup-codes-warning'
 import { Footer } from './footer'
 import type { UserMenuUser } from './user-menu'
 import { cn } from '@/lib/utils'
@@ -29,7 +30,7 @@ function AppShellContent({ children, user }: AppShellProps) {
 
       {/* Mobile Header - visible below 1024px */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-16 items-center gap-3 border-b border-brand-100 bg-white px-4">
-        <MobileNav />
+        <MobileNav user={user} />
         <Link href="/dashboard" className="flex items-center gap-3">
           <Image
             src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
@@ -68,6 +69,7 @@ export function AppShell({ children, user }: AppShellProps) {
     <SidebarProvider>
       <KeyboardShortcuts />
       <ShortcutHelpDialog />
+      <MfaBackupCodesWarning />
       <AppShellContent user={user}>{children}</AppShellContent>
     </SidebarProvider>
   )

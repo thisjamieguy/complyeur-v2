@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { MessageSquarePlus, PanelLeftClose, PanelLeft } from 'lucide-react'
+import { MessageSquarePlus, PanelLeftClose, PanelLeft, Shield } from 'lucide-react'
 import { navSections } from '@/components/navigation/nav-items'
 import { FeedbackDialog } from '@/components/feedback/feedback-dialog'
 import { useSidebar } from '@/contexts/sidebar-context'
@@ -17,6 +17,36 @@ interface SidebarProps {
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
   const { isOpen, toggle } = useSidebar()
+  const canAccessItem = (href: string): boolean => {
+    if (href === '/calendar') return user.canAccessCalendar === true
+    if (href === '/trip-forecast') return user.canAccessForecast === true
+    if (href === '/admin') return user.canAccessAdminPanel === true
+    return true
+  }
+
+  const sections = navSections.map((section) => {
+    const baseItems = section.items.filter((item) => canAccessItem(item.href))
+    if (section.title !== 'System' || !user.canAccessAdminPanel) {
+      return {
+        ...section,
+        items: baseItems,
+      }
+    }
+
+    return {
+      ...section,
+      items: [
+        ...baseItems,
+        {
+          href: '/admin',
+          label: 'Admin',
+          icon: Shield,
+          section: 'System' as const,
+        },
+      ],
+    }
+  })
+  const visibleSections = sections.filter((section) => section.items.length > 0)
 
   return (
     <aside
@@ -55,7 +85,7 @@ export function Sidebar({ user }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3">
-        {navSections.map((section) => (
+        {visibleSections.map((section) => (
           <div key={section.title} className="mb-6">
             {isOpen && (
               <h3 className="px-3 mb-2 text-xs font-semibold text-brand-400 uppercase tracking-wider">

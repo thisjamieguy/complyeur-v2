@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Menu, MessageSquarePlus } from 'lucide-react'
+import { Menu, MessageSquarePlus, Shield } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -16,10 +16,33 @@ import { FeedbackDialog } from '@/components/feedback/feedback-dialog'
 import { navItems } from '@/components/navigation/nav-items'
 import { useSidebar } from '@/contexts/sidebar-context'
 import { cn } from '@/lib/utils'
+import type { UserMenuUser } from '@/components/layout/user-menu'
 
-export function MobileNav() {
+interface MobileNavProps {
+  user?: UserMenuUser
+}
+
+export function MobileNav({ user }: MobileNavProps) {
   const pathname = usePathname()
   const { isMobileOpen, toggleMobile, closeMobile } = useSidebar()
+  const canAccessItem = (href: string): boolean => {
+    if (href === '/calendar') return user?.canAccessCalendar === true
+    if (href === '/trip-forecast') return user?.canAccessForecast === true
+    if (href === '/admin') return user?.canAccessAdminPanel === true
+    return true
+  }
+  const baseItems = navItems.filter((item) => canAccessItem(item.href))
+  const items = user?.canAccessAdminPanel
+    ? [
+        ...baseItems,
+        {
+          href: '/admin',
+          label: 'Admin',
+          icon: Shield,
+          section: 'System' as const,
+        },
+      ]
+    : baseItems
 
   // Close on route change
   useEffect(() => {
@@ -56,7 +79,7 @@ export function MobileNav() {
           </SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col p-2">
-          {navItems.map((item) => {
+          {items.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
 

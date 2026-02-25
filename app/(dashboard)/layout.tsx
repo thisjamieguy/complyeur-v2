@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
+import { isSuperAdminEmail } from '@/lib/admin/superadmin'
+import { checkEntitlement } from '@/lib/billing/entitlements'
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/layout/app-shell'
 import { DataRefreshHandler } from '@/components/data-refresh-handler'
@@ -17,7 +19,7 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
-  const [mfa, { data: profile, error: profileError }] = await Promise.all([
+  const [mfa, { data: profile, error: profileError }, canAccessCalendar, canAccessForecast] = await Promise.all([
     enforceMfaForPrivilegedUser(supabase, user.id, {
       userEmail: user.email,
     }),
@@ -26,6 +28,8 @@ export default async function DashboardLayout({
       .select('role, is_superadmin, first_name, last_name')
       .eq('id', user.id)
       .single(),
+    checkEntitlement('can_calendar'),
+    checkEntitlement('can_forecast'),
   ])
 
   if (!mfa.ok) {
@@ -50,6 +54,9 @@ export default async function DashboardLayout({
     email: user.email ?? '',
     full_name: derivedFullName || null,
     role: profile?.role ?? null,
+    canAccessAdminPanel: isSuperAdminEmail(user.email),
+    canAccessCalendar,
+    canAccessForecast,
   }
 
   return (

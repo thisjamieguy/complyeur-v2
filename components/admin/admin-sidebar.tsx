@@ -9,6 +9,7 @@ import {
   Layers,
   Activity,
   Settings,
+  BarChart3,
   ArrowLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -17,6 +18,7 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Companies', href: '/admin/companies', icon: Building2 },
   { name: 'Tiers', href: '/admin/tiers', icon: Layers },
+  { name: 'Metrics', href: '/admin/metrics', icon: BarChart3 },
   { name: 'Activity', href: '/admin/activity', icon: Activity },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]

@@ -1,12 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
-
-const ADMIN_PANEL_ALLOWED_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
-
-function normalizeEmail(email: string | null | undefined): string {
-  return (email ?? '').trim().toLowerCase()
-}
+import { isSuperAdminEmail } from '@/lib/admin/superadmin'
 
 function deriveAdminName(user: {
   email?: string | null
@@ -44,26 +39,26 @@ export async function requireSuperAdmin() {
     redirect('/login?redirect=/admin')
   }
 
-  if (!ADMIN_PANEL_ALLOWED_EMAILS.includes(normalizeEmail(user.email))) {
+  const emailAllowed = isSuperAdminEmail(user.email)
+  if (!emailAllowed) {
     redirect('/dashboard')
   }
 
-  // Check superadmin status
-  // Note: is_superadmin column is added by the admin panel migration
+  // Check superadmin status if profile exists; allow approved superadmin emails
+  // even when the profile flag has not yet been backfilled.
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('is_superadmin')
     .eq('id', user.id)
     .single()
 
-  if (profileError || !profile?.is_superadmin) {
-    // Silent redirect - don't reveal admin panel exists
-    redirect('/dashboard')
+  if (profileError) {
+    console.error('[requireSuperAdmin] Failed to fetch profile flag:', profileError.message)
   }
 
   const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, {
     userEmail: user.email,
-    isSuperadmin: profile.is_superadmin,
+    isSuperadmin: profile?.is_superadmin ?? emailAllowed,
   })
   if (!mfa.ok) {
     redirect('/mfa')
@@ -72,7 +67,7 @@ export async function requireSuperAdmin() {
   return {
     user,
     profile: {
-      is_superadmin: true,
+      is_superadmin: profile?.is_superadmin ?? emailAllowed,
       full_name: deriveAdminName(user),
     },
   }

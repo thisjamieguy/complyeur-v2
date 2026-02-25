@@ -20,6 +20,9 @@ export interface UserMenuUser {
   email: string
   full_name?: string | null
   role?: string | null
+  canAccessAdminPanel?: boolean
+  canAccessCalendar?: boolean
+  canAccessForecast?: boolean
 }
 
 interface UserMenuProps {

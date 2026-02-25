@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Building2,
   Layers,
+  BarChart3,
   Activity,
   Settings,
 } from 'lucide-react'
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Companies', href: '/admin/companies', icon: Building2 },
   { name: 'Tiers', href: '/admin/tiers', icon: Layers },
+  { name: 'Metrics', href: '/admin/metrics', icon: BarChart3 },
   { name: 'Activity', href: '/admin/activity', icon: Activity },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]
@@ -139,6 +141,12 @@ export function AdminHeader({ user, adminName }: AdminHeaderProps) {
 
       {/* User info */}
       <div className="flex items-center gap-x-4 lg:gap-x-6">
+        <Button asChild variant="outline" size="sm" className="h-9">
+          <Link href="/dashboard" className="inline-flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Back to App</span>
+          </Link>
+        </Button>
         <div className="hidden sm:block">
           <p className="text-sm font-medium text-slate-900">
             {adminName || 'Admin'}

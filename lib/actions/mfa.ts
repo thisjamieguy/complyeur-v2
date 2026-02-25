@@ -11,6 +11,7 @@ import {
 type MfaStatusResult =
   | {
       success: true
+      userId: string
       currentLevel: 'aal1' | 'aal2' | null
       nextLevel: 'aal1' | 'aal2' | null
       hasVerifiedFactor: boolean
@@ -43,6 +44,7 @@ export async function getMfaStatusAction(): Promise<MfaStatusResult> {
 
   return {
     success: true,
+    userId: user.id,
     currentLevel: status.currentLevel,
     nextLevel: status.nextLevel,
     hasVerifiedFactor: status.hasVerifiedFactor,
@@ -64,15 +66,20 @@ export async function enrollTotpAction(): Promise<EnrollResult> {
   }
 
   const { data: factors } = await supabase.auth.mfa.listFactors()
-  if (factors?.totp && factors.totp.length > 0) {
+  const hasVerifiedTotpFactor = Boolean(
+    factors?.all?.some((factor) => factor.factor_type === 'totp' && factor.status === 'verified')
+  )
+
+  if (hasVerifiedTotpFactor) {
     return { success: false, error: 'MFA already enrolled' }
   }
 
-  const unverifiedTotp = factors?.all?.find(
+  const unverifiedTotpFactors = factors?.all?.filter(
     (factor) => factor.factor_type === 'totp' && factor.status === 'unverified'
   )
-  if (unverifiedTotp) {
-    await supabase.auth.mfa.unenroll({ factorId: unverifiedTotp.id })
+
+  for (const unverifiedFactor of unverifiedTotpFactors ?? []) {
+    await supabase.auth.mfa.unenroll({ factorId: unverifiedFactor.id })
   }
 
   const { data, error } = await supabase.auth.mfa.enroll({
@@ -99,6 +106,8 @@ type VerifyResult =
   | { success: true }
   | { success: false; error: string }
 
+type MfaProofMethod = 'totp' | 'backup'
+
 export async function verifyTotpAction(factorId: string, code: string): Promise<VerifyResult> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -122,11 +131,22 @@ export async function verifyTotpAction(factorId: string, code: string): Promise<
   return { success: true }
 }
 
-export async function unenrollTotpAction(): Promise<VerifyResult> {
+export async function unenrollTotpAction(
+  method: MfaProofMethod,
+  code: string
+): Promise<VerifyResult> {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  if (method !== 'totp' && method !== 'backup') {
+    return { success: false, error: 'Invalid MFA verification method' }
+  }
+
+  if (!code?.trim()) {
+    return { success: false, error: 'Enter a verification code to reset MFA' }
   }
 
   const { data: factors } = await supabase.auth.mfa.listFactors()
@@ -137,6 +157,27 @@ export async function unenrollTotpAction(): Promise<VerifyResult> {
 
   if (!totpFactor) {
     return { success: false, error: 'No TOTP factor found' }
+  }
+
+  if (method === 'totp') {
+    const { error: challengeError } = await supabase.auth.mfa.challengeAndVerify({
+      factorId: totpFactor.id,
+      code: code.replace(/\s/g, ''),
+    })
+
+    if (challengeError) {
+      return { success: false, error: challengeError.message }
+    }
+  } else {
+    const redeemedBackupCode = await redeemBackupCode(supabase, user.id, code)
+    if (!redeemedBackupCode.success) {
+      return redeemedBackupCode
+    }
+  }
+
+  const recoveryCleanup = await clearMfaRecoveryData(supabase, user.id)
+  if (!recoveryCleanup.success) {
+    return recoveryCleanup
   }
 
   const { error } = await supabase.auth.mfa.unenroll({ factorId: totpFactor.id })
@@ -157,6 +198,63 @@ const BACKUP_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
 function normalizeBackupCode(value: string): string {
   return value.replace(/[^A-Z0-9]/gi, '').toUpperCase()
+}
+
+async function redeemBackupCode(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  code: string
+): Promise<VerifyResult> {
+  const normalized = normalizeBackupCode(code)
+  if (normalized.length !== BACKUP_CODE_LENGTH) {
+    return { success: false, error: 'Invalid backup code' }
+  }
+
+  const codeHash = hashSecret(normalized)
+  const { data: record, error } = await supabase
+    .from('mfa_backup_codes')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('code_hash', codeHash)
+    .is('used_at', null)
+    .maybeSingle()
+
+  if (error || !record) {
+    return { success: false, error: 'Invalid or already used backup code' }
+  }
+
+  const { data: redeemedRecord, error: updateError } = await supabase
+    .from('mfa_backup_codes')
+    .update({ used_at: new Date().toISOString() })
+    .eq('id', record.id)
+    .is('used_at', null)
+    .select('id')
+    .maybeSingle()
+
+  if (updateError || !redeemedRecord) {
+    return { success: false, error: 'Invalid or already used backup code' }
+  }
+
+  return { success: true }
+}
+
+async function clearMfaRecoveryData(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<VerifyResult> {
+  const [codesDelete, sessionsDelete] = await Promise.all([
+    supabase.from('mfa_backup_codes').delete().eq('user_id', userId),
+    supabase.from('mfa_backup_sessions').delete().eq('user_id', userId),
+  ])
+
+  if (codesDelete.error || sessionsDelete.error) {
+    return {
+      success: false,
+      error: 'Failed to clear existing backup recovery data. Please retry.',
+    }
+  }
+
+  return { success: true }
 }
 
 function generateBackupCode(): string {
@@ -215,30 +313,9 @@ export async function verifyBackupCodeAction(code: string): Promise<VerifyBackup
     return { success: false, error: 'MFA not enrolled' }
   }
 
-  const normalized = normalizeBackupCode(code)
-  if (normalized.length !== BACKUP_CODE_LENGTH) {
-    return { success: false, error: 'Invalid backup code' }
-  }
-
-  const codeHash = hashSecret(normalized)
-  const { data: record, error } = await supabase
-    .from('mfa_backup_codes')
-    .select('id, used_at')
-    .eq('user_id', user.id)
-    .eq('code_hash', codeHash)
-    .single()
-
-  if (error || !record || record.used_at) {
-    return { success: false, error: 'Invalid or already used backup code' }
-  }
-
-  const { error: updateError } = await supabase
-    .from('mfa_backup_codes')
-    .update({ used_at: new Date().toISOString() })
-    .eq('id', record.id)
-
-  if (updateError) {
-    return { success: false, error: 'Failed to redeem backup code' }
+  const redeemedBackupCode = await redeemBackupCode(supabase, user.id, code)
+  if (!redeemedBackupCode.success) {
+    return redeemedBackupCode
   }
 
   const sessionToken = randomBytes(32).toString('hex')
