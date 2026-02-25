@@ -73,15 +73,15 @@ const faqData: FAQSection[] = [
             </p>
             <p>
               <span className="inline-block w-3 h-3 rounded-full bg-green-500 mr-2" />
-              <strong>Green (Compliant):</strong> 0-60 days used. Safe to travel.
+              <strong>Green (Compliant):</strong> 0-68 days used. Safe to travel.
             </p>
             <p>
               <span className="inline-block w-3 h-3 rounded-full bg-amber-500 mr-2" />
-              <strong>Amber (At Risk):</strong> 61-75 days used. Plan travel carefully.
+              <strong>Amber (At Risk):</strong> 69-82 days used. Plan travel carefully.
             </p>
             <p>
               <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-2" />
-              <strong>Red (Non-Compliant):</strong> 76-89 days used. Approaching the limit.
+              <strong>Red (High Risk):</strong> 83-89 days used. Approaching the limit.
             </p>
             <p>
               <span className="inline-block w-3 h-3 rounded-full bg-slate-900 mr-2" />

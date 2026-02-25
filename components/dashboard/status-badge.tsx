@@ -30,7 +30,7 @@ const statusConfig = {
     text: 'text-rose-800',
     border: 'border-rose-300',
     dot: 'bg-rose-600',
-    label: 'Non-Compliant',
+    label: 'High Risk',
   },
   breach: {
     bg: 'bg-brand-800',
@@ -50,7 +50,7 @@ const statusConfig = {
 
 /**
  * Status badge component displaying compliance risk level.
- * Uses color coding: green (compliant), amber (at-risk), red (non-compliant), breach (90+ days, black).
+ * Uses color coding: green (compliant), amber (at-risk), red (high risk), breach (90+ days, black).
  */
 export function StatusBadge({
   status,

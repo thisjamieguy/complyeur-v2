@@ -43,7 +43,7 @@ const FilterButton = memo(function FilterButton({ filter, label, count, isActive
 
 /**
  * Status filter buttons for the dashboard.
- * Allows filtering employees by compliance status: All, Compliant, At Risk, Non-Compliant, Breach.
+ * Allows filtering employees by compliance status: All, Compliant, At Risk, High Risk, Breach.
  */
 export const StatusFilters = memo(function StatusFilters({
   activeFilter,
@@ -54,7 +54,7 @@ export const StatusFilters = memo(function StatusFilters({
     { filter: 'all', label: 'All', count: stats.total },
     { filter: 'green', label: 'Compliant', count: stats.compliant },
     { filter: 'amber', label: 'At Risk', count: stats.at_risk },
-    { filter: 'red', label: 'Non-Compliant', count: stats.non_compliant },
+    { filter: 'red', label: 'High Risk', count: stats.non_compliant },
     { filter: 'breach', label: 'Breach', count: stats.breach },
     ...(stats.exempt > 0
       ? [{ filter: 'exempt' as StatusFilter, label: 'Exempt', count: stats.exempt }]

@@ -9,7 +9,7 @@ export function DashboardStatusLegend() {
       <div className="flex flex-wrap items-center gap-2">
         <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-100">Compliant</Badge>
         <Badge className="bg-amber-100 text-amber-800 border-amber-400 hover:bg-amber-100">At Risk</Badge>
-        <Badge className="bg-rose-100 text-rose-800 border-rose-300 hover:bg-rose-100">Non-Compliant</Badge>
+        <Badge className="bg-rose-100 text-rose-800 border-rose-300 hover:bg-rose-100">High Risk</Badge>
         <Badge className="bg-brand-800 text-white border-brand-800 hover:bg-brand-800">Breach</Badge>
         <Badge className="bg-brand-100 text-brand-800 border-brand-300 hover:bg-brand-100">Exempt</Badge>
       </div>

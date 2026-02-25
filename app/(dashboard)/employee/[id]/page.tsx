@@ -19,8 +19,9 @@ const BulkAddTripsModal = dynamic(
 )
 import { isSchengenCountry } from '@/lib/constants/schengen-countries'
 import { isExemptFromTracking, NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
-import { calculateCompliance, parseDateOnlyAsUTC, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'
+import { calculateCompliance, getStatusFromDaysUsed, parseDateOnlyAsUTC, type Trip as ComplianceTrip, type RiskLevel } from '@/lib/compliance'
 import { toUTCMidnight } from '@/lib/compliance/date-utils'
+import { getCompanySettings } from '@/lib/actions/settings'
 
 interface EmployeeDetailPageProps {
   params: Promise<{ id: string }>
@@ -49,32 +50,36 @@ function toComplianceTrip(trip: { entry_date: string; exit_date: string; country
 /**
  * Get badge styling based on risk level
  */
-function getStatusBadgeProps(riskLevel: RiskLevel, isCompliant: boolean): {
+function getStatusBadgeProps(status: RiskLevel | 'exempt'): {
   label: string
   className: string
 } {
-  if (!isCompliant) {
-    return {
-      label: 'Violation',
-      className: 'bg-red-100 text-red-800 border-red-200',
-    }
-  }
-  switch (riskLevel) {
+  switch (status) {
+    case 'breach':
+      return {
+        label: 'Breach',
+        className: 'bg-slate-900 text-white border-slate-900',
+      }
     case 'red':
       return {
-        label: 'Critical',
-        className: 'bg-red-100 text-red-800 border-red-200',
+        label: 'High Risk',
+        className: 'bg-rose-100 text-rose-800 border-rose-300',
       }
     case 'amber':
       return {
-        label: 'Warning',
+        label: 'At Risk',
         className: 'bg-amber-100 text-amber-800 border-amber-200',
+      }
+    case 'exempt':
+      return {
+        label: 'Exempt',
+        className: 'bg-blue-50 text-blue-700 border-blue-200',
       }
     case 'green':
     default:
       return {
         label: 'Compliant',
-        className: 'bg-green-100 text-green-800 border-green-200',
+        className: 'bg-emerald-100 text-emerald-800 border-emerald-300',
       }
   }
 }
@@ -127,9 +132,10 @@ async function TripSection({
 export default async function EmployeeDetailPage({ params }: EmployeeDetailPageProps) {
   const { id } = await params
   // Fetch employee first (single row by PK — fast) and trips in parallel
-  const [employee, trips] = await Promise.all([
+  const [employee, trips, settings] = await Promise.all([
     getEmployeeById(id),
     getTripsByEmployeeId(id),
+    getCompanySettings(),
   ])
 
   if (!employee) {
@@ -156,12 +162,22 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
   // Calculate compliance using the compliance engine (rolling 180-day window)
   // Skip for exempt employees
   const complianceTrips = schengenTrips.map(toComplianceTrip)
-  const complianceResult = !exempt && schengenTrips.length > 0
+  const complianceResult = !exempt
     ? calculateCompliance(complianceTrips, {
         mode: 'audit',
         referenceDate: toUTCMidnight(new Date()),
       })
     : null
+
+  const detailStatus = exempt
+    ? 'exempt'
+    : complianceResult
+      ? getStatusFromDaysUsed(complianceResult.daysUsed, {
+          greenMax: settings?.status_green_max ?? 68,
+          amberMax: settings?.status_amber_max ?? 82,
+          redMax: settings?.status_red_max ?? 89,
+        })
+      : null
 
   return (
     <div className="space-y-6">
@@ -202,12 +218,12 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500">Status</span>
-                  {complianceResult ? (
+                  {detailStatus ? (
                     <Badge
                       variant="outline"
-                      className={getStatusBadgeProps(complianceResult.riskLevel, complianceResult.isCompliant).className}
+                      className={getStatusBadgeProps(detailStatus).className}
                     >
-                      {getStatusBadgeProps(complianceResult.riskLevel, complianceResult.isCompliant).label}
+                      {getStatusBadgeProps(detailStatus).label}
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="bg-gray-100 text-gray-600 border-gray-200">

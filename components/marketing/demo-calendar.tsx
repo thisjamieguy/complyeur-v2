@@ -423,7 +423,7 @@ export function DemoCalendar({
         </div>
         <div className="flex items-center gap-1.5">
           <div className="h-3 w-3 rounded-sm bg-red-500" />
-          <span className="text-xs text-slate-600">Non-Compliant</span>
+          <span className="text-xs text-slate-600">High Risk</span>
         </div>
       </div>
     </div>

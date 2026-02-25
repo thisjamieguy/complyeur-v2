@@ -123,8 +123,8 @@ function validateStatusThresholds(thresholds: StatusThresholds): void {
  * Determines the status level based on days used (days used paradigm).
  *
  * Status levels:
- * - green: daysUsed <= greenMax (default 60)
- * - amber: daysUsed <= amberMax (default 75)
+ * - green: daysUsed <= greenMax (default 68)
+ * - amber: daysUsed <= amberMax (default 82)
  * - red: daysUsed <= redMax (default 89)
  * - breach: daysUsed >= 90 (always, regardless of settings)
  *
@@ -137,7 +137,7 @@ function validateStatusThresholds(thresholds: StatusThresholds): void {
  * @example
  * getStatusFromDaysUsed(45)  // 'green'
  * getStatusFromDaysUsed(65)  // 'amber'
- * getStatusFromDaysUsed(80)  // 'red'
+ * getStatusFromDaysUsed(85)  // 'red'
  * getStatusFromDaysUsed(92)  // 'breach'
  */
 export function getStatusFromDaysUsed(

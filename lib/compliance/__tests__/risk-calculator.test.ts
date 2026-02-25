@@ -91,22 +91,22 @@ describe('getRiskLevel', () => {
 
 describe('getStatusFromDaysUsed', () => {
   describe('default thresholds', () => {
-    // Default: greenMax: 60, amberMax: 75, redMax: 89
-    it('returns green for 0-60 days used', () => {
+    // Default: greenMax: 68, amberMax: 82, redMax: 89
+    it('returns green for 0-68 days used', () => {
       expect(getStatusFromDaysUsed(0)).toBe('green');
       expect(getStatusFromDaysUsed(30)).toBe('green');
-      expect(getStatusFromDaysUsed(60)).toBe('green');
+      expect(getStatusFromDaysUsed(68)).toBe('green');
     });
 
-    it('returns amber for 61-75 days used', () => {
-      expect(getStatusFromDaysUsed(61)).toBe('amber');
+    it('returns amber for 69-82 days used', () => {
+      expect(getStatusFromDaysUsed(69)).toBe('amber');
       expect(getStatusFromDaysUsed(70)).toBe('amber');
-      expect(getStatusFromDaysUsed(75)).toBe('amber');
+      expect(getStatusFromDaysUsed(82)).toBe('amber');
     });
 
-    it('returns red for 76-89 days used', () => {
-      expect(getStatusFromDaysUsed(76)).toBe('red');
-      expect(getStatusFromDaysUsed(80)).toBe('red');
+    it('returns red for 83-89 days used', () => {
+      expect(getStatusFromDaysUsed(83)).toBe('red');
+      expect(getStatusFromDaysUsed(85)).toBe('red');
       expect(getStatusFromDaysUsed(89)).toBe('red');
     });
 
@@ -119,14 +119,14 @@ describe('getStatusFromDaysUsed', () => {
   });
 
   describe('threshold boundaries', () => {
-    it('green/amber boundary at 60/61', () => {
-      expect(getStatusFromDaysUsed(60)).toBe('green');
-      expect(getStatusFromDaysUsed(61)).toBe('amber');
+    it('green/amber boundary at 68/69', () => {
+      expect(getStatusFromDaysUsed(68)).toBe('green');
+      expect(getStatusFromDaysUsed(69)).toBe('amber');
     });
 
-    it('amber/red boundary at 75/76', () => {
-      expect(getStatusFromDaysUsed(75)).toBe('amber');
-      expect(getStatusFromDaysUsed(76)).toBe('red');
+    it('amber/red boundary at 82/83', () => {
+      expect(getStatusFromDaysUsed(82)).toBe('amber');
+      expect(getStatusFromDaysUsed(83)).toBe('red');
     });
 
     it('red/breach boundary at 89/90 (non-configurable)', () => {

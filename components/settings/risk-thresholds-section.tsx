@@ -111,7 +111,7 @@ export function RiskThresholdsSection({ disabled }: RiskThresholdsSectionProps) 
             <FormItem>
               <div className="flex items-center gap-3">
                 <div className="h-4 w-4 rounded-full bg-red-500" />
-                <FormLabel className="mb-0">Red (Non-Compliant)</FormLabel>
+                <FormLabel className="mb-0">Red (High Risk)</FormLabel>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Days used &le;</span>
@@ -128,7 +128,7 @@ export function RiskThresholdsSection({ disabled }: RiskThresholdsSectionProps) 
                 </FormControl>
               </div>
               <FormDescription>
-                Employees with {amberMax + 1}-{redMax} days used show as Non-Compliant (red).
+                Employees with {amberMax + 1}-{redMax} days used show as High Risk (red).
               </FormDescription>
               <FormMessage />
             </FormItem>

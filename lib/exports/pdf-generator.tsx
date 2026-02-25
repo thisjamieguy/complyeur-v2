@@ -297,7 +297,7 @@ function SummaryStats({ summary }: { summary: ComplianceSummary }) {
         </Text>
       </View>
       <View style={[styles.summaryBox, styles.summaryBoxLast]}>
-        <Text style={styles.summaryLabel}>Non-Compliant</Text>
+        <Text style={styles.summaryLabel}>High Risk</Text>
         <Text style={[styles.summaryValue, { color: COLORS.red.text }]}>
           {summary.nonCompliantCount}
         </Text>
@@ -613,7 +613,7 @@ export async function generateSummaryPdf(
     totalEmployees: employees.length,
     compliantCount: employees.filter((e) => e.status === 'Compliant').length,
     atRiskCount: employees.filter((e) => e.status === 'At Risk').length,
-    nonCompliantCount: employees.filter((e) => e.status === 'Non-Compliant').length,
+    nonCompliantCount: employees.filter((e) => e.status === 'High Risk').length,
     compliancePercentage:
       employees.length > 0
         ? Math.round(

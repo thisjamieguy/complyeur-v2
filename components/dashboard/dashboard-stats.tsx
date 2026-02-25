@@ -36,7 +36,7 @@ function StatCard({ title, value, icon: Icon, iconBgColor, iconColor, accentBord
 
 /**
  * Dashboard summary statistics cards showing employee compliance breakdown.
- * Displays: Total employees, Compliant (green), At Risk (amber), Non-Compliant (red), Breach (black)
+ * Displays: Total employees, Compliant (green), At Risk (amber), High Risk (red), Breach (black)
  */
 export function DashboardStats({ stats }: DashboardStatsProps) {
   const hasExempt = stats.exempt > 0
@@ -71,7 +71,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
         accentBorder="border-l-amber-500"
       />
       <StatCard
-        title="Non-Compliant"
+        title="High Risk"
         value={stats.non_compliant}
         icon={XCircle}
         iconBgColor="bg-rose-100"

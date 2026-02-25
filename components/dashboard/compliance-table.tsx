@@ -67,6 +67,24 @@ function formatDate(dateString: string | null): string {
   })
 }
 
+function getDaysRemainingClassName(
+  riskLevel: EmployeeCompliance['risk_level']
+): string {
+  switch (riskLevel) {
+    case 'green':
+      return 'text-emerald-600'
+    case 'amber':
+      return 'text-amber-600'
+    case 'red':
+      return 'text-rose-600'
+    case 'breach':
+      return 'text-slate-900'
+    case 'exempt':
+    default:
+      return 'text-brand-500'
+  }
+}
+
 /**
  * Calculate compliance statistics from employee data
  */
@@ -134,7 +152,7 @@ const EmployeeCard = memo(function EmployeeCard({
               <span
                 className={cn(
                   'ml-2 font-medium',
-                  employee.days_remaining < 0 && 'text-rose-600'
+                  getDaysRemainingClassName(employee.risk_level)
                 )}
               >
                 {employee.days_remaining}
@@ -422,11 +440,7 @@ export function ComplianceTable({
                         <span
                           className={cn(
                             'font-medium',
-                            employee.days_remaining >= 30 && 'text-emerald-600',
-                            employee.days_remaining >= 10 &&
-                              employee.days_remaining < 30 &&
-                              'text-amber-600',
-                            employee.days_remaining < 10 && 'text-rose-600'
+                            getDaysRemainingClassName(employee.risk_level)
                           )}
                         >
                           {employee.days_remaining} days

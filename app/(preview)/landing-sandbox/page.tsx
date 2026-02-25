@@ -418,7 +418,7 @@ export default function LandingSandboxPage() {
                   <p className="text-2xl font-semibold text-amber-600">{dashboardPreview.atRisk}</p>
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <p className="text-xs text-slate-500">Non-Compliant</p>
+                  <p className="text-xs text-slate-500">High Risk</p>
                   <p className="text-2xl font-semibold text-red-600">{dashboardPreview.nonCompliant}</p>
                 </div>
               </div>
@@ -426,7 +426,7 @@ export default function LandingSandboxPage() {
               <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
                 <p className="text-sm font-semibold text-red-700">
                   {dashboardPreview.latestRisk === 'red'
-                    ? 'Warning triggered instantly: newest trip is non-compliant.'
+                    ? 'Warning triggered instantly: newest trip is high risk.'
                     : 'Waiting for trigger trip...'}
                 </p>
                 {dashboardPreview.latestTrip && (

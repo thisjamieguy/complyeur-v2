@@ -11,7 +11,7 @@ import type { ForecastRiskLevel } from '@/types/forecast'
 /**
  * Employee compliance status for export display.
  */
-export type ComplianceStatus = 'Compliant' | 'At Risk' | 'Non-Compliant' | 'Breach'
+export type ComplianceStatus = 'Compliant' | 'At Risk' | 'High Risk' | 'Breach'
 
 /**
  * Future alert status for export display.
@@ -128,7 +128,7 @@ export interface ComplianceSummary {
   compliantCount: number
   /** Count of at-risk employees (amber status) */
   atRiskCount: number
-  /** Count of non-compliant employees (red status) */
+  /** Count of high-risk employees (red status) */
   nonCompliantCount: number
   /** Compliance percentage */
   compliancePercentage: number
@@ -304,7 +304,7 @@ export function riskLevelToStatus(riskLevel: RiskLevel): ComplianceStatus {
     case 'amber':
       return 'At Risk'
     case 'red':
-      return 'Non-Compliant'
+      return 'High Risk'
     case 'breach':
       return 'Breach'
   }
@@ -321,7 +321,7 @@ export function statusToKey(
       return 'compliant'
     case 'At Risk':
       return 'at-risk'
-    case 'Non-Compliant':
+    case 'High Risk':
       return 'non-compliant'
     case 'Breach':
       return 'breach'

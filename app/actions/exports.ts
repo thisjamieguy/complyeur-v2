@@ -220,7 +220,7 @@ export async function exportComplianceData(
       const statusMap = {
         compliant: 'Compliant',
         'at-risk': 'At Risk',
-        'non-compliant': 'Non-Compliant',
+        'non-compliant': 'High Risk',
       } as const
       filteredData = exportData.filter(
         (e) => e.status === statusMap[validatedOptions.statusFilter!]

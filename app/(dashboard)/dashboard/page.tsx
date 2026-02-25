@@ -60,14 +60,14 @@ async function EmployeeComplianceList({
   // If company has custom thresholds that differ from defaults, re-fetch with them.
   // Most companies use defaults, so this branch is rarely taken.
   const hasCustomThresholds = settings &&
-    (settings.status_green_max !== 60 || settings.status_amber_max !== 75 || settings.status_red_max !== 89)
+    (settings.status_green_max !== 68 || settings.status_amber_max !== 82 || settings.status_red_max !== 89)
 
   const finalResult = hasCustomThresholds
     ? await getEmployeeComplianceDataPaginated(
         { page, pageSize: PAGE_SIZE, search: search || undefined, sort },
         {
-          greenMax: settings.status_green_max ?? 60,
-          amberMax: settings.status_amber_max ?? 75,
+          greenMax: settings.status_green_max ?? 68,
+          amberMax: settings.status_amber_max ?? 82,
           redMax: settings.status_red_max ?? 89,
         }
       )

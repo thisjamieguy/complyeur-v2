@@ -219,7 +219,7 @@ export const getEmployeesWithTrips = cache(async (): Promise<DbEmployee[]> => {
  * Uses React cache() for request-level deduplication.
  *
  * @param statusThresholds - Optional custom status thresholds (days used paradigm)
- *                          If not provided, uses defaults: green ≤60, amber ≤75, red ≤89, breach 90+
+ *                          If not provided, uses defaults: green ≤68, amber ≤82, red ≤89, breach 90+
  */
 export const getEmployeeComplianceData = cache(async (
   statusThresholds?: StatusThresholds

@@ -48,16 +48,16 @@ export const DEFAULT_RISK_THRESHOLDS: Readonly<RiskThresholds> = {
  * Default status thresholds (days used paradigm).
  * Used for dashboard status badge display.
  *
- * - green: 0-60 days used (Compliant)
- * - amber: 61-75 days used (At Risk)
- * - red: 76-89 days used (Non-Compliant)
+ * - green: 0-68 days used (Compliant)      => 22+ days remaining
+ * - amber: 69-82 days used (At Risk)       => 8-21 days remaining
+ * - red: 83-89 days used (High Risk)       => 1-7 days remaining
  * - breach: 90+ days used (always, regardless of settings)
  *
  * These thresholds are user-configurable via company settings.
  */
 export const DEFAULT_STATUS_THRESHOLDS: Readonly<StatusThresholds> = {
-  greenMax: 60,
-  amberMax: 75,
+  greenMax: 68,
+  amberMax: 82,
   redMax: 89,
 } as const;
 

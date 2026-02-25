@@ -40,7 +40,7 @@ const statusConfig = {
     text: 'text-red-700',
     border: 'border-red-200',
     dot: 'bg-red-500',
-    label: 'Non-Compliant',
+    label: 'High Risk',
   },
 } as const
 
@@ -173,7 +173,7 @@ export function DemoEmployeeList({ employees, highlightedEmployeeName }: DemoEmp
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-3">
           <div className="text-2xl font-bold text-red-600 transition-all duration-500">{nonCompliantCount}</div>
-          <div className="text-xs text-slate-500">Non-Compliant</div>
+          <div className="text-xs text-slate-500">High Risk</div>
         </div>
       </div>
 
