@@ -20,6 +20,15 @@ interface DayCellProps {
   dayWidth: number
   isWeekend: boolean
   isToday: boolean
+  isMonthStart: boolean
+  isInRollingWindow: boolean
+  isRollingWindowStart: boolean
+  isRollingWindowEnd: boolean
+  isRowHovered: boolean
+  isColumnHovered: boolean
+  isTripStart: boolean
+  isTripEnd: boolean
+  onHover: () => void
 }
 
 const schengenTripStyles = {
@@ -66,21 +75,42 @@ export const DayCell = memo(function DayCell({
   dayWidth,
   isWeekend,
   isToday,
+  isMonthStart,
+  isInRollingWindow,
+  isRollingWindowStart,
+  isRollingWindowEnd,
+  isRowHovered,
+  isColumnHovered,
+  isTripStart,
+  isTripEnd,
+  onHover,
 }: DayCellProps) {
-  const cellContent = trip
-    ? trip.isPrivate
+  const showCountryLabel = Boolean(trip && isTripStart)
+  const cellContent = showCountryLabel
+    ? trip?.isPrivate
       ? '--'
-      : trip.country
+      : trip?.country
     : null
 
   const baseCls = cn(
     'shrink-0 flex items-center justify-center border-r border-slate-100',
     // Empty cells
-    !trip && !isToday && !isWeekend && 'bg-white',
-    !trip && isWeekend && !isToday && 'bg-slate-50',
+    !trip && !isToday && !isWeekend && !isInRollingWindow && 'bg-white',
+    !trip && !isToday && !isWeekend && isInRollingWindow && 'bg-sky-50/40',
+    !trip && isWeekend && !isToday && !isInRollingWindow && 'bg-slate-50',
+    !trip && isWeekend && !isToday && isInRollingWindow && 'bg-sky-50/55',
     !trip && isToday && 'bg-blue-50',
+    !trip && isRowHovered && 'bg-slate-100/70',
+    !trip && isColumnHovered && 'bg-sky-100/55',
+    !trip && isRowHovered && isColumnHovered && 'bg-sky-100/75',
+    isMonthStart && 'border-l border-l-slate-300/80',
     // Today's travel cells should preserve trip color while still standing out
-    trip && isToday && 'ring-1 ring-inset ring-blue-300'
+    trip && isToday && 'ring-1 ring-inset ring-blue-300',
+    trip && isColumnHovered && 'ring-1 ring-inset ring-sky-300/70',
+    trip && isRowHovered && !isColumnHovered && 'ring-1 ring-inset ring-slate-200/80',
+    trip && !isTripEnd && !isRollingWindowEnd && 'border-r-transparent',
+    isRollingWindowStart && 'border-l border-l-sky-400',
+    isRollingWindowEnd && 'border-r border-r-sky-400'
   )
 
   const tripStyles = trip
@@ -95,6 +125,7 @@ export const DayCell = memo(function DayCell({
       <div
         className={baseCls}
         style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
+        onMouseEnter={onHover}
       />
     )
   }
@@ -108,14 +139,17 @@ export const DayCell = memo(function DayCell({
             baseCls,
             tripStyles && (isWeekend ? tripStyles.weekend : tripStyles.base),
             tripStyles?.hover,
+            isTripStart && 'rounded-l-md',
+            isTripEnd && 'rounded-r-md',
             'cursor-pointer transition-colors'
           )}
           style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
           aria-label={`${trip.country} trip on ${format(date, 'MMM d')}`}
+          onMouseEnter={onHover}
         >
           <span
             className={cn(
-              'text-[10px] font-medium leading-none',
+              'text-[10px] font-semibold leading-none tracking-wide',
               tripStyles?.text ?? (isToday ? 'text-blue-700' : 'text-slate-600')
             )}
           >

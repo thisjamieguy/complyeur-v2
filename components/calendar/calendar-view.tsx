@@ -2,25 +2,28 @@
 
 import { useState, useMemo } from 'react'
 import dynamic from 'next/dynamic'
-import {
-  startOfDay,
-  addDays,
-  subDays,
-  eachDayOfInterval,
-  isWithinInterval,
-  format,
-} from 'date-fns'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   calculateCompliance,
   isSchengenCountry,
-  createComplianceCalculator,
+  getComplianceAtDates,
   parseDateOnlyAsUTC,
   type Trip as ComplianceTrip,
+  type ComplianceResult,
   type RiskLevel,
 } from '@/lib/compliance'
-import { differenceInUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
+import {
+  addUtcDays,
+  differenceInUtcDays,
+  toUTCMidnight,
+} from '@/lib/compliance/date-utils'
 import { RangeSelector } from './range-selector'
+import {
+  buildDateRange,
+  buildDayMap,
+  overlapsVisibleRange,
+  toDateKey,
+} from './calendar-view.utils'
 import type { ProcessedTrip, ProcessedEmployee } from './types'
 
 const GanttChart = dynamic(
@@ -45,7 +48,6 @@ interface DbTrip {
   entry_date: string
   exit_date: string
   purpose: string | null
-  job_ref: string | null
   is_private: boolean
   ghosted: boolean
 }
@@ -60,44 +62,22 @@ interface CalendarViewProps {
   employees: EmployeeWithTrips[]
 }
 
-/**
- * Convert DB trip to compliance engine format
- */
-function toComplianceTrip(trip: DbTrip): ComplianceTrip {
-  return {
-    id: trip.id,
-    country: trip.country,
-    entryDate: parseDateOnlyAsUTC(trip.entry_date),
-    exitDate: parseDateOnlyAsUTC(trip.exit_date),
-  }
+interface ParsedTrip extends DbTrip {
+  entryDate: Date
+  exitDate: Date
+  isSchengen: boolean
 }
 
 /**
- * Calculate risk level at the end of a specific trip
- * Uses memoized calculator for performance
+ * Convert parsed DB trip to compliance engine format
  */
-function getTripRiskLevel(
-  trip: DbTrip,
-  allEmployeeTrips: DbTrip[],
-  calculator: ReturnType<typeof createComplianceCalculator>
-): RiskLevel {
-  // Only calculate for Schengen trips
-  if (!isSchengenCountry(trip.country)) {
-    return 'green' // Non-Schengen trips don't affect compliance
+function toComplianceTrip(trip: ParsedTrip): ComplianceTrip {
+  return {
+    id: trip.id,
+    country: trip.country,
+    entryDate: trip.entryDate,
+    exitDate: trip.exitDate,
   }
-
-  // Convert to compliance format - only include non-ghosted Schengen trips
-  const complianceTrips = allEmployeeTrips
-    .filter((t) => !t.ghosted && isSchengenCountry(t.country))
-    .map(toComplianceTrip)
-
-  // Calculate compliance at end of this trip (memoized)
-  const result = calculator(complianceTrips, {
-    mode: 'audit',
-    referenceDate: parseDateOnlyAsUTC(trip.exit_date),
-  })
-
-  return result.riskLevel
 }
 
 /**
@@ -106,104 +86,87 @@ function getTripRiskLevel(
 export function CalendarView({ employees }: CalendarViewProps) {
   const [weeksForward, setWeeksForward] = useState(DEFAULT_WEEKS_FORWARD)
 
-  // Create memoized compliance calculator once per component instance
-  // This caches calculations across all employees and trips
-  const complianceCalculator = useMemo(() => createComplianceCalculator(), [])
-
   // Calculate date range
   const { startDate, endDate, dates } = useMemo(() => {
-    const today = startOfDay(new Date())
-    const start = subDays(today, DAYS_BACK)
-    const end = addDays(today, weeksForward * 7)
-
-    const allDates = eachDayOfInterval({ start, end })
+    const today = toUTCMidnight(new Date())
+    const start = addUtcDays(today, -DAYS_BACK)
+    const end = addUtcDays(today, weeksForward * 7)
 
     return {
       startDate: start,
       endDate: end,
-      dates: allDates,
+      dates: buildDateRange(start, end),
     }
   }, [weeksForward])
 
-  // Process employees and their trips with memoized calculations
+  // Process employees and their trips with per-employee batched compliance work.
   const processedEmployees = useMemo((): ProcessedEmployee[] => {
     const today = toUTCMidnight(new Date())
 
     return employees.map((employee) => {
-      // Filter out ghosted trips
-      const activeTrips = employee.trips.filter((t) => !t.ghosted)
+      const parsedTrips: ParsedTrip[] = employee.trips
+        .filter((trip) => !trip.ghosted)
+        .map((trip) => {
+          const entryDate = parseDateOnlyAsUTC(trip.entry_date)
+          const exitDate = parseDateOnlyAsUTC(trip.exit_date)
+          return {
+            ...trip,
+            entryDate,
+            exitDate,
+            isSchengen: isSchengenCountry(trip.country),
+          }
+        })
 
-      // Calculate current compliance status (memoized)
-      const complianceTrips = activeTrips
-        .filter((t) => isSchengenCountry(t.country))
+      const complianceTrips = parsedTrips
+        .filter((trip) => trip.isSchengen)
         .map(toComplianceTrip)
 
-      const currentCompliance = complianceCalculator(complianceTrips, {
+      const currentCompliance = calculateCompliance(complianceTrips, {
         mode: 'audit',
         referenceDate: today,
       })
 
-      // Process trips that fall within the date range
-      const tripsInRange = activeTrips.filter((trip) => {
-        const entryDate = parseDateOnlyAsUTC(trip.entry_date)
-        const exitDate = parseDateOnlyAsUTC(trip.exit_date)
+      const tripsInRange = parsedTrips.filter((trip) =>
+        overlapsVisibleRange(trip.entryDate, trip.exitDate, startDate, endDate)
+      )
 
-        // Check if trip overlaps with our date range
-        return (
-          isWithinInterval(entryDate, { start: startDate, end: endDate }) ||
-          isWithinInterval(exitDate, { start: startDate, end: endDate }) ||
-          (entryDate <= startDate && exitDate >= endDate)
-        )
-      })
+      const uniqueSchengenExitDates = Array.from(
+        new Map(
+          tripsInRange
+            .filter((trip) => trip.isSchengen)
+            .map((trip) => [toDateKey(trip.exitDate), trip.exitDate])
+        ).values()
+      )
 
-      // Process each trip with memoized calculations
+      const complianceAtExitDate: Map<string, ComplianceResult> =
+        uniqueSchengenExitDates.length > 0
+          ? getComplianceAtDates(complianceTrips, uniqueSchengenExitDates)
+          : new Map<string, ComplianceResult>()
+
       const processedTrips: ProcessedTrip[] = tripsInRange.map((trip) => {
-        const entryDate = parseDateOnlyAsUTC(trip.entry_date)
-        const exitDate = parseDateOnlyAsUTC(trip.exit_date)
-        const duration = differenceInUtcDays(exitDate, entryDate) + 1
-        const isSchengen = isSchengenCountry(trip.country)
-
-        // Calculate risk level at end of trip (memoized)
-        const riskLevel = getTripRiskLevel(trip, activeTrips, complianceCalculator)
-
-        // Calculate days remaining at end of trip (memoized)
-        const tripCompliance = isSchengen
-          ? complianceCalculator(
-              activeTrips
-                .filter((t) => !t.ghosted && isSchengenCountry(t.country))
-                .map(toComplianceTrip),
-              {
-                mode: 'audit',
-                referenceDate: exitDate,
-              }
-            )
-          : { daysRemaining: 90 }
+        const duration = differenceInUtcDays(trip.exitDate, trip.entryDate) + 1
+        const tripCompliance = trip.isSchengen
+          ? complianceAtExitDate.get(toDateKey(trip.exitDate))
+          : undefined
+        const riskLevel: RiskLevel = trip.isSchengen
+          ? (tripCompliance?.riskLevel ?? 'green')
+          : 'green'
 
         return {
           id: trip.id,
           country: trip.is_private ? 'XX' : trip.country,
-          entryDate,
-          exitDate,
+          entryDate: trip.entryDate,
+          exitDate: trip.exitDate,
           duration,
-          daysRemaining: tripCompliance.daysRemaining,
+          daysRemaining: tripCompliance?.daysRemaining ?? 90,
           riskLevel,
           purpose: trip.purpose,
           isPrivate: trip.is_private,
-          isSchengen,
+          isSchengen: trip.isSchengen,
         }
       })
 
-      // Build day map for spreadsheet grid — O(1) lookup per day cell
-      const dayMap = new Map<string, ProcessedTrip>()
-      for (const trip of processedTrips) {
-        const days = eachDayOfInterval({ start: trip.entryDate, end: trip.exitDate })
-        for (const day of days) {
-          const key = format(day, 'yyyy-MM-dd')
-          if (!dayMap.has(key)) {
-            dayMap.set(key, trip)
-          }
-        }
-      }
+      const dayMap = buildDayMap(processedTrips)
 
       return {
         id: employee.id,
@@ -215,17 +178,37 @@ export function CalendarView({ employees }: CalendarViewProps) {
         tripsInRange: tripsInRange.length,
       }
     })
-  }, [employees, startDate, endDate, complianceCalculator])
+  }, [employees, startDate, endDate])
 
   return (
     <>
       {/* Desktop view - Gantt chart */}
       <div className="hidden md:block">
-        <Card className="rounded-xl overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <h2 className="text-sm font-medium text-slate-700">
-              Timeline View
-            </h2>
+        <Card className="rounded-xl overflow-hidden border-slate-200 shadow-sm">
+          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pb-4 bg-slate-50/70 border-b border-slate-100">
+            <div className="space-y-2">
+              <h2 className="text-sm font-semibold tracking-wide text-slate-700 uppercase">
+                Travel Timeline
+              </h2>
+              <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm border border-sky-300 bg-sky-50/70" />
+                  180-day window
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm border border-slate-300 bg-slate-100" />
+                  weekend
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm border border-blue-300 bg-blue-50" />
+                  today
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="h-3 w-px bg-slate-400" />
+                  month boundary
+                </span>
+              </div>
+            </div>
             <RangeSelector value={weeksForward} onChange={setWeeksForward} />
           </CardHeader>
           <CardContent className="p-0">
