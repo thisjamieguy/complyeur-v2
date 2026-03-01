@@ -35,7 +35,7 @@ export default async function CompaniesPage({
     .select(`
       *,
       ${entitlementJoin},
-      profiles(count),
+      profiles(id, full_name, role),
       employees(count)
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -71,6 +71,17 @@ export default async function CompaniesPage({
   const { data: companies, count } = await query
   const filteredCompanies = companies || []
 
+  // Fetch auth users to get emails (profiles table doesn't store email)
+  const { data: authUsersData } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
+  const userEmailMap: Record<string, string> = {}
+  if (authUsersData?.users) {
+    for (const user of authUsersData.users) {
+      if (user.email) {
+        userEmailMap[user.id] = user.email
+      }
+    }
+  }
+
   // Fetch tiers for filter dropdown
   const { data: tiers } = await supabase
     .from('tiers')
@@ -98,6 +109,7 @@ export default async function CompaniesPage({
         currentPage={page}
         totalPages={totalPages}
         tiers={tiers || []}
+        userEmailMap={userEmailMap}
       />
     </div>
   )

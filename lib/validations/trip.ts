@@ -4,7 +4,6 @@ import { differenceInUtcDays, parseDateOnlyAsUTC } from '@/lib/compliance/date-u
 import {
   isValidISODate,
   isDateTooFarInPast,
-  isDateTooFarInFuture,
   getTripDurationDays,
 } from './dates'
 
@@ -14,7 +13,7 @@ import {
  * Validates:
  * - Country code (2 letters, known country)
  * - Entry date (required, valid date, not more than 180 days in the past)
- * - Exit date (required, valid date, must be >= entry_date, not more than 30 days in future)
+ * - Exit date (required, valid date, must be >= entry_date)
  * - Trip duration cannot exceed 180 days (warning issued for >90 days)
  * - Optional fields (purpose, job_ref)
  */
@@ -62,17 +61,6 @@ export const tripSchema = z
     {
       message: 'Entry date cannot be more than 180 days in the past',
       path: ['entry_date'],
-    }
-  )
-  // Validate exit date is not too far in the future (30 days max)
-  .refine(
-    (data) => {
-      const exit = parseDateOnlyAsUTC(data.exit_date)
-      return !isDateTooFarInFuture(exit, 30)
-    },
-    {
-      message: 'Exit date cannot be more than 30 days in the future',
-      path: ['exit_date'],
     }
   )
   // Validate exit date is on or after entry date

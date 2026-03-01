@@ -22,7 +22,6 @@ import { validateCountry, COUNTRY_NAMES } from '@/lib/constants/schengen-countri
 import {
   checkTripDurationWarning,
   getTripDurationDays,
-  isDateTooFarInFuture,
   isDateTooFarInPast,
 } from '@/lib/validations/dates'
 import { parseDateOnlyAsUTC } from '@/lib/compliance/date-utils'
@@ -72,17 +71,6 @@ const tripFormSchema = z
     {
       message: 'Entry date cannot be more than 180 days in the past',
       path: ['entry_date'],
-    }
-  )
-  // Validate exit date is not too far in the future (30 days max)
-  .refine(
-    (data) => {
-      const exit = parseDateOnlyAsUTC(data.exit_date)
-      return !isDateTooFarInFuture(exit, 30)
-    },
-    {
-      message: 'Exit date cannot be more than 30 days in the future',
-      path: ['exit_date'],
     }
   )
   // Validate exit date is on or after entry date

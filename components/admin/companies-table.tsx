@@ -25,13 +25,19 @@ interface CompanyEntitlement {
   is_suspended: boolean | null
 }
 
+interface CompanyProfile {
+  id: string
+  full_name: string | null
+  role: string | null
+}
+
 interface Company {
   id: string
   name: string
   slug: string
   created_at: string | null
   company_entitlements: CompanyEntitlement | null
-  profiles: { count: number }[] | null
+  profiles: CompanyProfile[] | null
   employees: { count: number }[] | null
 }
 
@@ -43,6 +49,7 @@ interface CompaniesTableProps {
     slug: string
     display_name: string
   }>
+  userEmailMap: Record<string, string>
 }
 
 function getStatusBadge(entitlement: CompanyEntitlement | null) {
@@ -93,6 +100,7 @@ export function CompaniesTable({
   currentPage,
   totalPages,
   tiers,
+  userEmailMap,
 }: CompaniesTableProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -135,8 +143,12 @@ export function CompaniesTable({
           </TableHeader>
           <TableBody>
             {companies.map((company) => {
-              const userCount = company.profiles?.[0]?.count || 0
+              const profiles = company.profiles || []
+              const userCount = profiles.length
               const employeeCount = company.employees?.[0]?.count || 0
+              // Find owner or first user
+              const owner = profiles.find((p) => p.role === 'owner') || profiles[0]
+              const ownerEmail = owner ? userEmailMap[owner.id] : null
 
               return (
                 <TableRow key={company.id}>
@@ -147,7 +159,12 @@ export function CompaniesTable({
                     >
                       {company.name}
                     </Link>
-                    <p className="text-xs text-slate-500">{company.slug}</p>
+                    {owner?.full_name && (
+                      <p className="text-xs text-slate-600">{owner.full_name}</p>
+                    )}
+                    {ownerEmail && (
+                      <p className="text-xs text-slate-400">{ownerEmail}</p>
+                    )}
                   </TableCell>
                   <TableCell>
                     {getTierBadge(
