@@ -233,7 +233,7 @@ export function ComplianceTable({
     [serverStats, employees]
   )
 
-  // Handle filter change and update URL
+  // Handle filter change and update URL (resets to page 1)
   const handleFilterChange = useCallback(
     (filter: StatusFilter) => {
       setStatusFilter(filter)
@@ -243,6 +243,8 @@ export function ComplianceTable({
       } else {
         params.set('status', filter)
       }
+      // Reset to page 1 when filter changes
+      params.delete('page')
       router.push(`?${params.toString()}`, { scroll: false })
     },
     [router, searchParams]
@@ -324,11 +326,8 @@ export function ComplianceTable({
     }
   }, [pathname, router, searchParams])
 
-  // Apply client-side status filter only (sort and search are now server-side via URL params)
-  const filteredAndSorted = useMemo(() => {
-    if (statusFilter === 'all') return employees
-    return employees.filter((e) => e.risk_level === statusFilter)
-  }, [employees, statusFilter])
+  // Status filter is now server-side via URL params (like search and sort)
+  const filteredAndSorted = employees
 
   // Show empty state if no employees at all (check stats.total for accurate count with pagination)
   const totalEmployees = serverStats?.total ?? employees.length

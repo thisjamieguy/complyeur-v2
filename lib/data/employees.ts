@@ -40,6 +40,7 @@ export interface PaginationParams {
   pageSize?: number  // default 25
   search?: string    // optional name search (case-insensitive)
   sort?: EmployeeSortOption  // server-side sort (default: days_remaining_asc)
+  status?: string    // optional risk_level filter (e.g. 'green', 'exempt')
 }
 
 /**
@@ -361,7 +362,7 @@ export async function getEmployeeComplianceDataPaginated(
   params: PaginationParams = {},
   statusThresholds?: StatusThresholds
 ): Promise<PaginatedEmployeeResult> {
-  const { page = 1, pageSize = 25, search, sort = 'days_remaining_asc' } = params
+  const { page = 1, pageSize = 25, search, sort = 'days_remaining_asc', status } = params
 
   return withDbTiming('getEmployeeComplianceDataPaginated', async () => {
     // Fetch all employees with compliance (React.cache deduplicates within request)
@@ -376,8 +377,13 @@ export async function getEmployeeComplianceDataPaginated(
       )
     }
 
-    // Calculate stats from filtered set (before pagination)
+    // Calculate stats from filtered set (before status filter and pagination)
     const stats = calculateStats(filtered)
+
+    // Apply status filter (after stats so badge counts reflect the full set)
+    if (status && status !== 'all') {
+      filtered = filtered.filter((e) => e.risk_level === status)
+    }
 
     // Apply server-side sort
     const sorted = sortEmployees(filtered, sort)

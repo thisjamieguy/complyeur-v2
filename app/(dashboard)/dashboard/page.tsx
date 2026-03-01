@@ -44,16 +44,18 @@ async function EmployeeComplianceList({
   page,
   search,
   sort,
+  status,
 }: {
   page: number
   search: string
   sort: EmployeeSortOption
+  status: string
 }) {
   // Fetch settings and employee data in parallel (M-14 optimisation)
   const [settings, result] = await Promise.all([
     getCompanySettings(),
     getEmployeeComplianceDataPaginated(
-      { page, pageSize: PAGE_SIZE, search: search || undefined, sort },
+      { page, pageSize: PAGE_SIZE, search: search || undefined, sort, status: status || undefined },
     ),
   ])
 
@@ -64,7 +66,7 @@ async function EmployeeComplianceList({
 
   const finalResult = hasCustomThresholds
     ? await getEmployeeComplianceDataPaginated(
-        { page, pageSize: PAGE_SIZE, search: search || undefined, sort },
+        { page, pageSize: PAGE_SIZE, search: search || undefined, sort, status: status || undefined },
         {
           greenMax: settings.status_green_max ?? 68,
           amberMax: settings.status_amber_max ?? 82,
@@ -98,7 +100,7 @@ async function AlertSection() {
 }
 
 interface DashboardPageProps {
-  searchParams: Promise<{ page?: string; search?: string; tour?: string; sort?: string }>
+  searchParams: Promise<{ page?: string; search?: string; tour?: string; sort?: string; status?: string }>
 }
 
 /**
@@ -117,6 +119,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const sort: EmployeeSortOption = VALID_SORTS.has(params.sort as EmployeeSortOption)
     ? (params.sort as EmployeeSortOption)
     : 'days_remaining_asc'
+  const status = params.status ?? ''
   const forceTour = params.tour === '1'
 
   // Cached fetcher — deduplicated within this request
@@ -147,8 +150,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       </div>
 
       {/* Main content with suspense for streaming */}
-      <Suspense key={`${page}-${search}-${sort}`} fallback={<DashboardSkeleton />}>
-        <EmployeeComplianceList page={page} search={search} sort={sort} />
+      <Suspense key={`${page}-${search}-${sort}-${status}`} fallback={<DashboardSkeleton />}>
+        <EmployeeComplianceList page={page} search={search} sort={sort} status={status} />
       </Suspense>
     </div>
   )
