@@ -274,3 +274,9 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Performance: skip off-screen section layout/paint */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-block-size: var(--cis-h, 600px);
+}
