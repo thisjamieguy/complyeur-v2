@@ -1,9 +1,9 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
-import { joinWaitlist, type WaitlistState } from '../landing/actions'
-import { cn } from '@/lib/utils'
 import { Turnstile } from '@/components/ui/turnstile'
+import { cn } from '@/lib/utils'
+import { joinWaitlist, type WaitlistState } from './actions'
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
 
@@ -115,7 +115,7 @@ export function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'm
               Submitting...
             </span>
           ) : (
-            'Apply for Early Access'
+            'Join Waiting List'
           )}
         </button>
       </div>

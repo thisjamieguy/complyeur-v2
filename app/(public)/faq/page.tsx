@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { SITE_URL } from '@/lib/metadata'
 import {
   Collapsible,
   CollapsibleContent,
@@ -282,6 +283,62 @@ const faqData: FAQSection[] = [
   },
 ]
 
+const FAQ_SCHEMA_ANSWER_OVERRIDES: Record<string, string> = {
+  'What do the status colours mean?':
+    'Status colours map risk by rolling 180-day usage: Green 0-68 days (compliant), Amber 69-82 days (at risk), Red 83-89 days (high risk), and Black 90+ days (breach). Thresholds for Green, Amber, and Red can be customised in settings.',
+  'My import failed. What should I check?':
+    'Check that headers are present in row 1, dates are consistent, employee names are spelled consistently, empty rows are removed, and the validation summary is reviewed for row-level errors.',
+  'What do the forecast risk levels mean?':
+    'Low Risk means a proposed trip fits comfortably within allowance. Medium Risk means the trip is possible with limited buffer. High Risk means the trip would exceed the 90-day limit and needs date changes or other schedule adjustments.',
+}
+
+function toFaqSchemaAnswerText(item: FAQItem): string {
+  if (typeof item.answer === 'string') {
+    return item.answer
+  }
+
+  return FAQ_SCHEMA_ANSWER_OVERRIDES[item.question] ?? 'Read the full answer on this page.'
+}
+
+const faqStructuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'FAQPage',
+      '@id': `${SITE_URL}/faq#faq`,
+      url: `${SITE_URL}/faq`,
+      mainEntity: faqData.flatMap((section) =>
+        section.items.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: toFaqSchemaAnswerText(item),
+          },
+        }))
+      ),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${SITE_URL}/faq#breadcrumbs`,
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: `${SITE_URL}/landing`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'FAQ',
+          item: `${SITE_URL}/faq`,
+        },
+      ],
+    },
+  ],
+}
+
 function FAQItemComponent({ item }: { item: FAQItem }) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -307,6 +364,12 @@ function FAQItemComponent({ item }: { item: FAQItem }) {
 export default function FAQPage() {
   return (
     <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(faqStructuredData),
+        }}
+      />
       <div className="pointer-events-none absolute inset-0">
         <div className="landing-aurora-top absolute -top-32 left-[-8rem] h-[24rem] w-[24rem] rounded-full" />
         <div className="landing-aurora-bottom absolute right-[-8rem] top-[18rem] h-[22rem] w-[22rem] rounded-full" />
@@ -341,6 +404,41 @@ export default function FAQPage() {
             <p className="mt-4 text-sm text-slate-500">
               New here? Read <Link href="/about" className="font-medium text-brand-700 hover:underline">about ComplyEur</Link> or compare plans on <Link href="/pricing" className="font-medium text-brand-700 hover:underline">pricing</Link>.
             </p>
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+              <p className="text-sm font-semibold text-slate-900">Official Guidance</p>
+              <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                <li>
+                  <a
+                    href="https://travel-europe.europa.eu/ees_en"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-brand-700 hover:underline"
+                  >
+                    EU Entry/Exit System (EES)
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa/visa-policy/short-stay-visas_en"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-brand-700 hover:underline"
+                  >
+                    European Commission short-stay Schengen visas guidance
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://www.gov.uk/foreign-travel-advice"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-brand-700 hover:underline"
+                  >
+                    UK Government foreign travel advice
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <div className="mt-10 space-y-8">

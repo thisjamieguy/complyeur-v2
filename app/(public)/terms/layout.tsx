@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createPageMetadata } from '@/lib/metadata'
 
 export const metadata: Metadata = createPageMetadata({
-  title: 'Terms of Service',
+  title: 'Schengen Compliance Platform Terms for UK Teams',
   description:
     'Read ComplyEur Terms of Service for Schengen compliance management. Understand the terms governing your use of our visa tracking platform.',
   path: '/terms',

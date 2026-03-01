@@ -95,7 +95,7 @@ export function createPageMetadata({
 export const defaultMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'ComplyEur - Schengen Compliance Management',
+    default: 'Schengen Compliance Management for UK Travel Teams',
     template: '%s | ComplyEur',
   },
   description:

@@ -230,7 +230,17 @@ export function BillingOnboardingFlow({
         }),
       })
 
-      const payload = await response.json() as { url?: string; error?: string }
+      let payload: { url?: string; error?: string } = {}
+      const contentType = response.headers.get('content-type') ?? ''
+      if (contentType.includes('application/json')) {
+        payload = await response.json() as { url?: string; error?: string }
+      } else if (!response.ok) {
+        payload = {
+          error:
+            response.statusText ||
+            `Checkout request failed with status ${response.status}.`,
+        }
+      }
 
       if (!response.ok || !payload.url) {
         setStatusError(

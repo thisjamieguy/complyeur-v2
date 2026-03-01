@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { redirect } from 'next/navigation'
+import { permanentRedirect, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
 // No metadata - this page immediately redirects to /landing or /dashboard
@@ -71,5 +71,5 @@ export default async function Home({ searchParams }: HomePageProps) {
     redirect(`/login?error=${encodeURIComponent(message)}`)
   }
 
-  redirect('/landing')
+  permanentRedirect('/landing')
 }

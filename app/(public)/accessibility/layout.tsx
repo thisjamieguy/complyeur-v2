@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createPageMetadata } from '@/lib/metadata'
 
 export const metadata: Metadata = createPageMetadata({
-  title: 'Accessibility Statement',
+  title: 'Schengen Compliance Accessibility Statement',
   description:
     'ComplyEur is committed to digital accessibility. We make our Schengen compliance platform usable for everyone, following WCAG 2.1 guidelines.',
   path: '/accessibility',

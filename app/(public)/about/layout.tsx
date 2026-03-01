@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createPageMetadata } from '@/lib/metadata'
 
 export const metadata: Metadata = createPageMetadata({
-  title: 'About Us - Our Mission',
+  title: 'Schengen Compliance Platform Mission and Team',
   description: 'Learn how ComplyEur helps UK businesses manage Schengen 90/180-day visa compliance with automated tracking, alerts, and reporting.',
   path: '/about',
 })

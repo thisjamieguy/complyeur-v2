@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { headers } from "next/headers";
-import { Geist } from "next/font/google";
+import { Montserrat, Open_Sans } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
@@ -12,9 +12,16 @@ import "./globals.css";
 // Import CookieYes types for global window augmentation
 import "@/lib/cookieyes";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const openSans = Open_Sans({
   subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
@@ -33,10 +40,74 @@ export default async function RootLayout({
   const requestHeaders = await headers()
   const nonce = requestHeaders.get('x-nonce') ?? undefined
   const xProfileUrl = `https://x.com/${X_HANDLE.replace(/^@/, '')}`
+  const enableSpeedInsights = process.env.NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS === 'true'
+  const structuredDataGraph = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        name: "ComplyEur",
+        url: SITE_URL,
+        inLanguage: "en-GB",
+        description: "Schengen compliance management for UK businesses",
+        publisher: {
+          "@id": `${SITE_URL}/#organization`,
+        },
+      },
+      {
+        "@type": "Organization",
+        "@id": `${SITE_URL}/#organization`,
+        name: "ComplyEur",
+        url: SITE_URL,
+        logo: `${SITE_URL}/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.webp`,
+        sameAs: [xProfileUrl],
+        description:
+          "Helping UK businesses track EU Schengen 90/180-day visa compliance for their employees.",
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": `${SITE_URL}/#software`,
+        name: "ComplyEur",
+        applicationCategory: "BusinessApplication",
+        applicationSubCategory: "Compliance Management",
+        operatingSystem: "Web browser",
+        url: SITE_URL,
+        inLanguage: "en-GB",
+        areaServed: {
+          "@type": "Country",
+          name: "United Kingdom",
+        },
+        description:
+          "Track and manage EU Schengen 90/180-day visa compliance for your employees. Automated tracking, real-time alerts, and compliance reporting for UK businesses.",
+        featureList: [
+          "Real-time compliance tracking",
+          "90/180-day rule calculator",
+          "Employee travel management",
+          "Automated alerts and warnings",
+          "Trip planning tools",
+          "GDPR compliant data handling",
+        ],
+        offers: {
+          "@type": "Offer",
+          availability: "https://schema.org/PreOrder",
+          price: "0",
+          priceCurrency: "GBP",
+          priceValidUntil: "2026-12-31",
+        },
+        publisher: {
+          "@id": `${SITE_URL}/#organization`,
+        },
+      },
+    ],
+  }
 
   return (
     <html lang="en">
-      <head>
+      <body
+        className={`${openSans.variable} ${montserrat.variable} antialiased`}
+        suppressHydrationWarning
+      >
         {/* CookieYes Consent Management Script - GDPR compliance */}
         {process.env.NODE_ENV === 'production' && (
           <Script
@@ -46,75 +117,18 @@ export default async function RootLayout({
             nonce={nonce}
           />
         )}
-      </head>
-      <body
-        className={`${geistSans.variable} antialiased`}
-        suppressHydrationWarning
-      >
         {/* JSON-LD Structured Data for SEO - safe static content */}
         <script
           type="application/ld+json"
           nonce={nonce}
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify([
-              {
-                "@context": "https://schema.org",
-                "@type": "WebSite",
-                "@id": `${SITE_URL}/#website`,
-                name: "ComplyEur",
-                url: SITE_URL,
-                description: "Schengen compliance management for UK businesses",
-                publisher: {
-                  "@id": `${SITE_URL}/#organization`,
-                },
-              },
-              {
-                "@context": "https://schema.org",
-                "@type": "Organization",
-                "@id": `${SITE_URL}/#organization`,
-                name: "ComplyEur",
-                url: SITE_URL,
-                logo: `${SITE_URL}/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg`,
-                sameAs: [xProfileUrl],
-                description: "Helping UK businesses track EU Schengen 90/180-day visa compliance for their employees.",
-              },
-              {
-                "@context": "https://schema.org",
-                "@type": "SoftwareApplication",
-                "@id": `${SITE_URL}/#software`,
-                name: "ComplyEur",
-                applicationCategory: "BusinessApplication",
-                applicationSubCategory: "Compliance Management",
-                operatingSystem: "Web browser",
-                url: SITE_URL,
-                description:
-                  "Track and manage EU Schengen 90/180-day visa compliance for your employees. Automated tracking, real-time alerts, and compliance reporting for UK businesses.",
-                featureList: [
-                  "Real-time compliance tracking",
-                  "90/180-day rule calculator",
-                  "Employee travel management",
-                  "Automated alerts and warnings",
-                  "Trip planning tools",
-                  "GDPR compliant data handling",
-                ],
-                offers: {
-                  "@type": "Offer",
-                  availability: "https://schema.org/PreOrder",
-                  price: "0",
-                  priceCurrency: "GBP",
-                  priceValidUntil: "2026-12-31",
-                },
-                publisher: {
-                  "@id": `${SITE_URL}/#organization`,
-                },
-              },
-            ]),
+            __html: JSON.stringify(structuredDataGraph),
           }}
         />
         <MaintenanceBanner />
         {children}
         <Toaster />
-        <SpeedInsights />
+        {enableSpeedInsights && <SpeedInsights />}
         {process.env.NODE_ENV === 'production' && (
           <ConsentAwareGoogleAnalytics gaId="G-PKKZZFWD63" />
         )}

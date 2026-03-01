@@ -2,8 +2,11 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { X_HANDLE } from '@/lib/metadata'
 
 export function Footer() {
+  const xProfileUrl = `https://x.com/${X_HANDLE.replace(/^@/, '')}`
+
   const handleCookieSettings = () => {
     if (typeof window !== 'undefined' && window.cookieyes) {
       window.cookieyes.showSettingsPopup()
@@ -50,6 +53,14 @@ export function Footer() {
             >
               Contact
             </Link>
+            <a
+              href={xProfileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-brand-700 transition-colors"
+            >
+              X
+            </a>
             <Link
               href="/privacy"
               className="hover:text-brand-700 transition-colors"

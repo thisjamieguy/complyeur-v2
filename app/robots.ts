@@ -75,12 +75,10 @@ const NON_INDEXABLE_UTILITY_ROUTES = [
 ]
 
 const PREVIEW_ROUTE_PATTERNS = [
-  '/landing-v2',
-  '/landing-v2/*',
-  '/landing-v3',
-  '/landing-v3/*',
   '/landing-sandbox',
   '/landing-sandbox/*',
+  '/landing/preview',
+  '/landing/preview/*',
   '/landing/sandbox',
   '/landing/sandbox/*',
 ]

@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { Footer } from '@/components/layout/footer'
 import { SkipLink } from '@/components/ui/skip-link'
 
@@ -15,14 +14,25 @@ export default function PublicLayout({
         <div className="mx-auto max-w-6xl">
           <div className="flex items-center justify-between gap-4">
             <Link href="/landing" className="inline-block hover:opacity-80 transition-opacity">
-              <Image
-                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
-                alt="ComplyEur"
-                width={150}
-                height={40}
-                className="h-8 w-auto"
-                priority
-              />
+              <picture>
+                <source
+                  srcSet="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.avif"
+                  type="image/avif"
+                />
+                <source
+                  srcSet="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.webp"
+                  type="image/webp"
+                />
+                <img
+                  src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png"
+                  alt="ComplyEur"
+                  width={150}
+                  height={40}
+                  className="h-8 w-auto"
+                  loading="eager"
+                  decoding="async"
+                />
+              </picture>
             </Link>
             <div className="flex items-center gap-2">
               <Link

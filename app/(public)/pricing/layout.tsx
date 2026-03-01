@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { createPageMetadata } from '@/lib/metadata'
 
 export const metadata: Metadata = createPageMetadata({
-  title: 'Pricing - Schengen Compliance Plans',
+  title: 'Schengen Compliance Pricing for UK Travel Teams',
   description:
     'Compare ComplyEur plans for UK businesses managing Schengen 90/180-day compliance. Transparent GBP pricing with monthly and annual billing options.',
   path: '/pricing',

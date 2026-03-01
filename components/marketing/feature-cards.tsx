@@ -246,16 +246,6 @@ export function FeatureCards() {
           ))}
         </div>
 
-        {/* Trust footer */}
-        <div className="mt-14 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            <span>Daily rolling-window calculations</span>
-          </div>
-        </div>
       </div>
     </section>
   )
