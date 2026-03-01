@@ -117,12 +117,12 @@ export default function RootLayout({
             strategy="afterInteractive"
           />
         )}
-        {/* JSON-LD Structured Data for SEO.
-            type="application/ld+json" is a data block, not executable JavaScript,
-            so no CSP nonce is required. Content is static build-time data only. */}
-        <script
+        {/* JSON-LD Structured Data for SEO — placed in <head> via beforeInteractive.
+            No nonce required: CSP uses 'unsafe-inline' to allow static rendering. */}
+        <Script
+          id="structured-data"
           type="application/ld+json"
-          suppressHydrationWarning
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredDataGraph) }}
         />
         <MaintenanceBanner />
