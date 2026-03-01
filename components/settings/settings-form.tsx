@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { DataPrivacySection } from './data-privacy-section'
+import { CalendarPreferencesSection } from './calendar-preferences-section'
 import { RiskThresholdsSection } from './risk-thresholds-section'
 import { ForecastingSection } from './forecasting-section'
 import { NotificationsSection } from './notifications-section'
@@ -38,6 +39,7 @@ export function SettingsForm({ settings, canEdit }: SettingsFormProps) {
       status_amber_max: settings.status_amber_max,
       status_red_max: settings.status_red_max,
       future_job_warning_threshold: settings.future_job_warning_threshold,
+      calendar_load_mode: settings.calendar_load_mode,
       notify_70_days: settings.notify_70_days,
       notify_85_days: settings.notify_85_days,
       notify_90_days: settings.notify_90_days,
@@ -99,6 +101,7 @@ export function SettingsForm({ settings, canEdit }: SettingsFormProps) {
         )}
 
         <DataPrivacySection disabled={!canEdit || isPending} />
+        <CalendarPreferencesSection disabled={!canEdit || isPending} />
         <RiskThresholdsSection disabled={!canEdit || isPending} />
         <ForecastingSection disabled={!canEdit || isPending} />
         <NotificationsSection disabled={!canEdit || isPending} />

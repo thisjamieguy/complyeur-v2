@@ -4,6 +4,8 @@
  * forecasting, and notification preferences
  */
 
+export type CalendarLoadMode = 'all_employees' | 'employees_with_trips'
+
 export interface CompanySettings {
   company_id: string
 
@@ -22,6 +24,9 @@ export interface CompanySettings {
 
   // Forecasting
   future_job_warning_threshold: number
+
+  // Calendar
+  calendar_load_mode: CalendarLoadMode
 
   // Notifications
   notify_70_days: boolean
@@ -52,6 +57,7 @@ export interface UpdateSettingsInput {
   status_amber_max?: number
   status_red_max?: number
   future_job_warning_threshold?: number
+  calendar_load_mode?: CalendarLoadMode
   notify_70_days?: boolean
   notify_85_days?: boolean
   notify_90_days?: boolean
@@ -69,6 +75,7 @@ export const DEFAULT_SETTINGS: Omit<CompanySettings, 'company_id' | 'created_at'
   status_amber_max: 82,
   status_red_max: 89,
   future_job_warning_threshold: 80,
+  calendar_load_mode: 'all_employees',
   notify_70_days: true,
   notify_85_days: true,
   notify_90_days: true,

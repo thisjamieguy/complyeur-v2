@@ -1,5 +1,6 @@
 export { SettingsForm } from './settings-form'
 export { DataPrivacySection } from './data-privacy-section'
+export { CalendarPreferencesSection } from './calendar-preferences-section'
 export { RiskThresholdsSection } from './risk-thresholds-section'
 export { ForecastingSection } from './forecasting-section'
 export { NotificationsSection } from './notifications-section'

@@ -8,7 +8,6 @@ import type { DateMeta } from './gantt-chart'
 interface DateHeaderProps {
   dateMeta: DateMeta[]
   dayWidth: number
-  hoveredDateKey: string | null
 }
 
 interface WeekSpan {
@@ -31,7 +30,6 @@ const WINDOW_INDICATOR_HEIGHT = 18
 export const DateHeader = memo(function DateHeader({
   dateMeta,
   dayWidth,
-  hoveredDateKey,
 }: DateHeaderProps) {
   const totalWidth = dateMeta.length * dayWidth
 
@@ -168,8 +166,7 @@ export const DateHeader = memo(function DateHeader({
               dm.isWeekend && 'bg-slate-100/80',
               dm.isInRollingWindow && !dm.isWeekend && 'bg-sky-50/45',
               dm.isInRollingWindow && dm.isWeekend && 'bg-sky-50/60',
-              dm.isMonthStart && 'border-l border-l-slate-300/80',
-              hoveredDateKey === dm.key && 'bg-sky-100/65'
+              dm.isMonthStart && 'border-l border-l-slate-300/80'
             )}
             style={{ width: dayWidth, height: 20 }}
           >
@@ -197,7 +194,6 @@ export const DateHeader = memo(function DateHeader({
               !dm.isToday && dm.isWeekend && 'bg-slate-50/80',
               !dm.isToday && dm.isWeekend && dm.isInRollingWindow && 'bg-sky-50/55',
               dm.isMonthStart && 'border-l border-l-slate-300/80',
-              hoveredDateKey === dm.key && !dm.isToday && 'bg-sky-100/70',
               dm.isToday && 'bg-blue-50',
               dm.isRollingWindowStart && 'border-l border-l-sky-400',
               dm.isRollingWindowEnd && 'border-r border-r-sky-400'

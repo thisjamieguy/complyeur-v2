@@ -50,6 +50,9 @@ export const settingsSchema = z.object({
     .min(50, 'Warning threshold must be at least 50 days')
     .max(89, 'Warning threshold cannot exceed 89 days'),
 
+  // Calendar loading behavior
+  calendar_load_mode: z.enum(['all_employees', 'employees_with_trips']),
+
   // Notification toggles
   notify_70_days: z.boolean(),
   notify_85_days: z.boolean(),
@@ -123,6 +126,10 @@ export const statusThresholdsSchema = z.object({
 
 export const forecastingSchema = z.object({
   future_job_warning_threshold: settingsSchema.shape.future_job_warning_threshold,
+})
+
+export const calendarPreferencesSchema = z.object({
+  calendar_load_mode: settingsSchema.shape.calendar_load_mode,
 })
 
 export const notificationsSchema = z.object({

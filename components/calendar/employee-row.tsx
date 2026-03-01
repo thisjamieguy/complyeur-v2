@@ -10,8 +10,6 @@ interface EmployeeRowProps {
   dateMeta: DateMeta[]
   dayWidth: number
   hoveredEmployeeId: string | null
-  hoveredDateKey: string | null
-  onCellHover: (employeeId: string, dateKey: string) => void
 }
 
 /**
@@ -24,8 +22,6 @@ export const EmployeeRow = memo(function EmployeeRow({
   dateMeta,
   dayWidth,
   hoveredEmployeeId,
-  hoveredDateKey,
-  onCellHover,
 }: EmployeeRowProps) {
   const tripByDate = dateMeta.map((dm) => employee.dayMap.get(dm.key))
   const isRowHovered = hoveredEmployeeId === employee.id
@@ -53,10 +49,8 @@ export const EmployeeRow = memo(function EmployeeRow({
             isRollingWindowStart={dm.isRollingWindowStart}
             isRollingWindowEnd={dm.isRollingWindowEnd}
             isRowHovered={isRowHovered}
-            isColumnHovered={hoveredDateKey === dm.key}
             isTripStart={isTripStart}
             isTripEnd={isTripEnd}
-            onHover={() => onCellHover(employee.id, dm.key)}
           />
         )
       })}

@@ -588,6 +588,7 @@ export type Database = {
       company_settings: {
         Row: {
           breach_email_enabled: boolean | null
+          calendar_load_mode: string
           company_id: string
           created_at: string
           critical_threshold: number | null
@@ -612,6 +613,7 @@ export type Database = {
         }
         Insert: {
           breach_email_enabled?: boolean | null
+          calendar_load_mode?: string
           company_id: string
           created_at?: string
           critical_threshold?: number | null
@@ -636,6 +638,7 @@ export type Database = {
         }
         Update: {
           breach_email_enabled?: boolean | null
+          calendar_load_mode?: string
           company_id?: string
           created_at?: string
           critical_threshold?: number | null

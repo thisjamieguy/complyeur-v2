@@ -22,6 +22,7 @@
     "test:e2e:dashboard": "playwright test e2e/dashboard-verification.spec.ts",
     "test:e2e:multi-user": "playwright test e2e/multi-user-isolation.spec.ts",
     "test:e2e:stress": "playwright test e2e/stress-test.spec.ts --timeout=300000",
+    "test:e2e:calendar-performance": "playwright test e2e/performance/calendar-performance.spec.ts",
     "test:regression": "playwright test e2e/phase-regression.spec.ts",
     "test:regression:ui": "playwright test e2e/phase-regression.spec.ts --ui",
     "test:all": "npm run test:coverage && npm run test:e2e",

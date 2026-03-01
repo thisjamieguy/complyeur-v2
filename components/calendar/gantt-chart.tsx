@@ -72,7 +72,6 @@ export const GanttChart = memo(function GanttChart({
 }: GanttChartProps) {
   const [overscan, setOverscan] = useState(BASE_OVERSCAN)
   const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(null)
-  const [hoveredDateKey, setHoveredDateKey] = useState<string | null>(null)
   const mountStartedAtRef = useRef<number>(
     typeof performance !== 'undefined' ? performance.now() : 0
   )
@@ -268,14 +267,8 @@ export const GanttChart = memo(function GanttChart({
   const virtualRows = virtualizer.getVirtualItems()
   const visibleRows = virtualRows.length
 
-  const handleCellHover = (employeeId: string, dateKey: string) => {
-    setHoveredEmployeeId(employeeId)
-    setHoveredDateKey(dateKey)
-  }
-
   const clearHover = () => {
     setHoveredEmployeeId(null)
-    setHoveredDateKey(null)
   }
 
   useEffect(() => {
@@ -364,7 +357,6 @@ export const GanttChart = memo(function GanttChart({
             <DateHeader
               dateMeta={dateMeta}
               dayWidth={DAY_WIDTH}
-              hoveredDateKey={hoveredDateKey}
             />
 
             {/* Virtualized grid rows */}
@@ -387,14 +379,13 @@ export const GanttChart = memo(function GanttChart({
                         transform: `translate3d(0, ${virtualRow.start}px, 0)`,
                         willChange: 'transform',
                       }}
+                      onMouseEnter={() => setHoveredEmployeeId(employee.id)}
                     >
                       <EmployeeRow
                         employee={employee}
                         dateMeta={dateMeta}
                         dayWidth={DAY_WIDTH}
                         hoveredEmployeeId={hoveredEmployeeId}
-                        hoveredDateKey={hoveredDateKey}
-                        onCellHover={handleCellHover}
                       />
                     </div>
                   )
