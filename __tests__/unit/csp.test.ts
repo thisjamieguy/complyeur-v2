@@ -8,26 +8,26 @@ afterEach(() => {
 })
 
 describe('buildContentSecurityPolicy', () => {
-  it('removes unsafe script directives in production', () => {
+  it('uses unsafe-inline (no nonce) in production to allow static rendering', () => {
     process.env.NODE_ENV = 'production'
 
-    const csp = buildContentSecurityPolicy('nonce123')
+    const csp = buildContentSecurityPolicy()
     const scriptSrcDirective =
       csp
         .split(';')
         .map((directive) => directive.trim())
         .find((directive) => directive.startsWith('script-src ')) ?? ''
 
-    expect(scriptSrcDirective).toContain("'nonce-nonce123'")
-    expect(scriptSrcDirective).toContain("'strict-dynamic'")
-    expect(scriptSrcDirective).not.toContain("'unsafe-inline'")
+    expect(scriptSrcDirective).toContain("'unsafe-inline'")
     expect(scriptSrcDirective).not.toContain("'unsafe-eval'")
+    expect(scriptSrcDirective).not.toContain("'strict-dynamic'")
+    expect(scriptSrcDirective).toContain('https://cdn-cookieyes.com')
   })
 
   it('keeps development script relaxations in non-production', () => {
     process.env.NODE_ENV = 'development'
 
-    const csp = buildContentSecurityPolicy('nonce123')
+    const csp = buildContentSecurityPolicy()
 
     expect(csp).toContain("script-src 'self' 'unsafe-eval' 'unsafe-inline'")
   })
