@@ -3,17 +3,19 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const features = [
-  'Built for UK businesses sending staff to the EU',
-  'Designed for HR, operations, and mobility teams',
-  'EES-era automated checks reduce tolerance for manual counting',
-  'One trip update recalculates every rolling 90/180 window',
-  'Keep Schengen travel in one compliance system of record',
+  'A single system of record for Schengen travel compliance',
+  'Rolling 90/180 windows recalculated with every trip update',
+  'Per-employee compliance visibility across your team',
+  'Centralised oversight of every EU travel approval',
+  'Accurate day tracking aligned with automated border checks',
 ]
 
 export function FeatureTicker() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
   const [isPaused, setIsPaused] = useState(false)
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   const cycleFeature = useCallback(() => {
     setIsVisible(false)
@@ -21,20 +23,45 @@ export function FeatureTicker() {
     setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % features.length)
       setIsVisible(true)
-    }, 500)
+    }, 250)
+  }, [])
+
+  // Wait for browser idle before starting rotation — keeps first paint free of interval work
+  useEffect(() => {
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(() => setIsAnimating(true), { timeout: 2000 })
+      return () => window.cancelIdleCallback(id)
+    } else {
+      const id = setTimeout(() => setIsAnimating(true), 1000) as unknown as number
+      return () => clearTimeout(id)
+    }
   }, [])
 
   useEffect(() => {
-    if (isPaused) return
+    if (isPaused || prefersReducedMotion || !isAnimating) return
 
-    const interval = setInterval(cycleFeature, 3000)
+    const interval = setInterval(cycleFeature, 4000)
 
     return () => clearInterval(interval)
-  }, [isPaused, cycleFeature])
+  }, [isPaused, prefersReducedMotion, cycleFeature, isAnimating])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const handleChange = () => {
+      setPrefersReducedMotion(mediaQuery.matches)
+    }
+
+    handleChange()
+    mediaQuery.addEventListener('change', handleChange)
+
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
+
+  const activeFeature = prefersReducedMotion ? features[0] : features[currentIndex]
 
   return (
     <div
-      className="mt-8 h-10 flex items-center justify-center"
+      className="mt-8 min-h-5 sm:min-h-6 flex items-center justify-center"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       role="marquee"
@@ -42,11 +69,11 @@ export function FeatureTicker() {
       aria-atomic="true"
     >
       <p
-        className={`text-slate-500 font-medium text-base sm:text-lg transition-all duration-500 ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-        }`}
+        className={`text-muted-foreground font-normal text-sm sm:text-base leading-5 sm:leading-6 ${
+          prefersReducedMotion ? '' : 'transition-all duration-300'
+        } ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}
       >
-        {features[currentIndex]}
+        {activeFeature}
       </p>
 
       {/* Hidden list for screen readers */}
