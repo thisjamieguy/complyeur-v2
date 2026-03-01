@@ -199,6 +199,21 @@ export default function LandingPage() {
                 <p className="mt-2 max-w-xl text-sm text-slate-500">
                   No spreadsheets. No manual counting. One live record per approval.
                 </p>
+
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <Link
+                    href="#waitlist"
+                    className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+                  >
+                    Request Early Access
+                  </Link>
+                  <Link
+                    href="/landing/preview"
+                    className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                  >
+                    See the product &rarr;
+                  </Link>
+                </div>
               </div>
 
               <div id="product-demo" className="space-y-5 lg:pt-2">
