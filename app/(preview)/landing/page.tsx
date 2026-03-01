@@ -149,6 +149,9 @@ export default function LandingPage() {
               <Link href="#how-it-works" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
                 How it works
               </Link>
+              <Link href="/landing/preview" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+                Preview
+              </Link>
               <Link href="#waitlist" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
                 Join waitlist
               </Link>
@@ -178,10 +181,10 @@ export default function LandingPage() {
             <div className="grid gap-x-10 gap-y-8 lg:grid-cols-[1.02fr_0.98fr] lg:items-start">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-700">
-                  UK business travel compliance
+                  Schengen compliance for UK travel teams
                 </p>
                 <h1 className="landing-serif mt-4 text-balance text-5xl font-semibold leading-[1.02] text-slate-900 sm:text-6xl lg:text-7xl">
-                  Approve EU trips with every Schengen day already clear.
+                  Know every employee&rsquo;s Schengen position before you approve.
                 </h1>
 
                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl">
@@ -203,52 +206,6 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div
-                id="waitlist"
-                className="landing-panel h-full rounded-[1.75rem] border border-slate-200/80 bg-white/95 p-5 shadow-md shadow-slate-900/5 backdrop-blur sm:p-6"
-              >
-                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">
-                  Apply for the limited early-access cohort
-                </p>
-                <p className="mb-4 max-w-lg text-sm leading-relaxed text-slate-600">
-                  We are onboarding a private launch group of UK teams with active EU travel and approval risk to
-                  manage now.
-                </p>
-                <WaitlistForm variant="default" />
-                <Link
-                  href="/landing/preview"
-                  className="mt-4 inline-flex text-sm font-semibold text-brand-700 underline-offset-4 hover:underline"
-                >
-                  Prefer to explore first? Open the interactive preview
-                </Link>
-              </div>
-
-              <div className="space-y-4 lg:self-start">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-[1.75rem] border border-slate-200 bg-slate-900 p-5 text-white shadow-lg shadow-slate-900/10">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-300">Average warning buffer</p>
-                    <p className="landing-serif mt-2 text-4xl">17 days</p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-300">
-                      Typical lead time between the first warning and a projected 90-day breach in the sample team view.
-                    </p>
-                  </div>
-                  <div className="rounded-[1.75rem] border border-brand-200 bg-brand-50 p-5 text-brand-950">
-                    <p className="text-xs uppercase tracking-[0.18em] text-brand-700">Live 90/180 engine</p>
-                    <p className="landing-serif mt-2 text-4xl">Daily</p>
-                    <p className="mt-2 text-sm leading-relaxed text-brand-800">
-                      Every trip recalculates the rolling window so approvals reflect today&apos;s position, not last
-                      week&apos;s worksheet.
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-sm text-slate-500">
-                  Preview feature:{' '}
-                  <Link href="/landing/preview" className="font-medium text-brand-700 underline-offset-4 hover:underline">
-                    Try the interactive calendar preview
-                  </Link>
-                </p>
-              </div>
             </div>
 
             <FeatureTicker />
@@ -473,7 +430,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-slate-900 py-24">
+        <section id="waitlist" className="relative overflow-hidden bg-slate-900 py-24">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(92,127,163,0.35),transparent_45%)]" />
           <div className="relative mx-auto max-w-3xl px-6 text-center">
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">Private launch cohort</p>
