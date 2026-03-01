@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type Stripe from 'stripe'
 import { constructWebhookEvent } from '@/lib/billing/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendPaymentFailedEmail } from '@/lib/services/email-service'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -88,7 +89,7 @@ async function processWebhookEvent(admin: SupabaseClient, event: Stripe.Event) {
       await handleSubscriptionDeleted(admin, event.data.object as Stripe.Subscription)
       return
     case 'invoice.payment_failed':
-      await handlePaymentFailed(event.data.object as Stripe.Invoice)
+      await handlePaymentFailed(admin, event.data.object as Stripe.Invoice)
       return
     default:
       return
@@ -296,6 +297,9 @@ async function handleSubscriptionUpdated(
 
   const updates: Record<string, unknown> = {
     subscription_status: subscription.status,
+    current_period_end: subscription.items.data[0]?.current_period_end
+      ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString()
+      : null,
   }
 
   const priceId = subscription.items.data[0]?.price?.id
@@ -374,7 +378,7 @@ async function handleSubscriptionDeleted(
   }
 }
 
-async function handlePaymentFailed(invoice: Stripe.Invoice) {
+async function handlePaymentFailed(admin: SupabaseClient, invoice: Stripe.Invoice) {
   const subscriptionId = invoice.parent?.subscription_details?.subscription as
     | string
     | null
@@ -383,8 +387,38 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
       ? invoice.customer
       : invoice.customer?.id ?? null
 
+  const attemptCount = invoice.attempt_count ?? 1
+  const amountDue = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: (invoice.currency ?? 'gbp').toUpperCase(),
+  }).format((invoice.amount_due ?? 0) / 100)
+
   console.error(
     `[billing/webhook] Payment failed for subscription ${subscriptionId}`,
-    { attemptCount: invoice.attempt_count }
+    { attemptCount, customerId }
   )
+
+  if (!customerId) {
+    console.warn('[billing/webhook] No customer ID on invoice — skipping email')
+    return
+  }
+
+  // Look up the company email via stripe_customer_id
+  const { data: company, error } = await admin
+    .from('companies')
+    .select('name, email')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle()
+
+  if (error || !company?.email) {
+    console.error('[billing/webhook] Could not find company for customer', { customerId, error })
+    return
+  }
+
+  await sendPaymentFailedEmail({
+    recipientEmail: company.email,
+    companyName: company.name ?? undefined,
+    amountDue,
+    attemptCount,
+  })
 }

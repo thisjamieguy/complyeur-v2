@@ -3,6 +3,14 @@
     {
       "path": "/api/gdpr/cron/retention",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/onboarding",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/billing",
+      "schedule": "0 9 * * *"
     }
   ]
 }
