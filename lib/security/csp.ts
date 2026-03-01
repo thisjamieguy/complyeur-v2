@@ -1,15 +1,18 @@
-export function createCspNonce(): string {
-  return crypto.randomUUID().replace(/-/g, '')
-}
-
-export function buildContentSecurityPolicy(nonce: string): string {
+/**
+ * Build the Content Security Policy header value.
+ *
+ * Note: We use 'unsafe-inline' instead of nonce-based CSP so that public
+ * pages (landing, pricing, etc.) can be statically pre-rendered and served
+ * from Vercel's edge CDN. All sensitive data is protected at the database
+ * level via Supabase RLS and HttpOnly auth cookies.
+ */
+export function buildContentSecurityPolicy(): string {
   const isProduction = process.env.NODE_ENV === 'production'
 
   const scriptSrc = isProduction
     ? [
         "'self'",
-        `'nonce-${nonce}'`,
-        "'strict-dynamic'",
+        "'unsafe-inline'",
         'https://*.supabase.co',
         'https://*.vercel-scripts.com',
         'https://cdn-cookieyes.com',

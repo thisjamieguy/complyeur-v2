@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { headers } from "next/headers";
 import { Montserrat, Open_Sans } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
@@ -32,76 +31,78 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = defaultMetadata;
 
-export default async function RootLayout({
+// Hoisted to module scope so they're computed once at build time, not per-request.
+const xProfileUrl = `https://x.com/${X_HANDLE.replace(/^@/, '')}`
+
+const structuredDataGraph = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: "ComplyEur",
+      url: SITE_URL,
+      inLanguage: "en-GB",
+      description: "Schengen compliance management for UK businesses",
+      publisher: {
+        "@id": `${SITE_URL}/#organization`,
+      },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "ComplyEur",
+      url: SITE_URL,
+      logo: `${SITE_URL}/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.webp`,
+      sameAs: [xProfileUrl],
+      description:
+        "Helping UK businesses track EU Schengen 90/180-day visa compliance for their employees.",
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${SITE_URL}/#software`,
+      name: "ComplyEur",
+      applicationCategory: "BusinessApplication",
+      applicationSubCategory: "Compliance Management",
+      operatingSystem: "Web browser",
+      url: SITE_URL,
+      inLanguage: "en-GB",
+      areaServed: {
+        "@type": "Country",
+        name: "United Kingdom",
+      },
+      description:
+        "Track and manage EU Schengen 90/180-day visa compliance for your employees. Automated tracking, real-time alerts, and compliance reporting for UK businesses.",
+      featureList: [
+        "Real-time compliance tracking",
+        "90/180-day rule calculator",
+        "Employee travel management",
+        "Automated alerts and warnings",
+        "Trip planning tools",
+        "GDPR compliant data handling",
+      ],
+      offers: {
+        "@type": "Offer",
+        availability: "https://schema.org/PreOrder",
+        price: "0",
+        priceCurrency: "GBP",
+        priceValidUntil: "2026-12-31",
+      },
+      publisher: {
+        "@id": `${SITE_URL}/#organization`,
+      },
+    },
+  ],
+}
+
+// NEXT_PUBLIC_* vars are inlined at build time — safe to read at module scope.
+const enableSpeedInsights = process.env.NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS === 'true'
+
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const requestHeaders = await headers()
-  const nonce = requestHeaders.get('x-nonce') ?? undefined
-  const xProfileUrl = `https://x.com/${X_HANDLE.replace(/^@/, '')}`
-  const enableSpeedInsights = process.env.NEXT_PUBLIC_ENABLE_SPEED_INSIGHTS === 'true'
-  const structuredDataGraph = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebSite",
-        "@id": `${SITE_URL}/#website`,
-        name: "ComplyEur",
-        url: SITE_URL,
-        inLanguage: "en-GB",
-        description: "Schengen compliance management for UK businesses",
-        publisher: {
-          "@id": `${SITE_URL}/#organization`,
-        },
-      },
-      {
-        "@type": "Organization",
-        "@id": `${SITE_URL}/#organization`,
-        name: "ComplyEur",
-        url: SITE_URL,
-        logo: `${SITE_URL}/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.webp`,
-        sameAs: [xProfileUrl],
-        description:
-          "Helping UK businesses track EU Schengen 90/180-day visa compliance for their employees.",
-      },
-      {
-        "@type": "SoftwareApplication",
-        "@id": `${SITE_URL}/#software`,
-        name: "ComplyEur",
-        applicationCategory: "BusinessApplication",
-        applicationSubCategory: "Compliance Management",
-        operatingSystem: "Web browser",
-        url: SITE_URL,
-        inLanguage: "en-GB",
-        areaServed: {
-          "@type": "Country",
-          name: "United Kingdom",
-        },
-        description:
-          "Track and manage EU Schengen 90/180-day visa compliance for your employees. Automated tracking, real-time alerts, and compliance reporting for UK businesses.",
-        featureList: [
-          "Real-time compliance tracking",
-          "90/180-day rule calculator",
-          "Employee travel management",
-          "Automated alerts and warnings",
-          "Trip planning tools",
-          "GDPR compliant data handling",
-        ],
-        offers: {
-          "@type": "Offer",
-          availability: "https://schema.org/PreOrder",
-          price: "0",
-          priceCurrency: "GBP",
-          priceValidUntil: "2026-12-31",
-        },
-        publisher: {
-          "@id": `${SITE_URL}/#organization`,
-        },
-      },
-    ],
-  }
-
   return (
     <html lang="en">
       <body
@@ -114,18 +115,15 @@ export default async function RootLayout({
             id="cookieyes"
             src="https://cdn-cookieyes.com/client_data/8c2e311aa3e53bd1fc42091adb588e5c/script.js"
             strategy="afterInteractive"
-            nonce={nonce}
           />
         )}
-        {/* JSON-LD Structured Data for SEO - safe static content */}
-        <Script
-          id="structured-data"
+        {/* JSON-LD Structured Data for SEO.
+            type="application/ld+json" is a data block, not executable JavaScript,
+            so no CSP nonce is required. Content is static build-time data only. */}
+        <script
           type="application/ld+json"
-          strategy="beforeInteractive"
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredDataGraph),
-          }}
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredDataGraph) }}
         />
         <MaintenanceBanner />
         {children}

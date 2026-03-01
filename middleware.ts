@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { buildContentSecurityPolicy, createCspNonce } from '@/lib/security/csp'
+import { buildContentSecurityPolicy } from '@/lib/security/csp'
 import {
   formatMaxRequestBodyError,
   getMaxRequestBodyBytesForPath,
@@ -17,10 +17,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const nonce = createCspNonce()
-  const cspHeader = buildContentSecurityPolicy(nonce)
+  const cspHeader = buildContentSecurityPolicy()
   const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-nonce', nonce)
 
   const withSecurityHeaders = (response: NextResponse): NextResponse => {
     response.headers.set('Content-Security-Policy', cspHeader)
@@ -106,13 +104,7 @@ export async function middleware(request: NextRequest) {
   // Public marketing routes do not require per-request Supabase auth hydration.
   // Skipping this avoids an external call on every anonymous landing-page request.
   if (isPublicMarketingRoute) {
-    return withSecurityHeaders(
-      NextResponse.next({
-        request: {
-          headers: requestHeaders,
-        },
-      })
-    )
+    return withSecurityHeaders(NextResponse.next())
   }
 
   // 2. Auth & Session Management
