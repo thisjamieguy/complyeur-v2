@@ -153,7 +153,7 @@ export default function LandingPage() {
                 Preview
               </Link>
               <Link href="#waitlist" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
-                Request access
+                Join waitlist
               </Link>
             </div>
 
@@ -168,7 +168,7 @@ export default function LandingPage() {
                 href="#waitlist"
                 className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
               >
-                Request Early Access
+                Join Waiting List
               </Link>
             </div>
           </div>
@@ -192,12 +192,8 @@ export default function LandingPage() {
                   &mdash; so approvals are based on current data, not manual counting.
                 </p>
 
-                <p className="mt-4 max-w-xl text-sm font-medium text-slate-700">
-                  Avoid overstays. Avoid fines. Avoid border refusals.
-                </p>
-
-                <p className="mt-2 max-w-xl text-sm text-slate-500">
-                  No spreadsheets. No manual counting. One live record per approval.
+                <p className="mt-4 max-w-xl text-base font-semibold text-slate-800">
+                  Avoid overstays <span aria-hidden="true" className="mx-1.5 text-brand-500">·</span> Avoid fines <span aria-hidden="true" className="mx-1.5 text-brand-500">·</span> Avoid border refusals
                 </p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -205,7 +201,7 @@ export default function LandingPage() {
                     href="#waitlist"
                     className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
                   >
-                    Request Early Access
+                    Join Waiting List
                   </Link>
                   <Link
                     href="/landing/preview"
@@ -216,7 +212,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div id="product-demo" className="space-y-5 lg:pt-2">
+              <div id="product-demo" className="space-y-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Live 90/180-day tracking, per employee
                 </p>
@@ -454,7 +450,7 @@ export default function LandingPage() {
         <section id="waitlist" className="relative overflow-hidden bg-slate-900 py-24">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(92,127,163,0.35),transparent_45%)]" />
           <div className="relative mx-auto max-w-3xl px-6 text-center">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">Early access</p>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">Join the waitlist</p>
             <h2 className="landing-serif text-balance text-4xl font-semibold text-white sm:text-5xl">
               Secure private early access for your UK travel team.
             </h2>
