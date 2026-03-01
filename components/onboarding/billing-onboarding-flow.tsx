@@ -3,13 +3,14 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  Building2,
   CheckCircle2,
   Loader2,
   ShieldCheck,
   Sparkles,
   Timer,
 } from 'lucide-react'
-import { completeOnboarding } from '@/app/(onboarding)/onboarding/actions'
+import { completeOnboarding, updateCompanyName } from '@/app/(onboarding)/onboarding/actions'
 import {
   SELF_SERVE_PLANS,
   formatGbpPrice,
@@ -22,6 +23,7 @@ import { trackEvent } from '@/lib/analytics/client'
 
 type CheckoutState = 'success' | 'cancelled' | null
 type FlowState =
+  | 'company_details'
   | 'plan_select'
   | 'payment_pending'
   | 'payment_finalizing'
@@ -52,6 +54,9 @@ export function BillingOnboardingFlow({
   initialTierSlug,
   checkoutState,
 }: BillingOnboardingFlowProps) {
+  const [companyName, setCompanyName] = useState(initialCompanyName)
+  const [companyNameError, setCompanyNameError] = useState<string | null>(null)
+  const [companyNameSaving, setCompanyNameSaving] = useState(false)
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
   const [promotionCodeEnabled, setPromotionCodeEnabled] = useState(false)
   const [promotionCode, setPromotionCode] = useState('')
@@ -71,7 +76,7 @@ export function BillingOnboardingFlow({
   const [flowState, setFlowState] = useState<FlowState>(() => {
     if (isPaidSubscription(initialSubscriptionStatus)) return 'welcome'
     if (checkoutState === 'success') return 'payment_finalizing'
-    return 'plan_select'
+    return 'company_details'
   })
 
   useEffect(() => {
@@ -98,8 +103,9 @@ export function BillingOnboardingFlow({
   )
 
   const activeStep = (() => {
-    if (flowState === 'welcome') return 3
-    if (flowState === 'payment_pending' || flowState === 'payment_finalizing') return 2
+    if (flowState === 'welcome') return 4
+    if (flowState === 'payment_pending' || flowState === 'payment_finalizing') return 3
+    if (flowState === 'plan_select') return 2
     return 1
   })()
 
@@ -259,6 +265,30 @@ export function BillingOnboardingFlow({
     }
   }, [billingInterval, promotionCode])
 
+  async function handleCompanyNameSubmit() {
+    const trimmed = companyName.trim()
+    if (!trimmed || trimmed.length < 2) {
+      setCompanyNameError('Company name must be at least 2 characters')
+      return
+    }
+
+    setCompanyNameError(null)
+    setCompanyNameSaving(true)
+
+    try {
+      const formData = new FormData()
+      formData.set('companyName', trimmed)
+      await updateCompanyName(formData)
+      setFlowState('plan_select')
+    } catch (error) {
+      setCompanyNameError(
+        error instanceof Error ? error.message : 'Failed to save company name'
+      )
+    } finally {
+      setCompanyNameSaving(false)
+    }
+  }
+
   async function handleCompleteOnboarding() {
     setCompletionPending(true)
     setStatusError(null)
@@ -286,16 +316,16 @@ export function BillingOnboardingFlow({
             Finish billing before entering your workspace
           </h1>
           <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
-            Account created for <span className="font-medium text-slate-800">{initialCompanyName}</span>.
-            Pick your tier, complete checkout, then launch into your dashboard.
+            Confirm your details, pick your tier, complete checkout, then launch into your dashboard.
           </p>
         </div>
 
-        <ol className="mb-8 grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-3">
+        <ol className="mb-8 grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4">
           {[
-            { index: 1, label: 'Select Tier' },
-            { index: 2, label: 'Payment' },
-            { index: 3, label: 'Welcome' },
+            { index: 1, label: 'Company' },
+            { index: 2, label: 'Select Tier' },
+            { index: 3, label: 'Payment' },
+            { index: 4, label: 'Welcome' },
           ].map((step) => (
             <li
               key={step.index}
@@ -312,6 +342,71 @@ export function BillingOnboardingFlow({
             </li>
           ))}
         </ol>
+
+        {flowState === 'company_details' && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
+                  <Building2 className="h-5 w-5 text-brand-700" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Company name</h2>
+                  <p className="text-sm text-slate-600">Confirm or update your company name</p>
+                </div>
+              </div>
+
+              <div className="mt-5 max-w-md">
+                <label htmlFor="onboarding-company-name" className="block text-sm font-medium text-slate-700">
+                  Company name
+                </label>
+                <input
+                  id="onboarding-company-name"
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => {
+                    setCompanyName(e.target.value)
+                    setCompanyNameError(null)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleCompanyNameSubmit()
+                    }
+                  }}
+                  autoFocus
+                  autoComplete="organization"
+                  maxLength={100}
+                  className={cn(
+                    'mt-1.5 w-full rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2',
+                    companyNameError
+                      ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-200'
+                      : 'border-slate-300 focus:border-brand-400 focus:ring-brand-200'
+                  )}
+                />
+                {companyNameError && (
+                  <p className="mt-1.5 text-sm text-rose-600">{companyNameError}</p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleCompanyNameSubmit}
+                disabled={companyNameSaving}
+                className="mt-5 inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {companyNameSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  'Continue'
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {flowState === 'plan_select' && (
           <div className="space-y-6">
