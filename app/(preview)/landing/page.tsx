@@ -211,7 +211,7 @@ export default function LandingPage() {
                     href="/landing/preview"
                     className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
                   >
-                    See the product &rarr;
+                    See the product <span aria-hidden="true">&rarr;</span>
                   </Link>
                 </div>
               </div>
