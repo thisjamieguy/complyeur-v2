@@ -37,9 +37,9 @@ const statusConfig = {
   },
   red: {
     bg: 'bg-red-50',
-    text: 'text-red-700',
-    border: 'border-red-200',
-    dot: 'bg-red-500',
+    text: 'text-red-800',
+    border: 'border-red-300',
+    dot: 'bg-red-600',
     label: 'High Risk',
   },
 } as const
@@ -138,19 +138,34 @@ function getAutonomousEmployees(frameIndex: number): DemoEmployee[] {
 export function DemoEmployeeList({ employees, highlightedEmployeeName }: DemoEmployeeListProps) {
   const isControlled = Boolean(employees)
   const [frameIndex, setFrameIndex] = useState(0)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   const autonomousEmployees = useMemo(() => getAutonomousEmployees(frameIndex), [frameIndex])
   const rows = employees ?? autonomousEmployees
 
+  // Wait for browser idle before starting animation — keeps first paint free of interval work
   useEffect(() => {
     if (isControlled) return
+    let id: number
+
+    if ('requestIdleCallback' in window) {
+      id = window.requestIdleCallback(() => setIsAnimating(true), { timeout: 2000 })
+      return () => window.cancelIdleCallback(id)
+    } else {
+      id = setTimeout(() => setIsAnimating(true), 1000) as unknown as number
+      return () => clearTimeout(id)
+    }
+  }, [isControlled])
+
+  useEffect(() => {
+    if (isControlled || !isAnimating) return
 
     const interval = setInterval(() => {
       setFrameIndex((prev) => (prev + 1) % employeeAnimations[0].frames.length)
     }, 2500)
 
     return () => clearInterval(interval)
-  }, [isControlled])
+  }, [isControlled, isAnimating])
 
   const compliantCount = rows.filter((employee) => employee.status === 'green').length
   const atRiskCount = rows.filter((employee) => employee.status === 'amber').length
@@ -172,7 +187,7 @@ export function DemoEmployeeList({ employees, highlightedEmployeeName }: DemoEmp
           <div className="text-xs text-slate-500">At Risk</div>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-3">
-          <div className="text-2xl font-bold text-red-600 transition-all duration-500">{nonCompliantCount}</div>
+          <div className="text-2xl font-bold text-red-700 transition-all duration-500">{nonCompliantCount}</div>
           <div className="text-xs text-slate-500">High Risk</div>
         </div>
       </div>
@@ -225,7 +240,7 @@ export function DemoEmployeeList({ employees, highlightedEmployeeName }: DemoEmp
                             'h-full rounded-full transition-all duration-500',
                             employee.status === 'green' && 'bg-green-500',
                             employee.status === 'amber' && 'bg-amber-500',
-                            employee.status === 'red' && 'bg-red-500'
+                            employee.status === 'red' && 'bg-red-600'
                           )}
                           style={{ width: `${(employee.daysUsed / 90) * 100}%` }}
                         />
@@ -240,7 +255,7 @@ export function DemoEmployeeList({ employees, highlightedEmployeeName }: DemoEmp
                         employee.daysRemaining >= 10 &&
                           employee.daysRemaining < 30 &&
                           'text-amber-600',
-                        employee.daysRemaining < 10 && 'text-red-600'
+                        employee.daysRemaining < 10 && 'font-bold text-red-700'
                       )}
                     >
                       {employee.daysRemaining} days
