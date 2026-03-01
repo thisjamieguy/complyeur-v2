@@ -115,7 +115,7 @@ export function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'm
               Submitting...
             </span>
           ) : (
-            'Join Waiting List'
+            'Request Early Access'
           )}
         </button>
       </div>
