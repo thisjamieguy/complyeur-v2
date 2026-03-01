@@ -27,12 +27,10 @@ export interface MfaEnforcementContext {
 }
 
 export function shouldEnforceMfaForRole(
-  role: string | null | undefined,
+  _role: string | null | undefined,
   isSuperadmin: boolean | null | undefined
 ): boolean {
-  if (isSuperadmin === true) return true
-  const normalizedRole = role?.trim().toLowerCase()
-  return normalizedRole === 'owner' || normalizedRole === 'admin'
+  return isSuperadmin === true
 }
 
 export async function getMfaStatusForUser(
