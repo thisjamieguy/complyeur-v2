@@ -3,6 +3,7 @@ import Script from "next/script";
 import { headers } from "next/headers";
 import { Montserrat, Open_Sans } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
 import { ConsentAwareGoogleAnalytics } from "@/components/analytics/consent-aware-google-analytics";
@@ -128,6 +129,7 @@ export default async function RootLayout({
         <MaintenanceBanner />
         {children}
         <Toaster />
+        <Analytics />
         {enableSpeedInsights && <SpeedInsights />}
         {process.env.NODE_ENV === 'production' && (
           <ConsentAwareGoogleAnalytics gaId="G-PKKZZFWD63" />
