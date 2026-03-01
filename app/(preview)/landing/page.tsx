@@ -188,13 +188,16 @@ export default function LandingPage() {
                 </h1>
 
                 <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl">
-                  ComplyEur gives HR, operations, and mobility teams a live 90/180-day position for every traveller, so
-                  approvals are based on current data instead of spreadsheet checks.
+                  ComplyEur gives HR, operations, and mobility teams a live 90/180-day record for every traveller
+                  &mdash; so approvals are based on current data, not manual counting.
                 </p>
 
-                <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
-                  As the EU Entry/Exit System (EES) expands automated border controls, manual counting leaves less room
-                  for error. ComplyEur becomes the working record behind each Schengen travel decision.
+                <p className="mt-4 max-w-xl text-sm font-medium text-slate-700">
+                  Avoid overstays. Avoid fines. Avoid border refusals.
+                </p>
+
+                <p className="mt-2 max-w-xl text-sm text-slate-500">
+                  No spreadsheets. No manual counting. One live record per approval.
                 </p>
               </div>
 
