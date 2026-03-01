@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { Footer } from '@/components/layout/footer'
 import { SkipLink } from '@/components/ui/skip-link'
@@ -14,25 +15,16 @@ export default function PublicLayout({
         <div className="mx-auto max-w-6xl">
           <div className="flex items-center justify-between gap-4">
             <Link href="/landing" className="inline-block hover:opacity-80 transition-opacity">
-              <picture>
-                <source
-                  srcSet="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.avif"
-                  type="image/avif"
-                />
-                <source
-                  srcSet="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.webp"
-                  type="image/webp"
-                />
-                <img
-                  src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png"
-                  alt="ComplyEur"
-                  width={150}
-                  height={40}
-                  className="h-8 w-auto"
-                  loading="eager"
-                  decoding="async"
-                />
-              </picture>
+              <Image
+                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png"
+                alt="ComplyEur"
+                width={150}
+                height={40}
+                className="h-8 w-auto"
+                priority
+                fetchPriority="high"
+                sizes="150px"
+              />
             </Link>
             <div className="flex items-center gap-2">
               <Link
@@ -42,14 +34,17 @@ export default function PublicLayout({
                 Sign in
               </Link>
               <Link
-                href="/landing"
+                href="/landing#early-access"
                 className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
               >
-                Join Waitlist
+                Request Early Access
               </Link>
             </div>
           </div>
           <nav aria-label="Public pages" className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <Link href="/landing/preview" className="font-medium text-slate-600 transition hover:text-slate-900">
+              Preview
+            </Link>
             <Link href="/pricing" className="font-medium text-slate-600 transition hover:text-slate-900">
               Pricing
             </Link>

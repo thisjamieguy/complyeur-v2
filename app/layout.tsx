@@ -118,8 +118,10 @@ export default async function RootLayout({
           />
         )}
         {/* JSON-LD Structured Data for SEO - safe static content */}
-        <script
+        <Script
+          id="structured-data"
           type="application/ld+json"
+          strategy="beforeInteractive"
           nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredDataGraph),

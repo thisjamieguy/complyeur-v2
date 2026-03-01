@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import Script from 'next/script'
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { SITE_URL } from '@/lib/metadata'
@@ -364,8 +365,10 @@ function FAQItemComponent({ item }: { item: FAQItem }) {
 export default function FAQPage() {
   return (
     <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">
-      <script
+      <Script
+        id="faq-structured-data"
         type="application/ld+json"
+        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(faqStructuredData),
         }}
@@ -415,16 +418,6 @@ export default function FAQPage() {
                     className="font-medium text-brand-700 hover:underline"
                   >
                     EU Entry/Exit System (EES)
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa/visa-policy/short-stay-visas_en"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-brand-700 hover:underline"
-                  >
-                    European Commission short-stay Schengen visas guidance
                   </a>
                 </li>
                 <li>
