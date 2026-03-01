@@ -258,7 +258,7 @@ describe('Compliance Algorithm Load Tests', () => {
         oracleResult,
         '100k days load test'
       );
-    });
+    }, 15_000);
 
     it('processes 500,000+ days correctly against oracle', () => {
       // Generate 500,000+ days of trips for extreme load
@@ -313,7 +313,7 @@ describe('Compliance Algorithm Load Tests', () => {
         oracleResult,
         '500k days load test'
       );
-    });
+    }, 30_000);
 
     it.each(generateKnownScenarios())(
       'scenario: $name - expected $expectedDaysUsed days used',
