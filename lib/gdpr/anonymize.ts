@@ -19,7 +19,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { logGdprAction, type AnonymizeDetails } from './audit'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
-import { isOwnerOrAdmin } from '@/lib/permissions'
+import { requireOwnerOrAdminMutation } from '@/lib/security/authorization'
 
 /**
  * Result type for anonymization
@@ -35,7 +35,7 @@ export interface AnonymizeResult {
 export interface AnonymizeError {
   success: false
   error: string
-  code: 'NOT_FOUND' | 'UNAUTHORIZED' | 'ALREADY_ANONYMIZED' | 'DATABASE_ERROR'
+  code: 'NOT_FOUND' | 'UNAUTHORIZED' | 'ALREADY_ANONYMIZED' | 'DATABASE_ERROR' | 'RATE_LIMIT'
 }
 
 /**
@@ -77,41 +77,21 @@ export async function anonymizeEmployee(
   const supabase = await createClient()
 
   try {
-    // Get current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const access = await requireOwnerOrAdminMutation(supabase, 'anonymizeEmployee')
+    if (!access.allowed) {
+      const error =
+        access.status === 401
+          ? 'Unauthorized - you must be logged in'
+          : access.mfaReason
+            ? access.error
+            : access.status === 403
+              ? 'Only owners and administrators can anonymize employees'
+              : access.error
 
-    if (authError || !user) {
       return {
         success: false,
-        error: 'Unauthorized - you must be logged in',
-        code: 'UNAUTHORIZED',
-      }
-    }
-
-    // Get user's profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('company_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !profile) {
-      return {
-        success: false,
-        error: 'Could not find your profile',
-        code: 'DATABASE_ERROR',
-      }
-    }
-
-    // Check owner/admin permission
-    if (!isOwnerOrAdmin(profile.role)) {
-      return {
-        success: false,
-        error: 'Only owners and administrators can anonymize employees',
-        code: 'UNAUTHORIZED',
+        error,
+        code: access.status === 429 ? 'RATE_LIMIT' : 'UNAUTHORIZED',
       }
     }
 
@@ -195,8 +175,8 @@ export async function anonymizeEmployee(
     }
 
     await logGdprAction({
-      companyId: profile.company_id ?? '',
-      userId: user.id,
+      companyId: access.companyId,
+      userId: access.user.id,
       action: 'ANONYMIZE',
       entityType: 'employee',
       entityId: employeeId,

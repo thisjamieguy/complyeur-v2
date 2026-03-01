@@ -28,6 +28,11 @@ export async function middleware(request: NextRequest) {
   }
 
   const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
+  const publicApiRoutes = [
+    '/api/health',
+    '/api/billing/webhook',
+    '/api/gdpr/cron/retention',
+  ]
   const publicMarketingRoutes = [
     '/',
     '/landing',
@@ -43,12 +48,17 @@ export async function middleware(request: NextRequest) {
     '/icon.svg',
   ]
   const isAuthRoute = authRoutes.includes(pathname)
+  const isApiRoute = pathname.startsWith('/api/')
+  const isPublicApiRoute = publicApiRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  )
+  const isProtectedApiRoute = isApiRoute && !isPublicApiRoute
   const isLandingVariantRoute = pathname.startsWith('/landing')
   const isPublicMarketingRoute =
     publicMarketingRoutes.includes(pathname) || isLandingVariantRoute
 
   // Legacy landing variant route: always promote traffic to current landing page.
-  if (pathname === '/landing-v2') {
+  if (pathname === '/landing-v2' || pathname === '/landing-v3' || pathname === '/landing-21st') {
     return withSecurityHeaders(NextResponse.redirect(new URL('/landing', request.url)))
   }
 
@@ -110,14 +120,14 @@ export async function middleware(request: NextRequest) {
 
   // Public routes that don't require authentication
   const isPublicRoute =
-    isPublicMarketingRoute || pathname.startsWith('/api/') || pathname.startsWith('/auth/')
+    isPublicMarketingRoute || isPublicApiRoute || pathname.startsWith('/auth/')
 
   const isOnboardingRoute = pathname.startsWith('/onboarding')
 
   // Protected routes: everything that isn't public or auth or onboarding
   // This covers all (dashboard) route group pages: /calendar, /import, /settings,
   // /employee, /exports, /gdpr, /trip-forecast, /future-job-alerts, etc.
-  const isProtectedRoute = !isPublicRoute && !isAuthRoute && !isOnboardingRoute
+  const isProtectedRoute = !isApiRoute && !isPublicRoute && !isAuthRoute && !isOnboardingRoute
 
   const redirectWithCookies = (url: URL) => {
     const response = NextResponse.redirect(url)
@@ -125,6 +135,25 @@ export async function middleware(request: NextRequest) {
       response.cookies.set(cookie)
     })
     return withSecurityHeaders(response)
+  }
+
+  const jsonWithCookies = (
+    body: Record<string, unknown>,
+    init?: ResponseInit
+  ) => {
+    const response = NextResponse.json(body, init)
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      response.cookies.set(cookie)
+    })
+    return withSecurityHeaders(response)
+  }
+
+  if (isProtectedApiRoute && !user) {
+    return jsonWithCookies({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (isApiRoute) {
+    return withSecurityHeaders(supabaseResponse)
   }
 
   // If user is authenticated and trying to access auth routes, redirect to dashboard

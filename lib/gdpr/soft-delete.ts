@@ -27,7 +27,7 @@ import {
 } from './audit'
 import { RECOVERY_PERIOD_DAYS } from './constants'
 import { requireCompanyAccess, requireCompanyAccessCached } from '@/lib/security/tenant-access'
-import { isOwnerOrAdmin } from '@/lib/permissions'
+import { requireOwnerOrAdminMutation } from '@/lib/security/authorization'
 
 // Re-export for convenience
 export { RECOVERY_PERIOD_DAYS }
@@ -47,7 +47,7 @@ export interface SoftDeleteResult {
 export interface SoftDeleteError {
   success: false
   error: string
-  code: 'NOT_FOUND' | 'UNAUTHORIZED' | 'ALREADY_DELETED' | 'DATABASE_ERROR'
+  code: 'NOT_FOUND' | 'UNAUTHORIZED' | 'ALREADY_DELETED' | 'DATABASE_ERROR' | 'RATE_LIMIT'
 }
 
 /**
@@ -72,41 +72,21 @@ export async function softDeleteEmployee(
   const supabase = await createClient()
 
   try {
-    // Get current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const access = await requireOwnerOrAdminMutation(supabase, 'softDeleteEmployee')
+    if (!access.allowed) {
+      const error =
+        access.status === 401
+          ? 'Unauthorized - you must be logged in'
+          : access.mfaReason
+            ? access.error
+            : access.status === 403
+              ? 'Only owners and administrators can delete employees'
+              : access.error
 
-    if (authError || !user) {
       return {
         success: false,
-        error: 'Unauthorized - you must be logged in',
-        code: 'UNAUTHORIZED',
-      }
-    }
-
-    // Get user's profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('company_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !profile) {
-      return {
-        success: false,
-        error: 'Could not find your profile',
-        code: 'DATABASE_ERROR',
-      }
-    }
-
-    // Check owner/admin permission
-    if (!isOwnerOrAdmin(profile.role)) {
-      return {
-        success: false,
-        error: 'Only owners and administrators can delete employees',
-        code: 'UNAUTHORIZED',
+        error,
+        code: access.status === 429 ? 'RATE_LIMIT' : 'UNAUTHORIZED',
       }
     }
 
@@ -179,8 +159,8 @@ export async function softDeleteEmployee(
     }
 
     await logGdprAction({
-      companyId: profile.company_id ?? '',
-      userId: user.id,
+      companyId: access.companyId,
+      userId: access.user.id,
       action: 'SOFT_DELETE',
       entityType: 'employee',
       entityId: employeeId,
@@ -218,7 +198,7 @@ export interface RestoreResult {
 export interface RestoreError {
   success: false
   error: string
-  code: 'NOT_FOUND' | 'UNAUTHORIZED' | 'NOT_DELETED' | 'EXPIRED' | 'DATABASE_ERROR'
+  code: 'NOT_FOUND' | 'UNAUTHORIZED' | 'NOT_DELETED' | 'EXPIRED' | 'DATABASE_ERROR' | 'RATE_LIMIT'
 }
 
 /**
@@ -241,41 +221,21 @@ export async function restoreEmployee(
   const supabase = await createClient()
 
   try {
-    // Get current user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const access = await requireOwnerOrAdminMutation(supabase, 'restoreEmployee')
+    if (!access.allowed) {
+      const error =
+        access.status === 401
+          ? 'Unauthorized - you must be logged in'
+          : access.mfaReason
+            ? access.error
+            : access.status === 403
+              ? 'Only owners and administrators can restore employees'
+              : access.error
 
-    if (authError || !user) {
       return {
         success: false,
-        error: 'Unauthorized - you must be logged in',
-        code: 'UNAUTHORIZED',
-      }
-    }
-
-    // Get user's profile (profiles don't have email - use auth.users email)
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('company_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !profile) {
-      return {
-        success: false,
-        error: 'Could not find your profile',
-        code: 'DATABASE_ERROR',
-      }
-    }
-
-    // Check owner/admin permission
-    if (!isOwnerOrAdmin(profile.role)) {
-      return {
-        success: false,
-        error: 'Only owners and administrators can restore employees',
-        code: 'UNAUTHORIZED',
+        error,
+        code: access.status === 429 ? 'RATE_LIMIT' : 'UNAUTHORIZED',
       }
     }
 
@@ -350,12 +310,12 @@ export async function restoreEmployee(
     const auditDetails: RestoreDetails = {
       employee_name: employee.name,
       days_until_hard_delete: daysUntilHardDelete,
-      restored_by: user.email ?? 'unknown',
+      restored_by: access.user.email ?? 'unknown',
     }
 
     await logGdprAction({
-      companyId: profile.company_id ?? '',
-      userId: user.id,
+      companyId: access.companyId,
+      userId: access.user.id,
       action: 'RESTORE',
       entityType: 'employee',
       entityId: employeeId,

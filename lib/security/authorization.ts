@@ -4,8 +4,10 @@ import {
   type Permission,
   PERMISSIONS,
   isOwnerOrAdmin,
+  ROLES,
 } from '@/lib/permissions'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 type AuthProfile = {
   company_id: string | null
@@ -27,6 +29,13 @@ export type AuthGuardFailure = {
 }
 
 export type AuthGuardResult = AuthGuardSuccess | AuthGuardFailure
+
+export type MutationGuardSuccess = AuthGuardSuccess & {
+  companyId: string
+  role: string | null
+}
+
+export type MutationGuardResult = MutationGuardSuccess | AuthGuardFailure
 
 async function getAuthProfile(
   supabase: Awaited<ReturnType<typeof createClient>>
@@ -69,6 +78,35 @@ async function enforceMfaIfRequired(
     status: 403,
     error: message,
     mfaReason: mfa.reason,
+  }
+}
+
+async function enforceMutationRateLimit(
+  userId: string,
+  actionName: string
+): Promise<Pick<AuthGuardFailure, 'error' | 'status'> | null> {
+  const rateLimit = await checkServerActionRateLimit(userId, actionName)
+
+  if (rateLimit.allowed) {
+    return null
+  }
+
+  return {
+    status: 429,
+    error: rateLimit.error ?? 'Rate limit exceeded',
+  }
+}
+
+function toMutationGuardSuccess(
+  user: { id: string; email?: string | null },
+  profile: AuthProfile
+): MutationGuardSuccess {
+  return {
+    allowed: true,
+    user,
+    profile,
+    companyId: profile.company_id as string,
+    role: profile.role,
   }
 }
 
@@ -121,4 +159,83 @@ export async function requireAdminAccess(
   }
 
   return { allowed: true, user, profile }
+}
+
+export async function requireMutationPermission(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  permission: Permission,
+  actionName: string
+): Promise<MutationGuardResult> {
+  const { user, profile } = await getAuthProfile(supabase)
+  if (!user || !profile?.company_id) {
+    return { allowed: false, status: 401, error: 'Unauthorized' }
+  }
+
+  if (!hasPermission(profile.role, permission)) {
+    return { allowed: false, status: 403, error: 'Forbidden' }
+  }
+
+  const mfaFailure = await enforceMfaIfRequired(supabase, user, profile)
+  if (mfaFailure) {
+    return { allowed: false, ...mfaFailure }
+  }
+
+  const rateLimitFailure = await enforceMutationRateLimit(user.id, actionName)
+  if (rateLimitFailure) {
+    return { allowed: false, ...rateLimitFailure }
+  }
+
+  return toMutationGuardSuccess(user, profile)
+}
+
+export async function requireOwnerOrAdminMutation(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  actionName: string
+): Promise<MutationGuardResult> {
+  const { user, profile } = await getAuthProfile(supabase)
+  if (!user || !profile?.company_id) {
+    return { allowed: false, status: 401, error: 'Unauthorized' }
+  }
+
+  if (!isOwnerOrAdmin(profile.role)) {
+    return { allowed: false, status: 403, error: 'Forbidden' }
+  }
+
+  const mfaFailure = await enforceMfaIfRequired(supabase, user, profile)
+  if (mfaFailure) {
+    return { allowed: false, ...mfaFailure }
+  }
+
+  const rateLimitFailure = await enforceMutationRateLimit(user.id, actionName)
+  if (rateLimitFailure) {
+    return { allowed: false, ...rateLimitFailure }
+  }
+
+  return toMutationGuardSuccess(user, profile)
+}
+
+export async function requireOwnerMutation(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  actionName: string
+): Promise<MutationGuardResult> {
+  const { user, profile } = await getAuthProfile(supabase)
+  if (!user || !profile?.company_id) {
+    return { allowed: false, status: 401, error: 'Unauthorized' }
+  }
+
+  if (profile.role !== ROLES.OWNER) {
+    return { allowed: false, status: 403, error: 'Forbidden' }
+  }
+
+  const mfaFailure = await enforceMfaIfRequired(supabase, user, profile)
+  if (mfaFailure) {
+    return { allowed: false, ...mfaFailure }
+  }
+
+  const rateLimitFailure = await enforceMutationRateLimit(user.id, actionName)
+  if (rateLimitFailure) {
+    return { allowed: false, ...rateLimitFailure }
+  }
+
+  return toMutationGuardSuccess(user, profile)
 }

@@ -10,8 +10,11 @@ import {
   ROLES,
   type UserRole,
 } from '@/lib/permissions'
-import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { dispatchInviteEmail, normalizeInviteEmail } from '@/lib/services/team-invites'
+import {
+  requireMutationPermission,
+  requireOwnerMutation,
+} from '@/lib/security/authorization'
 
 type TeamRole = Exclude<UserRole, 'owner'>
 
@@ -143,6 +146,46 @@ async function getActorContext(): Promise<ActionResult<ActorContext>> {
   }
 }
 
+async function getPrivilegedActorContext(
+  actionName: string,
+  access: 'invite' | 'manage' | 'owner',
+  forbiddenError: string
+): Promise<ActionResult<ActorContext>> {
+  const supabase = await createClient()
+
+  const accessResult =
+    access === 'owner'
+      ? await requireOwnerMutation(supabase, actionName)
+      : await requireMutationPermission(
+          supabase,
+          access === 'invite' ? PERMISSIONS.USERS_INVITE : PERMISSIONS.USERS_MANAGE,
+          actionName
+        )
+
+  if (!accessResult.allowed) {
+    const error =
+      accessResult.status === 401
+        ? 'Not authenticated'
+        : accessResult.mfaReason
+          ? accessResult.error
+          : accessResult.status === 403
+            ? forbiddenError
+            : accessResult.error
+
+    return { success: false, error }
+  }
+
+  return {
+    success: true,
+    data: {
+      userId: accessResult.user.id,
+      userEmail: normalizeInviteEmail(accessResult.user.email ?? ''),
+      companyId: accessResult.companyId,
+      role: accessResult.role,
+    },
+  }
+}
+
 async function expireOldInvites(companyId: string): Promise<void> {
   const adminResult = getAdminClientResult()
   if (!adminResult.ok) return
@@ -231,21 +274,16 @@ export async function listTeamMembersAndInvites(): Promise<ActionResult<TeamSnap
 }
 
 export async function inviteTeamMember(email: string, role: TeamRole): Promise<ActionResult> {
-  const actorResult = await getActorContext()
+  const actorResult = await getPrivilegedActorContext(
+    'inviteTeamMember',
+    'invite',
+    'Only owners and admins can invite users'
+  )
   if (!actorResult.success || !actorResult.data) {
     return { success: false, error: actorResult.error }
   }
 
   const actor = actorResult.data
-
-  const rateCheck = await checkServerActionRateLimit(actor.userId, 'inviteTeamMember')
-  if (!rateCheck.allowed) {
-    return { success: false, error: rateCheck.error || 'Too many requests' }
-  }
-
-  if (!isOwnerOrAdmin(actor.role)) {
-    return { success: false, error: 'Only owners and admins can invite users' }
-  }
 
   const normalizedEmail = normalizeInviteEmail(email)
   if (!normalizedEmail || !normalizedEmail.includes('@')) {
@@ -324,15 +362,16 @@ export async function updateTeamMemberRole(
   targetUserId: string,
   role: TeamRole
 ): Promise<ActionResult> {
-  const actorResult = await getActorContext()
+  const actorResult = await getPrivilegedActorContext(
+    'updateTeamMemberRole',
+    'manage',
+    'Only owners and admins can update roles'
+  )
   if (!actorResult.success || !actorResult.data) {
     return { success: false, error: actorResult.error }
   }
 
   const actor = actorResult.data
-  if (!isOwnerOrAdmin(actor.role)) {
-    return { success: false, error: 'Only owners and admins can update roles' }
-  }
 
   if (!isValidInviteRole(role)) {
     return { success: false, error: 'Invalid role selected' }
@@ -381,15 +420,16 @@ export async function updateTeamMemberRole(
 }
 
 export async function removeTeamMember(targetUserId: string): Promise<ActionResult> {
-  const actorResult = await getActorContext()
+  const actorResult = await getPrivilegedActorContext(
+    'removeTeamMember',
+    'manage',
+    'Only owners and admins can remove users'
+  )
   if (!actorResult.success || !actorResult.data) {
     return { success: false, error: actorResult.error }
   }
 
   const actor = actorResult.data
-  if (!isOwnerOrAdmin(actor.role)) {
-    return { success: false, error: 'Only owners and admins can remove users' }
-  }
 
   if (!targetUserId) {
     return { success: false, error: 'Target user is required' }
@@ -443,15 +483,16 @@ export async function removeTeamMember(targetUserId: string): Promise<ActionResu
 }
 
 export async function transferOwnership(newOwnerUserId: string): Promise<ActionResult> {
-  const actorResult = await getActorContext()
+  const actorResult = await getPrivilegedActorContext(
+    'transferOwnership',
+    'owner',
+    'Only the current owner can transfer ownership'
+  )
   if (!actorResult.success || !actorResult.data) {
     return { success: false, error: actorResult.error }
   }
 
   const actor = actorResult.data
-  if (actor.role !== ROLES.OWNER) {
-    return { success: false, error: 'Only the current owner can transfer ownership' }
-  }
 
   if (!newOwnerUserId) {
     return { success: false, error: 'Target user is required' }
@@ -492,15 +533,16 @@ export async function transferOwnership(newOwnerUserId: string): Promise<ActionR
 }
 
 export async function revokeInvite(inviteId: string): Promise<ActionResult> {
-  const actorResult = await getActorContext()
+  const actorResult = await getPrivilegedActorContext(
+    'revokeInvite',
+    'manage',
+    'Only owners and admins can revoke invites'
+  )
   if (!actorResult.success || !actorResult.data) {
     return { success: false, error: actorResult.error }
   }
 
   const actor = actorResult.data
-  if (!isOwnerOrAdmin(actor.role)) {
-    return { success: false, error: 'Only owners and admins can revoke invites' }
-  }
 
   if (!inviteId) {
     return { success: false, error: 'Invite ID is required' }

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logGdprAction } from '@/lib/gdpr/audit'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { requireOwnerOrAdminMutation } from '@/lib/security/authorization'
 import { isOwnerOrAdmin } from '@/lib/permissions'
 
 /**
@@ -282,37 +283,28 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
   let historyDeleted = 0
 
   try {
-    // Verify authentication and owner/admin role using the regular (RLS-enforced) client
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    const access = await requireOwnerOrAdminMutation(supabase, 'bulkDeleteData')
+    if (!access.allowed) {
+      const error =
+        access.status === 401
+          ? 'Not authenticated'
+          : access.mfaReason
+            ? access.error
+            : access.status === 403
+              ? 'Owner or admin access required'
+              : access.error
+
       return {
         success: false,
         employees: 0,
         trips: 0,
         mappings: 0,
         history: 0,
-        errors: ['Not authenticated'],
+        errors: [error],
       }
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('company_id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
-      return {
-        success: false,
-        employees: 0,
-        trips: 0,
-        mappings: 0,
-        history: 0,
-        errors: ['Owner or admin access required'],
-      }
-    }
-
-    await requireCompanyAccess(supabase, profile.company_id)
+    await requireCompanyAccess(supabase, access.companyId)
 
     // Use admin client for actual operations (bypasses RLS after auth verification above)
     const admin = createAdminClient()
@@ -325,7 +317,7 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
           const { error: tripError, count } = await admin
             .from('trips')
             .delete({ count: 'exact' })
-            .eq('company_id', profile.company_id)
+            .eq('company_id', access.companyId)
             .in('id', batch)
 
           if (tripError) {
@@ -350,7 +342,7 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
           const { error: empError, count } = await admin
             .from('employees')
             .update({ deleted_at: now } as Record<string, unknown>)
-            .eq('company_id', profile.company_id)
+            .eq('company_id', access.companyId)
             .in('id', batch)
             .is('deleted_at', null)
 
@@ -374,7 +366,7 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
           const { error: mapError, count } = await admin
             .from('column_mappings')
             .delete({ count: 'exact' })
-            .eq('company_id', profile.company_id)
+            .eq('company_id', access.companyId)
             .in('id', batch)
 
           if (mapError) {
@@ -397,7 +389,7 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
           const { error: histError, count } = await admin
             .from('import_sessions')
             .delete({ count: 'exact' })
-            .eq('company_id', profile.company_id)
+            .eq('company_id', access.companyId)
             .in('id', batch)
 
           if (histError) {
@@ -414,8 +406,8 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
 
     // 5. Log to GDPR audit trail
     await logGdprAction({
-      companyId: profile.company_id,
-      userId: user.id,
+      companyId: access.companyId,
+      userId: access.user.id,
       action: 'BULK_DELETE',
       entityType: 'bulk_data',
       entityId: null,

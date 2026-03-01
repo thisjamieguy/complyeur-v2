@@ -34,9 +34,8 @@ import {
 } from '@/lib/db/alerts'
 import type { TripCreateInput, TripUpdate, CompanySettingsUpdate, NotificationPreferencesUpdate, AlertWithEmployee, CompanySettings, NotificationPreferences, BulkTripInput } from '@/types/database-helpers'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
-import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
-import { hasPermission, PERMISSIONS, type Permission } from '@/lib/permissions'
-import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
+import { PERMISSIONS, type Permission } from '@/lib/permissions'
+import { requireMutationPermission } from '@/lib/security/authorization'
 
 /**
  * Helper to run alert detection after trip changes
@@ -83,18 +82,14 @@ async function enforceMutationAccess(
   permission: Permission,
   actionName: string
 ): Promise<{ userId: string }> {
-  const ctx = await requireCompanyAccessCached()
+  const supabase = await createClient()
+  const access = await requireMutationPermission(supabase, permission, actionName)
 
-  const rateLimit = await checkServerActionRateLimit(ctx.userId, actionName)
-  if (!rateLimit.allowed) {
-    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
+  if (!access.allowed) {
+    throw new Error(access.error)
   }
 
-  if (!ctx.role || !hasPermission(ctx.role, permission)) {
-    throw new Error('Forbidden')
-  }
-
-  return { userId: ctx.userId }
+  return { userId: access.user.id }
 }
 
 export async function addEmployeeAction(formData: { name: string; nationality_type?: string }) {
@@ -232,24 +227,14 @@ interface BulkTripResult {
 export async function bulkAddTripsAction(
   trips: BulkTripInput[]
 ): Promise<BulkTripResult> {
-  const ctx = await requireCompanyAccessCached()
-
-  const rateLimit = await checkServerActionRateLimit(ctx.userId, 'bulkAddTripsAction')
-  if (!rateLimit.allowed) {
-    return { success: false, created: 0, errors: [{ index: 0, message: rateLimit.error ?? 'Rate limit exceeded' }] }
-  }
-
-  if (!hasPermission(ctx.role, PERMISSIONS.TRIPS_CREATE)) {
-    return { success: false, created: 0, errors: [{ index: 0, message: 'Forbidden' }] }
-  }
-
   const supabase = await createClient()
-  const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId, {
-    role: ctx.role,
-    isSuperadmin: ctx.isSuperadmin,
-  })
-  if (mfa?.ok === false) {
-    return { success: false, created: 0, errors: [{ index: 0, message: 'MFA required. Complete setup or verification to continue.' }] }
+  const access = await requireMutationPermission(
+    supabase,
+    PERMISSIONS.TRIPS_CREATE,
+    'bulkAddTripsAction'
+  )
+  if (!access.allowed) {
+    return { success: false, created: 0, errors: [{ index: 0, message: access.error }] }
   }
 
   if (!trips || trips.length === 0) {

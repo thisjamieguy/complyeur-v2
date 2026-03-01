@@ -15,6 +15,10 @@ This execution wave validated high-priority controls from the approved penetrati
 
 The strongest positive signal is that checklist §1.1 controls are now fully executed with explicit evidence, including signup enumeration parity, password complexity hardening, session/token lifecycle checks, and enforceable local auth/password-reset rate-limit verification.
 
+> **Addendum (2026-02-28):**
+> A later authorization follow-up extended privileged-mutation hardening beyond the original February 19 execution wave. That follow-up added shared server-side enforcement for MFA and rate limiting on sensitive owner/admin mutation paths and is documented in `docs/security/2026-02-28-authz-followup-audit.md`.
+> This report remains the record of the **February 19 execution wave** and should be read together with that follow-up note for current code status.
+
 ---
 
 ## Remediation Status Update (Final + OAuth Addendum Through February 23, 2026)

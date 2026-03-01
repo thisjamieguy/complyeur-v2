@@ -6,8 +6,9 @@ import { settingsSchema } from '@/lib/validations/settings'
 import type { CompanySettings, UpdateSettingsInput } from '@/lib/types/settings'
 import { DEFAULT_SETTINGS } from '@/lib/types/settings'
 import { hasPermission, PERMISSIONS } from '@/lib/permissions'
-import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { getCompanySettings as getSettingsFromDb } from '@/lib/db/alerts'
+import { requireMutationPermission } from '@/lib/security/authorization'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 
 interface ActionResult<T = void> {
   success: boolean
@@ -23,6 +24,11 @@ interface ActionResult<T = void> {
 export async function getCompanySettings(): Promise<CompanySettings | null> {
   try {
     const data = await getSettingsFromDb()
+    const calendarLoadMode =
+      data.calendar_load_mode === 'employees_with_trips'
+        ? 'employees_with_trips'
+        : DEFAULT_SETTINGS.calendar_load_mode
+
     return {
       ...data,
       retention_months: data.retention_months ?? DEFAULT_SETTINGS.retention_months,
@@ -33,6 +39,7 @@ export async function getCompanySettings(): Promise<CompanySettings | null> {
       status_amber_max: data.status_amber_max ?? DEFAULT_SETTINGS.status_amber_max,
       status_red_max: data.status_red_max ?? DEFAULT_SETTINGS.status_red_max,
       future_job_warning_threshold: data.future_job_warning_threshold ?? DEFAULT_SETTINGS.future_job_warning_threshold,
+      calendar_load_mode: calendarLoadMode,
       notify_70_days: data.notify_70_days ?? DEFAULT_SETTINGS.notify_70_days,
       notify_85_days: data.notify_85_days ?? DEFAULT_SETTINGS.notify_85_days,
       notify_90_days: data.notify_90_days ?? DEFAULT_SETTINGS.notify_90_days,
@@ -57,19 +64,24 @@ export async function getCompanySettings(): Promise<CompanySettings | null> {
 export async function updateCompanySettings(
   input: UpdateSettingsInput
 ): Promise<ActionResult> {
-  let ctx
-  try {
-    ctx = await requireCompanyAccessCached()
-  } catch {
-    return { success: false, error: 'Not authenticated' }
-  }
-
-  // Check permission
-  if (!ctx.role || !hasPermission(ctx.role, PERMISSIONS.SETTINGS_UPDATE)) {
-    return { success: false, error: 'Only owners and admins can update settings' }
-  }
-
   const supabase = await createClient()
+  const access = await requireMutationPermission(
+    supabase,
+    PERMISSIONS.SETTINGS_UPDATE,
+    'updateCompanySettings'
+  )
+  if (!access.allowed) {
+    const error =
+      access.status === 401
+        ? 'Not authenticated'
+        : access.mfaReason
+          ? access.error
+          : access.status === 403
+            ? 'Only owners and admins can update settings'
+            : access.error
+
+    return { success: false, error }
+  }
 
   // Validate input
   const currentSettings = await getCompanySettings()
@@ -86,6 +98,7 @@ export async function updateCompanySettings(
     status_amber_max: input.status_amber_max ?? currentSettings.status_amber_max,
     status_red_max: input.status_red_max ?? currentSettings.status_red_max,
     future_job_warning_threshold: input.future_job_warning_threshold ?? currentSettings.future_job_warning_threshold,
+    calendar_load_mode: input.calendar_load_mode ?? currentSettings.calendar_load_mode,
     notify_70_days: input.notify_70_days ?? currentSettings.notify_70_days,
     notify_85_days: input.notify_85_days ?? currentSettings.notify_85_days,
     notify_90_days: input.notify_90_days ?? currentSettings.notify_90_days,
@@ -111,7 +124,7 @@ export async function updateCompanySettings(
       ...input,
       updated_at: new Date().toISOString(),
     })
-    .eq('company_id', ctx.companyId)
+    .eq('company_id', access.companyId)
 
   if (error) {
     console.error('Error updating settings:', error)
@@ -120,6 +133,7 @@ export async function updateCompanySettings(
 
   revalidatePath('/settings')
   revalidatePath('/dashboard')  // Revalidate dashboard to reflect new status thresholds
+  revalidatePath('/calendar')
   return { success: true }
 }
 

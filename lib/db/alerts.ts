@@ -6,7 +6,6 @@ import { requireCompanyAccess, requireCompanyAccessCached } from '@/lib/security
 import type {
   Alert,
   AlertInsert,
-  AlertUpdate,
   AlertWithEmployee,
   AlertType,
   CompanySettings,
@@ -352,6 +351,7 @@ export const getCompanySettings = cache(async (): Promise<CompanySettings> => {
         warning_email_enabled: true,
         urgent_email_enabled: true,
         breach_email_enabled: true,
+        calendar_load_mode: 'all_employees',
       })
       .select()
       .single()
