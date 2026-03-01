@@ -36,16 +36,19 @@ export async function requireCompanyAccess(
 
   const isSuperadmin = profile.is_superadmin === true
 
-  if (!profile.company_id) {
-    if (isSuperadmin && options.allowSuperadmin && targetCompanyId) {
-      return {
-        userId: user.id,
-        companyId: targetCompanyId,
-        role: profile.role ?? null,
-        isSuperadmin,
-      }
+  // Superadmins with explicit allowSuperadmin permission bypass all company checks.
+  // This must be checked before the company_id guards so that superadmins who have
+  // their own company (created via normal signup) can still administer other companies.
+  if (isSuperadmin && options.allowSuperadmin) {
+    return {
+      userId: user.id,
+      companyId: targetCompanyId ?? profile.company_id ?? '',
+      role: profile.role ?? null,
+      isSuperadmin,
     }
+  }
 
+  if (!profile.company_id) {
     throw new DatabaseError('User has no associated company')
   }
 
