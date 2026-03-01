@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { BrowserFrame } from '@/components/marketing/browser-frame'
 import { DemoCalendar } from '@/components/marketing/demo-calendar'
@@ -121,25 +122,16 @@ export default function LandingPage() {
         <nav className="sticky top-5">
           <div className="mx-auto flex max-w-[88rem] items-center justify-between rounded-full border border-slate-200/90 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl sm:px-6">
             <Link href="/" className="shrink-0">
-              <picture>
-                <source
-                  srcSet="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.avif"
-                  type="image/avif"
-                />
-                <source
-                  srcSet="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.webp"
-                  type="image/webp"
-                />
-                <img
-                  src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png"
-                  alt="ComplyEur"
-                  width={172}
-                  height={46}
-                  className="h-8 w-auto sm:h-9"
-                  loading="eager"
-                  decoding="async"
-                />
-              </picture>
+              <Image
+                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png"
+                alt="ComplyEur"
+                width={172}
+                height={46}
+                className="h-8 w-auto sm:h-9"
+                priority
+                fetchPriority="high"
+                sizes="(min-width: 640px) 172px, 150px"
+              />
             </Link>
 
             <div className="hidden items-center gap-8 lg:flex">
@@ -152,9 +144,6 @@ export default function LandingPage() {
               <Link href="/landing/preview" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
                 Preview
               </Link>
-              <Link href="#waitlist" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
-                Join waitlist
-              </Link>
             </div>
 
             <div className="flex items-center gap-3">
@@ -165,10 +154,10 @@ export default function LandingPage() {
                 Sign in
               </Link>
               <Link
-                href="#waitlist"
-                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
+                href="#early-access"
+                className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
               >
-                Join Waiting List
+                Request Early Access
               </Link>
             </div>
           </div>
@@ -176,47 +165,50 @@ export default function LandingPage() {
       </header>
 
       <main id="main-content" className="relative z-10">
-        <section className="border-b border-slate-200/70 pb-16 pt-10 lg:pb-24 lg:pt-12">
+        <section className="border-b border-slate-200/70 pb-12 pt-8 lg:pb-20 lg:pt-10">
           <div className="mx-auto max-w-[88rem] px-6">
             <div className="grid gap-x-10 gap-y-8 lg:grid-cols-[1.02fr_0.98fr] lg:items-start">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-700">
                   Schengen compliance for UK travel teams
                 </p>
-                <h1 className="landing-serif mt-4 text-balance text-5xl font-semibold leading-[1.02] text-slate-900 sm:text-6xl lg:text-7xl">
-                  Know every employee&rsquo;s Schengen position before you approve.
+                <h1 className="landing-serif mt-4 text-balance text-[2.55rem] font-semibold leading-[1.02] text-slate-900 sm:text-[3.19rem] lg:text-[3.83rem]">
+                  Approve EU travel with complete certainty.
                 </h1>
 
-                <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl">
-                  ComplyEur gives HR, operations, and mobility teams a live 90/180-day record for every traveller
-                  &mdash; so approvals are based on current data, not manual counting.
+                <p className="mt-4 text-xl font-semibold text-slate-700 sm:text-2xl">
+                  The rules haven&rsquo;t changed. Enforcement has.
                 </p>
 
-                <p className="mt-4 max-w-xl text-base font-semibold text-slate-800">
-                  Avoid overstays <span aria-hidden="true" className="mx-1.5 text-brand-500">·</span> Avoid fines <span aria-hidden="true" className="mx-1.5 text-brand-500">·</span> Avoid border refusals
+                <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-600 sm:text-xl">
+                  Live, rolling 90/180-day compliance per traveller, automatically recalculated with every trip. Every travel approval reflects current data as border enforcement becomes automated.
                 </p>
 
-                <div className="mt-8 flex flex-wrap items-center gap-3">
+                <p className="mx-auto mt-6 mb-7 max-w-md text-center text-sm font-medium uppercase tracking-[0.18em] text-slate-500 sm:text-base">
+                  Prevent overstays <span aria-hidden="true" className="mx-2 text-slate-400">·</span> Reduce fines risk <span aria-hidden="true" className="mx-2 text-slate-400">·</span> Avoid border refusals
+                </p>
+
+                <div className="flex flex-wrap items-center gap-3">
                   <Link
-                    href="#waitlist"
-                    className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+                    href="#early-access"
+                    className="rounded-full bg-slate-900 px-8 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
                   >
-                    Join Waiting List
+                    Request Early Access
                   </Link>
                   <Link
-                    href="/landing/preview"
-                    className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                    href="#how-it-works"
+                    className="rounded-full border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
                   >
-                    See the product <span aria-hidden="true">&rarr;</span>
+                    See How It Works <span aria-hidden="true">&rarr;</span>
                   </Link>
                 </div>
               </div>
 
               <div id="product-demo" className="space-y-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-brand-700">
                   Live 90/180-day tracking, per employee
                 </p>
-                <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-3 shadow-2xl shadow-slate-900/10 backdrop-blur">
+                <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-3 shadow-2xl shadow-slate-900/15 backdrop-blur">
                   <BrowserFrame title="app.complyeur.com" showUrlBar>
                     <DemoEmployeeList />
                   </BrowserFrame>
@@ -240,7 +232,10 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-slate-50/80 py-20 sm:py-24">
+        <section
+          className="cv-auto bg-slate-50/80 py-20 sm:py-24"
+          style={{ '--cis-h': '800px' } as React.CSSProperties}
+        >
           <div className="mx-auto max-w-[88rem] px-6">
             <div className="landing-impact-band relative overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(244,248,252,0.96))] px-6 py-8 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:px-8 sm:py-10 lg:px-14 lg:py-14">
               <div className="absolute inset-0 opacity-50 [background-image:radial-gradient(circle,rgba(100,116,139,0.14)_1.1px,transparent_1.1px)] [background-size:38px_38px]" />
@@ -362,15 +357,7 @@ export default function LandingPage() {
                     >
                       EU Entry/Exit System (EES)
                     </a>{' '}
-                    and{' '}
-                    <a
-                      href="https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa/visa-policy/short-stay-visas_en"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-brand-700 underline-offset-4 hover:underline"
-                    >
-                      European Commission short-stay Schengen guidance
-                    </a>
+                    and European Commission short-stay Schengen guidance
                     .
                   </p>
                 </div>
@@ -379,14 +366,22 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <div id="features">
+        <div
+          id="features"
+          className="cv-auto"
+          style={{ '--cis-h': '700px' } as React.CSSProperties}
+        >
           <FeatureCards />
         </div>
 
-        <section id="how-it-works" className="bg-slate-50 py-24">
+        <section
+          id="how-it-works"
+          className="cv-auto bg-slate-50 py-24"
+          style={{ '--cis-h': '750px' } as React.CSSProperties}
+        >
           <div className="mx-auto max-w-[88rem] px-6">
             <div className="max-w-2xl">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">How it works</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-brand-700">How it works</p>
               <h2 className="landing-serif text-balance text-4xl font-semibold text-slate-900 sm:text-5xl">
                 Setup in one session. Start tracking the same day.
               </h2>
@@ -419,10 +414,13 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="border-t border-slate-200/70 bg-white py-16">
+        <section
+          className="cv-auto border-t border-slate-200/70 bg-white py-16"
+          style={{ '--cis-h': '350px' } as React.CSSProperties}
+        >
           <div className="mx-auto max-w-6xl px-6">
             <div className="mb-7 max-w-2xl">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">Explore more</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.22em] text-brand-700">Explore more</p>
               <h2 className="landing-serif text-3xl font-semibold text-slate-900 sm:text-4xl">
                 Want to learn more before you sign up?
               </h2>
@@ -447,10 +445,14 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="waitlist" className="relative overflow-hidden bg-slate-900 py-24">
+        <section
+          id="early-access"
+          className="cv-auto relative overflow-hidden bg-slate-900 py-24"
+          style={{ '--cis-h': '500px' } as React.CSSProperties}
+        >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(92,127,163,0.35),transparent_45%)]" />
           <div className="relative mx-auto max-w-3xl px-6 text-center">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">Join the waitlist</p>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.22em] text-brand-300">Request early access</p>
             <h2 className="landing-serif text-balance text-4xl font-semibold text-white sm:text-5xl">
               Secure private early access for your UK travel team.
             </h2>
