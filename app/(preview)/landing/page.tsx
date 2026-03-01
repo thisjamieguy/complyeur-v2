@@ -454,7 +454,7 @@ export default function LandingPage() {
         <section id="waitlist" className="relative overflow-hidden bg-slate-900 py-24">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(92,127,163,0.35),transparent_45%)]" />
           <div className="relative mx-auto max-w-3xl px-6 text-center">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">Private launch cohort</p>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-brand-300">Early access</p>
             <h2 className="landing-serif text-balance text-4xl font-semibold text-white sm:text-5xl">
               Secure private early access for your UK travel team.
             </h2>
