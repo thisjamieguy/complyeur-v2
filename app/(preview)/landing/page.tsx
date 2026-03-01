@@ -153,7 +153,7 @@ export default function LandingPage() {
                 Preview
               </Link>
               <Link href="#waitlist" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
-                Join waitlist
+                Request access
               </Link>
             </div>
 
@@ -168,7 +168,7 @@ export default function LandingPage() {
                 href="#waitlist"
                 className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
               >
-                Join Waiting List
+                Request Early Access
               </Link>
             </div>
           </div>
