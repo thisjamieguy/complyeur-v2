@@ -217,6 +217,9 @@ export default function LandingPage() {
               </div>
 
               <div id="product-demo" className="space-y-5 lg:pt-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Live 90/180-day tracking, per employee
+                </p>
                 <div className="rounded-3xl border border-slate-200/80 bg-white/90 p-3 shadow-2xl shadow-slate-900/10 backdrop-blur">
                   <BrowserFrame title="app.complyeur.com" showUrlBar>
                     <DemoEmployeeList />
