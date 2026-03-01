@@ -20,10 +20,10 @@ export function Footer() {
           <div className="flex items-center justify-center gap-2 mb-2">
             <Image
               src="/images/Icons/03_Icon_Only/ComplyEur_Icon.svg"
-              alt=""
+              alt="ComplyEur icon"
               width={20}
               height={20}
-              aria-hidden="true"
+              loading="eager"
             />
             <span className="font-medium text-brand-700">ComplyEur</span>
           </div>
