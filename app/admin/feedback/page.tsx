@@ -66,7 +66,8 @@ export default async function FeedbackPage({
   const supabase = createAdminClient()
   const params = await searchParams
 
-  const page = Math.max(1, parseInt(params.page || '1'))
+  const rawPage = parseInt(params.page || '1', 10)
+  const page = Number.isNaN(rawPage) ? 1 : Math.max(1, rawPage)
   const categoryParam = params.category
   const activeCategory = VALID_CATEGORIES.includes(categoryParam as Category)
     ? (categoryParam as Category)
