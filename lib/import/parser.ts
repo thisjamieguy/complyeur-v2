@@ -1,4 +1,4 @@
-import { read, utils } from 'xlsx';
+import ExcelJS from 'exceljs';
 import {
   ImportFormat,
   ParsedEmployeeRow,
@@ -37,6 +37,23 @@ function sanitizeValue(value: unknown): string {
     return '';
   }
 
+  // ExcelJS rich text objects have a { text: string } shape
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    if (typeof obj.text === 'string') {
+      return sanitizeValue(obj.text);
+    }
+    // Formula result
+    if (typeof obj.result !== 'undefined') {
+      return sanitizeValue(obj.result);
+    }
+    // Date objects
+    if (value instanceof Date) {
+      if (isNaN(value.getTime())) return '';
+      return value.toISOString().split('T')[0];
+    }
+  }
+
   const str = String(value).trim();
 
   // CSV injection prevention: prefix dangerous characters
@@ -63,6 +80,198 @@ function normalizeHeader(header: string): string {
 }
 
 // ============================================================
+// CSV DETECTION
+// ============================================================
+
+function isCSVFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  const type = file.type.toLowerCase();
+  return (
+    name.endsWith('.csv') ||
+    type === 'text/csv' ||
+    type === 'text/plain' ||
+    type === 'application/csv'
+  );
+}
+
+// ============================================================
+// PARSE CSV BUFFER TO ROWS
+// Minimal RFC-4180 compliant CSV parser that handles:
+//   - quoted fields with embedded commas and newlines
+//   - BOM prefix
+//   - CRLF and LF line endings
+// Returns an array of string arrays (rows × columns).
+// ============================================================
+
+function parseCSV(text: string): string[][] {
+  // Strip BOM
+  const raw = text.startsWith('\uFEFF') ? text.slice(1) : text;
+
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < raw.length) {
+    const ch = raw[i];
+
+    if (inQuotes) {
+      if (ch === '"') {
+        // Check for escaped quote ""
+        if (raw[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        }
+        inQuotes = false;
+        i++;
+        continue;
+      }
+      field += ch;
+      i++;
+      continue;
+    }
+
+    // Not in quotes
+    if (ch === '"') {
+      inQuotes = true;
+      i++;
+      continue;
+    }
+
+    if (ch === ',') {
+      row.push(field);
+      field = '';
+      i++;
+      continue;
+    }
+
+    if (ch === '\r') {
+      // CRLF or lone CR
+      row.push(field);
+      field = '';
+      rows.push(row);
+      row = [];
+      if (raw[i + 1] === '\n') {
+        i += 2;
+      } else {
+        i++;
+      }
+      continue;
+    }
+
+    if (ch === '\n') {
+      row.push(field);
+      field = '';
+      rows.push(row);
+      row = [];
+      i++;
+      continue;
+    }
+
+    field += ch;
+    i++;
+  }
+
+  // Final field/row
+  if (field !== '' || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  return rows;
+}
+
+// ============================================================
+// CONVERT CSV ROWS TO RECORD ARRAY
+// ============================================================
+
+function csvRowsToRecords(rows: string[][]): {
+  records: Record<string, unknown>[];
+  headers: string[];
+} {
+  if (rows.length === 0) {
+    return { records: [], headers: [] };
+  }
+
+  // First row is headers
+  const headers = rows[0].map((h) => h.trim());
+
+  const records: Record<string, unknown>[] = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    // Skip rows that are entirely empty
+    if (row.every((cell) => cell.trim() === '')) {
+      continue;
+    }
+    const record: Record<string, unknown> = {};
+    for (let j = 0; j < headers.length; j++) {
+      record[headers[j]] = row[j] !== undefined ? row[j] : '';
+    }
+    records.push(record);
+  }
+
+  return { records, headers };
+}
+
+// ============================================================
+// PARSE XLSX BUFFER WITH EXCELJS
+// Returns rows as Record<string, unknown>[] and raw headers.
+// ============================================================
+
+async function parseXlsxBuffer(buffer: ArrayBuffer): Promise<{
+  records: Record<string, unknown>[];
+  headers: string[];
+}> {
+  const workbook = new ExcelJS.Workbook();
+  // ExcelJS types declare load(buffer: Buffer) with the pre-TS5.7 non-generic Buffer.
+  // @types/node 20+ makes Buffer generic (Buffer<ArrayBufferLike>), causing a type mismatch.
+  // The runtime behaviour is identical; suppress the stale type error.
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error ExcelJS type definitions predate the generic Buffer introduced in @types/node 20
+  await workbook.xlsx.load(Buffer.from(buffer));
+
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) {
+    throw new Error('File contains no worksheets');
+  }
+
+  // Row 1 is the header row
+  const headerRow = worksheet.getRow(1);
+  // headerRow.values is 1-based (index 0 is undefined); slice to get 1-based values
+  const rawHeaderValues = (headerRow.values as ExcelJS.CellValue[]).slice(1);
+  const headers: string[] = rawHeaderValues.map((v) =>
+    v !== null && v !== undefined ? String(v).trim() : ''
+  );
+
+  const records: Record<string, unknown>[] = [];
+
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return; // skip header
+
+    // row.values is 1-based; slice to align with headers array (0-based)
+    const cellValues = (row.values as ExcelJS.CellValue[]).slice(1);
+
+    // Skip rows that are entirely null/undefined/empty
+    const hasContent = cellValues.some(
+      (v) => v !== null && v !== undefined && String(v).trim() !== ''
+    );
+    if (!hasContent) return;
+
+    const record: Record<string, unknown> = {};
+    for (let j = 0; j < headers.length; j++) {
+      const cellValue = cellValues[j];
+      // Convert cell value to string (dates, numbers, rich text, etc.)
+      record[headers[j]] = cellValue !== undefined && cellValue !== null ? cellValue : '';
+    }
+    records.push(record);
+  });
+
+  return { records, headers };
+}
+
+// ============================================================
 // PARSE FILE BUFFER
 // ============================================================
 
@@ -71,29 +280,24 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
     // Read file as ArrayBuffer
     const buffer = await file.arrayBuffer();
 
-    // Parse workbook
-    const workbook = read(buffer, {
-      type: 'array',
-      cellDates: true,
-      dateNF: 'yyyy-mm-dd',
-    });
+    let records: Record<string, unknown>[];
+    let rawHeaders: string[];
 
-    // Get first sheet
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
-      return { success: false, error: 'File contains no worksheets' };
+    if (isCSVFile(file)) {
+      const text = new TextDecoder('utf-8').decode(buffer);
+      const csvRows = parseCSV(text);
+      const result = csvRowsToRecords(csvRows);
+      records = result.records;
+      rawHeaders = result.headers;
+    } else {
+      // Excel
+      const result = await parseXlsxBuffer(buffer);
+      records = result.records;
+      rawHeaders = result.headers;
     }
 
-    const sheet = workbook.Sheets[sheetName];
-
-    // Convert to JSON with headers
-    const jsonData = utils.sheet_to_json<Record<string, unknown>>(sheet, {
-      defval: '',
-      raw: false,
-    });
-
     // Check for empty file
-    if (jsonData.length === 0) {
+    if (records.length === 0) {
       return {
         success: false,
         error: 'File appears empty. Add data rows below the header row and try again.',
@@ -101,15 +305,14 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
     }
 
     // Check row limit
-    if (jsonData.length > MAX_ROWS) {
+    if (records.length > MAX_ROWS) {
       return {
         success: false,
-        error: `Import limited to ${MAX_ROWS} rows for performance. Your file has ${jsonData.length} rows. Please split into smaller files.`,
+        error: `Import limited to ${MAX_ROWS} rows for performance. Your file has ${records.length} rows. Please split into smaller files.`,
       };
     }
 
-    // Get headers from first row and normalize them
-    const rawHeaders = Object.keys(jsonData[0] || {});
+    // Get normalized headers
     const headers = rawHeaders.map(normalizeHeader);
 
     // Validate headers based on format
@@ -121,12 +324,12 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
     // Parse rows based on format
     let parsedData: ParsedRow[];
     if (format === 'employees') {
-      parsedData = parseEmployeeRows(jsonData, rawHeaders);
+      parsedData = parseEmployeeRows(records, rawHeaders);
     } else if (format === 'trips') {
-      parsedData = parseTripRows(jsonData, rawHeaders);
+      parsedData = parseTripRows(records, rawHeaders);
     } else if (format === 'gantt') {
       // Gantt format - parse schedule and generate trips
-      const ganttResult = parseGanttFromData(buffer);
+      const ganttResult = await parseGanttFromData(buffer, isCSVFile(file));
       if (!ganttResult.success) {
         return {
           success: false,
@@ -172,29 +375,24 @@ export async function parseFileRaw(file: File): Promise<RawParseResult> {
     // Read file as ArrayBuffer
     const buffer = await file.arrayBuffer();
 
-    // Parse workbook
-    const workbook = read(buffer, {
-      type: 'array',
-      cellDates: true,
-      dateNF: 'yyyy-mm-dd',
-    });
+    let records: Record<string, unknown>[];
+    let rawHeaders: string[];
 
-    // Get first sheet
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
-      return { success: false, error: 'File contains no worksheets' };
+    if (isCSVFile(file)) {
+      const text = new TextDecoder('utf-8').decode(buffer);
+      const csvRows = parseCSV(text);
+      const result = csvRowsToRecords(csvRows);
+      records = result.records;
+      rawHeaders = result.headers;
+    } else {
+      // Excel
+      const result = await parseXlsxBuffer(buffer);
+      records = result.records;
+      rawHeaders = result.headers;
     }
 
-    const sheet = workbook.Sheets[sheetName];
-
-    // Convert to JSON with headers
-    const jsonData = utils.sheet_to_json<Record<string, unknown>>(sheet, {
-      defval: '',
-      raw: false,
-    });
-
     // Check for empty file
-    if (jsonData.length === 0) {
+    if (records.length === 0) {
       return {
         success: false,
         error: 'File appears empty. Add data rows below the header row and try again.',
@@ -202,18 +400,15 @@ export async function parseFileRaw(file: File): Promise<RawParseResult> {
     }
 
     // Check row limit
-    if (jsonData.length > MAX_ROWS) {
+    if (records.length > MAX_ROWS) {
       return {
         success: false,
-        error: `Import limited to ${MAX_ROWS} rows for performance. Your file has ${jsonData.length} rows. Please split into smaller files.`,
+        error: `Import limited to ${MAX_ROWS} rows for performance. Your file has ${records.length} rows. Please split into smaller files.`,
       };
     }
 
-    // Get raw headers from first row (don't normalize - preserve original names)
-    const rawHeaders = Object.keys(jsonData[0] || {});
-
     // Sanitize all values
-    const sanitizedData = jsonData.map((row) => {
+    const sanitizedData = records.map((row) => {
       const sanitized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(row)) {
         sanitized[key] = sanitizeValue(value);
@@ -388,28 +583,44 @@ function formatDateValue(value: string): string {
 // PARSE GANTT FORMAT
 // ============================================================
 
-function parseGanttFromData(buffer: ArrayBuffer): ParseResult {
+async function parseGanttFromData(buffer: ArrayBuffer, isCsv = false): Promise<ParseResult> {
   try {
-    // Parse workbook to get raw 2D array
-    const workbook = read(buffer, {
-      type: 'array',
-      cellDates: false, // Keep dates as strings for Gantt parsing
-      raw: true,
-    });
+    let data: unknown[][];
 
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) {
-      return { success: false, error: 'File contains no worksheets' };
+    if (isCsv) {
+      const text = new TextDecoder('utf-8').decode(buffer);
+      data = parseCSV(text);
+    } else {
+      // Parse Excel to 2D array using ExcelJS
+      const workbook = new ExcelJS.Workbook();
+      // See parseXlsxBuffer for explanation of the @ts-expect-error below
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error ExcelJS type definitions predate the generic Buffer introduced in @types/node 20
+      await workbook.xlsx.load(Buffer.from(buffer));
+
+      const worksheet = workbook.worksheets[0];
+      if (!worksheet) {
+        return { success: false, error: 'File contains no worksheets' };
+      }
+
+      data = [];
+      worksheet.eachRow((row) => {
+        // row.values is 1-based; slice(1) to get 0-based array
+        const rowValues = (row.values as ExcelJS.CellValue[]).slice(1);
+        // Convert each cell to a raw primitive (string/number/null) keeping dates as-is
+        const rowData = rowValues.map((v) => {
+          if (v === null || v === undefined) return '';
+          if (typeof v === 'object' && v instanceof Date) return v;
+          if (typeof v === 'object') {
+            const obj = v as unknown as Record<string, unknown>;
+            if (typeof obj.result !== 'undefined') return obj.result;
+            if (typeof obj.text === 'string') return obj.text;
+          }
+          return v;
+        });
+        data.push(rowData);
+      });
     }
-
-    const sheet = workbook.Sheets[sheetName];
-
-    // Convert to 2D array (including headers)
-    const data = utils.sheet_to_json<unknown[]>(sheet, {
-      header: 1,
-      defval: '',
-      raw: true,
-    });
 
     if (data.length < 2) {
       return {
@@ -452,7 +663,7 @@ function parseGanttFromData(buffer: ArrayBuffer): ParseResult {
     }
 
     // Convert generated trips to ParsedTripRow format
-    const parsedData: ParsedTripRow[] = trips.map((trip, index) => ({
+    const parsedData: ParsedTripRow[] = trips.map((trip) => ({
       row_number: trip.sourceRow, // Use original row number for error reporting
       employee_email: trip.employeeEmail ?? '', // Gantt may not have email, validation will catch it
       employee_name: trip.employeeName,
@@ -485,4 +696,4 @@ function parseGanttFromData(buffer: ArrayBuffer): ParseResult {
 // EXPORT FOR TESTING
 // ============================================================
 
-export { sanitizeValue, normalizeHeader, formatDateValue, parseGanttFromData };
+export { sanitizeValue, normalizeHeader, formatDateValue, parseGanttFromData, isCSVFile };

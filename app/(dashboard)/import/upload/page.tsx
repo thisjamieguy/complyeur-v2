@@ -119,8 +119,8 @@ export default function UploadPage() {
       // Special handling for Gantt/Schedule format
       if (format === 'gantt') {
         const buffer = await file.arrayBuffer();
-        const { parseGanttFromData } = await import('@/lib/import/parser');
-        const ganttResult = parseGanttFromData(buffer);
+        const { parseGanttFromData, isCSVFile } = await import('@/lib/import/parser');
+        const ganttResult = await parseGanttFromData(buffer, isCSVFile(file));
 
         if (!ganttResult.success || !ganttResult.data) {
           showError('Parse Error', ganttResult.error ?? 'Failed to parse schedule file');

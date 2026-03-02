@@ -110,12 +110,11 @@ describe('API route auth review coverage', () => {
     expect(supabase.from).not.toHaveBeenCalled()
   })
 
-  it('returns 401 for DSAR API requests when the export helper rejects access', async () => {
-    generateDsarExportMock.mockResolvedValue({
-      success: false,
-      error: 'Unauthorized',
-      code: 'UNAUTHORIZED',
-    })
+  it('returns 401 for DSAR API requests when the outer auth guard rejects unauthenticated access', async () => {
+    // The outer requireAdminAccess guard runs before generateDsarExport.
+    // An unauthenticated supabase client causes the guard to short-circuit with 401.
+    const supabase = createUnauthenticatedSupabase()
+    createClientMock.mockResolvedValue(supabase)
 
     const { GET } = await import('@/app/api/gdpr/dsar/[employeeId]/route')
     const response = await GET(
@@ -126,7 +125,8 @@ describe('API route auth review coverage', () => {
 
     expect(response.status).toBe(401)
     expect(body.error).toBe('Unauthorized')
-    expect(generateDsarExportMock).toHaveBeenCalledWith('employee-1')
+    // generateDsarExport must NOT be called — the outer guard prevents it
+    expect(generateDsarExportMock).not.toHaveBeenCalled()
   })
 
   it('rejects retention cron requests without CRON_SECRET credentials', async () => {

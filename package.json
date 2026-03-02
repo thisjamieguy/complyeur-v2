@@ -65,9 +65,10 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "exceljs": "^4.4.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.562.0",
-    "next": "16.1.1",
+    "next": "16.1.6",
     "next-themes": "^0.4.6",
     "react": "19.2.3",
     "react-day-picker": "^9.13.0",
@@ -78,7 +79,6 @@
     "sonner": "^2.0.7",
     "stripe": "^20.3.1",
     "tailwind-merge": "^3.4.0",
-    "xlsx": "^0.18.5",
     "zod": "^4.3.5"
   },
   "devDependencies": {
@@ -96,7 +96,7 @@
     "@vitest/coverage-v8": "^4.0.16",
     "auto-changelog": "^2.5.0",
     "eslint": "^9",
-    "eslint-config-next": "16.1.1",
+    "eslint-config-next": "16.1.6",
     "husky": "^9.1.7",
     "jsdom": "^27.4.0",
     "tailwindcss": "^4",

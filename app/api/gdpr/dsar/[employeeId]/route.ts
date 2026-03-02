@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateDsarExport } from '@/lib/gdpr'
+import { requireAdminAccess } from '@/lib/security/authorization'
+import { createClient } from '@/lib/supabase/server'
 
 /**
  * DSAR Export Download Endpoint
@@ -26,6 +28,13 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ employeeId: string }> }
 ) {
+  // Outer auth guard — defence in depth
+  const supabase = await createClient()
+  const guard = await requireAdminAccess(supabase)
+  if (!guard.allowed) {
+    return NextResponse.json({ error: guard.error }, { status: guard.status })
+  }
+
   const { employeeId } = await params
 
   if (!employeeId) {
@@ -55,7 +64,7 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="${result.fileName}"`,
+        'Content-Disposition': `attachment; filename="${result.fileName.replace(/"/g, '\\"')}"`,
         'Content-Length': result.zipBuffer.length.toString(),
         // Prevent caching of sensitive data
         'Cache-Control': 'no-store, no-cache, must-revalidate',

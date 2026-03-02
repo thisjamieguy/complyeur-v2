@@ -4,6 +4,12 @@ import { env } from '@/lib/env'
 import { SUPABASE_COOKIE_OPTIONS } from '@/lib/supabase/cookie-options'
 import type { User } from '@supabase/supabase-js'
 
+function getSiteOwnerEmails(): string[] {
+  const configured = process.env.SITE_OWNER_EMAILS
+  if (!configured) return []
+  return configured.split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+}
+
 function inferCompanyNameFromEmail(email: string): string {
   try {
     const domain = email.split('@')[1]
@@ -176,8 +182,7 @@ export async function updateSession(
 
   if (metaCompanyId) {
     // Metadata is present — skip profiles query entirely
-    const SITE_OWNER_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
-    const isSiteOwner = SITE_OWNER_EMAILS.includes(user.email?.toLowerCase() ?? '')
+    const isSiteOwner = getSiteOwnerEmails().includes(user.email?.toLowerCase() ?? '')
     const needsOnboarding = !isSiteOwner && metaOnboardingCompleted !== true
 
     return { supabaseResponse, user, needsOnboarding, sessionExpired: false }
@@ -225,8 +230,7 @@ export async function updateSession(
         },
       }).catch(() => undefined)
 
-      const SITE_OWNER_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
-      const isSiteOwner = SITE_OWNER_EMAILS.includes(user.email?.toLowerCase() ?? '')
+      const isSiteOwner = getSiteOwnerEmails().includes(user.email?.toLowerCase() ?? '')
       const needsOnboarding = !isSiteOwner && !recoveredContext.onboardingCompleted
       return { supabaseResponse, user, needsOnboarding, sessionExpired: false }
     }
@@ -251,8 +255,7 @@ export async function updateSession(
   })
 
   // Site owner always bypasses onboarding
-  const SITE_OWNER_EMAILS = ['james.walsh23@outlook.com', 'complyeur@gmail.com']
-  const isSiteOwner = SITE_OWNER_EMAILS.includes(user.email?.toLowerCase() ?? '')
+  const isSiteOwner = getSiteOwnerEmails().includes(user.email?.toLowerCase() ?? '')
   const needsOnboarding = !isSiteOwner && !profile.onboarding_completed_at
 
   return { supabaseResponse, user, needsOnboarding, sessionExpired: false }

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { parseFileRaw, sanitizeValue, normalizeHeader, formatDateValue } from '@/lib/import/parser';
 import { validateRows, getValidationSummary, getAllErrors, getAllWarnings } from '@/lib/import/validator';
 import type {
@@ -43,13 +43,18 @@ function createExcelFile(buffer: ArrayBuffer, filename = 'test.xlsx'): File {
 }
 
 /**
- * Creates an Excel workbook from rows of data.
+ * Creates an Excel workbook from rows of data using ExcelJS.
+ * Each inner array is a row; elements can be string, number, Date, null, or undefined.
  */
-function createExcelBuffer(rows: (string | number)[][]): ArrayBuffer {
-  const workbook = XLSX.utils.book_new();
-  const worksheet = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-  return XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+async function createExcelBuffer(rows: (string | number | Date | null | undefined)[][]): Promise<ArrayBuffer> {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Sheet1');
+  for (const row of rows) {
+    worksheet.addRow(row);
+  }
+  const buffer = await workbook.xlsx.writeBuffer();
+  // writeBuffer returns Buffer (Node) which is also an ArrayBuffer-like; cast to ArrayBuffer
+  return buffer as unknown as ArrayBuffer;
 }
 
 /**
@@ -192,7 +197,7 @@ test@test.com,45945,45950,FR`;
 
       expect(result.success).toBe(true);
       expect(result.rawData).toHaveLength(1);
-      // XLSX library handles BOM, headers should be clean
+      // BOM stripped, headers should be clean
     });
 
     it('handles quoted fields with commas inside', async () => {
@@ -220,7 +225,7 @@ Jane,Smith,jane@test.com
       const result = await parseFileRaw(file);
 
       expect(result.success).toBe(true);
-      // Empty rows should be handled - XLSX may include or skip them
+      // Empty rows should be handled - parser skips all-empty rows
       expect(result.rawData!.length).toBeGreaterThanOrEqual(2);
     });
 
@@ -266,7 +271,7 @@ Jane,Smith,jane@test.com
         ['Jane', 'Smith', 'jane@test.com', 'US'],
       ];
 
-      const buffer = createExcelBuffer(rows);
+      const buffer = await createExcelBuffer(rows);
       const file = createExcelFile(buffer);
       const result = await parseFileRaw(file);
 
@@ -282,7 +287,7 @@ Jane,Smith,jane@test.com
         ['jane@test.com', '2025-11-15', '2025-11-20', 'DE'],
       ];
 
-      const buffer = createExcelBuffer(rows);
+      const buffer = await createExcelBuffer(rows);
       const file = createExcelFile(buffer);
       const result = await parseFileRaw(file);
 
@@ -291,23 +296,19 @@ Jane,Smith,jane@test.com
     });
 
     it('handles multiple sheets (uses first sheet by default)', async () => {
-      const workbook = XLSX.utils.book_new();
+      const workbook = new ExcelJS.Workbook();
 
       // First sheet - should be used
-      const sheet1 = XLSX.utils.aoa_to_sheet([
-        ['first_name', 'last_name', 'email'],
-        ['John', 'Doe', 'john@test.com'],
-      ]);
-      XLSX.utils.book_append_sheet(workbook, sheet1, 'Employees');
+      const sheet1 = workbook.addWorksheet('Employees');
+      sheet1.addRow(['first_name', 'last_name', 'email']);
+      sheet1.addRow(['John', 'Doe', 'john@test.com']);
 
       // Second sheet - should be ignored
-      const sheet2 = XLSX.utils.aoa_to_sheet([
-        ['other', 'data'],
-        ['foo', 'bar'],
-      ]);
-      XLSX.utils.book_append_sheet(workbook, sheet2, 'Other');
+      const sheet2 = workbook.addWorksheet('Other');
+      sheet2.addRow(['other', 'data']);
+      sheet2.addRow(['foo', 'bar']);
 
-      const buffer = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+      const buffer = await workbook.xlsx.writeBuffer() as unknown as ArrayBuffer;
       const file = createExcelFile(buffer);
       const result = await parseFileRaw(file);
 
@@ -317,15 +318,13 @@ Jane,Smith,jane@test.com
     });
 
     it('handles formatted dates in Excel', async () => {
-      // Create workbook with actual date objects
-      const workbook = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet([
-        ['email', 'entry_date', 'exit_date', 'country'],
-        ['test@test.com', new Date(2025, 10, 15), new Date(2025, 10, 20), 'FR'],
-      ]);
-      XLSX.utils.book_append_sheet(workbook, ws, 'Trips');
+      // Create workbook with actual Date objects
+      const workbook = new ExcelJS.Workbook();
+      const ws = workbook.addWorksheet('Trips');
+      ws.addRow(['email', 'entry_date', 'exit_date', 'country']);
+      ws.addRow(['test@test.com', new Date(2025, 10, 15), new Date(2025, 10, 20), 'FR']);
 
-      const buffer = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+      const buffer = await workbook.xlsx.writeBuffer() as unknown as ArrayBuffer;
       const file = createExcelFile(buffer);
       const result = await parseFileRaw(file);
 
@@ -625,13 +624,13 @@ John,Doe,john@test.com`;
     });
 
     it('handles null/undefined values in cells', async () => {
-      const rows = [
+      const rows: (string | number | null | undefined)[][] = [
         ['first_name', 'last_name', 'email'],
         [null, 'Doe', 'john@test.com'],
         ['Jane', undefined, 'jane@test.com'],
       ];
 
-      const buffer = createExcelBuffer(rows as (string | number)[][]);
+      const buffer = await createExcelBuffer(rows);
       const file = createExcelFile(buffer);
       const result = await parseFileRaw(file);
 

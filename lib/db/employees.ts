@@ -141,18 +141,18 @@ export async function createEmployee(employee: EmployeeCreateInput): Promise<Emp
  */
 export async function updateEmployee(id: string, updates: EmployeeUpdate): Promise<Employee> {
   const supabase = await createClient()
+  const { companyId } = await requireCompanyAccess(supabase)
 
   const { data: existing, error: fetchError } = await supabase
     .from('employees')
     .select('company_id')
     .eq('id', id)
+    .eq('company_id', companyId)
     .single()
 
   if (fetchError || !existing) {
     throw new NotFoundError('Employee not found')
   }
-
-  await requireCompanyAccess(supabase, existing.company_id)
 
   let { data, error } = await supabase
     .from('employees')
@@ -203,18 +203,18 @@ export async function updateEmployee(id: string, updates: EmployeeUpdate): Promi
  */
 export async function deleteEmployee(id: string): Promise<void> {
   const supabase = await createClient()
+  const { companyId } = await requireCompanyAccess(supabase)
 
   const { data: existing, error: fetchError } = await supabase
     .from('employees')
     .select('company_id')
     .eq('id', id)
+    .eq('company_id', companyId)
     .single()
 
   if (fetchError || !existing) {
     throw new NotFoundError('Employee not found')
   }
-
-  await requireCompanyAccess(supabase, existing.company_id)
 
   const { error } = await supabase
     .from('employees')
