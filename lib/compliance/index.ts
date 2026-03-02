@@ -179,7 +179,7 @@ export {
 
 import type { Trip, ComplianceConfig, ComplianceResult } from './types';
 import { presenceDays } from './presence-calculator';
-import { daysUsedInWindow, calculateDaysRemaining, isCompliant as checkCompliant } from './window-calculator';
+import { daysUsedInWindow } from './window-calculator';
 import { getRiskLevel } from './risk-calculator';
 import { SCHENGEN_DAY_LIMIT } from './constants';
 

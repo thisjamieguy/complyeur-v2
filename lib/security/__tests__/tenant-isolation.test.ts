@@ -16,24 +16,12 @@
  * - Test data: employees, trips in each company
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
 // These tests are integration tests that require a real Supabase connection
 // They are marked as .skip by default and should be run manually
 
 describe.skip('Tenant Isolation Security', () => {
-  // Test configuration
-  const testConfig = {
-    companyA: {
-      id: 'test-company-a-uuid',
-      userId: 'test-user-a-uuid',
-    },
-    companyB: {
-      id: 'test-company-b-uuid',
-      userId: 'test-user-b-uuid',
-    },
-  }
-
   describe('RLS Policy Tests', () => {
     describe('employees table', () => {
       it('should only return employees from the authenticated user company', async () => {

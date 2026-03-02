@@ -71,7 +71,7 @@ interface EntitlementsTabProps {
   }>
 }
 
-export function EntitlementsTab({ company, tier: _tier, tiers }: EntitlementsTabProps) {
+export function EntitlementsTab({ company, tiers }: EntitlementsTabProps) {
   const [isPending, startTransition] = useTransition()
   const [trialDays, setTrialDays] = useState('7')
   const [trialReason, setTrialReason] = useState('')

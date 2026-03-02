@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft, History, Loader2 } from 'lucide-react';
+import { ArrowLeft, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getImportSessionsPaginated } from '../../import/actions';
 import { ImportHistoryList } from './import-history-list';

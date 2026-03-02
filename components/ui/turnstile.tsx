@@ -212,14 +212,6 @@ export function Turnstile({
     }
   }, [siteKey, theme, size, appearance, action, responseFieldName, handleVerify, handleError, handleExpire])
 
-  // Reset function exposed for parent components
-  const reset = useCallback(() => {
-    if (widgetIdRef.current && window.turnstile) {
-      window.turnstile.reset(widgetIdRef.current)
-      setToken('')
-    }
-  }, [])
-
   // If Turnstile fails to load, render a hidden input with empty value
   // The server should handle this gracefully
   if (loadError) {

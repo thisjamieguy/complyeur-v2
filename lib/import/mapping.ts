@@ -23,8 +23,6 @@ import type {
 } from '@/types/import';
 import {
   getRequiredFields,
-  REQUIRED_EMPLOYEE_FIELDS,
-  REQUIRED_TRIP_FIELDS,
 } from '@/types/import';
 import { mapHeaders, type CanonicalField } from './header-aliases';
 import { parseDate } from './date-parser';

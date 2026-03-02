@@ -7,19 +7,12 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  presenceDays,
-  daysUsedInWindow,
-  calculateDaysRemaining,
   getRiskLevel,
   earliestSafeEntry,
   isSchengenCountry,
   calculateCompliance,
 } from '../index';
 import {
-  oraclePresenceDays,
-  oracleDaysUsedInWindow,
-  oracleDaysRemaining,
-  oracleRiskLevel,
   oracleCalculate,
   validateAgainstOracle,
 } from './oracle-calculator';

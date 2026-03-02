@@ -13,7 +13,6 @@ import {
 import {
   parseGanttFormat,
   generateTripsFromGantt,
-  type GeneratedTrip,
 } from './gantt-parser';
 
 // ============================================================
@@ -228,7 +227,7 @@ async function parseXlsxBuffer(buffer: ArrayBuffer): Promise<{
   // ExcelJS types declare load(buffer: Buffer) with the pre-TS5.7 non-generic Buffer.
   // @types/node 20+ makes Buffer generic (Buffer<ArrayBufferLike>), causing a type mismatch.
   // The runtime behaviour is identical; suppress the stale type error.
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+   
   // @ts-expect-error ExcelJS type definitions predate the generic Buffer introduced in @types/node 20
   await workbook.xlsx.load(Buffer.from(buffer));
 
@@ -594,7 +593,7 @@ async function parseGanttFromData(buffer: ArrayBuffer, isCsv = false): Promise<P
       // Parse Excel to 2D array using ExcelJS
       const workbook = new ExcelJS.Workbook();
       // See parseXlsxBuffer for explanation of the @ts-expect-error below
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+       
       // @ts-expect-error ExcelJS type definitions predate the generic Buffer introduced in @types/node 20
       await workbook.xlsx.load(Buffer.from(buffer));
 

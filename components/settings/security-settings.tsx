@@ -69,7 +69,7 @@ export function SecuritySettings() {
       } else {
         toast.error(result.error)
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to update password")
     } finally {
       setIsLoading(false)

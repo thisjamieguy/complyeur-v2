@@ -172,7 +172,7 @@ function oracleCalculateDaysUsed(
     const exit = trip.exitDate ? new Date(trip.exitDate) : new Date(refDate);
     exit.setUTCHours(0, 0, 0, 0);
 
-    let current = new Date(entry);
+    const current = new Date(entry);
     while (current <= exit) {
       if (current >= effectiveWindowStart && current <= windowEnd) {
         schengenDays.add(current.toISOString().split('T')[0]);

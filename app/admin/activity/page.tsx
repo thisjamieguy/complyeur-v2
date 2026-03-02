@@ -1,12 +1,11 @@
 import Link from 'next/link'
-import { formatDistanceToNow, parseISO, format } from 'date-fns'
+import { parseISO, format } from 'date-fns'
 import { requireSuperAdmin } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import {
-  Building2,
   Clock,
   FileEdit,
   MessageSquare,

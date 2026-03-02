@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
   sendTrialExpiringEmail,
@@ -29,7 +29,7 @@ import { logger } from '@/lib/logger.mjs'
  *   }]
  * }
  */
-async function handleBillingCron(_request: NextRequest): Promise<NextResponse> {
+async function handleBillingCron(): Promise<NextResponse> {
   logger.info('[Billing Cron] Starting billing email run')
 
   const admin = createAdminClient()

@@ -6,7 +6,7 @@
  */
 
 import { format } from 'date-fns';
-import { sanitizeCsvValue, toCsvRow } from '../exports/sanitize';
+import { toCsvRow } from '../exports/sanitize';
 import type { ValidationError } from '@/types/import';
 
 /**

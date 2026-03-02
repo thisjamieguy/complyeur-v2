@@ -72,7 +72,6 @@ const defaultEmployees: CalendarEmployeeRow[] = [
 ]
 
 const DEFAULT_TOTAL_DAYS = 28
-const DEFAULT_TODAY_OFFSET = 14
 
 const riskStyles = {
   green: 'bg-green-500',

@@ -9,14 +9,14 @@
  * - getComplianceAtDates: Compliance at specific dates
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   batchCalculateCompliance,
   createComplianceCalculator,
   calculateComplianceRange,
   getComplianceAtDates,
 } from '../cached';
-import type { Trip, ComplianceConfig, ComplianceResult } from '../types';
+import type { Trip, ComplianceConfig } from '../types';
 
 // Helper to create a trip
 function createTrip(
@@ -42,17 +42,6 @@ function createConfig(overrides: Partial<ComplianceConfig> = {}): ComplianceConf
     complianceStartDate: EARLY_COMPLIANCE_START,
     ...overrides,
   };
-}
-
-// Helper to generate consecutive dates
-function generateDates(start: string, count: number): string[] {
-  const dates: string[] = [];
-  const startDate = new Date(start + 'T00:00:00.000Z');
-  for (let i = 0; i < count; i++) {
-    const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
-    dates.push(d.toISOString().split('T')[0]);
-  }
-  return dates;
 }
 
 describe('batchCalculateCompliance', () => {

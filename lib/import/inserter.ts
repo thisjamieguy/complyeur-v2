@@ -81,7 +81,7 @@ export async function insertValidRows(
 
   try {
     await requireCompanyAccess(supabase, session.company_id)
-  } catch (error) {
+  } catch {
     return {
       success: false,
       employees_created: 0,
@@ -106,7 +106,7 @@ export async function insertValidRows(
   if (format === 'employees') {
     return insertEmployees(supabase, companyId, rows, duplicateOptions);
   } else if (format === 'trips' || format === 'gantt') {
-    return insertTrips(supabase, companyId, rows, duplicateOptions);
+    return insertTrips(supabase, companyId, rows);
   }
 
   return {
@@ -324,7 +324,6 @@ async function insertTrips(
   supabase: Awaited<ReturnType<typeof createClient>>,
   companyId: string,
   rows: ValidatedRow<ParsedRow>[],
-  duplicateOptions: DuplicateOptions
 ): Promise<ImportResult> {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];

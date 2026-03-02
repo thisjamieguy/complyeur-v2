@@ -50,7 +50,7 @@ export function CompanyNameStep({ initialName, onComplete }: CompanyNameStepProp
   return (
     <Card className="border-slate-200 bg-white shadow-sm">
       <CardHeader>
-        <CardTitle className="text-xl">What's your company called?</CardTitle>
+        <CardTitle className="text-xl">What&apos;s your company called?</CardTitle>
         <CardDescription>
           This is how your company will appear across ComplyEur.
         </CardDescription>

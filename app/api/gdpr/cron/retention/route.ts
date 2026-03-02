@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { runRetentionPurge } from '@/lib/gdpr'
 import { withCronAuth } from '@/lib/security/cron-auth'
 
@@ -26,7 +26,7 @@ import { withCronAuth } from '@/lib/security/cron-auth'
  *
  * The schedule "0 3 * * *" runs at 3:00 AM UTC daily.
  */
-async function handleRetentionPurge(_request: NextRequest): Promise<NextResponse> {
+async function handleRetentionPurge(): Promise<NextResponse> {
   console.log('[Retention Cron] Starting data retention purge...')
 
   try {

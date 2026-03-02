@@ -17,7 +17,7 @@ export type UpdatePasswordResult =
   | { success: false; error: string }
 
 export async function updatePasswordAction(
-  prevState: any, 
+  prevState: UpdatePasswordResult | null,
   formData: FormData
 ): Promise<UpdatePasswordResult> {
   const supabase = await createClient()

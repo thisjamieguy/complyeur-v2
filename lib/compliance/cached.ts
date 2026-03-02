@@ -17,7 +17,6 @@ import {
   type Trip,
   type ComplianceConfig,
   type ComplianceResult,
-  type RiskLevel,
 } from './index'
 
 /**

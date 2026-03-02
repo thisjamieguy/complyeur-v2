@@ -58,7 +58,7 @@ function keyToDate(key: string): Date {
  * @throws InvalidTripError if trip data is invalid
  * @throws InvalidDateRangeError if exit is before entry
  */
-function validateTrip(trip: Trip, referenceDate: Date): void {
+function validateTrip(trip: Trip): void {
   // Validate entry date
   if (!trip.entryDate) {
     throw new InvalidTripError('entryDate', trip.entryDate, 'Entry date is required');
@@ -132,7 +132,7 @@ export function presenceDays(
 
   for (const trip of trips) {
     // Validate trip data
-    validateTrip(trip, referenceDate);
+    validateTrip(trip);
 
     // Skip non-Schengen countries (including Ireland, Cyprus)
     if (!isSchengenCountry(trip.country)) {

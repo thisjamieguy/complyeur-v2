@@ -54,7 +54,7 @@ function getAlertSubject(alertType: AlertType, employeeName: string, daysRemaini
   }
 }
 
-function getAlertPreviewText(alertType: AlertType, daysUsed: number, daysRemaining: number): string {
+function getAlertPreviewText(alertType: AlertType, daysUsed: number): string {
   switch (alertType) {
     case 'warning':
       return `They've used ${daysUsed} of 90 days — here's what to watch for.`
@@ -108,7 +108,7 @@ function generateAlertEmailHtml(data: AlertEmailData): string {
 
   const color = colors[alertType]
   const nextAvailableDate = calculateNextAvailableDate(daysUsed)
-  const previewText = getAlertPreviewText(alertType, daysUsed, daysRemaining)
+  const previewText = getAlertPreviewText(alertType, daysUsed)
   const actionItems = getActionItems(alertType)
 
   return `

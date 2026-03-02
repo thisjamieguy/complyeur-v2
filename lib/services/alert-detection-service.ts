@@ -136,7 +136,6 @@ async function sendAlertEmails(
   context: DetectionContext,
   daysUsed: number,
   daysRemaining: number,
-  settings: CompanySettings
 ): Promise<void> {
   const alertType = alert.alert_type as 'warning' | 'urgent' | 'breach'
 
@@ -304,7 +303,7 @@ export async function detectAndProcessAlerts(
 
       // Send email if enabled (non-blocking)
       if (shouldSendEmail(alertType, settings)) {
-        sendAlertEmails(alert, context, daysUsed, daysRemaining, settings).catch(err => {
+        sendAlertEmails(alert, context, daysUsed, daysRemaining).catch(err => {
           logger.error('[AlertDetection] Failed to send alert emails', { error: err })
         })
       }

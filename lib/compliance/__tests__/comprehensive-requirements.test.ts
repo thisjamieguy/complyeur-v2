@@ -16,8 +16,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   calculateCompliance,
-  presenceDays,
-  daysUsedInWindow,
   getRiskLevel,
   isCompliant,
   earliestSafeEntry,

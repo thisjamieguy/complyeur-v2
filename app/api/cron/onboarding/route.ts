@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendOnboardingDay1Email, sendOnboardingDay3Email } from '@/lib/services/email-service'
 import { withCronAuth } from '@/lib/security/cron-auth'
@@ -26,7 +26,7 @@ import { logger } from '@/lib/logger.mjs'
  *   }]
  * }
  */
-async function handleOnboardingCron(_request: NextRequest): Promise<NextResponse> {
+async function handleOnboardingCron(): Promise<NextResponse> {
   logger.info('[Onboarding Cron] Starting onboarding email run')
 
   const admin = createAdminClient()

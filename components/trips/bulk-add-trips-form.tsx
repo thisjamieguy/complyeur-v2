@@ -175,7 +175,7 @@ export function BulkAddTripsForm({
       </div>
 
       <div className="space-y-4">
-        {rows.map((row, index) => (
+        {rows.map((row) => (
           <div
             key={row.id}
             className="p-4 border rounded-lg bg-muted/30"
