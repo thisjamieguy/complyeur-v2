@@ -22,13 +22,8 @@ describe('getBaseUrl', () => {
   it('uses canonical NEXT_PUBLIC_APP_URL and ignores forwarded host headers', () => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://app.com///'
     process.env.VERCEL_URL = 'preview-evil.vercel.app'
-    const requestHeaders = new Headers({
-      'x-forwarded-host': 'attacker.example',
-      'x-forwarded-proto': 'http',
-      host: 'attacker.example',
-    })
 
-    expect(getBaseUrl(requestHeaders)).toBe('https://app.com')
+    expect(getBaseUrl()).toBe('https://app.com')
   })
 
   it('falls back to VERCEL_URL when NEXT_PUBLIC_APP_URL is unset', () => {

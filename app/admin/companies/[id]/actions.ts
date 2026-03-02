@@ -221,8 +221,13 @@ export async function extendTrial(
 }
 
 export async function convertTrial(companyId: string) {
+  const companyIdResult = companyIdSchema.safeParse(companyId)
+  if (!companyIdResult.success) {
+    return { success: false, error: 'Invalid company ID format' }
+  }
+
   const { user } = await requireSuperAdmin()
-  await requireAdminCompanyAccess(companyId)
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
   const { error } = await supabase
@@ -232,7 +237,7 @@ export async function convertTrial(companyId: string) {
       trial_ends_at: null,
       updated_at: new Date().toISOString(),
     })
-    .eq('company_id', companyId)
+    .eq('company_id', companyIdResult.data)
 
   if (error) {
     console.error('Failed to convert trial:', error)
@@ -241,11 +246,11 @@ export async function convertTrial(companyId: string) {
 
   await logAdminAction({
     adminUserId: user.id,
-    targetCompanyId: companyId,
+    targetCompanyId: companyIdResult.data,
     action: ADMIN_ACTIONS.TRIAL_CONVERTED,
   })
 
-  revalidatePath(`/admin/companies/${companyId}`)
+  revalidatePath(`/admin/companies/${companyIdResult.data}`)
   return { success: true }
 }
 
@@ -294,8 +299,13 @@ export async function suspendCompany(companyId: string, reason: string) {
 }
 
 export async function restoreCompany(companyId: string) {
+  const companyIdResult = companyIdSchema.safeParse(companyId)
+  if (!companyIdResult.success) {
+    return { success: false, error: 'Invalid company ID format' }
+  }
+
   const { user } = await requireSuperAdmin()
-  await requireAdminCompanyAccess(companyId)
+  await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
   const { error } = await supabase
@@ -306,7 +316,7 @@ export async function restoreCompany(companyId: string) {
       suspended_reason: null,
       updated_at: new Date().toISOString(),
     })
-    .eq('company_id', companyId)
+    .eq('company_id', companyIdResult.data)
 
   if (error) {
     console.error('Failed to restore company:', error)
@@ -315,10 +325,10 @@ export async function restoreCompany(companyId: string) {
 
   await logAdminAction({
     adminUserId: user.id,
-    targetCompanyId: companyId,
+    targetCompanyId: companyIdResult.data,
     action: ADMIN_ACTIONS.COMPANY_RESTORED,
   })
 
-  revalidatePath(`/admin/companies/${companyId}`)
+  revalidatePath(`/admin/companies/${companyIdResult.data}`)
   return { success: true }
 }

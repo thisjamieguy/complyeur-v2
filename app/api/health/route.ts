@@ -6,9 +6,10 @@ export const revalidate = 0
 
 export async function GET() {
   try {
-    // Keep the probe lightweight while still validating a live DB round-trip.
+    // Lightweight probe — validates a live DB round-trip without touching business tables.
+    // Type assertion needed until `npm run db:types` is run after the ping() migration.
     const supabase = await createClient()
-    const { error } = await supabase.from('companies').select('id').limit(1)
+    const { error } = await (supabase.rpc as unknown as (fn: string) => Promise<{ error: unknown }>)('ping')
 
     if (error) throw error
 

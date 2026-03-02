@@ -71,6 +71,7 @@ export async function enforceMfaForPrivilegedUser(
   // Keep local/dev behavior aligned with production by default.
   // MFA bypass is only allowed for explicitly tagged automated test runs.
   const bypassMfaForE2E =
+    process.env.NODE_ENV !== 'production' &&
     process.env.DISABLE_MFA_FOR_E2E === 'true' &&
     process.env.MFA_BYPASS_CONTEXT === 'playwright'
 

@@ -317,6 +317,10 @@ export async function reassignTripAction(
  * Get all active (unresolved) alerts for the company
  */
 export async function getActiveAlertsAction(): Promise<AlertWithEmployee[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
   return getActiveAlerts()
 }
 
@@ -324,6 +328,10 @@ export async function getActiveAlertsAction(): Promise<AlertWithEmployee[]> {
  * Get unacknowledged alerts (for dashboard banner)
  */
 export async function getUnacknowledgedAlertsAction(): Promise<AlertWithEmployee[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
   return getUnacknowledgedAlerts()
 }
 
@@ -381,7 +389,10 @@ export async function getNotificationPreferencesAction(): Promise<NotificationPr
 }
 
 /**
- * Update user's notification preferences
+ * Update user's notification preferences.
+ * Intentionally skips SETTINGS_UPDATE permission — these are personal
+ * per-user preferences, not company-wide settings. Any authenticated
+ * user (including viewers) may change their own notification prefs.
  */
 export async function updateNotificationPreferencesAction(
   updates: NotificationPreferencesUpdate

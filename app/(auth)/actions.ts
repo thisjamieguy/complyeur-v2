@@ -230,7 +230,7 @@ export async function forgotPassword(formData: FormData) {
   if (!rl.success) throw new AuthError('Too many password reset attempts. Please wait an hour before trying again.')
 
   const supabase = await createClient()
-  const baseUrl = getBaseUrl(requestHeaders)
+  const baseUrl = getBaseUrl()
 
   const rawData = {
     email: formData.get('email') as string,
@@ -319,7 +319,7 @@ export async function signInWithGoogle(redirectTo?: string) {
   if (!rl.success) throw new AuthError('Too many sign-in attempts. Please wait a moment and try again.')
 
   const supabase = await createClient()
-  const baseUrl = getBaseUrl(requestHeaders)
+  const baseUrl = getBaseUrl()
 
   // Validate redirectTo to prevent open redirect attacks
   const validatedRedirect = validateRedirectUrl(redirectTo)

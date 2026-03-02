@@ -14,6 +14,11 @@ import { isOwnerOrAdmin } from '@/lib/permissions'
  */
 const BATCH_SIZE = 100
 
+/** Maximum total IDs across all entity types in a single bulk delete request. */
+const MAX_TOTAL_IDS = 500
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /**
  * Parameters for bulk data deletion
  */
@@ -275,6 +280,35 @@ export async function getHistoryForDeletion(): Promise<HistoryItem[]> {
  * Authentication and authorization are verified first with the regular client.
  */
 export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDeleteResult> {
+  const allIds = [
+    ...params.employeeIds,
+    ...params.tripIds,
+    ...params.mappingIds,
+    ...params.historyIds,
+  ]
+
+  if (allIds.length > MAX_TOTAL_IDS) {
+    return {
+      success: false,
+      employees: 0,
+      trips: 0,
+      mappings: 0,
+      history: 0,
+      errors: [`Too many IDs: ${allIds.length} exceeds maximum of ${MAX_TOTAL_IDS}`],
+    }
+  }
+
+  if (allIds.some((id) => !UUID_RE.test(id))) {
+    return {
+      success: false,
+      employees: 0,
+      trips: 0,
+      mappings: 0,
+      history: 0,
+      errors: ['One or more IDs are not valid UUIDs'],
+    }
+  }
+
   const supabase = await createClient()
   const errors: string[] = []
   let employeesDeleted = 0

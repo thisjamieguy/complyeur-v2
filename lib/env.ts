@@ -65,9 +65,8 @@ export type Env = typeof env
  * 2. VERCEL_URL (preview/production fallback)
  * 3. localhost (development fallback)
  *
- * @param _requestHeaders - kept for backward compatibility with existing call sites
  */
-export function getBaseUrl(_requestHeaders?: Headers): string {
+export function getBaseUrl(): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
   if (appUrl) {
     return normalizeOrigin(appUrl)
