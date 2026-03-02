@@ -231,6 +231,7 @@ export async function updateTrip(id: string, updates: TripUpdate): Promise<Trip>
     .from('trips')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .eq('company_id', companyId)
     .select()
     .single()
 
@@ -263,13 +264,10 @@ export async function deleteTrip(id: string): Promise<void> {
     .from('trips')
     .select('id, company_id')
     .eq('id', id)
+    .eq('company_id', companyId)
     .single()
 
   if (fetchError || !existingTrip) {
-    throw new NotFoundError('Trip not found')
-  }
-
-  if (existingTrip.company_id !== companyId) {
     throw new NotFoundError('Trip not found')
   }
 
@@ -278,6 +276,7 @@ export async function deleteTrip(id: string): Promise<void> {
     .from('trips')
     .delete()
     .eq('id', id)
+    .eq('company_id', companyId)
 
   if (error) {
     console.error('Error deleting trip:', error)

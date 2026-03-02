@@ -158,6 +158,7 @@ export async function updateEmployee(id: string, updates: EmployeeUpdate): Promi
     .from('employees')
     .update(updates)
     .eq('id', id)
+    .eq('company_id', companyId)
     .select()
     .single()
 
@@ -179,6 +180,7 @@ export async function updateEmployee(id: string, updates: EmployeeUpdate): Promi
       .from('employees')
       .update(legacyUpdates)
       .eq('id', id)
+      .eq('company_id', companyId)
       .select()
       .single()
 
@@ -220,6 +222,7 @@ export async function deleteEmployee(id: string): Promise<void> {
     .from('employees')
     .delete()
     .eq('id', id)
+    .eq('company_id', companyId)
 
   if (error) {
     console.error('Error deleting employee:', error)

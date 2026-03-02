@@ -16,11 +16,7 @@ describe('/api/health route', () => {
 
   it('returns minimal success payload', async () => {
     createClientMock.mockResolvedValue({
-      from: () => ({
-        select: () => ({
-          limit: () => ({ error: null }),
-        }),
-      }),
+      rpc: vi.fn().mockResolvedValue({ error: null }),
     })
 
     const response = await GET()
@@ -33,11 +29,7 @@ describe('/api/health route', () => {
 
   it('returns minimal failure payload', async () => {
     createClientMock.mockResolvedValue({
-      from: () => ({
-        select: () => ({
-          limit: () => ({ error: new Error('db down') }),
-        }),
-      }),
+      rpc: vi.fn().mockResolvedValue({ error: new Error('db down') }),
     })
 
     const response = await GET()
