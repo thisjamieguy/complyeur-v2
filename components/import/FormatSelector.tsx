@@ -48,7 +48,8 @@ export function FormatSelector() {
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Import Data</h1>
         <p className="mt-2 text-slate-500">
-          Select the format that matches your data file, then download the template.
+          Select the format that matches your file type, then continue to upload.
+          Templates are available for employee lists, trip lists, and Gantt-style schedules.
         </p>
       </div>
 
@@ -105,7 +106,10 @@ export function FormatSelector() {
         })}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-end gap-3">
+        {!selectedFormat && (
+          <p className="text-sm text-slate-400">Select a format to continue</p>
+        )}
         <Button
           size="lg"
           onClick={handleContinue}

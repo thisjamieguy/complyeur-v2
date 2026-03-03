@@ -31,16 +31,18 @@ export function FirstTimeGuide() {
           <div className="pt-4 space-y-4">
             <div className="space-y-3">
               <Step number={1} title="Choose a format">
-                Select the format that matches your data. Download the template
-                to see the required columns.
+                Select the format that matches your file, whether that is an
+                employee list, a trip list, or a Gantt or schedule export.
+                Download the template if you want to compare the required columns.
               </Step>
               <Step number={2} title="Upload your file">
                 Upload your spreadsheet (Excel or CSV). We&apos;ll validate the
                 data and show you a preview.
               </Step>
               <Step number={3} title="Review & import">
-                Check the preview for any errors, then import your data. You can
-                fix issues in your file and re-upload.
+                Check the preview for any errors, then import your data. Existing
+                employees are updated when they match, and duplicate trips are
+                skipped automatically to avoid double-counting days.
               </Step>
             </div>
 

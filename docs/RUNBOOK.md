@@ -11,9 +11,10 @@ This document contains operational procedures for deploying, monitoring, and mai
 4. [Availability Targets (RTO/RPO)](#availability-targets-rtorpo)
 5. [Backup Restore Testing](#backup-restore-testing)
 6. [How to Check Logs](#how-to-check-logs)
-7. [How to Enable Maintenance Mode](#how-to-enable-maintenance-mode)
-8. [Emergency Contacts](#emergency-contacts)
-9. [First 24 Hours After Launch](#first-24-hours-after-launch)
+7. [Rate Limits and Cron Endpoints](#rate-limits-and-cron-endpoints)
+8. [How to Enable Maintenance Mode](#how-to-enable-maintenance-mode)
+9. [Emergency Contacts](#emergency-contacts)
+10. [First 24 Hours After Launch](#first-24-hours-after-launch)
 
 ---
 
@@ -156,6 +157,54 @@ SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public';
 3. View **Issues** for grouped errors
 4. Check **Performance** for slow transactions
 
+### What to look for after March 2026 hardening
+- `429` responses on interactive mutation routes if users are retrying too aggressively
+- `503` responses if the production rate limiter is unavailable and fail-closed protection is active
+- Generic cron API failures such as `Failed to process onboarding emails` or `Failed to process renewal emails`; details are intentionally kept in logs, not the HTTP body
+
+High-signal routes:
+- `/api/billing/checkout`
+- `/api/billing/portal`
+- `/api/billing/status`
+- `/api/cron/billing`
+- `/api/cron/onboarding`
+- server actions behind Team, GDPR, Import, Onboarding, and Admin company detail pages
+
+---
+
+## Rate Limits and Cron Endpoints
+
+### Protected routes and actions
+
+The app now applies centralized server-side rate limiting to:
+- billing checkout, billing portal, and billing status routes
+- onboarding actions such as company setup and team invites
+- import session reads/writes, saved mapping mutations, and session deletion
+- GDPR actions and DSAR-related workflows
+- team management and admin company-detail mutations
+
+### Expected production behavior
+
+- Normal limit hit: return `429 Too Many Requests`
+- Rate limiter unavailable in production: return `503` and fail closed
+- Development without Upstash: local in-memory fallback is used
+
+### Operator response
+
+If users report repeated `Too many requests` or `Rate limit exceeded` errors:
+1. Check whether a recent deploy changed client retry behavior.
+2. Inspect Vercel and Supabase logs for the affected action name.
+3. Confirm `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are present in production.
+4. Ask the user to retry once after the window resets instead of repeatedly submitting the same form.
+
+### Cron endpoint notes
+
+Cron routes intentionally return generic error messages now:
+- `/api/cron/billing`
+- `/api/cron/onboarding`
+
+Use runtime logs to get the underlying query or provider failure. Do not rely on the HTTP response body for detailed diagnosis.
+
 ---
 
 ## How to Enable Maintenance Mode
@@ -209,6 +258,7 @@ Maintenance mode shows a banner to users without taking the site offline.
 - [ ] Review Sentry for new errors
 - [ ] Check GA4 for traffic patterns
 - [ ] Spot-check one core feature (add employee, add trip, etc.)
+- [ ] Check for unexpected spikes in `429` or `503` responses on billing, onboarding, and import flows
 
 ### Hour 12-24
 - [ ] Review total signups: `SELECT COUNT(*) FROM companies WHERE created_at > NOW() - INTERVAL '24 hours';`

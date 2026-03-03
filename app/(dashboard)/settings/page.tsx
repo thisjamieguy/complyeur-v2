@@ -17,7 +17,7 @@ import type { NotificationPreferences } from '@/types/database-helpers'
 import { cn } from '@/lib/utils'
 
 export const metadata = {
-  title: 'Settings | ComplyEur',
+  title: 'Settings',
   description: 'Configure your company settings for Schengen compliance tracking',
 }
 
@@ -164,7 +164,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   Dashboard Tour
                 </h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Need a refresher on where key features live?
+                  Need a refresher on the briefing, navigation shortcuts, and where key workflows live?
                 </p>
                 <Link
                   href="/dashboard?tour=1"

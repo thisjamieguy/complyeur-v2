@@ -1,11 +1,12 @@
 # Multi-User Team Invites (Help Draft)
 
-Last validated: February 17, 2026 (local Supabase + Mailpit)
+Last validated: March 3, 2026 (local Supabase + Mailpit)
 
 ## What this supports
 - The first user who signs up for a company account is the company `owner`.
 - Owners and admins can invite teammates from `Settings > Team`.
 - Team invites are limited by your plan seat limit (`active users + pending invites`).
+- Team invite reads and writes are rate-limited server-side to reduce abuse and duplicate sends.
 - Invite emails are sent as magic-link invites.
 - Invited users are added to the same company account after accepting.
 
@@ -19,6 +20,7 @@ Last validated: February 17, 2026 (local Supabase + Mailpit)
 - The teammate receives an email titled **"You have been invited"**.
 - The link routes through Supabase Auth and into your app callback.
 - The user is added to your company with the invited role.
+- If the invite action is throttled, the UI returns a `Rate limit exceeded` style error and no invite is created.
 
 ## Seat limits
 - Seat usage is shown at the top of Team settings.
@@ -43,10 +45,12 @@ Status: aligned with Team settings as of this update.
 
 - Onboarding invite action now also sends magic-link invite emails.
 - It uses the same invite-dispatch logic as `Settings > Team`.
+- It is also protected by the same server-side rate limiting guard pattern.
 - On non-recoverable email send failures, the invite row is revoked.
 
 ## Troubleshooting
 - If Team page shows `Failed to load team invites`, confirm local DB migrations are up to date.
+- If you see `Rate limit exceeded` or `Too many requests`, wait briefly and retry instead of repeatedly submitting the form.
 - For local email checks, use Mailpit at `http://127.0.0.1:54324`.
 - Confirm `NEXT_PUBLIC_APP_URL` points to your local app URL in local testing.
 

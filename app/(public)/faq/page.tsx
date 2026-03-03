@@ -59,7 +59,7 @@ const faqData: FAQSection[] = [
       {
         question: 'How do I add an employee?',
         answer:
-          'From the Dashboard, click the "Add Employee" button. Enter their name to get started. You can also add a job reference to help identify them within your organisation.',
+          'From the Dashboard, click the "Add Employee" button. Enter their name to get started. You can also add a job reference to help identify them within your organisation. If you prefer keyboard shortcuts, press Alt + N while you are on the Dashboard.',
       },
       {
         question: 'How do I log a trip?',
@@ -101,9 +101,19 @@ const faqData: FAQSection[] = [
           'Days Remaining shows how many more days an employee can spend in the Schengen Area today without exceeding the 90-day limit. This number changes daily as old trips drop out of the 180-day window and new trips are added.',
       },
       {
+        question: 'What is the compliance briefing at the top of the Dashboard?',
+        answer:
+          'The compliance briefing is a summary panel that highlights your overall compliance rate, how many employees need attention, and which employees should be reviewed first. It helps managers spot risk quickly without scanning the full table.',
+      },
+      {
         question: 'Can I customise the status thresholds?',
         answer:
           'Yes. Go to Settings > Status Thresholds to adjust when employees move between Green, Amber, and Red status. The Breach threshold (90+ days) cannot be changed as it reflects the legal limit.',
+      },
+      {
+        question: 'Are there keyboard shortcuts?',
+        answer:
+          'Yes. Press / to focus employee search, Alt + D for Dashboard, Alt + I for Import, Alt + F for Trip Forecast, Alt + N to add an employee from Dashboard pages, Alt + T to add a trip from an employee page, and Shift + ? to open the shortcut help panel.',
       },
     ],
   },
@@ -113,7 +123,7 @@ const faqData: FAQSection[] = [
       {
         question: 'What file formats can I import?',
         answer:
-          'ComplyEur supports CSV and Excel (.xlsx) files. Your file should include columns for employee name, trip start date, trip end date, and optionally destination country and job reference.',
+          'ComplyEur supports CSV and Excel (.xlsx) files. You can import employee lists, trip lists, and Gantt or schedule-style files. Start by choosing the matching format on the Import page, then continue to upload.',
       },
       {
         question: 'How does column mapping work?',
@@ -123,12 +133,12 @@ const faqData: FAQSection[] = [
       {
         question: 'What date formats are supported?',
         answer:
-          'ComplyEur detects common date formats including DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, and variations with different separators. During import, you will confirm the detected format to ensure dates are parsed correctly.',
+          'ComplyEur detects common date formats including DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD, shortened numeric dates, month-name formats, and common separator variations. For Gantt or schedule uploads, it also recognises Excel date cells and date headers that are not always on the first row.',
       },
       {
         question: 'How are duplicate trips handled?',
         answer:
-          'During import, ComplyEur detects potential duplicates (same employee, same dates). You can choose to skip duplicates, update existing trips, or import them anyway. We recommend skipping duplicates to avoid double-counting days.',
+          'ComplyEur uses smart defaults during import. Existing employees are updated when they match, and duplicate trips are skipped to avoid double-counting days. You no longer need to choose duplicate handling manually during the flow.',
       },
       {
         question: 'My import failed. What should I check?',

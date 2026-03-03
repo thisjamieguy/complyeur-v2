@@ -451,8 +451,8 @@ export async function sendOnboardingDay1Email(data: OnboardingEmailData): Promis
           </tr>
           <tr>
             <td style="padding: 0 32px 32px; text-align: center;">
-              <a href="${appUrl}/employee/new" style="display: inline-block; background-color: #2563EB; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
-                Add your first employee
+              <a href="${appUrl}/dashboard" style="display: inline-block; background-color: #2563EB; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Open dashboard
               </a>
             </td>
           </tr>
@@ -474,9 +474,9 @@ export async function sendOnboardingDay1Email(data: OnboardingEmailData): Promis
 
 You're set up on ComplyEur — the next step is to add your first employee so you can start tracking their EU travel compliance.
 
-It only takes 30 seconds. Once you've added an employee, you can log their Schengen trips and see their 90-day compliance status instantly.
+It only takes 30 seconds. Once you're in the dashboard, use Add Employee to start tracking Schengen trips and current compliance status.
 
-Add your first employee: ${appUrl}/employee/new
+Open dashboard: ${appUrl}/dashboard
 
 ---
 Questions? Contact ${REPLY_TO_EMAIL}`
@@ -629,7 +629,7 @@ export async function sendTrialExpiringEmail(data: TrialExpiringEmailData): Prom
   const { companyName, trialEndsAt, daysRemaining } = data
   const greeting = companyName ? `Hi ${companyName},` : 'Hi,'
   const expiryDate = trialEndsAt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
-  const upgradeUrl = `${APP_URL}/settings?tab=billing`
+  const upgradeUrl = `${APP_URL}/settings?section=general`
   const daysLabel = daysRemaining === 1 ? 'tomorrow' : `in ${daysRemaining} days`
 
   const html = `
@@ -744,7 +744,7 @@ export async function sendUpcomingRenewalEmail(data: UpcomingRenewalEmailData): 
   const { companyName, planName, amountDue, renewsAt } = data
   const greeting = companyName ? `Hi ${companyName},` : 'Hi,'
   const renewalDate = renewsAt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-  const billingUrl = `${APP_URL}/settings?tab=billing`
+  const billingUrl = `${APP_URL}/settings?section=general`
 
   const html = `
 <!DOCTYPE html>
@@ -870,7 +870,7 @@ function getPaymentFailedPreviewText(attemptCount: number, amountDue: string): s
 
 function generatePaymentFailedEmailHtml(data: PaymentFailedEmailData): string {
   const { companyName, amountDue, attemptCount } = data
-  const billingUrl = `${APP_URL}/settings?tab=billing`
+  const billingUrl = `${APP_URL}/settings?section=general`
   const previewText = getPaymentFailedPreviewText(attemptCount, amountDue)
 
   const isFinal = attemptCount >= 3
@@ -965,7 +965,7 @@ function generatePaymentFailedEmailHtml(data: PaymentFailedEmailData): string {
 
 function generatePaymentFailedEmailText(data: PaymentFailedEmailData): string {
   const { companyName, amountDue, attemptCount } = data
-  const billingUrl = `${APP_URL}/settings?tab=billing`
+  const billingUrl = `${APP_URL}/settings?section=general`
   const greeting = companyName ? `Hi ${companyName},` : 'Hi,'
 
   const bodyText = attemptCount >= 3

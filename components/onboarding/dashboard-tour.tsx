@@ -14,7 +14,7 @@ const TOUR_STEPS = [
   {
     title: 'Dashboard',
     targetId: 'tour-dashboard-home',
-    description: 'This view tracks live compliance risk and current employee status.',
+    description: 'This view combines the compliance briefing with the employee table so you can spot current risk and decide who needs attention first.',
   },
   {
     title: 'Calendar',
@@ -24,7 +24,7 @@ const TOUR_STEPS = [
   {
     title: 'Import',
     targetId: 'tour-nav-import',
-    description: 'Bulk import employee travel records to keep data synchronized quickly.',
+    description: 'Import employee lists, trip lists, or Gantt-style schedules to keep your records up to date without manual entry.',
   },
   {
     title: 'Exports',

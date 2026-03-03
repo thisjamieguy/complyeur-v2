@@ -43,6 +43,7 @@ WHERE email = 'user@example.com';
 ### Security Notes
 - All admin actions are logged to `admin_audit_log`
 - Admin uses service role (bypasses RLS)
+- Mutating admin actions are rate-limited server-side; brief bursts should be retried rather than spammed
 - Never share service role key
 
 ---
@@ -200,6 +201,10 @@ Manual migration path for legacy accounts:
    - Follow-up date (optional)
 5. Click **Create**
 
+Notes:
+- Note create, edit, and delete actions are rate-limited.
+- If the UI reports `Rate limit exceeded`, wait and retry once instead of submitting repeatedly.
+
 **Note Categories:**
 
 | Category | Use For |
@@ -235,6 +240,20 @@ curl -X PATCH 'https://PROJECT.supabase.co/rest/v1/company_entitlements?company_
   -H 'Content-Type: application/json' \
   -d '{"can_bulk_import": true, "manual_override": true}'
 ```
+
+### Rate-Limited Admin Mutations
+
+The following company-detail mutations are protected by server-side rate limiting:
+- entitlement updates
+- tier changes
+- trial extension and trial conversion
+- suspend and restore
+- company note create, update, and delete
+
+Expected behavior:
+- Users receive a `Rate limit exceeded` style error when the limit is hit.
+- No partial admin mutation should be applied when the action is rejected.
+- Audit logs only appear for successful actions.
 
 ---
 
@@ -407,6 +426,15 @@ WHERE target_company_id = 'COMPANY_UUID'
 ORDER BY created_at DESC;
 ```
 
+### "Rate limit exceeded" on company actions or notes
+
+**Cause:** The admin mutation guard rejected a burst of requests.
+
+**Fix:**
+1. Wait briefly and retry the action once.
+2. Confirm the prior submission did not already succeed by checking the company detail UI and `admin_audit_log`.
+3. If retries continue to fail unexpectedly, inspect application logs for the action name and rate-limit response.
+
 ---
 
 ## Quick Reference
@@ -439,4 +467,4 @@ ORDER BY created_at DESC;
 
 ---
 
-*Last updated: January 2026*
+*Last updated: March 2026*
