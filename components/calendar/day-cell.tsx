@@ -35,24 +35,28 @@ const schengenTripStyles = {
     weekend: 'bg-green-200/70',
     text: 'text-green-800',
     hover: 'hover:bg-green-200/80',
+    border: 'border-green-300',
   },
   amber: {
     base: 'bg-amber-100',
     weekend: 'bg-amber-200/70',
     text: 'text-amber-800',
     hover: 'hover:bg-amber-200/80',
+    border: 'border-amber-300',
   },
   red: {
     base: 'bg-red-100',
     weekend: 'bg-red-200/70',
     text: 'text-red-800',
     hover: 'hover:bg-red-200/80',
+    border: 'border-red-300',
   },
   breach: {
     base: 'bg-slate-700',
     weekend: 'bg-slate-800/90',
     text: 'text-white',
     hover: 'hover:bg-slate-800',
+    border: 'border-slate-500',
   },
 } as const
 
@@ -61,6 +65,7 @@ const nonSchengenTripStyles = {
   weekend: 'bg-slate-200/60',
   text: 'text-slate-600',
   hover: 'hover:bg-slate-200/80',
+  border: 'border-slate-300',
 } as const
 
 /**
@@ -97,13 +102,14 @@ export const DayCell = memo(function DayCell({
     !trip && isWeekend && !isToday && isInRollingWindow && 'bg-sky-50/55',
     !trip && isToday && 'bg-blue-50',
     !trip && isRowHovered && 'bg-slate-100/70',
-    isMonthStart && 'border-l border-l-slate-300/80',
+    isMonthStart && !(trip && !isTripStart) && 'border-l border-l-slate-300/80',
     // Today's travel cells should preserve trip color while still standing out
     trip && isToday && 'ring-1 ring-inset ring-blue-300',
     trip && isRowHovered && 'ring-1 ring-inset ring-slate-200/80',
-    trip && !isTripEnd && !isRollingWindowEnd && 'border-r-transparent',
-    isRollingWindowStart && 'border-l border-l-sky-400',
-    isRollingWindowEnd && 'border-r border-r-sky-400'
+    // Make trip bars solid — no internal borders
+    trip && !isTripEnd && 'border-r-0',
+    !trip && isRollingWindowStart && 'border-l border-l-sky-400',
+    !trip && isRollingWindowEnd && 'border-r border-r-sky-400'
   )
 
   const tripStyles = trip
@@ -129,10 +135,13 @@ export const DayCell = memo(function DayCell({
         <button
           className={cn(
             baseCls,
-            tripStyles && (isWeekend ? tripStyles.weekend : tripStyles.base),
+            tripStyles && tripStyles.base,
             tripStyles?.hover,
-            isTripStart && 'rounded-l-md',
-            isTripEnd && 'rounded-r-md',
+            // Outer border for trip block definition
+            tripStyles && 'border-t border-b',
+            tripStyles && tripStyles.border,
+            isTripStart && 'border-l rounded-l-md',
+            isTripEnd && 'border-r rounded-r-md',
             'cursor-pointer transition-colors'
           )}
           style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}

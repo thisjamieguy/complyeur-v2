@@ -38,6 +38,7 @@ import type {
   WhatIfInput,
   WhatIfResult,
   ForecastConfig,
+  ScenarioTripEntry,
 } from '@/types/forecast';
 
 // ============================================================================
@@ -388,6 +389,82 @@ export function calculateWhatIfScenario(
     isScenario: true,
     scenarioId: scenarioTrip.id,
   };
+}
+
+// ============================================================================
+// Multi-Trip Scenario Calculation
+// ============================================================================
+
+/**
+ * Calculates compliance for multiple hypothetical trips in sequence.
+ *
+ * Each trip's calculation includes all prior scenario trips as if they were
+ * real trips. This means trip B's "days before" count includes trip A.
+ *
+ * @param scenarios - Array of scenario trip entries (must be sorted by start date)
+ * @param realTrips - The employee's real existing trips
+ * @param employeeName - Employee display name
+ * @param config - Forecast configuration
+ * @returns Array of ForecastResult, one per scenario in the same order
+ */
+export function calculateMultiTripScenario(
+  scenarios: ScenarioTripEntry[],
+  realTrips: ForecastTrip[],
+  employeeName: string,
+  config: Partial<ForecastConfig> = {}
+): ForecastResult[] {
+  if (scenarios.length === 0) return [];
+
+  // Sort scenarios chronologically by start date
+  const sorted = [...scenarios].sort(
+    (a, b) => a.input.startDate.localeCompare(b.input.startDate)
+  );
+
+  const results: ForecastResult[] = [];
+  const injectedTrips: ForecastTrip[] = [];
+
+  for (const scenario of sorted) {
+    const { input, key } = scenario;
+    const entryDate = safeParseDate(input.startDate);
+    const exitDate = safeParseDate(input.endDate);
+    const duration = calculateTripDuration(entryDate, exitDate);
+
+    // Create a ForecastTrip for this scenario
+    const scenarioTrip: ForecastTrip = {
+      id: `scenario-${key}`,
+      employeeId: input.employeeId,
+      companyId: '',
+      country: input.country.toUpperCase(),
+      entryDate: input.startDate,
+      exitDate: input.endDate,
+      purpose: null,
+      jobRef: null,
+      isPrivate: false,
+      ghosted: false,
+      travelDays: duration,
+    };
+
+    // Combine real trips + all previously injected scenario trips
+    const allTrips = [...realTrips, ...injectedTrips];
+
+    // Run the standard forecast calculation
+    const result = calculateFutureJobCompliance(
+      scenarioTrip,
+      allTrips,
+      employeeName,
+      config
+    );
+
+    results.push(result);
+    injectedTrips.push(scenarioTrip);
+  }
+
+  // Return results in the original scenario order (sorted by date)
+  // Map back from sorted order to match `scenarios` input order
+  const resultMap = new Map<string, ForecastResult>();
+  sorted.forEach((s, i) => resultMap.set(s.key, results[i]));
+
+  return scenarios.map((s) => resultMap.get(s.key)!);
 }
 
 // ============================================================================

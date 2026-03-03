@@ -20,29 +20,32 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getSchengenCountries } from '@/lib/compliance';
-import type { ForecastEmployee, WhatIfResult } from '@/types/forecast';
+import type { ForecastEmployee } from '@/types/forecast';
 
 interface TripForecastFormProps {
   employees: ForecastEmployee[];
-  onCalculate: (
+  onAddTrip: (
     employeeId: string,
     startDate: string,
     endDate: string,
     country: string
-  ) => Promise<WhatIfResult | null>;
-  onResult: (result: WhatIfResult | null) => void;
+  ) => void;
+  /** When set, locks the employee selector to this employee */
+  lockedEmployeeId?: string;
+  /** Whether there are existing scenario trips (changes button text) */
+  hasTrips?: boolean;
 }
 
 export function TripForecastForm({
   employees,
-  onCalculate,
-  onResult,
+  onAddTrip,
+  lockedEmployeeId,
+  hasTrips = false,
 }: TripForecastFormProps) {
-  const [employeeId, setEmployeeId] = useState('');
+  const [employeeId, setEmployeeId] = useState(lockedEmployeeId ?? '');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [country, setCountry] = useState('');
-  const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const schengenCountries = getSchengenCountries();
@@ -77,7 +80,7 @@ export function TripForecastForm({
     return null;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     const validationError = validateForm();
@@ -87,26 +90,11 @@ export function TripForecastForm({
     }
 
     setError(null);
-    setIsCalculating(true);
+    onAddTrip(employeeId, startDate, endDate, country);
 
-    try {
-      const result = await onCalculate(employeeId, startDate, endDate, country);
-      onResult(result);
-    } catch {
-      setError('We could not calculate this scenario. Check your dates and employee selection, then try again.');
-      onResult(null);
-    } finally {
-      setIsCalculating(false);
-    }
-  };
-
-  const handleReset = () => {
-    setEmployeeId('');
+    // Clear only dates — keep employee and country for rapid entry
     setStartDate('');
     setEndDate('');
-    setCountry('');
-    setError(null);
-    onResult(null);
   };
 
   return (
@@ -121,7 +109,11 @@ export function TripForecastForm({
         {/* Employee selector */}
         <div className="space-y-2">
           <Label htmlFor="employee">Employee</Label>
-          <Select value={employeeId} onValueChange={setEmployeeId}>
+          <Select
+            value={employeeId}
+            onValueChange={setEmployeeId}
+            disabled={!!lockedEmployeeId}
+          >
             <SelectTrigger id="employee">
               <SelectValue placeholder="Select employee" />
             </SelectTrigger>
@@ -183,11 +175,8 @@ export function TripForecastForm({
       </div>
 
       <div className="flex items-center gap-3 pt-2">
-        <Button type="submit" disabled={!isFormComplete || isCalculating}>
-          {isCalculating ? 'Calculating...' : 'Check Compliance'}
-        </Button>
-        <Button type="button" variant="outline" onClick={handleReset}>
-          Reset
+        <Button type="submit" disabled={!isFormComplete}>
+          {hasTrips ? 'Add Trip' : 'Check Compliance'}
         </Button>
       </div>
       <p className="text-xs text-slate-500">

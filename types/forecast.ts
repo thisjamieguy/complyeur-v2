@@ -284,3 +284,25 @@ export interface ForecastCountry {
   /** Emoji flag */
   flag: string;
 }
+
+// ============================================================================
+// Multi-Trip Scenario Types
+// ============================================================================
+
+/**
+ * A single trip entry in a multi-trip scenario.
+ * Pairs form input values with a stable key for React rendering.
+ */
+export interface ScenarioTripEntry {
+  /** Stable unique key for React list rendering */
+  key: string;
+  /** The form input values for this trip */
+  input: {
+    employeeId: string;
+    startDate: string;
+    endDate: string;
+    country: string;
+  };
+  /** Resolved country display name */
+  countryName: string;
+}

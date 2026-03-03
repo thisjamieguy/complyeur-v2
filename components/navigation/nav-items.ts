@@ -9,7 +9,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-export type NavSection = 'Main' | 'Data' | 'Tools' | 'System'
+export type NavSection = 'Main' | 'Data' | 'Planning' | 'System'
 
 export interface NavItem {
   href: string
@@ -61,19 +61,19 @@ export const navItems: NavItem[] = [
     tourId: 'tour-nav-exports',
   },
 
-  // Tools
+  // Planning
   {
     href: '/future-job-alerts',
     label: 'Future Alerts',
     icon: Bell,
-    section: 'Tools',
+    section: 'Planning',
     tourId: 'tour-nav-alerts',
   },
   {
     href: '/trip-forecast',
     label: 'Trip Forecast',
     icon: TrendingUp,
-    section: 'Tools',
+    section: 'Planning',
     tourId: 'tour-nav-forecast',
   },
 
@@ -101,8 +101,8 @@ export const navSections: NavSectionGroup[] = [
     items: navItems.filter((item) => item.section === 'Data'),
   },
   {
-    title: 'Tools',
-    items: navItems.filter((item) => item.section === 'Tools'),
+    title: 'Planning',
+    items: navItems.filter((item) => item.section === 'Planning'),
   },
   {
     title: 'System',
