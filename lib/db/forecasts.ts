@@ -47,7 +47,7 @@ export async function getFutureTrips(): Promise<
     .select(
       `
       *,
-      employee:employees!inner(name)
+      employee:employees!trips_employee_id_fkey!inner(name)
     `
     )
     .eq('company_id', companyId)

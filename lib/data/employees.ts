@@ -165,12 +165,16 @@ export const getEmployeesWithTrips = cache(async (): Promise<DbEmployee[]> => {
     const { companyId } = await requireCompanyAccessCached()
 
     const runQuery = async (includeNationalityType: boolean) => {
+      // Use !trips_employee_id_fkey hint to disambiguate the nested join.
+      // The harden_multi_tenant_boundaries migration added a composite FK
+      // (employee_id, company_id) alongside the original single-column FK,
+      // causing PostgREST to error on ambiguous relationships without a hint.
       const selectClause = includeNationalityType
         ? `
             id,
             name,
             nationality_type,
-            trips (
+            trips!trips_employee_id_fkey (
               id,
               country,
               entry_date,
@@ -181,7 +185,7 @@ export const getEmployeesWithTrips = cache(async (): Promise<DbEmployee[]> => {
         : `
             id,
             name,
-            trips (
+            trips!trips_employee_id_fkey (
               id,
               country,
               entry_date,
@@ -544,7 +548,7 @@ export const getEmployeeById = cache(async (id: string) => {
             name,
             nationality_type,
             created_at,
-            trips (
+            trips!trips_employee_id_fkey (
               id,
               country,
               entry_date,
@@ -561,7 +565,7 @@ export const getEmployeeById = cache(async (id: string) => {
             id,
             name,
             created_at,
-            trips (
+            trips!trips_employee_id_fkey (
               id,
               country,
               entry_date,

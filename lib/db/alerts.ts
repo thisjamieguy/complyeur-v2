@@ -45,7 +45,7 @@ export async function getActiveAlerts(): Promise<AlertWithEmployee[]> {
     .from('alerts')
     .select(`
       *,
-      employee:employees!inner(id, name, deleted_at)
+      employee:employees!alerts_employee_id_fkey!inner(id, name, deleted_at)
     `)
     .eq('company_id', companyId)
     .eq('resolved', false)
@@ -71,7 +71,7 @@ export async function getUnacknowledgedAlerts(): Promise<AlertWithEmployee[]> {
     .from('alerts')
     .select(`
       *,
-      employee:employees!inner(id, name, deleted_at)
+      employee:employees!alerts_employee_id_fkey!inner(id, name, deleted_at)
     `)
     .eq('company_id', companyId)
     .eq('resolved', false)

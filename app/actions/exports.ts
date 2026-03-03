@@ -117,7 +117,7 @@ export async function exportComplianceData(
         `
         id,
         name,
-        trips (
+        trips!trips_employee_id_fkey (
           id,
           country,
           entry_date,
@@ -425,7 +425,7 @@ async function exportFutureAlerts(
         `
         id,
         name,
-        trips (
+        trips!trips_employee_id_fkey (
           id,
           country,
           entry_date,

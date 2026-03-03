@@ -223,7 +223,7 @@ export async function getTripsForDeletion(): Promise<TripItem[]> {
 
   const { data, error } = await supabase
     .from('trips')
-    .select('id, country, entry_date, exit_date, employee:employees(name)')
+    .select('id, country, entry_date, exit_date, employee:employees!trips_employee_id_fkey(name)')
     .eq('company_id', profile.company_id)
     .order('entry_date', { ascending: false })
     .limit(500) // Reasonable limit for UI
