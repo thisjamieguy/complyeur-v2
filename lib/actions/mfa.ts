@@ -7,6 +7,7 @@ import {
   hashSecret,
   setBackupSessionCookie,
 } from '@/lib/security/mfa'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 type MfaStatusResult =
   | {
@@ -26,6 +27,11 @@ export async function getMfaStatusAction(): Promise<MfaStatusResult> {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'getMfaStatus')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Too many requests. Please try again later.' }
   }
 
   const status = await getMfaStatusForUser(supabase, user.id)
@@ -63,6 +69,11 @@ export async function enrollTotpAction(): Promise<EnrollResult> {
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'enrollTotp')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Too many requests. Please try again later.' }
   }
 
   const { data: factors } = await supabase.auth.mfa.listFactors()
@@ -115,6 +126,11 @@ export async function verifyTotpAction(factorId: string, code: string): Promise<
     return { success: false, error: 'Not authenticated' }
   }
 
+  const rateLimit = await checkServerActionRateLimit(user.id, 'verifyTotp')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Too many requests. Please try again later.' }
+  }
+
   if (!factorId || !code) {
     return { success: false, error: 'Missing MFA code' }
   }
@@ -139,6 +155,11 @@ export async function unenrollTotpAction(
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'unenrollTotp')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Too many requests. Please try again later.' }
   }
 
   if (method !== 'totp' && method !== 'backup') {
@@ -273,6 +294,11 @@ export async function generateBackupCodesAction(): Promise<BackupCodesResult> {
     return { success: false, error: 'Not authenticated' }
   }
 
+  const rateLimit = await checkServerActionRateLimit(user.id, 'generateBackupCodes')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Too many requests. Please try again later.' }
+  }
+
   const status = await getMfaStatusForUser(supabase, user.id)
   if (!status.hasVerifiedFactor) {
     return { success: false, error: 'Enroll MFA before generating backup codes' }
@@ -306,6 +332,11 @@ export async function verifyBackupCodeAction(code: string): Promise<VerifyBackup
   const { data: { user }, error: authError } = await supabase.auth.getUser()
   if (authError || !user) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'verifyBackupCode')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Too many requests. Please try again later.' }
   }
 
   const status = await getMfaStatusForUser(supabase, user.id)

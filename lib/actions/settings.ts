@@ -9,6 +9,7 @@ import { hasPermission, PERMISSIONS } from '@/lib/permissions'
 import { getCompanySettings as getSettingsFromDb } from '@/lib/db/alerts'
 import { requireMutationPermission } from '@/lib/security/authorization'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 interface ActionResult<T = void> {
   success: boolean
@@ -23,6 +24,12 @@ interface ActionResult<T = void> {
  */
 export async function getCompanySettings(): Promise<CompanySettings | null> {
   try {
+    const ctx = await requireCompanyAccessCached()
+    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getCompanySettings')
+    if (!rateLimit.allowed) {
+      return null
+    }
+
     const data = await getSettingsFromDb()
     const calendarLoadMode =
       data.calendar_load_mode === 'employees_with_trips'
@@ -143,6 +150,11 @@ export async function updateCompanySettings(
 export async function canViewSettings(): Promise<boolean> {
   try {
     const ctx = await requireCompanyAccessCached()
+    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'canViewSettings')
+    if (!rateLimit.allowed) {
+      return false
+    }
+
     if (!ctx.role) return false
     return hasPermission(ctx.role, PERMISSIONS.SETTINGS_VIEW)
   } catch {
@@ -156,6 +168,11 @@ export async function canViewSettings(): Promise<boolean> {
 export async function canUpdateSettings(): Promise<boolean> {
   try {
     const ctx = await requireCompanyAccessCached()
+    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'canUpdateSettings')
+    if (!rateLimit.allowed) {
+      return false
+    }
+
     if (!ctx.role) return false
     return hasPermission(ctx.role, PERMISSIONS.SETTINGS_UPDATE)
   } catch {

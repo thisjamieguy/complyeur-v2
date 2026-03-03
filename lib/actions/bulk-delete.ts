@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logGdprAction } from '@/lib/gdpr/audit'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import { requireOwnerOrAdminMutation } from '@/lib/security/authorization'
 import { isOwnerOrAdmin } from '@/lib/permissions'
@@ -93,6 +94,16 @@ export interface HistoryItem {
 export async function getDataCounts(): Promise<DataCounts> {
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { employees: 0, trips: 0, mappings: 0, history: 0 }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'getDataCounts')
+  if (!rateLimit.allowed) {
+    return { employees: 0, trips: 0, mappings: 0, history: 0 }
+  }
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('company_id, role')
@@ -138,6 +149,16 @@ export async function getDataCounts(): Promise<DataCounts> {
 export async function getEmployeesForDeletion(): Promise<EmployeeItem[]> {
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return []
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'getEmployeesForDeletion')
+  if (!rateLimit.allowed) {
+    return []
+  }
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('company_id, role')
@@ -167,6 +188,16 @@ export async function getEmployeesForDeletion(): Promise<EmployeeItem[]> {
  */
 export async function getTripsForDeletion(): Promise<TripItem[]> {
   const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return []
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'getTripsForDeletion')
+  if (!rateLimit.allowed) {
+    return []
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -204,6 +235,16 @@ export async function getTripsForDeletion(): Promise<TripItem[]> {
 export async function getMappingsForDeletion(): Promise<MappingItem[]> {
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return []
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'getMappingsForDeletion')
+  if (!rateLimit.allowed) {
+    return []
+  }
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('company_id, role')
@@ -232,6 +273,16 @@ export async function getMappingsForDeletion(): Promise<MappingItem[]> {
  */
 export async function getHistoryForDeletion(): Promise<HistoryItem[]> {
   const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return []
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'getHistoryForDeletion')
+  if (!rateLimit.allowed) {
+    return []
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -339,6 +390,18 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
     }
 
     await requireCompanyAccess(supabase, access.companyId)
+
+    const rateLimit = await checkServerActionRateLimit(access.user.id, 'bulkDeleteData')
+    if (!rateLimit.allowed) {
+      return {
+        success: false,
+        employees: 0,
+        trips: 0,
+        mappings: 0,
+        history: 0,
+        errors: [rateLimit.error ?? 'Rate limit exceeded'],
+      }
+    }
 
     // Use admin client for actual operations (bypasses RLS after auth verification above)
     const admin = createAdminClient()

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logAdminAction, ADMIN_ACTIONS } from '@/lib/admin/audit'
 import { revalidatePath } from 'next/cache'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import {
   companyIdSchema,
   addNoteSchema,
@@ -35,6 +36,10 @@ export async function addNote(companyId: string, data: AddNoteData) {
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'addNote')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
@@ -95,6 +100,10 @@ export async function updateNote(
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'updateNote')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
@@ -136,6 +145,10 @@ export async function deleteNote(noteId: string, companyId: string) {
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'deleteNote')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
@@ -178,6 +191,10 @@ export async function togglePinNote(
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'togglePinNote')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 

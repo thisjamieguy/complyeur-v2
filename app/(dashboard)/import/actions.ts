@@ -224,7 +224,12 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
 export async function getImportSession(sessionId: string): Promise<ImportSession | null> {
   try {
     // Auth + company via cached fetcher (deduplicated within request)
-    const { companyId } = await requireCompanyAccessCached();
+    const { userId, companyId } = await requireCompanyAccessCached();
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'getImportSession')
+    if (!rateLimit.allowed) {
+      return null;
+    }
 
     const supabase = await createClient();
 
@@ -254,7 +259,13 @@ export async function getImportSession(sessionId: string): Promise<ImportSession
 
 export async function getRecentImportSessions(limit = 10): Promise<ImportSession[]> {
   try {
-    const { companyId } = await requireCompanyAccessCached();
+    const { userId, companyId } = await requireCompanyAccessCached();
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'getRecentImportSessions')
+    if (!rateLimit.allowed) {
+      return [];
+    }
+
     const supabase = await createClient();
 
     // Exclude heavy JSONB columns (parsed_data, validation_errors) for listing
@@ -298,7 +309,13 @@ export async function getImportSessionsPaginated(
   perPage = 20
 ): Promise<PaginatedImportSessions> {
   try {
-    const { companyId } = await requireCompanyAccessCached();
+    const { userId, companyId } = await requireCompanyAccessCached();
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'getImportSessionsPaginated')
+    if (!rateLimit.allowed) {
+      return { sessions: [], total: 0, page, perPage, totalPages: 0 };
+    }
+
     const supabase = await createClient();
 
     // Get total count
@@ -354,6 +371,13 @@ export async function updateSessionStatus(
   additionalData?: Partial<ImportSession>
 ): Promise<boolean> {
   try {
+    const { userId } = await requireCompanyAccessCached();
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'updateSessionStatus')
+    if (!rateLimit.allowed) {
+      return false;
+    }
+
     const supabase = await createClient();
 
     const { data: session, error: sessionError } = await supabase
@@ -408,6 +432,13 @@ export async function saveParsedData(
   validationErrors: ValidationError[]
 ): Promise<boolean> {
   try {
+    const { userId } = await requireCompanyAccessCached();
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'saveParsedData')
+    if (!rateLimit.allowed) {
+      return false;
+    }
+
     const supabase = await createClient();
 
     const { data: session, error: sessionError } = await supabase
@@ -646,6 +677,13 @@ export async function executeImport(
 
 export async function deleteImportSession(sessionId: string): Promise<boolean> {
   try {
+    const { userId } = await requireCompanyAccessCached();
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'deleteImportSession')
+    if (!rateLimit.allowed) {
+      return false;
+    }
+
     const supabase = await createClient();
 
     const { data: session, error: sessionError } = await supabase
@@ -720,7 +758,12 @@ export async function loadSavedMappings(
 ): Promise<SavedColumnMapping[]> {
   try {
     // Auth via cached fetcher (deduplicated within request)
-    await requireCompanyAccessCached();
+    const { userId } = await requireCompanyAccessCached();
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'loadSavedMappings')
+    if (!rateLimit.allowed) {
+      return [];
+    }
 
     const supabase = await createClient();
 
@@ -779,6 +822,11 @@ export async function saveColumnMapping(
     // Auth + company via cached fetcher (deduplicated within request)
     const { userId, companyId } = await requireCompanyAccessCached();
 
+    const rateLimit = await checkServerActionRateLimit(userId, 'saveColumnMapping')
+    if (!rateLimit.allowed) {
+      return null;
+    }
+
     const supabase = await createClient();
 
     // Insert the mapping
@@ -816,6 +864,13 @@ export async function saveColumnMapping(
  */
 export async function deleteColumnMapping(mappingId: string): Promise<boolean> {
   try {
+    const { userId } = await requireCompanyAccessCached();
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'deleteColumnMapping')
+    if (!rateLimit.allowed) {
+      return false;
+    }
+
     const supabase = await createClient();
 
     const { data: mapping, error: fetchError } = await supabase
@@ -858,6 +913,13 @@ export async function deleteColumnMapping(mappingId: string): Promise<boolean> {
  */
 export async function incrementMappingUsage(mappingId: string): Promise<boolean> {
   try {
+    const { userId } = await requireCompanyAccessCached();
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'incrementMappingUsage')
+    if (!rateLimit.allowed) {
+      return false;
+    }
+
     const supabase = await createClient();
 
     // Get current times_used, then increment

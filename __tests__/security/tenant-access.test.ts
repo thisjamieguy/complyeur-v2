@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
-import { AuthError, DatabaseError } from '@/lib/errors'
+import { AuthError, DatabaseError, NotFoundError } from '@/lib/errors'
 import { createClient } from '@/lib/supabase/server'
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -77,26 +77,18 @@ describe('write paths', () => {
   it('blocks cross-tenant employee update before mutation', async () => {
     const updateSpy = vi.fn()
 
+    // The ownership check queries .eq('company_id', 'company-a') on an employee
+    // that belongs to company-b. The DB filter returns no rows — simulated here
+    // by returning null data with a PGRST116 error.
     const employeeReadChain = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
-        data: { company_id: 'company-b' },
-        error: null,
+        data: null,
+        error: { code: 'PGRST116' },
       }),
       update: updateSpy,
     }
-
-    const employeeUpdateChain = {
-      eq: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: { id: 'emp-1', company_id: 'company-b' },
-        error: null,
-      }),
-    }
-
-    updateSpy.mockReturnValue(employeeUpdateChain)
 
     const profileChain = {
       select: vi.fn().mockReturnThis(),
@@ -125,7 +117,7 @@ describe('write paths', () => {
 
     const { updateEmployee } = await import('@/lib/db/employees')
 
-    await expect(updateEmployee('emp-1', { name: 'New Name' })).rejects.toThrow(AuthError)
+    await expect(updateEmployee('emp-1', { name: 'New Name' })).rejects.toThrow(NotFoundError)
     expect(updateSpy).not.toHaveBeenCalled()
   })
 })

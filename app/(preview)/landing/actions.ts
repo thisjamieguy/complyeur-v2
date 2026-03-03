@@ -9,6 +9,7 @@ import {
   isWaitlistEmailEncryptionRequired,
   normalizeWaitlistEmail,
 } from '@/lib/security/waitlist-encryption'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 export type WaitlistState = {
   success: boolean
@@ -125,6 +126,16 @@ export async function joinWaitlist(
   }
 
   const { email, companyName } = result.data
+
+  const identifier = `waitlist:${email.toLowerCase()}`
+  const rateLimit = await checkServerActionRateLimit(identifier, 'joinWaitlist')
+  if (!rateLimit.allowed) {
+    return {
+      success: false,
+      message: rateLimit.error ?? 'Too many requests. Please try again later.',
+      error: 'rate_limit',
+    }
+  }
 
   try {
     const supabase = await createClient()

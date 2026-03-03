@@ -3,21 +3,22 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { DatabaseError } from '@/lib/errors'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 export async function completeDashboardTour() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { userId } = await requireCompanyAccessCached()
 
-  if (!user) {
-    throw new Error('Not authenticated')
+  const rateLimit = await checkServerActionRateLimit(userId, 'completeDashboardTour')
+  if (!rateLimit.allowed) {
+    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
   }
 
+  const supabase = await createClient()
   const { error } = await supabase
     .from('profiles')
     .update({ dashboard_tour_completed_at: new Date().toISOString() })
-    .eq('id', user.id)
+    .eq('id', userId)
 
   if (error) {
     console.error('[dashboard/tour] Failed to persist tour completion:', error)

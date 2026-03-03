@@ -36,6 +36,7 @@ import type { TripCreateInput, TripUpdate, CompanySettingsUpdate, NotificationPr
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { PERMISSIONS, type Permission } from '@/lib/permissions'
 import { requireMutationPermission } from '@/lib/security/authorization'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 
 /**
  * Helper to run alert detection after trip changes
@@ -89,6 +90,11 @@ async function enforceMutationAccess(
     throw new Error(access.error)
   }
 
+  const rateLimit = await checkServerActionRateLimit(access.user.id, actionName)
+  if (!rateLimit.allowed) {
+    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
+  }
+
   return { userId: access.user.id }
 }
 
@@ -116,17 +122,9 @@ export async function submitFeedbackAction(
   formData: FeedbackSubmissionFormData
 ): Promise<{ ok: true }> {
   const validated = feedbackSubmissionSchema.parse(formData)
-  const supabase = await createClient()
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+  const { userId } = await requireCompanyAccessCached()
 
-  if (authError || !user) {
-    throw new Error('Not authenticated')
-  }
-
-  const rateLimit = await checkServerActionRateLimit(user.id, 'submitFeedbackAction')
+  const rateLimit = await checkServerActionRateLimit(userId, 'submitFeedbackAction')
   if (!rateLimit.allowed) {
     throw new Error(rateLimit.error ?? 'Rate limit exceeded')
   }
@@ -237,6 +235,11 @@ export async function bulkAddTripsAction(
     return { success: false, created: 0, errors: [{ index: 0, message: access.error }] }
   }
 
+  const rateLimit = await checkServerActionRateLimit(access.user.id, 'bulkAddTripsAction')
+  if (!rateLimit.allowed) {
+    return { success: false, created: 0, errors: [{ index: 0, message: rateLimit.error ?? 'Rate limit exceeded' }] }
+  }
+
   if (!trips || trips.length === 0) {
     return { success: false, created: 0, errors: [{ index: 0, message: 'No trips provided' }] }
   }
@@ -317,10 +320,7 @@ export async function reassignTripAction(
  * Get all active (unresolved) alerts for the company
  */
 export async function getActiveAlertsAction(): Promise<AlertWithEmployee[]> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-
+  await requireCompanyAccessCached()
   return getActiveAlerts()
 }
 
@@ -328,10 +328,7 @@ export async function getActiveAlertsAction(): Promise<AlertWithEmployee[]> {
  * Get unacknowledged alerts (for dashboard banner)
  */
 export async function getUnacknowledgedAlertsAction(): Promise<AlertWithEmployee[]> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-
+  await requireCompanyAccessCached()
   return getUnacknowledgedAlerts()
 }
 
@@ -361,6 +358,7 @@ export async function resolveAlertAction(alertId: string): Promise<void> {
  * Get company notification settings
  */
 export async function getCompanySettingsAction(): Promise<CompanySettings> {
+  await requireCompanyAccessCached()
   return getCompanySettings()
 }
 
@@ -385,6 +383,7 @@ export async function updateCompanySettingsAction(
  * Get user's notification preferences
  */
 export async function getNotificationPreferencesAction(): Promise<NotificationPreferences> {
+  await requireCompanyAccessCached()
   return getNotificationPreferences()
 }
 

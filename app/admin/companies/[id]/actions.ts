@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logAdminAction, ADMIN_ACTIONS } from '@/lib/admin/audit'
 import { revalidatePath } from 'next/cache'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import {
   companyIdSchema,
   updateEntitlementsSchema,
@@ -37,6 +38,10 @@ export async function updateEntitlements(
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'updateEntitlements')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
@@ -85,6 +90,10 @@ export async function changeTier(companyId: string, tierSlug: string) {
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'changeTier')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
@@ -168,6 +177,10 @@ export async function extendTrial(
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'extendTrial')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
@@ -227,6 +240,10 @@ export async function convertTrial(companyId: string) {
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'convertTrial')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
@@ -269,6 +286,10 @@ export async function suspendCompany(companyId: string, reason: string) {
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'suspendCompany')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 
@@ -305,6 +326,10 @@ export async function restoreCompany(companyId: string) {
   }
 
   const { user } = await requireSuperAdmin()
+  const rateLimit = await checkServerActionRateLimit(user.id, 'restoreCompany')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
   await requireAdminCompanyAccess(companyIdResult.data)
   const supabase = createAdminClient()
 

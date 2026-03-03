@@ -652,9 +652,7 @@ describe('Trips API - CRUD Operations', () => {
 
       const deleteChain = {
         delete: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          error: null,
-        }),
+        eq: vi.fn().mockReturnThis(),
       }
 
       const supabase = {
@@ -700,7 +698,6 @@ describe('Trips API - CRUD Operations', () => {
     })
 
     it('throws NotFoundError when trip belongs to different company', async () => {
-      const existingTrip = createMockTrip({ company_id: 'company-b' })
       const { requireCompanyAccess } = await import('@/lib/security/tenant-access')
 
       vi.mocked(requireCompanyAccess).mockResolvedValue({
@@ -708,12 +705,14 @@ describe('Trips API - CRUD Operations', () => {
         companyId: 'company-a',
       })
 
+      // Ownership check returns null — the .eq('company_id', 'company-a') filter
+      // excludes the trip because it belongs to company-b
       const fetchChain = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: existingTrip,
-          error: null,
+          data: null,
+          error: { code: 'PGRST116' },
         }),
       }
 

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 const updatePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
@@ -26,6 +27,11 @@ export async function updatePasswordAction(
   const { data: { user }, error: userError } = await supabase.auth.getUser()
   if (userError || !user || !user.email) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'updatePasswordAction')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
   }
 
   // 2. Parse and validate inputs

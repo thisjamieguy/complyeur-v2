@@ -15,6 +15,7 @@ import {
   requireMutationPermission,
   requireOwnerMutation,
 } from '@/lib/security/authorization'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 type TeamRole = Exclude<UserRole, 'owner'>
 
@@ -221,6 +222,12 @@ export async function listTeamMembersAndInvites(): Promise<ActionResult<TeamSnap
   }
 
   const actor = actorResult.data
+
+  const rateLimit = await checkServerActionRateLimit(actor.userId, 'listTeamMembersAndInvites')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
+
   const adminResult = getAdminClientResult()
   if (!adminResult.ok) {
     return { success: false, error: adminResult.error }
@@ -284,6 +291,11 @@ export async function inviteTeamMember(email: string, role: TeamRole): Promise<A
   }
 
   const actor = actorResult.data
+
+  const rateLimit = await checkServerActionRateLimit(actor.userId, 'inviteTeamMember')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
 
   const normalizedEmail = normalizeInviteEmail(email)
   if (!normalizedEmail || !normalizedEmail.includes('@')) {
@@ -373,6 +385,11 @@ export async function updateTeamMemberRole(
 
   const actor = actorResult.data
 
+  const rateLimit = await checkServerActionRateLimit(actor.userId, 'updateTeamMemberRole')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
+
   if (!isValidInviteRole(role)) {
     return { success: false, error: 'Invalid role selected' }
   }
@@ -430,6 +447,11 @@ export async function removeTeamMember(targetUserId: string): Promise<ActionResu
   }
 
   const actor = actorResult.data
+
+  const rateLimit = await checkServerActionRateLimit(actor.userId, 'removeTeamMember')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
 
   if (!targetUserId) {
     return { success: false, error: 'Target user is required' }
@@ -494,6 +516,11 @@ export async function transferOwnership(newOwnerUserId: string): Promise<ActionR
 
   const actor = actorResult.data
 
+  const rateLimit = await checkServerActionRateLimit(actor.userId, 'transferOwnership')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
+
   if (!newOwnerUserId) {
     return { success: false, error: 'Target user is required' }
   }
@@ -543,6 +570,11 @@ export async function revokeInvite(inviteId: string): Promise<ActionResult> {
   }
 
   const actor = actorResult.data
+
+  const rateLimit = await checkServerActionRateLimit(actor.userId, 'revokeInvite')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
 
   if (!inviteId) {
     return { success: false, error: 'Invite ID is required' }

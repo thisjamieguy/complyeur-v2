@@ -54,7 +54,7 @@ async function handleBillingCron(): Promise<NextResponse> {
 
   if (trialError) {
     logger.error('[Billing Cron] Failed to query trial candidates', { error: trialError })
-    return NextResponse.json({ success: false, error: trialError.message }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Failed to process trial expiry emails' }, { status: 500 })
   }
 
   for (const entitlement of trialCandidates ?? []) {
@@ -125,7 +125,7 @@ async function handleBillingCron(): Promise<NextResponse> {
 
   if (renewalError) {
     logger.error('[Billing Cron] Failed to query renewal candidates', { error: renewalError })
-    return NextResponse.json({ success: false, error: renewalError.message }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Failed to process renewal emails' }, { status: 500 })
   }
 
   for (const entitlement of renewalCandidates ?? []) {

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+// Rate limiting: handled by middleware (60 req/min per IP for all /api/* routes)
 export async function GET() {
   try {
     // Lightweight probe — validates a live DB round-trip without touching business tables.

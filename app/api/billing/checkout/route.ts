@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SELF_SERVE_PLANS, type BillingInterval } from '@/lib/billing/plans'
 import { createClient } from '@/lib/supabase/server'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -152,6 +153,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Please sign in to your account before starting checkout.' },
         { status: 401 }
+      )
+    }
+
+    const rateLimit = await checkServerActionRateLimit(user.id, 'billingCheckout')
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: rateLimit.error ?? 'Too many requests. Please try again later.' },
+        { status: 429 }
       )
     }
 

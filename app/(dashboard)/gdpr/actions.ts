@@ -27,6 +27,11 @@ export async function getEmployeesForGdpr(): Promise<
 > {
   const ctx = await requireCompanyAccessCached()
 
+  const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getEmployeesForGdpr')
+  if (!rateLimit.allowed) {
+    return []
+  }
+
   if (!isOwnerOrAdmin(ctx.role)) {
     return []
   }
@@ -193,6 +198,13 @@ export async function deleteEmployeeGdpr(
   message?: string
   error?: string
 }> {
+  const ctx = await requireCompanyAccessCached()
+
+  const rateLimit = await checkServerActionRateLimit(ctx.userId, 'deleteEmployeeGdpr')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
+
   // Validate employee ID format
   const idResult = employeeIdSchema.safeParse(employeeId)
   if (!idResult.success) {
@@ -228,6 +240,13 @@ export async function restoreEmployeeGdpr(employeeId: string): Promise<{
   message?: string
   error?: string
 }> {
+  const ctx = await requireCompanyAccessCached()
+
+  const rateLimit = await checkServerActionRateLimit(ctx.userId, 'restoreEmployeeGdpr')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
+
   // Validate employee ID format
   const idResult = employeeIdSchema.safeParse(employeeId)
   if (!idResult.success) {
@@ -259,6 +278,13 @@ export async function restoreEmployeeGdpr(employeeId: string): Promise<{
  * Gets all soft-deleted employees for the recovery UI.
  */
 export async function getDeletedEmployeesAction(): Promise<DeletedEmployee[]> {
+  const ctx = await requireCompanyAccessCached()
+
+  const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getDeletedEmployeesAction')
+  if (!rateLimit.allowed) {
+    return []
+  }
+
   return getDeletedEmployees()
 }
 
@@ -273,6 +299,13 @@ export async function anonymizeEmployeeGdpr(
   message?: string
   error?: string
 }> {
+  const ctx = await requireCompanyAccessCached()
+
+  const rateLimit = await checkServerActionRateLimit(ctx.userId, 'anonymizeEmployeeGdpr')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
+
   // Validate employee ID format
   const idResult = employeeIdSchema.safeParse(employeeId)
   if (!idResult.success) {
@@ -317,7 +350,12 @@ export async function getGdprAuditLogAction(options?: {
     createdAt: string
   }>
 > {
-  const { companyId, role } = await requireCompanyAccessCached()
+  const { userId, companyId, role } = await requireCompanyAccessCached()
+
+  const rateLimit = await checkServerActionRateLimit(userId, 'getGdprAuditLogAction')
+  if (!rateLimit.allowed) {
+    return []
+  }
 
   if (!isOwnerOrAdmin(role)) {
     return []
@@ -330,6 +368,13 @@ export async function getGdprAuditLogAction(options?: {
  * Gets retention statistics for the dashboard.
  */
 export async function getRetentionStatsAction(): Promise<RetentionStats | null> {
+  const ctx = await requireCompanyAccessCached()
+
+  const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getRetentionStatsAction')
+  if (!rateLimit.allowed) {
+    return null
+  }
+
   return getRetentionStats()
 }
 
@@ -338,7 +383,13 @@ export async function getRetentionStatsAction(): Promise<RetentionStats | null> 
  */
 export async function isAdmin(): Promise<boolean> {
   try {
-    const { role } = await requireCompanyAccessCached()
+    const { userId, role } = await requireCompanyAccessCached()
+
+    const rateLimit = await checkServerActionRateLimit(userId, 'isAdmin')
+    if (!rateLimit.allowed) {
+      return false
+    }
+
     return isOwnerOrAdmin(role)
   } catch {
     return false

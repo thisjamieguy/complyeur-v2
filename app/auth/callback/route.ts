@@ -180,11 +180,6 @@ export async function GET(request: Request) {
     const email = user.email || ''
     const companyName = inferCompanyNameFromEmail(email)
 
-    console.log('[auth/callback] Creating company/profile for new OAuth user:', {
-      userId: user.id,
-      provider,
-    })
-
     // Extract name from OAuth metadata if available
     const firstName = user.user_metadata?.given_name || user.user_metadata?.full_name?.split(' ')[0] || null
     const lastName = user.user_metadata?.family_name || null
@@ -212,8 +207,6 @@ export async function GET(request: Request) {
         `${origin}/login?error=${encodeURIComponent('Failed to set up your account. Please try again or contact support.')}`
       )
     }
-
-    console.log('[auth/callback] Company created for OAuth user')
 
     // Sync to user_metadata so middleware can skip the profiles query
     await supabase.auth.updateUser({

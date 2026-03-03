@@ -52,7 +52,7 @@ async function handleOnboardingCron(): Promise<NextResponse> {
 
   if (day1Error) {
     logger.error('[Onboarding Cron] Failed to query day1 candidates', { error: day1Error })
-    return NextResponse.json({ success: false, error: day1Error.message }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Failed to process onboarding emails' }, { status: 500 })
   }
 
   for (const company of day1Candidates ?? []) {
@@ -120,7 +120,7 @@ async function handleOnboardingCron(): Promise<NextResponse> {
 
   if (day3Error) {
     logger.error('[Onboarding Cron] Failed to query day3 candidates', { error: day3Error })
-    return NextResponse.json({ success: false, error: day3Error.message }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Failed to process onboarding emails' }, { status: 500 })
   }
 
   for (const company of day3Candidates ?? []) {

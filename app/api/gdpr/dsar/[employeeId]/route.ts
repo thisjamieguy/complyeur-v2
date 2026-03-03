@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateDsarExport } from '@/lib/gdpr'
 import { requireAdminAccess } from '@/lib/security/authorization'
 import { createClient } from '@/lib/supabase/server'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 /**
  * DSAR Export Download Endpoint
@@ -33,6 +34,11 @@ export async function GET(
   const guard = await requireAdminAccess(supabase)
   if (!guard.allowed) {
     return NextResponse.json({ error: guard.error }, { status: guard.status })
+  }
+
+  const rateLimit = await checkServerActionRateLimit(guard.user.id, 'dsarExport')
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: rateLimit.error ?? 'Too many requests' }, { status: 429 })
   }
 
   const { employeeId } = await params

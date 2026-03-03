@@ -10,6 +10,7 @@ import {
   dispatchInviteEmail,
   normalizeInviteEmail,
 } from '@/lib/services/team-invites'
+import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 async function getAuthenticatedUser() {
   const supabase = await createClient()
@@ -34,7 +35,12 @@ export async function updateCompanyName(formData: FormData) {
     throw new ValidationError(result.error.issues[0]?.message ?? 'Invalid company name')
   }
 
-  const { supabase, companyId } = await getAuthenticatedUser()
+  const { supabase, user, companyId } = await getAuthenticatedUser()
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'updateCompanyName')
+  if (!rateLimit.allowed) {
+    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
+  }
 
   const { error } = await supabase
     .from('companies')
@@ -59,7 +65,12 @@ export async function addFirstEmployee(formData: FormData) {
     throw new ValidationError(result.error.issues[0]?.message ?? 'Invalid employee data')
   }
 
-  const { supabase, companyId } = await getAuthenticatedUser()
+  const { supabase, user, companyId } = await getAuthenticatedUser()
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'addFirstEmployee')
+  if (!rateLimit.allowed) {
+    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
+  }
 
   const { error } = await supabase
     .from('employees')
@@ -92,6 +103,12 @@ export async function inviteTeamMembers(formData: FormData) {
   }
 
   const { user, companyId } = await getAuthenticatedUser()
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'inviteTeamMembers')
+  if (!rateLimit.allowed) {
+    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
+  }
+
   const validEmails = result.data.emails.filter((e) => e !== '')
 
   if (validEmails.length === 0) return
@@ -142,6 +159,11 @@ export async function inviteTeamMembers(formData: FormData) {
 
 export async function completeOnboarding() {
   const { supabase, user, companyId } = await getAuthenticatedUser()
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'completeOnboarding')
+  if (!rateLimit.allowed) {
+    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
+  }
 
   const { data: entitlements, error: entitlementError } = await supabase
     .from('company_entitlements')
