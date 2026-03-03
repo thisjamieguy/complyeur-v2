@@ -212,8 +212,8 @@ export const getEmployeesWithTrips = cache(async (): Promise<DbEmployee[]> => {
     }
 
     if (error) {
-      console.error('Error fetching employees:', error)
-      throw new Error('Failed to fetch employees')
+      console.error('[getEmployeesWithTrips] Supabase error:', error.message, error.code, error.details, error.hint)
+      throw new Error(`Failed to fetch employees: ${error.message}`)
     }
 
     return withDefaultNationality(

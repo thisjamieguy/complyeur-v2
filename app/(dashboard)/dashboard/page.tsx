@@ -57,47 +57,58 @@ async function EmployeeComplianceList({
   sort: EmployeeSortOption
   status: string
 }) {
-  // Fetch settings and employee data in parallel (M-14 optimisation)
-  const [settings, result] = await Promise.all([
-    getCompanySettings(),
-    getEmployeeComplianceDataPaginated(
-      { page, pageSize: PAGE_SIZE, search: search || undefined, sort, status: status || undefined },
-    ),
-  ])
-
-  // If company has custom thresholds that differ from defaults, re-fetch with them.
-  // Most companies use defaults, so this branch is rarely taken.
-  const hasCustomThresholds = settings &&
-    (settings.status_green_max !== 68 || settings.status_amber_max !== 82 || settings.status_red_max !== 89)
-
-  const finalResult = hasCustomThresholds
-    ? await getEmployeeComplianceDataPaginated(
+  try {
+    // Fetch settings and employee data in parallel (M-14 optimisation)
+    const [settings, result] = await Promise.all([
+      getCompanySettings(),
+      getEmployeeComplianceDataPaginated(
         { page, pageSize: PAGE_SIZE, search: search || undefined, sort, status: status || undefined },
-        {
-          greenMax: settings.status_green_max ?? 68,
-          amberMax: settings.status_amber_max ?? 82,
-          redMax: settings.status_red_max ?? 89,
-        }
-      )
-    : result
+      ),
+    ])
 
-  return (
-    <ComplianceTable
-      employees={finalResult.employees}
-      stats={finalResult.stats}
-      pagination={finalResult.pagination}
-      initialSearch={search}
-      initialSort={sort}
-    />
-  )
+    // If company has custom thresholds that differ from defaults, re-fetch with them.
+    // Most companies use defaults, so this branch is rarely taken.
+    const hasCustomThresholds = settings &&
+      (settings.status_green_max !== 68 || settings.status_amber_max !== 82 || settings.status_red_max !== 89)
+
+    const finalResult = hasCustomThresholds
+      ? await getEmployeeComplianceDataPaginated(
+          { page, pageSize: PAGE_SIZE, search: search || undefined, sort, status: status || undefined },
+          {
+            greenMax: settings.status_green_max ?? 68,
+            amberMax: settings.status_amber_max ?? 82,
+            redMax: settings.status_red_max ?? 89,
+          }
+        )
+      : result
+
+    return (
+      <ComplianceTable
+        employees={finalResult.employees}
+        stats={finalResult.stats}
+        pagination={finalResult.pagination}
+        initialSearch={search}
+        initialSort={sort}
+      />
+    )
+  } catch (error) {
+    console.error('[EmployeeComplianceList] Failed to load employee data:', error)
+    throw error // Re-throw to show error boundary, but now with logging
+  }
 }
 
 /**
  * Server component that fetches and displays the compliance briefing.
  */
 async function BriefingSection() {
-  const briefing = await getComplianceBriefing()
-  return <ComplianceBriefing briefing={briefing} />
+  try {
+    const briefing = await getComplianceBriefing()
+    return <ComplianceBriefing briefing={briefing} />
+  } catch (error) {
+    console.error('[BriefingSection] Failed to load compliance briefing:', error)
+    // Don't break the dashboard if briefing fails
+    return null
+  }
 }
 
 /**
