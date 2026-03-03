@@ -11,6 +11,7 @@ export {
   getEmployeesWithTrips,
   getEmployeeComplianceData,
   getEmployeeComplianceDataPaginated,
+  getComplianceBriefing,
   getEmployeeById,
   getEmployeeCount,
   type EmployeeSortOption,

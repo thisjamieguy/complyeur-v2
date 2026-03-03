@@ -9,19 +9,24 @@
 
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import {
   calculateCompliance,
   isSchengenCountry,
   getStatusFromDaysUsed,
   parseDateOnlyAsUTC,
+  presenceDays,
+  getSafeEntryInfo,
+  maxStayDays,
+  projectExpiringDays,
   DEFAULT_STATUS_THRESHOLDS,
   type Trip as ComplianceTrip,
   type StatusThresholds,
 } from '@/lib/compliance'
-import { toUTCMidnight } from '@/lib/compliance/date-utils'
+import { toUTCMidnight, differenceInUtcDays } from '@/lib/compliance/date-utils'
 import { withDbTiming } from '@/lib/performance'
 import { isExemptFromTracking, type NationalityType } from '@/lib/constants/nationality-types'
-import type { EmployeeCompliance, ComplianceStats } from '@/types/dashboard'
+import type { EmployeeCompliance, ComplianceStats, DashboardBriefing, BriefingEmployee } from '@/types/dashboard'
 
 /** Valid sort options for employee compliance table */
 export type EmployeeSortOption =
@@ -157,6 +162,7 @@ function toComplianceTrip(trip: {
 export const getEmployeesWithTrips = cache(async (): Promise<DbEmployee[]> => {
   return withDbTiming('getEmployeesWithTrips', async () => {
     const supabase = await createClient()
+    const { companyId } = await requireCompanyAccessCached()
 
     const runQuery = async (includeNationalityType: boolean) => {
       const selectClause = includeNationalityType
@@ -187,6 +193,7 @@ export const getEmployeesWithTrips = cache(async (): Promise<DbEmployee[]> => {
       return supabase
         .from('employees')
         .select(selectClause)
+        .eq('company_id', companyId)
         .is('deleted_at', null)
         .order('name')
     }
@@ -408,12 +415,127 @@ export async function getEmployeeComplianceDataPaginated(
 }
 
 /**
+ * Compute compliance briefing data for the dashboard header.
+ *
+ * Reuses cached getEmployeesWithTrips() and getEmployeeComplianceData()
+ * so no additional DB queries are needed. Only runs the compliance engine
+ * on at-risk employees (typically 0-5).
+ */
+export async function getComplianceBriefing(
+  statusThresholds?: StatusThresholds
+): Promise<DashboardBriefing> {
+  const [allEmployees, complianceData] = await Promise.all([
+    getEmployeesWithTrips(),
+    getEmployeeComplianceData(statusThresholds),
+  ])
+
+  const today = toUTCMidnight(new Date())
+
+  // Count by risk level
+  const at_risk_count = complianceData.filter((e) => e.risk_level === 'amber').length
+  const high_risk_count = complianceData.filter((e) => e.risk_level === 'red').length
+  const breach_count = complianceData.filter((e) => e.risk_level === 'breach').length
+  const attention_count = at_risk_count + high_risk_count + breach_count
+
+  // Non-exempt employees for compliance rate
+  const trackable = complianceData.filter((e) => e.risk_level !== 'exempt')
+  const compliant_count = trackable.filter((e) => e.risk_level === 'green').length
+  const compliance_pct = trackable.length > 0
+    ? Math.round((compliant_count / trackable.length) * 100)
+    : 100
+
+  // Build attention employee list (up to 5, sorted by days_remaining asc)
+  const attentionEmployees = complianceData
+    .filter((e) => e.risk_level === 'amber' || e.risk_level === 'red' || e.risk_level === 'breach')
+    .sort((a, b) => a.days_remaining - b.days_remaining)
+    .slice(0, 5)
+
+  // Build a lookup from employee id to their raw trips
+  const employeeTripsMap = new Map<string, DbEmployee>()
+  for (const emp of allEmployees) {
+    employeeTripsMap.set(emp.id, emp)
+  }
+
+  let soonestWindowChangeDate: string | null = null
+  let soonestWindowChangeDays = 0
+
+  const attention_employees: BriefingEmployee[] = attentionEmployees.map((emp) => {
+    const rawEmp = employeeTripsMap.get(emp.id)
+    const trips = (rawEmp?.trips ?? [])
+      .filter((t) => !t.ghosted && isSchengenCountry(t.country))
+      .map(toComplianceTrip)
+
+    const config = { mode: 'audit' as const, referenceDate: today }
+    const presence = presenceDays(trips, config)
+
+    // Safe entry info
+    const safeInfo = getSafeEntryInfo(presence, today)
+    const earliest_safe_entry = safeInfo.earliestSafeDate
+      ? safeInfo.earliestSafeDate.toISOString().split('T')[0]
+      : null
+
+    // Max stay days
+    const max_stay = maxStayDays(presence, today)
+
+    // Find first date where days expire (within 90 days)
+    let next_expiring_date: string | null = null
+    let next_expiring_count = 0
+    const projection = projectExpiringDays(presence, today, 90)
+    for (const day of projection) {
+      if (day.expiringDays > 0) {
+        next_expiring_date = day.date.toISOString().split('T')[0]
+        next_expiring_count = day.expiringDays
+        break
+      }
+    }
+
+    // Track soonest window change across all attention employees
+    if (next_expiring_date) {
+      const daysUntil = differenceInUtcDays(
+        new Date(next_expiring_date + 'T00:00:00.000Z'),
+        today
+      )
+      if (soonestWindowChangeDate === null || daysUntil < soonestWindowChangeDays) {
+        soonestWindowChangeDate = next_expiring_date
+        soonestWindowChangeDays = daysUntil
+      }
+    }
+
+    return {
+      id: emp.id,
+      name: emp.name,
+      risk_level: emp.risk_level,
+      days_used: emp.days_used,
+      days_remaining: emp.days_remaining,
+      max_stay_days: max_stay,
+      earliest_safe_entry,
+      next_expiring_date,
+      next_expiring_count,
+    }
+  })
+
+  return {
+    total: complianceData.length,
+    compliant_count,
+    compliance_pct,
+    attention_count,
+    at_risk_count,
+    high_risk_count,
+    breach_count,
+    next_window_change_date: soonestWindowChangeDate,
+    next_window_change_days: soonestWindowChangeDays,
+    attention_employees,
+  }
+}
+
+/**
  * Fetch a single employee with trips.
  * Uses React cache() for request-level deduplication.
  */
 export const getEmployeeById = cache(async (id: string) => {
   return withDbTiming('getEmployeeById', async () => {
     const supabase = await createClient()
+    const { companyId } = await requireCompanyAccessCached()
 
     const runQuery = async (includeNationalityType: boolean) => {
       const selectClause = includeNationalityType
@@ -457,6 +579,7 @@ export const getEmployeeById = cache(async (id: string) => {
         .from('employees')
         .select(selectClause)
         .eq('id', id)
+        .eq('company_id', companyId)
         .is('deleted_at', null)
         .single()
     }
@@ -502,11 +625,13 @@ export const getEmployeeById = cache(async (id: string) => {
 export const getEmployeeCount = cache(async (): Promise<number> => {
   return withDbTiming('getEmployeeCount', async () => {
     const supabase = await createClient()
+    const { companyId } = await requireCompanyAccessCached()
 
     // Uses COUNT with head:true - minimal payload, single index scan
     const { count, error } = await supabase
       .from('employees')
       .select('*', { count: 'exact', head: true })
+      .eq('company_id', companyId)
       .is('deleted_at', null)
 
     if (error) {

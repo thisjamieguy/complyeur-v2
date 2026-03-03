@@ -57,6 +57,46 @@ export interface ComplianceStats {
 /**
  * Status filter options for the dashboard
  */
+/**
+ * Employee data for the compliance briefing panel (at-risk employees only)
+ */
+export interface BriefingEmployee {
+  id: string
+  name: string
+  risk_level: EmployeeRiskLevel
+  days_used: number
+  days_remaining: number
+  /** How long they can stay if entering today */
+  max_stay_days: number
+  /** ISO date when they can re-enter (null if already eligible) */
+  earliest_safe_entry: string | null
+  /** When their next day drops off the 180-day window */
+  next_expiring_date: string | null
+  /** How many days drop off on that date */
+  next_expiring_count: number
+}
+
+/**
+ * Aggregated compliance briefing data for the dashboard header
+ */
+export interface DashboardBriefing {
+  total: number
+  compliant_count: number
+  /** 0-100 */
+  compliance_pct: number
+  /** amber + red + breach */
+  attention_count: number
+  at_risk_count: number
+  high_risk_count: number
+  breach_count: number
+  /** Soonest date any at-risk employee gets days back */
+  next_window_change_date: string | null
+  /** Days from today until that date */
+  next_window_change_days: number
+  /** Up to 5, sorted by days_remaining asc */
+  attention_employees: BriefingEmployee[]
+}
+
 export type StatusFilter = 'all' | 'green' | 'amber' | 'red' | 'breach' | 'exempt'
 
 /**
