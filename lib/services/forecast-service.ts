@@ -35,6 +35,7 @@ import type {
   ForecastTrip,
   ForecastResult,
   ForecastRiskLevel,
+  ForecastRiskFilter,
   WhatIfInput,
   WhatIfResult,
   ForecastConfig,
@@ -550,16 +551,13 @@ export function sortForecasts(
  */
 export function filterForecastsByRisk(
   forecasts: ForecastResult[],
-  filter: 'all' | 'at-risk' | 'critical'
+  filter: ForecastRiskFilter
 ): ForecastResult[] {
-  switch (filter) {
-    case 'all':
-      return forecasts;
-    case 'at-risk':
-      return forecasts.filter((f) => f.riskLevel !== 'green');
-    case 'critical':
-      return forecasts.filter((f) => f.riskLevel === 'red');
+  if (filter.length === 0) {
+    return [];
   }
+
+  return forecasts.filter((forecast) => filter.includes(forecast.riskLevel));
 }
 
 // ============================================================================

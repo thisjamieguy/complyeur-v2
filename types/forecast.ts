@@ -146,12 +146,10 @@ export interface ForecastSortConfig {
 }
 
 /**
- * Filter options for the future alerts table.
- * - all: Show all future trips
- * - at-risk: Show yellow + red trips only
- * - critical: Show red trips only
+ * Selected risk levels for the future alerts table.
+ * An empty array means no statuses are currently selected.
  */
-export type ForecastRiskFilter = 'all' | 'at-risk' | 'critical';
+export type ForecastRiskFilter = ForecastRiskLevel[];
 
 /**
  * Risk level priority for sorting (lower = more urgent).

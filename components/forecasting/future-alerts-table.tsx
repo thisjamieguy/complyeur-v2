@@ -26,10 +26,10 @@ interface FutureAlertsTableProps {
 
 export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)]">
       <Table>
         <TableHeader>
-          <TableRow className="bg-slate-50">
+          <TableRow className="bg-slate-50/90">
             <TableHead className="font-semibold text-slate-700">
               Employee
             </TableHead>
@@ -52,18 +52,31 @@ export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
+          {forecasts.length === 0 && (
+            <TableRow>
+              <TableCell
+                colSpan={7}
+                className="px-6 py-14 text-center text-sm text-slate-500"
+              >
+                Select at least one status to show matching trips.
+              </TableCell>
+            </TableRow>
+          )}
           {forecasts.map((forecast) => (
-            <TableRow key={forecast.tripId}>
+            <TableRow
+              key={forecast.tripId}
+              className="transition-colors hover:bg-slate-50/80"
+            >
               <TableCell className="font-medium">
                 <Link
                   href={`/employee/${forecast.employeeId}`}
-                  className="text-slate-900 hover:text-blue-600 hover:underline transition-colors"
+                  className="text-slate-900 transition-colors hover:text-sky-700"
                 >
                   {forecast.employeeName}
                 </Link>
               </TableCell>
               <TableCell>
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1">
                   <span className="text-lg">{forecast.countryFlag}</span>
                   <span className="text-slate-700">{forecast.countryName}</span>
                   {!forecast.isSchengen && (
@@ -72,13 +85,14 @@ export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
                 </span>
               </TableCell>
               <TableCell className="text-slate-600">
-                <span className="whitespace-nowrap">
-                  {formatDisplayDate(forecast.entryDate)}
-                </span>
-                <span className="mx-1 text-slate-400">-</span>
-                <span className="whitespace-nowrap">
-                  {formatDisplayDate(forecast.exitDate)}
-                </span>
+                <div className="flex flex-col gap-0.5">
+                  <span className="whitespace-nowrap font-medium text-slate-800">
+                    {formatDisplayDate(forecast.entryDate)}
+                  </span>
+                  <span className="whitespace-nowrap text-sm text-slate-500">
+                    to {formatDisplayDate(forecast.exitDate)}
+                  </span>
+                </div>
               </TableCell>
               <TableCell className="text-center text-slate-600">
                 {forecast.tripDuration} {forecast.tripDuration === 1 ? 'day' : 'days'}
@@ -95,11 +109,11 @@ export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
               </TableCell>
               <TableCell>
                 {forecast.compliantFromDate ? (
-                  <span className="text-amber-700">
+                  <span className="font-medium text-amber-700">
                     {formatDisplayDate(forecast.compliantFromDate)}
                   </span>
                 ) : forecast.isCompliant ? (
-                  <span className="text-green-600">Already compliant</span>
+                  <span className="font-medium text-green-700">Already compliant</span>
                 ) : (
                   <span className="text-slate-400">-</span>
                 )}
@@ -130,7 +144,7 @@ function DaysRemainingDisplay({
 
   return (
     <div className={colorClass}>
-      <div className="font-medium">{daysAfter}/90 days</div>
+      <div className="font-semibold">{daysAfter}/90 days</div>
       <div className="text-xs">
         {daysRemaining >= 0
           ? `${daysRemaining} remaining`

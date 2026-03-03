@@ -36,7 +36,7 @@ const riskConfig = {
     text: 'text-red-700',
     border: 'border-red-200',
     dot: 'bg-red-500',
-    label: 'Over Limit',
+    label: 'Critical',
   },
 } as const;
 
