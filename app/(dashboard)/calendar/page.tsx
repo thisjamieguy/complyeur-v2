@@ -100,11 +100,12 @@ const getEmployeesWithTrips = cache(async (
       .order('entry_date', { ascending: true })
 
     if (tripsError) {
-      console.error('Error fetching trips for calendar:', tripsError)
+      console.error('[Calendar] Error fetching trips (employees_with_trips):', tripsError)
       throw new Error('Failed to fetch trips')
     }
 
     const tripRows = (trips ?? []) as TripRow[]
+    console.log('[Calendar] employees_with_trips mode — trips fetched:', tripRows.length)
     if (tripRows.length === 0) {
       return []
     }
@@ -166,11 +167,13 @@ const getEmployeesWithTrips = cache(async (
     .order('entry_date', { ascending: true })
 
   if (tripsError) {
-    console.error('Error fetching trips for calendar:', tripsError)
+    console.error('[Calendar] Error fetching trips (all_employees):', tripsError)
     throw new Error('Failed to fetch trips')
   }
 
-  const tripsByEmployee = buildTripsByEmployee((trips ?? []) as TripRow[])
+  const tripRows = (trips ?? []) as TripRow[]
+  console.log('[Calendar] all_employees mode — employees:', employees.length, 'trips:', tripRows.length)
+  const tripsByEmployee = buildTripsByEmployee(tripRows)
 
   return employees.map((employee) => ({
     id: employee.id,

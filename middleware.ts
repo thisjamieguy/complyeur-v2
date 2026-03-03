@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password']
+  const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', '/check-email']
   const publicApiRoutes = [
     '/api/health',
     '/api/billing/webhook',

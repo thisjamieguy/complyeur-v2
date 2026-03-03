@@ -22,7 +22,7 @@ import {
   resetPasswordSchema,
 } from '@/lib/validations/auth'
 
-const SIGNUP_PARITY_REDIRECT = '/login?signup=check-email'
+const SIGNUP_PARITY_REDIRECT = '/check-email'
 
 function isExistingAccountErrorMessage(message: string): boolean {
   const normalized = message.toLowerCase()

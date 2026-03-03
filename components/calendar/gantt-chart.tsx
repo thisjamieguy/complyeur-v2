@@ -246,7 +246,7 @@ export const GanttChart = memo(function GanttChart({
         const dateTime = date.getTime()
         return {
           date,
-          key: format(date, 'yyyy-MM-dd'),
+          key: date.toISOString().split('T')[0],
           isWeekend: isWeekend(date),
           isToday: isToday(date),
           isMonthStart: format(date, 'd') === '1',
