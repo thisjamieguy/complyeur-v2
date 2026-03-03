@@ -88,6 +88,31 @@ export interface HistoryItem {
   createdAt: string
 }
 
+type BulkDeleteProfile = {
+  company_id: string
+  role: string | null
+}
+
+async function getScopedOwnerOrAdminProfile(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<BulkDeleteProfile | null> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('company_id, role')
+    .eq('id', userId)
+    .single()
+
+  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
+    return null
+  }
+
+  return {
+    company_id: profile.company_id,
+    role: profile.role,
+  }
+}
+
 /**
  * Gets counts of all deletable data for the current company
  */
@@ -104,12 +129,8 @@ export async function getDataCounts(): Promise<DataCounts> {
     return { employees: 0, trips: 0, mappings: 0, history: 0 }
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id, role')
-    .single()
-
-  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
+  const profile = await getScopedOwnerOrAdminProfile(supabase, user.id)
+  if (!profile) {
     return { employees: 0, trips: 0, mappings: 0, history: 0 }
   }
 
@@ -159,12 +180,8 @@ export async function getEmployeesForDeletion(): Promise<EmployeeItem[]> {
     return []
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id, role')
-    .single()
-
-  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
+  const profile = await getScopedOwnerOrAdminProfile(supabase, user.id)
+  if (!profile) {
     return []
   }
 
@@ -199,12 +216,8 @@ export async function getTripsForDeletion(): Promise<TripItem[]> {
     return []
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id, role')
-    .single()
-
-  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
+  const profile = await getScopedOwnerOrAdminProfile(supabase, user.id)
+  if (!profile) {
     return []
   }
 
@@ -245,12 +258,8 @@ export async function getMappingsForDeletion(): Promise<MappingItem[]> {
     return []
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id, role')
-    .single()
-
-  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
+  const profile = await getScopedOwnerOrAdminProfile(supabase, user.id)
+  if (!profile) {
     return []
   }
 
@@ -284,12 +293,8 @@ export async function getHistoryForDeletion(): Promise<HistoryItem[]> {
     return []
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('company_id, role')
-    .single()
-
-  if (!profile?.company_id || !isOwnerOrAdmin(profile.role)) {
+  const profile = await getScopedOwnerOrAdminProfile(supabase, user.id)
+  if (!profile) {
     return []
   }
 

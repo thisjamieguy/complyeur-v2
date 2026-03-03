@@ -128,14 +128,14 @@ export function Sidebar({ user }: SidebarProps) {
       </nav>
 
       {/* Feedback (Beta) */}
-      <div className="px-3 py-3 border-t border-brand-800">
+      <div className="px-3 py-2 border-t border-brand-800">
         <FeedbackDialog
           trigger={
             <button
               className={cn(
                 'flex items-center gap-3 w-full rounded-lg min-h-[44px]',
-                'bg-amber-400 text-amber-950 hover:bg-amber-300 transition-colors duration-150',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300',
+                'text-brand-200 hover:bg-brand-800 hover:text-white transition-colors duration-150',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
                 isOpen ? 'px-3 py-2.5' : 'justify-center px-0 py-2.5'
               )}
               aria-label="Open feedback form (beta)"
@@ -144,8 +144,8 @@ export function Sidebar({ user }: SidebarProps) {
               <MessageSquarePlus className="h-5 w-5 shrink-0" />
               {isOpen && (
                 <>
-                  <span className="text-sm font-semibold truncate">Feedback</span>
-                  <span className="ml-auto rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="text-sm font-medium truncate">Feedback</span>
+                  <span className="ml-auto rounded-full border border-brand-500 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-400">
                     Beta
                   </span>
                 </>
@@ -177,12 +177,6 @@ export function Sidebar({ user }: SidebarProps) {
           )}
         </button>
       </div>
-
-      {isOpen && (
-        <div className="px-4 py-2 border-t border-brand-800 text-[11px] text-brand-300">
-          <p>Shortcuts: <kbd className="font-mono">/</kbd> search, <kbd className="font-mono">N</kbd> add employee, <kbd className="font-mono">T</kbd> add trip, <kbd className="font-mono">Alt+D</kbd> dashboard, <kbd className="font-mono">Alt+I</kbd> import, <kbd className="font-mono">Alt+F</kbd> forecast, <kbd className="font-mono">Shift+?</kbd> help</p>
-        </div>
-      )}
 
       {/* User Menu */}
       <div className="px-3 py-3 border-t border-brand-800">

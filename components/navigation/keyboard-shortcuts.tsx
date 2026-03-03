@@ -42,14 +42,14 @@ export function KeyboardShortcuts() {
         router.push('/trip-forecast')
       }
 
-      if (!event.altKey && !event.metaKey && !event.ctrlKey && event.key.toLowerCase() === 'n') {
+      if (event.altKey && event.key.toLowerCase() === 'n') {
         if (pathname.startsWith('/dashboard')) {
           event.preventDefault()
           window.dispatchEvent(new Event('complyeur:open-add-employee'))
         }
       }
 
-      if (!event.altKey && !event.metaKey && !event.ctrlKey && event.key.toLowerCase() === 't') {
+      if (event.altKey && event.key.toLowerCase() === 't') {
         if (pathname.includes('/employee/')) {
           event.preventDefault()
           window.dispatchEvent(new Event('complyeur:open-add-trip'))

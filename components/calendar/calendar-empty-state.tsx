@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CalendarDays, Users } from 'lucide-react'
+import { CalendarDays, UserPlus } from 'lucide-react'
 
 /**
  * Empty state shown when no employees exist
@@ -22,8 +22,8 @@ export function CalendarEmptyState() {
         </p>
         <Link href="/dashboard">
           <Button>
-            <Users className="h-4 w-4 mr-2" />
-            Go to Dashboard
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add Employee
           </Button>
         </Link>
       </CardContent>

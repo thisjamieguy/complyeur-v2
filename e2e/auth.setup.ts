@@ -14,8 +14,37 @@ import { chromium, FullConfig } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { loadLocalEnv } from './utils/env';
+import {
+  createAdminClientFromEnv,
+  ensureTestUser,
+  getAdminConfigStatus,
+} from './utils/supabase-admin';
 
 const AUTH_FILE = path.join(__dirname, '../.auth/user.json');
+
+async function markOnboardingComplete(userId: string): Promise<boolean> {
+  const adminStatus = getAdminConfigStatus();
+  if (adminStatus.ok === false) {
+    console.log(`⚠️  Skipping test-user provisioning: ${adminStatus.reason}`);
+    return false;
+  }
+
+  const adminClient = createAdminClientFromEnv();
+  const { error } = await adminClient
+    .from('profiles')
+    .update({
+      onboarding_completed_at: new Date().toISOString(),
+      dashboard_tour_completed_at: new Date().toISOString(),
+    })
+    .eq('id', userId);
+
+  if (error) {
+    console.log(`⚠️  Failed to mark Playwright test user onboarding complete: ${error.message}`);
+    return false;
+  }
+
+  return true;
+}
 
 async function globalSetup(config: FullConfig) {
   loadLocalEnv();
@@ -41,6 +70,20 @@ async function globalSetup(config: FullConfig) {
   console.log('🔐 Setting up authenticated session...');
 
   try {
+    const provisionedUser = await ensureTestUser({
+      email: testEmail,
+      password: testPassword,
+      companyName: process.env.TEST_USER_COMPANY || 'Playwright Test Company',
+    });
+
+    if (!provisionedUser.ok || !provisionedUser.userId) {
+      console.log(`⚠️  Playwright auth user provisioning unavailable: ${provisionedUser.reason ?? 'unknown error'}`);
+      console.log('   Tests requiring authentication will be skipped');
+      return;
+    }
+
+    await markOnboardingComplete(provisionedUser.userId);
+
     const browser = await chromium.launch();
     const context = await browser.newContext({
       baseURL,
@@ -69,7 +112,7 @@ async function globalSetup(config: FullConfig) {
     await page.getByRole('button', { name: /sign in|log in|sign in with email/i }).click();
 
     try {
-      await page.waitForURL(/\/dashboard|\/employees|\/import|\/calendar/, { timeout: 15000 });
+      await page.waitForURL(/\/dashboard|\/employees|\/employee\/|\/import|\/calendar|\/onboarding/, { timeout: 15000 });
     } catch {
       console.log('❌ Login redirect failed during auth setup');
       await browser.close();

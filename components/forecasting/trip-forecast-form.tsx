@@ -47,6 +47,7 @@ export function TripForecastForm({
 
   const schengenCountries = getSchengenCountries();
   const today = format(new Date(), 'yyyy-MM-dd');
+  const isFormComplete = employeeId && startDate && endDate && country;
 
   const validateForm = (): string | null => {
     if (!employeeId) {
@@ -182,7 +183,7 @@ export function TripForecastForm({
       </div>
 
       <div className="flex items-center gap-3 pt-2">
-        <Button type="submit" disabled={isCalculating}>
+        <Button type="submit" disabled={!isFormComplete || isCalculating}>
           {isCalculating ? 'Calculating...' : 'Check Compliance'}
         </Button>
         <Button type="button" variant="outline" onClick={handleReset}>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { SELF_SERVE_PLANS, type BillingInterval } from '@/lib/billing/plans'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
@@ -26,6 +27,32 @@ type StripePromotionCodeLookupResponse = {
   error?: { message?: string }
 }
 
+type TierRecord = {
+  slug: string
+  is_active: boolean | null
+  stripe_price_id_monthly: string | null
+  stripe_price_id_annual: string | null
+  max_employees: number | null
+  max_users: number | null
+  can_export_csv: boolean | null
+  can_export_pdf: boolean | null
+  can_forecast: boolean | null
+  can_calendar: boolean | null
+  can_bulk_import: boolean | null
+  can_api_access: boolean | null
+  can_sso: boolean | null
+  can_audit_logs: boolean | null
+}
+
+function isLocalhostCheckoutBypassAllowed(request: NextRequest): boolean {
+  if (process.env.NODE_ENV === 'production') {
+    return false
+  }
+
+  const hostname = request.nextUrl.hostname.toLowerCase()
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]'
+}
+
 function resolveStripeSecretKey(): string {
   const secretKey = process.env.STRIPE_SECRET_KEY
 
@@ -37,15 +64,52 @@ function resolveStripeSecretKey(): string {
 }
 
 function getPriceIdForInterval(
-  tier: {
-    stripe_price_id_monthly: string | null
-    stripe_price_id_annual: string | null
-  },
+  tier: TierRecord,
   billingInterval: BillingInterval
 ): string | null {
   return billingInterval === 'annual'
     ? tier.stripe_price_id_annual
     : tier.stripe_price_id_monthly
+}
+
+async function provisionLocalCheckoutBypass(params: {
+  companyId: string
+  planSlug: string
+  billingInterval: BillingInterval
+  tier: TierRecord
+}) {
+  const admin = createAdminClient()
+  const localPeriodEnd = new Date()
+  localPeriodEnd.setFullYear(localPeriodEnd.getFullYear() + (params.billingInterval === 'annual' ? 1 : 0))
+  localPeriodEnd.setMonth(localPeriodEnd.getMonth() + (params.billingInterval === 'monthly' ? 1 : 12))
+
+  const { error } = await admin
+    .from('company_entitlements')
+    .update({
+      tier_slug: params.planSlug,
+      is_trial: false,
+      trial_ends_at: null,
+      stripe_subscription_id: null,
+      subscription_status: 'active',
+      current_period_end: localPeriodEnd.toISOString(),
+      max_employees: params.tier.max_employees,
+      max_users: params.tier.max_users,
+      can_export_csv: params.tier.can_export_csv,
+      can_export_pdf: params.tier.can_export_pdf,
+      can_forecast: params.tier.can_forecast,
+      can_calendar: params.tier.can_calendar,
+      can_bulk_import: params.tier.can_bulk_import,
+      can_api_access: params.tier.can_api_access,
+      can_sso: params.tier.can_sso,
+      can_audit_logs: params.tier.can_audit_logs,
+      manual_override: true,
+      override_notes: `Localhost checkout bypass (${params.billingInterval})`,
+    })
+    .eq('company_id', params.companyId)
+
+  if (error) {
+    throw error
+  }
 }
 
 function normalizePromotionCode(value?: string): string | null {
@@ -143,7 +207,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const stripeSecretKey = resolveStripeSecretKey()
     const supabase = await createClient()
     const {
       data: { user },
@@ -164,9 +227,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single()
+
+    if (profileError || !profile?.company_id) {
+      return NextResponse.json(
+        { error: 'We could not find a company for your account.' },
+        { status: 404 }
+      )
+    }
+
     const tierResult = await supabase
       .from('tiers')
-      .select('slug, is_active, stripe_price_id_monthly, stripe_price_id_annual')
+      .select(`
+        slug,
+        is_active,
+        stripe_price_id_monthly,
+        stripe_price_id_annual,
+        max_employees,
+        max_users,
+        can_export_csv,
+        can_export_pdf,
+        can_forecast,
+        can_calendar,
+        can_bulk_import,
+        can_api_access,
+        can_sso,
+        can_audit_logs
+      `)
       .eq('slug', planSlug)
       .maybeSingle()
 
@@ -189,6 +280,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const redirectPath = source === 'onboarding' ? '/onboarding' : '/pricing'
+    const successUrl = new URL(redirectPath, request.url)
+    successUrl.searchParams.set('checkout', 'success')
+
+    if (isLocalhostCheckoutBypassAllowed(request)) {
+      await provisionLocalCheckoutBypass({
+        companyId: profile.company_id,
+        planSlug,
+        billingInterval,
+        tier,
+      })
+
+      return NextResponse.json({ url: successUrl.toString() })
+    }
+
+    const stripeSecretKey = resolveStripeSecretKey()
+
     const stripePriceId = getPriceIdForInterval(tier, billingInterval)
     if (!stripePriceId) {
       return NextResponse.json(
@@ -209,8 +317,6 @@ export async function POST(request: NextRequest) {
       promotionCodeId = lookup.promotionCodeId
     }
 
-    const redirectPath = source === 'onboarding' ? '/onboarding' : '/pricing'
-    const successUrl = new URL(redirectPath, request.url)
     successUrl.searchParams.set('checkout', 'success')
     successUrl.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}')
 

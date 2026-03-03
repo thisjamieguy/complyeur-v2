@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
-import { isSuperAdminEmail } from '@/lib/admin/superadmin'
 import { checkEntitlement } from '@/lib/billing/entitlements'
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/layout/app-shell'
@@ -54,7 +53,7 @@ export default async function DashboardLayout({
     email: user.email ?? '',
     full_name: derivedFullName || null,
     role: profile?.role ?? null,
-    canAccessAdminPanel: isSuperAdminEmail(user.email),
+    canAccessAdminPanel: profile?.is_superadmin === true,
     canAccessCalendar,
     canAccessForecast,
   }

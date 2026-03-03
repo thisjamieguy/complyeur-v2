@@ -43,3 +43,57 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  tenant-isolation:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.75.0
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Run multi-tenant isolation E2E
+        run: pnpm test:e2e:multi-user
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_LOCAL_SERVICE_ROLE_KEY }}
+          TEST_USER_EMAIL: e2e-test@complyeur.test
+          TEST_USER_PASSWORD: E2ETestPassword123!
+          TEST_USER_COMPANY: Playwright Test Company
+          E2E_MULTI_USER_A_EMAIL: e2e.multi.a@complyeur.test
+          E2E_MULTI_USER_A_PASSWORD: TestPassword123!
+          E2E_MULTI_USER_A_COMPANY: E2E Multi User Company A
+          E2E_MULTI_USER_B_EMAIL: e2e.multi.b@complyeur.test
+          E2E_MULTI_USER_B_PASSWORD: TestPassword123!
+          E2E_MULTI_USER_B_COMPANY: E2E Multi User Company B
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop

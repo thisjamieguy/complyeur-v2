@@ -37,9 +37,6 @@ UPSTASH_REDIS_REST_TOKEN=...
 
 **Environment files in this project:**
 - `.env.local` — Local development (gitignored)
-- `.env.development` — Development defaults
-- `.env.staging` — Staging environment
-- `.env.production` — Production environment
 - `.env.example` — Template with variable names
 
 ---
@@ -126,30 +123,11 @@ SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --db-url "postgresql://postgr
 ---
 
 ## How to Help Me
-
-### Communication Style
-- Assume zero prior knowledge — nothing is "obvious"
 - Plain English first, technical explanation second
-- Structured, step-by-step guidance (phases, checklists)
-- Tight scopes: "Do X, then Y, then Z"
-- Direct and precise — no fluff or filler
-
-### Code Output Rules
-- **Always provide copy-ready code blocks**
-- Include with every code block:
-  - What it does
-  - Why it matters
-  - Common mistakes to avoid
-  - What to check/test next
-- Break big changes into small, incremental steps
-- Never skip steps or assume I'll figure it out
-
-### Avoid
-- Long theory dumps
-- Academic tone
-- Vague "you should try..." suggestions
-- Patronizing language
-- Generic tutorials
+- Structured, step-by-step guidance (phases, checklists, tables)
+- Break big changes into small, incremental steps — never skip steps
+- Always provide copy-ready code blocks
+- When debugging: give diagnostic paths, not guesses
 
 ---
 
@@ -340,13 +318,14 @@ When adding new third-party services, update CSP headers:
     /exports         → Data export features
     /gdpr            → GDPR data management
     /trip-forecast   → Trip forecasting tools
+    /future-job-alerts → Future compliance alert predictions
+    /test-endpoints  → API endpoint testing (dev only)
     /actions.ts      → Shared server actions for dashboard
-  /(public)          → Public marketing pages (about, pricing, faq, etc.)
-  /admin             → Admin panel (companies, tiers, activity)
+  /admin             → Admin panel (companies, tiers, activity, feedback, metrics, settings)
   /auth              → OAuth callback handler
   /mfa               → Multi-factor authentication flows
   /actions           → Top-level server actions
-  /api               → API routes (minimal — health, billing, GDPR)
+  /api               → API routes (health, billing, GDPR, cron, test-email)
 /components          → Organized by FEATURE FOLDER
   /ui                → Shadcn/UI primitives (DO NOT edit directly)
   /dashboard         → Dashboard widgets and cards
@@ -357,13 +336,15 @@ When adding new third-party services, update CSP headers:
   /forms             → Form components
   /layout            → Layout components (header, sidebar)
   /navigation        → Nav components
-  /admin, /alerts, /calendar, /exports, /feedback,
-  /forecasting, /gdpr, /marketing, /mfa → Feature components
+  /admin, /alerts, /analytics, /auth, /calendar, /compliance,
+  /exports, /feedback, /forecasting, /gdpr, /marketing,
+  /mfa, /onboarding  → Feature components
 /hooks               → Custom React hooks
 /contexts            → React Context providers
 /lib                 → Utilities and business logic
   /supabase          → Supabase clients (client.ts, server.ts, admin.ts)
   /db                → Database query layer (one file per entity)
+  /data              → Cached server-side queries (React cache())
   /compliance        → 90/180-day calculation engine
   /validations       → Zod schemas (trip, employee, etc.)
   /errors            → Custom error classes (AuthError, ValidationError, etc.)
@@ -373,6 +354,10 @@ When adding new third-party services, update CSP headers:
   /constants         → App-wide constants (schengen-countries, etc.)
   /import            → Import parsing, validation, insertion logic
   /gdpr              → GDPR compliance utilities
+  /admin             → Admin utilities
+  /analytics         → Analytics helpers
+  /exports           → Export generation logic
+  /performance       → Performance monitoring
   /permissions.ts    → Role-based permission system
   /rate-limit.ts     → Server action rate limiting
 /types               → TypeScript interfaces and generated Supabase types
@@ -382,7 +367,7 @@ When adding new third-party services, update CSP headers:
 /supabase
   /migrations        → Database migrations
   config.toml        → Local Supabase configuration
-/memory              → AI context files (ARCHITECTURE.md, CONVENTIONS.md)
+/memory              → AI context files
 ```
 
 ---
@@ -395,11 +380,12 @@ npm run build        # Production build
 npm run start        # Start production server
 
 # Testing
-npm run test         # Run unit tests
+npm run test         # Run unit tests (vitest)
 npm run test:unit    # Run unit tests only
 npm run test:integration  # Run integration tests
 npm run test:e2e     # Run all Playwright e2e tests
 npm run test:coverage     # Run tests with coverage report
+npm run test:all     # Full regression (coverage + e2e)
 npm run stress-test  # Run load/stress tests (requires setup)
 
 # Type checking & linting
@@ -408,6 +394,14 @@ npm run lint
 
 # Database
 npm run db:types     # Generate TypeScript types from Supabase schema
+
+# Billing (Stripe)
+npm run billing:prices:sync   # Sync Stripe prices
+npm run billing:prices:audit  # Audit Stripe price IDs
+npm run billing:webhook:check # Check webhook configuration
+
+# Security
+npm run security:check        # Run dependency audit
 ```
 
 ---
@@ -459,6 +453,7 @@ If cascade breaks start happening → full audit before more fixes.
 | Architecture overview | `memory/ARCHITECTURE.md` | System design, data flow, component structure |
 | Code conventions | `memory/CONVENTIONS.md` | Naming, patterns, style rules |
 | Performance audit | `memory/PERFORMANCE-AUDIT.md` | 60 performance issues with prioritised fix plan (audit date: 2026-02-18) |
+| Security audit | `memory/SECURITY-AUDIT.md` | Application security findings and remediation |
 
 To re-run the performance audit, prompt: `Run a full performance audit on the codebase after clearing chat`
 
@@ -466,6 +461,4 @@ To re-run the performance audit, prompt: `Run a full performance audit on the co
 
 ## Notes
 - I use OneNote for planning/documentation
-- I prefer visual formats (tables, checklists, diagrams)
 - Incremental progress > big bang changes
-- When debugging: give diagnostic paths, not guesses

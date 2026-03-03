@@ -5,13 +5,16 @@
  */
 
 import Link from 'next/link';
+import { CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function FutureAlertsEmpty() {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
       <div className="mx-auto max-w-md">
-        <div className="mb-4 text-4xl">📅</div>
+        <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+          <CalendarClock className="h-6 w-6 text-slate-400" />
+        </div>
         <h3 className="text-lg font-semibold text-slate-900">
           No future trips scheduled
         </h3>

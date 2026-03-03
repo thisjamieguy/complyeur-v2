@@ -18,7 +18,7 @@ import { StatusBadge } from './status-badge'
 import { StatusFilters } from './status-filters'
 import { SortSelect } from './sort-select'
 import { EmptyState } from './empty-state'
-import { DashboardStats } from './dashboard-stats'
+// DashboardStats removed — replaced by ComplianceBriefing in the dashboard page
 import { EmployeeSearch } from './employee-search'
 import { Pagination } from '@/components/ui/pagination'
 
@@ -337,9 +337,6 @@ export function ComplianceTable({
 
   return (
     <div className="space-y-8">
-      {/* Summary stats */}
-      <DashboardStats stats={stats} />
-
       {inlineMessage && (
         <Alert>
           <AlertDescription className="flex items-center justify-between gap-4">

@@ -1,75 +1,89 @@
-import { test, expect, Page } from '@playwright/test';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { ensureTestUser, hasAdminConfig } from './utils/supabase-admin';
-import { loadLocalEnv } from './utils/env';
+import { test, expect, type Page, type TestInfo } from '@playwright/test'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import {
+  createAdminClientFromEnv,
+  ensureTestUser,
+  getAdminConfigStatus,
+} from './utils/supabase-admin'
+import { loadLocalEnv } from './utils/env'
 
-loadLocalEnv();
+loadLocalEnv()
+
+interface SeededEmployee {
+  id: string
+  name: string
+}
 
 interface MultiUserAccount {
-  email: string;
-  password: string;
-  companyName: string;
-  userId?: string;
-  companyId?: string;
-  markerEmployeeName?: string;
+  email: string
+  password: string
+  companyName: string
+  userId?: string
+  companyId?: string
+  markerEmployee?: SeededEmployee
 }
 
 interface LoginOutcome {
-  ok: boolean;
-  waitlistMode: boolean;
+  ok: boolean
+  waitlistMode: boolean
 }
 
-const DEFAULT_PASSWORD = 'TestPassword123!';
-const LETTERS = 'abcdefghijklmnopqrstuvwxyz';
-const RUN_SUFFIX = Array.from({ length: 8 }, () => LETTERS[Math.floor(Math.random() * LETTERS.length)]).join('');
+const DEFAULT_PASSWORD = 'TestPassword123!'
+const LETTERS = 'abcdefghijklmnopqrstuvwxyz'
+const RUN_SUFFIX = Array.from(
+  { length: 8 },
+  () => LETTERS[Math.floor(Math.random() * LETTERS.length)]
+).join('')
 
 const userA: MultiUserAccount = {
   email: process.env.E2E_MULTI_USER_A_EMAIL || 'e2e.multi.a@complyeur.test',
   password: process.env.E2E_MULTI_USER_A_PASSWORD || DEFAULT_PASSWORD,
   companyName: process.env.E2E_MULTI_USER_A_COMPANY || 'E2E Multi User Company A',
-};
+}
 
 const userB: MultiUserAccount = {
   email: process.env.E2E_MULTI_USER_B_EMAIL || 'e2e.multi.b@complyeur.test',
   password: process.env.E2E_MULTI_USER_B_PASSWORD || DEFAULT_PASSWORD,
   companyName: process.env.E2E_MULTI_USER_B_COMPANY || 'E2E Multi User Company B',
-};
+}
 
-let adminClient: SupabaseClient | null = null;
-let setupSkipReason: string | null = null;
+let adminClient: SupabaseClient | null = null
+let setupSkipReason: string | null = null
 
 async function login(page: Page, email: string, password: string): Promise<LoginOutcome> {
-  await page.goto('/login');
+  await page.goto('/login')
 
-  const currentUrl = page.url();
-  const isAuthenticatedRoute = /\/dashboard|\/employees|\/import|\/calendar/.test(currentUrl);
+  const currentUrl = page.url()
+  const isAuthenticatedRoute = /\/dashboard|\/employee\/|\/employees|\/import|\/calendar/.test(currentUrl)
   if (isAuthenticatedRoute) {
-    return { ok: true, waitlistMode: false };
+    return { ok: true, waitlistMode: false }
   }
 
   if (currentUrl.includes('/landing') || currentUrl.includes('waitlist')) {
-    return { ok: false, waitlistMode: true };
+    return { ok: false, waitlistMode: true }
   }
 
-  const emailInput = page.getByLabel(/email/i);
-  const hasLoginForm = await emailInput.isVisible({ timeout: 5000 }).catch(() => false);
+  const emailInput = page.getByLabel(/email/i)
+  const hasLoginForm = await emailInput.isVisible({ timeout: 5000 }).catch(() => false)
   if (!hasLoginForm) {
-    const redirectedUrl = page.url();
-    if (/\/dashboard|\/employees|\/import|\/calendar/.test(redirectedUrl)) {
-      return { ok: true, waitlistMode: false };
+    const redirectedUrl = page.url()
+    if (/\/dashboard|\/employee\/|\/employees|\/import|\/calendar/.test(redirectedUrl)) {
+      return { ok: true, waitlistMode: false }
     }
-    return { ok: false, waitlistMode: false };
+    return { ok: false, waitlistMode: false }
   }
 
-  await emailInput.fill(email);
-  await page.getByLabel(/password/i).fill(password);
-  await page.getByRole('button', { name: /sign in|log in|sign in with email/i }).click();
+  await emailInput.fill(email)
+  await page.getByLabel(/password/i).fill(password)
+  await page.getByRole('button', { name: /sign in|log in|sign in with email/i }).click()
 
   try {
-    await page.waitForURL(/\/dashboard|\/employees|\/import|\/calendar/, { timeout: 15000 });
-    return { ok: true, waitlistMode: false };
+    await page.waitForURL(/\/dashboard|\/employee\/|\/employees|\/import|\/calendar/, {
+      timeout: 15000,
+    })
+    return { ok: true, waitlistMode: false }
   } catch {
-    return { ok: false, waitlistMode: false };
+    return { ok: false, waitlistMode: false }
   }
 }
 
@@ -81,13 +95,13 @@ async function getCompanyIdForUser(
     .from('profiles')
     .select('company_id')
     .eq('id', userId)
-    .maybeSingle();
+    .maybeSingle()
 
   if (error || !data?.company_id) {
-    return null;
+    return null
   }
 
-  return data.company_id;
+  return data.company_id
 }
 
 async function markOnboardingComplete(
@@ -100,53 +114,73 @@ async function markOnboardingComplete(
       onboarding_completed_at: new Date().toISOString(),
       dashboard_tour_completed_at: new Date().toISOString(),
     })
-    .eq('id', userId);
+    .eq('id', userId)
 
-  return !error;
+  return !error
 }
 
-async function addEmployeeViaUi(page: Page, employeeName: string): Promise<void> {
-  const tourDialog = page.getByRole('dialog', { name: /dashboard onboarding tour/i });
-  const tourVisible = await tourDialog.isVisible().catch(() => false);
-  if (tourVisible) {
-    await tourDialog.getByRole('button', { name: /^Skip$/i }).click();
-    await expect(tourDialog).not.toBeVisible({ timeout: 10000 });
+async function seedEmployee(
+  supabase: SupabaseClient,
+  companyId: string,
+  name: string
+): Promise<SeededEmployee | null> {
+  const { data, error } = await supabase
+    .from('employees')
+    .insert({
+      company_id: companyId,
+      name,
+      nationality_type: 'uk_citizen',
+    })
+    .select('id, name')
+    .single()
+
+  if (error || !data) {
+    console.log(`Failed to seed employee ${name}: ${error?.message ?? 'unknown error'}`)
+    return null
   }
 
-  const addButton = page.getByRole('button', { name: /^Add Employee$/ }).first();
-  await addButton.click();
+  return data
+}
 
-  const dialog = page.getByRole('dialog', { name: /Add Employee/i });
-  await expect(dialog).toBeVisible({ timeout: 10000 });
+function getBaseUrl(testInfo: TestInfo): string {
+  const baseURL = testInfo.project.use.baseURL
+  if (typeof baseURL !== 'string' || !baseURL) {
+    throw new Error('Playwright baseURL is required for multi-user isolation tests.')
+  }
+  return baseURL
+}
 
-  await dialog.getByPlaceholder('Enter employee name').fill(employeeName);
-  await dialog.getByRole('button', { name: /^Add Employee$/ }).click();
+async function expectDashboardSearchResult(
+  page: Page,
+  employeeName: string,
+  shouldExist: boolean
+): Promise<void> {
+  await page.goto(`/dashboard?search=${encodeURIComponent(employeeName)}`)
+  await page.waitForLoadState('networkidle')
 
-  await expect(dialog).not.toBeVisible({ timeout: 15000 });
-  await expect(page.getByText(employeeName).first()).toBeVisible({ timeout: 15000 });
+  const employeeLinks = page
+    .locator('a[href^="/employee/"]')
+    .filter({ hasText: employeeName })
+
+  if (shouldExist) {
+    await expect(employeeLinks.first()).toBeVisible({ timeout: 15000 })
+  } else {
+    await expect(employeeLinks).toHaveCount(0)
+    await expect(page.getByText(employeeName)).toHaveCount(0)
+  }
 }
 
 test.describe('Multi-User Dashboard Isolation', () => {
+  test.describe.configure({ mode: 'serial' })
+
   test.beforeAll(async () => {
-    if (!hasAdminConfig()) {
-      setupSkipReason = 'Missing Supabase admin credentials for multi-user provisioning.';
-      return;
+    const adminStatus = getAdminConfigStatus()
+    if (adminStatus.ok === false) {
+      setupSkipReason = adminStatus.reason
+      return
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      setupSkipReason = 'Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.';
-      return;
-    }
-
-    adminClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
+    adminClient = createAdminClientFromEnv()
 
     const [provisionA, provisionB] = await Promise.all([
       ensureTestUser({
@@ -159,110 +193,188 @@ test.describe('Multi-User Dashboard Isolation', () => {
         password: userB.password,
         companyName: userB.companyName,
       }),
-    ]);
+    ])
 
     if (!provisionA.ok || !provisionA.userId) {
-      setupSkipReason = provisionA.reason ?? 'Failed to provision user A.';
-      return;
+      setupSkipReason = provisionA.reason ?? 'Failed to provision user A.'
+      return
     }
 
     if (!provisionB.ok || !provisionB.userId) {
-      setupSkipReason = provisionB.reason ?? 'Failed to provision user B.';
-      return;
+      setupSkipReason = provisionB.reason ?? 'Failed to provision user B.'
+      return
     }
 
-    userA.userId = provisionA.userId;
-    userB.userId = provisionB.userId;
+    userA.userId = provisionA.userId
+    userB.userId = provisionB.userId
 
     const [onboardingAOk, onboardingBOk] = await Promise.all([
       markOnboardingComplete(adminClient, userA.userId),
       markOnboardingComplete(adminClient, userB.userId),
-    ]);
+    ])
 
     if (!onboardingAOk || !onboardingBOk) {
-      setupSkipReason = 'Failed to complete onboarding for one or more test users.';
-      return;
+      setupSkipReason = 'Failed to complete onboarding for one or more test users.'
+      return
     }
 
-    const companyA = await getCompanyIdForUser(adminClient, userA.userId);
-    const companyB = await getCompanyIdForUser(adminClient, userB.userId);
-    userA.companyId = companyA ?? undefined;
-    userB.companyId = companyB ?? undefined;
+    const [companyA, companyB] = await Promise.all([
+      getCompanyIdForUser(adminClient, userA.userId),
+      getCompanyIdForUser(adminClient, userB.userId),
+    ])
+
+    userA.companyId = companyA ?? undefined
+    userB.companyId = companyB ?? undefined
 
     if (!userA.companyId || !userB.companyId) {
-      setupSkipReason = 'Failed to resolve company IDs for provisioned users.';
-      return;
+      setupSkipReason = 'Failed to resolve company IDs for provisioned users.'
+      return
     }
 
     if (userA.companyId === userB.companyId) {
-      setupSkipReason = 'Provisioned test users belong to the same company; isolation test requires two tenants.';
-      return;
+      setupSkipReason = 'Provisioned test users belong to the same company; isolation test requires two tenants.'
+      return
     }
 
-    userA.markerEmployeeName = `Isolation Alpha ${RUN_SUFFIX}`;
-    userB.markerEmployeeName = `Isolation Bravo ${RUN_SUFFIX}`;
-  });
+    const [employeeA, employeeB] = await Promise.all([
+      seedEmployee(adminClient, userA.companyId, `Isolation Alpha ${RUN_SUFFIX}`),
+      seedEmployee(adminClient, userB.companyId, `Isolation Bravo ${RUN_SUFFIX}`),
+    ])
+
+    if (!employeeA || !employeeB) {
+      setupSkipReason = 'Failed to seed marker employees for isolated tenants.'
+      return
+    }
+
+    userA.markerEmployee = employeeA
+    userB.markerEmployee = employeeB
+  })
 
   test.afterAll(async () => {
-    if (!adminClient || !userA.markerEmployeeName || !userB.markerEmployeeName) {
-      return;
+    if (adminClient) {
+      const employeeIds = [userA.markerEmployee?.id, userB.markerEmployee?.id].filter(Boolean) as string[]
+      if (employeeIds.length > 0) {
+        const { error } = await adminClient
+          .from('employees')
+          .delete()
+          .in('id', employeeIds)
+
+        if (error) {
+          console.log(`Failed to clean up seeded employees: ${error.message}`)
+        }
+      }
     }
+  })
 
-    const { error } = await adminClient
-      .from('employees')
-      .delete()
-      .in('name', [userA.markerEmployeeName, userB.markerEmployeeName]);
-
-    if (error) {
-      console.log(`Failed to clean up marker employees: ${error.message}`);
-    }
-  });
-
-  test('users can only see employees from their own company', async ({ browser }) => {
-    test.setTimeout(120000);
+  test('dashboard search only returns employees from the signed-in tenant', async ({
+    browser,
+  }, testInfo) => {
+    test.setTimeout(120000)
 
     if (setupSkipReason) {
-      test.skip(true, setupSkipReason);
-      return;
+      test.skip(true, setupSkipReason)
+      return
     }
 
-    if (!userA.markerEmployeeName || !userB.markerEmployeeName) {
-      test.skip(true, 'Marker employees were not created.');
-      return;
+    if (!userA.markerEmployee || !userB.markerEmployee) {
+      test.skip(true, 'Marker employees were not created.')
+      return
     }
 
-    const emptyStorageState = { cookies: [], origins: [] };
-    const contextA = await browser.newContext({ storageState: emptyStorageState });
-    const contextB = await browser.newContext({ storageState: emptyStorageState });
+    const baseURL = getBaseUrl(testInfo)
+    const emptyStorageState = { cookies: [], origins: [] }
+    const contextA = await browser.newContext({ baseURL, storageState: emptyStorageState })
+    const contextB = await browser.newContext({ baseURL, storageState: emptyStorageState })
 
     try {
-      const pageA = await contextA.newPage();
-      const loginA = await login(pageA, userA.email, userA.password);
+      const pageA = await contextA.newPage()
+      const loginA = await login(pageA, userA.email, userA.password)
       if (loginA.waitlistMode) {
-        test.skip(true, 'App is in waitlist mode.');
+        test.skip(true, 'App is in waitlist mode.')
       }
-      expect(loginA.ok).toBe(true);
+      expect(loginA.ok).toBe(true)
 
-      await pageA.goto('/dashboard');
-      await addEmployeeViaUi(pageA, userA.markerEmployeeName);
+      await expectDashboardSearchResult(pageA, userA.markerEmployee.name, true)
+      await expectDashboardSearchResult(pageA, userB.markerEmployee.name, false)
 
-      await pageA.goto(`/dashboard?search=${encodeURIComponent(userB.markerEmployeeName)}`);
-      await expect(pageA.getByText(userB.markerEmployeeName)).toHaveCount(0);
-
-      const pageB = await contextB.newPage();
-      const loginB = await login(pageB, userB.email, userB.password);
+      const pageB = await contextB.newPage()
+      const loginB = await login(pageB, userB.email, userB.password)
       if (loginB.waitlistMode) {
-        test.skip(true, 'App is in waitlist mode.');
+        test.skip(true, 'App is in waitlist mode.')
       }
-      expect(loginB.ok).toBe(true);
+      expect(loginB.ok).toBe(true)
 
-      await pageB.goto('/dashboard');
-      await addEmployeeViaUi(pageB, userB.markerEmployeeName);
-
-      await pageB.goto(`/dashboard?search=${encodeURIComponent(userA.markerEmployeeName)}`);
-      await expect(pageB.getByText(userA.markerEmployeeName)).toHaveCount(0);
+      await expectDashboardSearchResult(pageB, userB.markerEmployee.name, true)
+      await expectDashboardSearchResult(pageB, userA.markerEmployee.name, false)
     } finally {
-      await Promise.allSettled([contextA.close(), contextB.close()]);
+      await Promise.allSettled([contextA.close(), contextB.close()])
     }
-  });
-});
+  })
+
+  test('direct detail routes and DSAR downloads deny cross-tenant access', async ({
+    browser,
+  }, testInfo) => {
+    test.setTimeout(120000)
+
+    if (setupSkipReason) {
+      test.skip(true, setupSkipReason)
+      return
+    }
+
+    if (!userA.markerEmployee || !userB.markerEmployee) {
+      test.skip(true, 'Marker employees were not created.')
+      return
+    }
+
+    const baseURL = getBaseUrl(testInfo)
+    const emptyStorageState = { cookies: [], origins: [] }
+    const contextA = await browser.newContext({ baseURL, storageState: emptyStorageState })
+    const contextB = await browser.newContext({ baseURL, storageState: emptyStorageState })
+
+    try {
+      const pageA = await contextA.newPage()
+      const loginA = await login(pageA, userA.email, userA.password)
+      if (loginA.waitlistMode) {
+        test.skip(true, 'App is in waitlist mode.')
+      }
+      expect(loginA.ok).toBe(true)
+
+      await pageA.goto(`/employee/${userA.markerEmployee.id}`)
+      await expect(
+        pageA.getByRole('heading', { name: userA.markerEmployee.name })
+      ).toBeVisible({ timeout: 15000 })
+
+      const ownDsarResponse = await contextA.request.get(
+        `/api/gdpr/dsar/${userA.markerEmployee.id}`
+      )
+      expect(ownDsarResponse.status()).toBe(200)
+      expect(ownDsarResponse.headers()['content-type']).toContain('application/zip')
+      expect(ownDsarResponse.headers()['cache-control']).toContain('no-store')
+
+      const pageB = await contextB.newPage()
+      const loginB = await login(pageB, userB.email, userB.password)
+      if (loginB.waitlistMode) {
+        test.skip(true, 'App is in waitlist mode.')
+      }
+      expect(loginB.ok).toBe(true)
+
+      await pageB.goto(`/employee/${userA.markerEmployee.id}`)
+      await expect(
+        pageB.getByRole('heading', { name: 'Page not found' })
+      ).toBeVisible({ timeout: 15000 })
+      await expect(pageB.getByText(userA.markerEmployee.name)).toHaveCount(0)
+
+      const crossTenantDsarResponse = await contextB.request.get(
+        `/api/gdpr/dsar/${userA.markerEmployee.id}`
+      )
+      expect(crossTenantDsarResponse.status()).toBe(404)
+
+      const crossTenantDsarBody = await crossTenantDsarResponse.json()
+      expect(crossTenantDsarBody).toMatchObject({
+        error: expect.stringMatching(/employee not found|access denied/i),
+      })
+    } finally {
+      await Promise.allSettled([contextA.close(), contextB.close()])
+    }
+  })
+})

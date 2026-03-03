@@ -12,6 +12,11 @@ import type { CalendarLoadMode } from '@/lib/types/settings'
 
 export const dynamic = 'force-dynamic'
 
+export const metadata = {
+  title: 'Calendar',
+  description: 'Visual timeline of employee Schengen travel',
+}
+
 const DAYS_BACK = 200
 const MAX_WEEKS_FORWARD = 12
 const COMPLIANCE_LOOKBACK_DAYS = 180

@@ -13,6 +13,11 @@ import { TripForecastCalculator } from './trip-forecast-calculator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ForecastRiskLegend } from '@/components/compliance/risk-legends';
 
+export const metadata = {
+  title: 'Trip Forecast',
+  description: 'Test hypothetical trips to check compliance before scheduling',
+}
+
 async function TripForecastContent() {
   const [employees, groupedData] = await Promise.all([
     getEmployeesForSelect(),

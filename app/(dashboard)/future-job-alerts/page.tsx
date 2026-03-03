@@ -6,6 +6,7 @@
  */
 
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { getAllTripsGroupedByEmployee } from '@/lib/db';
 import {
   calculateFutureJobCompliance,
@@ -17,6 +18,11 @@ import { FutureAlertsTable } from '@/components/forecasting/future-alerts-table'
 import { FutureAlertsControls } from '@/components/forecasting/future-alerts-controls';
 import { FutureAlertsEmpty } from '@/components/forecasting/future-alerts-empty';
 import { FutureAlertsLoading } from '@/components/forecasting/future-alerts-loading';
+
+export const metadata: Metadata = {
+  title: 'Future Alerts',
+  description: 'Review upcoming trips and their compliance status before scheduling',
+}
 
 interface PageProps {
   searchParams: Promise<{

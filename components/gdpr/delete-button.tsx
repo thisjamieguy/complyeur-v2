@@ -91,7 +91,7 @@ export function DeleteButton({ employees, onDeleted }: DeleteButtonProps) {
           </div>
 
           <Button
-            variant="destructive"
+            variant={selectedEmployee ? 'destructive' : 'outline'}
             onClick={() => setShowConfirm(true)}
             disabled={!selectedEmployee || isDeleting}
             className="gap-2"

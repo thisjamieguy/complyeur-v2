@@ -313,8 +313,19 @@ export function ExportForm({ employees, employeeCount }: ExportFormProps) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-end gap-3">
-        <Button variant="outline" disabled={isLoading}>
-          Cancel
+        <Button
+          variant="outline"
+          disabled={isLoading}
+          onClick={() => {
+            setScope('all')
+            setEmployeeId(undefined)
+            setStatusFilter(undefined)
+            setAlertsFilter('all')
+            setDateRange(undefined)
+            setExportFormat('pdf')
+          }}
+        >
+          Reset
         </Button>
         <Button onClick={handleExport} disabled={isLoading}>
           {isLoading ? (

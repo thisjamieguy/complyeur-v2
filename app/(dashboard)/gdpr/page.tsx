@@ -12,7 +12,7 @@ import {
 import { GdprPageClient } from './gdpr-page-client'
 
 export const metadata = {
-  title: 'GDPR & Privacy Tools | ComplyEur',
+  title: 'GDPR & Privacy Tools',
   description: 'Manage employee data rights, exports, and privacy compliance',
 }
 

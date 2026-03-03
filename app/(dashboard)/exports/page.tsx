@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Export Data | ComplyEur',
+  title: 'Export Data',
   description: 'Export compliance data as CSV or PDF reports',
 }
 

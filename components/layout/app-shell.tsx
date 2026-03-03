@@ -9,7 +9,7 @@ import { MobileNav } from '@/components/navigation/mobile-nav'
 import { KeyboardShortcuts } from '@/components/navigation/keyboard-shortcuts'
 import { ShortcutHelpDialog } from '@/components/navigation/shortcut-help-dialog'
 import { MfaBackupCodesWarning } from '@/components/mfa/mfa-backup-codes-warning'
-import { Footer } from './footer'
+import { DashboardFooter } from './dashboard-footer'
 import type { UserMenuUser } from './user-menu'
 import { cn } from '@/lib/utils'
 
@@ -58,7 +58,7 @@ function AppShellContent({ children, user }: AppShellProps) {
           {children}
         </div>
 
-        <Footer />
+        <DashboardFooter />
       </main>
     </div>
   )

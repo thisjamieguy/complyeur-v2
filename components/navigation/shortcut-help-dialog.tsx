@@ -47,8 +47,8 @@ export function ShortcutHelpDialog() {
           <ShortcutRow keys="Alt + D" description="Go to dashboard" />
           <ShortcutRow keys="Alt + I" description="Go to import" />
           <ShortcutRow keys="Alt + F" description="Go to trip forecast" />
-          <ShortcutRow keys="N" description="Open add employee (dashboard pages)" />
-          <ShortcutRow keys="T" description="Open add trip (employee detail page)" />
+          <ShortcutRow keys="Alt + N" description="Open add employee (dashboard pages)" />
+          <ShortcutRow keys="Alt + T" description="Open add trip (employee detail page)" />
           <ShortcutRow keys="Shift + ?" description="Open this help panel" />
         </div>
       </DialogContent>

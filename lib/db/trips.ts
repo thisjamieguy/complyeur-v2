@@ -40,9 +40,10 @@ export async function getTripsByEmployeeId(employeeId: string): Promise<Trip[]> 
     .from('employees')
     .select('id, company_id')
     .eq('id', employeeId)
+    .eq('company_id', companyId)
     .single()
 
-  if (employeeError || !employee || employee.company_id !== companyId) {
+  if (employeeError || !employee) {
     // Return empty results for unauthorized access to match RLS behavior
     return []
   }
@@ -51,6 +52,7 @@ export async function getTripsByEmployeeId(employeeId: string): Promise<Trip[]> 
     .from('trips')
     .select('*')
     .eq('employee_id', employeeId)
+    .eq('company_id', companyId)
     .order('entry_date', { ascending: false })
     .limit(500)
 
@@ -75,6 +77,7 @@ export async function getTripById(id: string): Promise<Trip | null> {
     .from('trips')
     .select('*')
     .eq('id', id)
+    .eq('company_id', companyId)
     .single()
 
   if (error) {
@@ -83,12 +86,6 @@ export async function getTripById(id: string): Promise<Trip | null> {
     }
     console.error('Error fetching trip:', error)
     throw new DatabaseError('Failed to fetch trip')
-  }
-
-  // Verify trip belongs to user's company
-  if (data.company_id !== companyId) {
-    // Return null for unauthorized access to match RLS behavior
-    return null
   }
 
   return data
@@ -112,13 +109,10 @@ export async function createTrip(trip: TripCreateInput): Promise<Trip> {
     .from('employees')
     .select('id, company_id')
     .eq('id', trip.employee_id)
+    .eq('company_id', companyId)
     .single()
 
   if (employeeError || !employee) {
-    throw new NotFoundError('Employee not found')
-  }
-
-  if (employee.company_id !== companyId) {
     throw new NotFoundError('Employee not found')
   }
 
@@ -127,6 +121,7 @@ export async function createTrip(trip: TripCreateInput): Promise<Trip> {
     .from('trips')
     .select('id, company_id, entry_date, exit_date')
     .eq('employee_id', trip.employee_id)
+    .eq('company_id', companyId)
 
   if (tripsError) {
     console.error('Error checking for overlapping trips:', tripsError)
@@ -134,7 +129,6 @@ export async function createTrip(trip: TripCreateInput): Promise<Trip> {
   }
 
   const relevantTrips = (existingTrips ?? []).filter((existingTrip) =>
-    (!existingTrip.company_id || existingTrip.company_id === companyId) &&
     existingTrip.entry_date <= trip.exit_date &&
     existingTrip.exit_date >= trip.entry_date
   )
@@ -172,29 +166,15 @@ export async function updateTrip(id: string, updates: TripUpdate): Promise<Trip>
   // Verify auth and get company
   const { companyId } = await getAuthenticatedUserCompany(supabase)
 
-  // Get the existing trip to validate ownership
+  // Get the existing trip scoped to the current company.
   const { data: existingTrip, error: fetchError } = await supabase
     .from('trips')
-    .select(`
-      *,
-      employee:employees!inner(company_id)
-    `)
+    .select('id, company_id, employee_id, entry_date, exit_date')
     .eq('id', id)
+    .eq('company_id', companyId)
     .single()
 
   if (fetchError || !existingTrip) {
-    throw new NotFoundError('Trip not found')
-  }
-
-  // Validate employee data structure at runtime
-  const employee = existingTrip.employee
-  if (!employee || typeof employee !== 'object' || !('company_id' in employee)) {
-    throw new DatabaseError('Failed to validate trip ownership')
-  }
-
-  // Verify trip belongs to user's company
-  const tripCompanyId = employee.company_id
-  if (tripCompanyId !== companyId) {
     throw new NotFoundError('Trip not found')
   }
 
@@ -208,6 +188,7 @@ export async function updateTrip(id: string, updates: TripUpdate): Promise<Trip>
       .from('trips')
       .select('id, company_id, entry_date, exit_date')
       .eq('employee_id', existingTrip.employee_id)
+      .eq('company_id', companyId)
       .neq('id', id) // Exclude the trip being updated
 
     if (tripsError) {
@@ -216,7 +197,6 @@ export async function updateTrip(id: string, updates: TripUpdate): Promise<Trip>
     }
 
     const relevantTrips = (existingTrips ?? []).filter((tripRecord) =>
-      (!tripRecord.company_id || tripRecord.company_id === companyId) &&
       tripRecord.entry_date <= newExitDate &&
       tripRecord.exit_date >= newEntryDate
     )
@@ -298,9 +278,10 @@ export async function getTripCountByEmployeeId(employeeId: string): Promise<numb
     .from('employees')
     .select('id, company_id')
     .eq('id', employeeId)
+    .eq('company_id', companyId)
     .single()
 
-  if (employeeError || !employee || employee.company_id !== companyId) {
+  if (employeeError || !employee) {
     // Return 0 for unauthorized access to match RLS behavior
     return 0
   }
@@ -309,6 +290,7 @@ export async function getTripCountByEmployeeId(employeeId: string): Promise<numb
     .from('trips')
     .select('*', { count: 'exact', head: true })
     .eq('employee_id', employeeId)
+    .eq('company_id', companyId)
 
   if (error) {
     console.error('Error counting trips:', error)
@@ -379,9 +361,10 @@ export async function createBulkTrips(trips: BulkTripInput[]): Promise<BulkTripR
     .from('employees')
     .select('id, company_id')
     .eq('id', employeeId)
+    .eq('company_id', companyId)
     .single()
 
-  if (employeeError || !employee || employee.company_id !== companyId) {
+  if (employeeError || !employee) {
     throw new NotFoundError('Employee not found')
   }
 
@@ -393,6 +376,7 @@ export async function createBulkTrips(trips: BulkTripInput[]): Promise<BulkTripR
     .from('trips')
     .select('id, company_id, entry_date, exit_date')
     .eq('employee_id', employeeId)
+    .eq('company_id', companyId)
 
   if (tripsError) {
     console.error('Error fetching existing trips:', tripsError)
@@ -405,7 +389,6 @@ export async function createBulkTrips(trips: BulkTripInput[]): Promise<BulkTripR
   // Include newly validated trips in overlap checking
   const allTripsForOverlapCheck: TripDateRange[] = (existingTrips ?? [])
     .filter((tripRecord) =>
-      (!tripRecord.company_id || tripRecord.company_id === companyId) &&
       tripRecord.entry_date <= maxExitDate &&
       tripRecord.exit_date >= minEntryDate
     )
@@ -500,13 +483,10 @@ export async function reassignTrip(tripId: string, newEmployeeId: string): Promi
     .from('trips')
     .select('id, company_id, entry_date, exit_date')
     .eq('id', tripId)
+    .eq('company_id', companyId)
     .single()
 
   if (tripError || !trip) {
-    throw new NotFoundError('Trip not found')
-  }
-
-  if (trip.company_id !== companyId) {
     throw new NotFoundError('Trip not found')
   }
 
@@ -515,13 +495,10 @@ export async function reassignTrip(tripId: string, newEmployeeId: string): Promi
     .from('employees')
     .select('id, company_id')
     .eq('id', newEmployeeId)
+    .eq('company_id', companyId)
     .single()
 
   if (employeeError || !newEmployee) {
-    throw new NotFoundError('Employee not found')
-  }
-
-  if (newEmployee.company_id !== companyId) {
     throw new NotFoundError('Employee not found')
   }
 
@@ -530,6 +507,7 @@ export async function reassignTrip(tripId: string, newEmployeeId: string): Promi
     .from('trips')
     .select('id, company_id, entry_date, exit_date')
     .eq('employee_id', newEmployeeId)
+    .eq('company_id', companyId)
     .neq('id', tripId) // Exclude the trip being moved
 
   if (tripsError) {
@@ -538,7 +516,6 @@ export async function reassignTrip(tripId: string, newEmployeeId: string): Promi
   }
 
   const relevantTrips = (existingTrips ?? []).filter((existingTrip) =>
-    (!existingTrip.company_id || existingTrip.company_id === companyId) &&
     existingTrip.entry_date <= trip.exit_date &&
     existingTrip.exit_date >= trip.entry_date
   )
@@ -553,6 +530,7 @@ export async function reassignTrip(tripId: string, newEmployeeId: string): Promi
     .from('trips')
     .update({ employee_id: newEmployeeId, updated_at: new Date().toISOString() })
     .eq('id', tripId)
+    .eq('company_id', companyId)
     .select()
     .single()
 

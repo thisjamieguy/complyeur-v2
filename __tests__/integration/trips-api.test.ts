@@ -88,6 +88,17 @@ function createMockTrip(overrides?: Partial<Trip>): Trip {
   }
 }
 
+function createAwaitableQueryChain<T>(result: { data: T; error: unknown }) {
+  return {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    then: (resolve: (value: { data: T; error: unknown }) => unknown) => resolve(result),
+  }
+}
+
 describe('Trips API - CRUD Operations', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -114,13 +125,10 @@ describe('Trips API - CRUD Operations', () => {
         }),
       }
 
-      const existingTripsChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          data: [],
-          error: null,
-        }),
-      }
+      const existingTripsChain = createAwaitableQueryChain({
+        data: [],
+        error: null,
+      })
 
       const insertChain = {
         insert: vi.fn().mockReturnThis(),
@@ -211,8 +219,8 @@ describe('Trips API - CRUD Operations', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: 'emp-1', company_id: 'company-b' },
-          error: null,
+          data: null,
+          error: { code: 'PGRST116' },
         }),
       }
 
@@ -253,19 +261,16 @@ describe('Trips API - CRUD Operations', () => {
         }),
       }
 
-      const existingTripsChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          data: [
-            {
-              id: 'trip-existing',
-              entry_date: '2025-11-05',
-              exit_date: '2025-11-15',
-            },
-          ],
-          error: null,
-        }),
-      }
+      const existingTripsChain = createAwaitableQueryChain({
+        data: [
+          {
+            id: 'trip-existing',
+            entry_date: '2025-11-05',
+            exit_date: '2025-11-15',
+          },
+        ],
+        error: null,
+      })
 
       const supabase = {
         from: vi.fn((table: string) => {
@@ -309,13 +314,10 @@ describe('Trips API - CRUD Operations', () => {
         }),
       }
 
-      const existingTripsChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          data: [],
-          error: null,
-        }),
-      }
+      const existingTripsChain = createAwaitableQueryChain({
+        data: [],
+        error: null,
+      })
 
       const insertChain = {
         insert: vi.fn().mockReturnThis(),
@@ -381,6 +383,7 @@ describe('Trips API - CRUD Operations', () => {
 
       expect(result).toEqual(mockTrip)
       expect(tripChain.eq).toHaveBeenCalledWith('id', 'trip-1')
+      expect(tripChain.eq).toHaveBeenCalledWith('company_id', 'company-a')
     })
 
     it('returns null when trip not found', async () => {
@@ -412,7 +415,6 @@ describe('Trips API - CRUD Operations', () => {
     })
 
     it('returns null when trip belongs to different company', async () => {
-      const mockTrip = createMockTrip({ company_id: 'company-b' })
       const { requireCompanyAccess } = await import('@/lib/security/tenant-access')
 
       vi.mocked(requireCompanyAccess).mockResolvedValue({
@@ -424,8 +426,8 @@ describe('Trips API - CRUD Operations', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: mockTrip,
-          error: null,
+          data: null,
+          error: { code: 'PGRST116' },
         }),
       }
 
@@ -485,6 +487,8 @@ describe('Trips API - CRUD Operations', () => {
       const result = await getTripsByEmployeeId('emp-1')
 
       expect(result).toEqual(mockTrips)
+      expect(employeeChain.eq).toHaveBeenCalledWith('company_id', 'company-a')
+      expect(tripsChain.eq).toHaveBeenCalledWith('company_id', 'company-a')
       expect(tripsChain.order).toHaveBeenCalledWith('entry_date', { ascending: false })
     })
 
@@ -500,8 +504,8 @@ describe('Trips API - CRUD Operations', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: 'emp-1', company_id: 'company-b' },
-          error: null,
+          data: null,
+          error: { code: 'PGRST116' },
         }),
       }
 
@@ -611,11 +615,8 @@ describe('Trips API - CRUD Operations', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: {
-            ...existingTrip,
-            employee: { company_id: 'company-b' },
-          },
-          error: null,
+          data: null,
+          error: { code: 'PGRST116' },
         }),
       }
 
@@ -744,13 +745,10 @@ describe('Trips API - CRUD Operations', () => {
         }),
       }
 
-      const countChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          count: 5,
-          error: null,
-        }),
-      }
+      const countChain = createAwaitableQueryChain({
+        count: 5,
+        error: null,
+      })
 
       const supabase = {
         from: vi.fn((table: string) => {
@@ -764,6 +762,8 @@ describe('Trips API - CRUD Operations', () => {
       const result = await getTripCountByEmployeeId('emp-1')
 
       expect(result).toBe(5)
+      expect(employeeChain.eq).toHaveBeenCalledWith('company_id', 'company-a')
+      expect(countChain.eq).toHaveBeenCalledWith('company_id', 'company-a')
     })
 
     it('returns 0 when employee belongs to different company', async () => {
@@ -778,8 +778,8 @@ describe('Trips API - CRUD Operations', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: 'emp-1', company_id: 'company-b' },
-          error: null,
+          data: null,
+          error: { code: 'PGRST116' },
         }),
       }
 
@@ -820,13 +820,10 @@ describe('Trips API - CRUD Operations', () => {
         }),
       }
 
-      const existingTripsChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          data: [],
-          error: null,
-        }),
-      }
+      const existingTripsChain = createAwaitableQueryChain({
+        data: [],
+        error: null,
+      })
 
       const insertChain = {
         insert: vi.fn().mockReturnThis(),
@@ -906,13 +903,10 @@ describe('Trips API - CRUD Operations', () => {
         }),
       }
 
-      const existingTripsChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          data: [],
-          error: null,
-        }),
-      }
+      const existingTripsChain = createAwaitableQueryChain({
+        data: [],
+        error: null,
+      })
 
       const insertChain = {
         insert: vi.fn().mockReturnThis(),
@@ -982,13 +976,10 @@ describe('Trips API - CRUD Operations', () => {
         }),
       }
 
-      const existingTripsChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({
-          data: [],
-          error: null,
-        }),
-      }
+      const existingTripsChain = createAwaitableQueryChain({
+        data: [],
+        error: null,
+      })
 
       const insertChain = {
         insert: vi.fn().mockReturnThis(),
@@ -1090,8 +1081,8 @@ describe('Trips API - CRUD Operations', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: 'emp-1', company_id: 'company-b' },
-          error: null,
+          data: null,
+          error: { code: 'PGRST116' },
         }),
       }
 
@@ -1166,14 +1157,10 @@ describe('Trips API - CRUD Operations', () => {
         }),
       }
 
-      const newEmployeeTripsChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockResolvedValue({
-          data: [],
-          error: null,
-        }),
-      }
+      const newEmployeeTripsChain = createAwaitableQueryChain({
+        data: [],
+        error: null,
+      })
 
       const updateChain = {
         update: vi.fn().mockReturnThis(),
@@ -1246,8 +1233,8 @@ describe('Trips API - CRUD Operations', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: existingTrip,
-          error: null,
+          data: null,
+          error: { code: 'PGRST116' },
         }),
       }
 
@@ -1326,8 +1313,8 @@ describe('Trips API - CRUD Operations', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: 'emp-2', company_id: 'company-b' },
-          error: null,
+          data: null,
+          error: { code: 'PGRST116' },
         }),
       }
 
@@ -1373,20 +1360,16 @@ describe('Trips API - CRUD Operations', () => {
         }),
       }
 
-      const newEmployeeTripsChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        neq: vi.fn().mockResolvedValue({
-          data: [
-            {
-              id: 'trip-existing',
-              entry_date: '2025-11-05',
-              exit_date: '2025-11-15',
-            },
-          ],
-          error: null,
-        }),
-      }
+      const newEmployeeTripsChain = createAwaitableQueryChain({
+        data: [
+          {
+            id: 'trip-existing',
+            entry_date: '2025-11-05',
+            exit_date: '2025-11-15',
+          },
+        ],
+        error: null,
+      })
 
       const supabase = {
         from: vi.fn((table: string) => {

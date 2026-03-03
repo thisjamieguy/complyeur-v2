@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
-import { isSuperAdminEmail } from '@/lib/admin/superadmin'
 
 function deriveAdminName(user: {
   email?: string | null
@@ -39,13 +38,6 @@ export async function requireSuperAdmin() {
     redirect('/login?redirect=/admin')
   }
 
-  const emailAllowed = isSuperAdminEmail(user.email)
-  if (!emailAllowed) {
-    redirect('/dashboard')
-  }
-
-  // Check superadmin status if profile exists; allow approved superadmin emails
-  // even when the profile flag has not yet been backfilled.
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('is_superadmin')
@@ -56,9 +48,13 @@ export async function requireSuperAdmin() {
     console.error('[requireSuperAdmin] Failed to fetch profile flag:', profileError.message)
   }
 
+  if (profile?.is_superadmin !== true) {
+    redirect('/dashboard')
+  }
+
   const mfa = await enforceMfaForPrivilegedUser(supabase, user.id, {
     userEmail: user.email,
-    isSuperadmin: profile?.is_superadmin ?? emailAllowed,
+    isSuperadmin: true,
   })
   if (!mfa.ok) {
     redirect('/mfa')
@@ -67,7 +63,7 @@ export async function requireSuperAdmin() {
   return {
     user,
     profile: {
-      is_superadmin: profile?.is_superadmin ?? emailAllowed,
+      is_superadmin: true,
       full_name: deriveAdminName(user),
     },
   }

@@ -3,7 +3,7 @@ import { listTeamMembersAndInvites } from './actions'
 import { TeamManagementClient } from './team-management-client'
 
 export const metadata = {
-  title: 'Team | ComplyEur',
+  title: 'Team',
   description: 'Manage user access for your company account',
 }
 

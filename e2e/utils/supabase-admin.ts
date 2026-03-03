@@ -6,18 +6,54 @@ export type AdminConfig = {
   serviceRoleKey: string
 }
 
+export type AdminConfigStatus =
+  | {
+      ok: true
+      config: AdminConfig
+    }
+  | {
+      ok: false
+      reason: string
+    }
+
 export type ProvisionResult = {
   ok: boolean
   reason?: string
   userId?: string
 }
 
-function getAdminConfig(): AdminConfig | null {
+function isSafeSupabaseAdminTarget(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return parsed.hostname === '127.0.0.1' || parsed.hostname === 'localhost'
+  } catch {
+    return false
+  }
+}
+
+export function getAdminConfigStatus(): AdminConfigStatus {
   loadLocalEnv()
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !serviceRoleKey) return null
-  return { url, serviceRoleKey }
+
+  if (!url || !serviceRoleKey) {
+    return { ok: false, reason: 'Missing Supabase admin credentials for provisioning.' }
+  }
+
+  if (
+    process.env.E2E_ALLOW_REMOTE_SUPABASE !== 'true' &&
+    !isSafeSupabaseAdminTarget(url)
+  ) {
+    return {
+      ok: false,
+      reason: `Refusing to run multi-user E2E provisioning against non-local Supabase (${url}). Set E2E_ALLOW_REMOTE_SUPABASE=true to override.`,
+    }
+  }
+
+  return {
+    ok: true,
+    config: { url, serviceRoleKey },
+  }
 }
 
 function createAdminClient(config: AdminConfig): SupabaseClient {
@@ -29,13 +65,23 @@ function createAdminClient(config: AdminConfig): SupabaseClient {
   })
 }
 
+export function createAdminClientFromEnv(): SupabaseClient {
+  const status = getAdminConfigStatus()
+  if (status.ok === false) {
+    throw new Error(status.reason)
+  }
+
+  return createAdminClient(status.config)
+}
+
 async function findUserIdByEmail(
   supabase: SupabaseClient,
   email: string
 ): Promise<string | null> {
   const { data, error } = await supabase.auth.admin.listUsers({ page: 1, perPage: 200 })
   if (error || !data?.users) return null
-  const match = data.users.find((user) => user.email?.toLowerCase() === email.toLowerCase())
+  const users = data.users as Array<{ id: string; email?: string | null }>
+  const match = users.find((user) => user.email?.toLowerCase() === email.toLowerCase())
   return match?.id ?? null
 }
 
@@ -44,12 +90,12 @@ export async function ensureTestUser(params: {
   password: string
   companyName: string
 }): Promise<ProvisionResult> {
-  const config = getAdminConfig()
-  if (!config) {
-    return { ok: false, reason: 'Missing Supabase admin credentials for provisioning.' }
+  const status = getAdminConfigStatus()
+  if (status.ok === false) {
+    return { ok: false, reason: status.reason }
   }
 
-  const supabase = createAdminClient(config)
+  const supabase = createAdminClient(status.config)
   const normalizedEmail = params.email.toLowerCase().trim()
 
   let userId: string | null = null
@@ -77,6 +123,15 @@ export async function ensureTestUser(params: {
 
   if (!userId) {
     return { ok: false, reason: 'Unable to resolve user id for test account.' }
+  }
+
+  const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {
+    password: params.password,
+    email_confirm: true,
+  })
+
+  if (updateError) {
+    return { ok: false, reason: `Failed to sync test user credentials: ${updateError.message}` }
   }
 
   const { data: profile } = await supabase
@@ -118,12 +173,12 @@ export async function ensureTestUser(params: {
 }
 
 export async function deleteUserByEmail(email: string): Promise<ProvisionResult> {
-  const config = getAdminConfig()
-  if (!config) {
-    return { ok: false, reason: 'Missing Supabase admin credentials for cleanup.' }
+  const status = getAdminConfigStatus()
+  if (status.ok === false) {
+    return { ok: false, reason: status.reason }
   }
 
-  const supabase = createAdminClient(config)
+  const supabase = createAdminClient(status.config)
   const userId = await findUserIdByEmail(supabase, email)
   if (!userId) {
     return { ok: true }
@@ -138,5 +193,5 @@ export async function deleteUserByEmail(email: string): Promise<ProvisionResult>
 }
 
 export function hasAdminConfig(): boolean {
-  return getAdminConfig() !== null
+  return getAdminConfigStatus().ok
 }
