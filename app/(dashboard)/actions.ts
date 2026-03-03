@@ -15,7 +15,7 @@ import {
   reassignTrip,
   getEmployeeById,
 } from '@/lib/db'
-import { employeeSchema } from '@/lib/validations/employee'
+import { employeeSchema, employeeWithTripsSchema } from '@/lib/validations/employee'
 import {
   feedbackSubmissionSchema,
   type FeedbackSubmissionFormData,
@@ -103,6 +103,71 @@ export async function addEmployeeAction(formData: { name: string; nationality_ty
   const validated = employeeSchema.parse(formData)
   await createEmployee(validated)
   revalidateTripData()
+}
+
+/**
+ * Add an employee with optional trips in a single action.
+ * Used by the unified add-employee dialog.
+ */
+export async function addEmployeeWithTripsAction(formData: {
+  name: string
+  nationality_type: string
+  trips?: Array<{
+    entry_date: string
+    exit_date: string
+    country: string
+    is_private?: boolean
+  }>
+}): Promise<{ employeeId: string; tripsCreated: number }> {
+  await enforceMutationAccess(PERMISSIONS.EMPLOYEES_CREATE, 'addEmployeeWithTripsAction')
+
+  const validated = employeeWithTripsSchema.parse(formData)
+
+  // Create the employee
+  const employee = await createEmployee({
+    name: validated.name,
+    nationality_type: validated.nationality_type,
+  })
+
+  if (!employee?.id) {
+    throw new Error('Failed to create employee')
+  }
+
+  // Filter out incomplete trip entries (user left fields blank)
+  const completedTrips = (validated.trips || []).filter(
+    (t) => t.entry_date && t.exit_date && t.country
+  )
+
+  let tripsCreated = 0
+
+  if (completedTrips.length > 0) {
+    // Validate each trip fully with tripSchema
+    const tripInputs: BulkTripInput[] = completedTrips.map((t) => {
+      const validated = tripSchema.parse({
+        employee_id: employee.id,
+        entry_date: t.entry_date,
+        exit_date: t.exit_date,
+        country: t.country,
+        is_private: t.is_private,
+      })
+      return {
+        employee_id: validated.employee_id,
+        country: validated.country,
+        entry_date: validated.entry_date,
+        exit_date: validated.exit_date,
+        is_private: validated.is_private,
+      }
+    })
+
+    const result = await createBulkTrips(tripInputs)
+    tripsCreated = result.created
+
+    // Run alert detection in background
+    runAlertDetectionBackground(employee.id)
+  }
+
+  revalidateTripData(employee.id)
+  return { employeeId: employee.id, tripsCreated }
 }
 
 export async function updateEmployeeAction(id: string, formData: { name: string; nationality_type?: string }) {

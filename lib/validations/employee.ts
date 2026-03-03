@@ -50,3 +50,27 @@ export const employeeUpdateSchema = z.object({
 })
 
 export type EmployeeUpdateData = z.infer<typeof employeeUpdateSchema>
+
+/**
+ * Trip entry within the unified add-employee form.
+ * All fields optional so users can leave the trips section empty.
+ * Validated more strictly when trips are actually provided.
+ */
+const tripEntrySchema = z.object({
+  entry_date: z.string().optional(),
+  exit_date: z.string().optional(),
+  country: z.string().optional(),
+  is_private: z.boolean().optional(),
+})
+
+/**
+ * Combined schema for adding an employee with optional trips.
+ * Used by the unified add-employee dialog.
+ */
+export const employeeWithTripsSchema = z.object({
+  name: employeeSchema.shape.name,
+  nationality_type: nationalityTypeEnum,
+  trips: z.array(tripEntrySchema).optional(),
+})
+
+export type EmployeeWithTripsFormData = z.infer<typeof employeeWithTripsSchema>

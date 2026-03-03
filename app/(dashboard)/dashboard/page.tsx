@@ -2,11 +2,12 @@ import { Suspense } from 'react'
 import nextDynamic from 'next/dynamic'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { getDashboardTourState } from '@/lib/db/profiles'
-import { getEmployeeComplianceDataPaginated, type EmployeeSortOption } from '@/lib/data'
+import { getEmployeeComplianceDataPaginated, getComplianceBriefing, type EmployeeSortOption } from '@/lib/data'
 import { getCompanySettings } from '@/lib/actions/settings'
 import { ComplianceTable } from '@/components/dashboard/compliance-table'
+import { ComplianceBriefing, ComplianceBriefingSkeleton } from '@/components/dashboard/compliance-briefing'
 import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
-import { AddEmployeeDialog } from '@/components/employees/add-employee-dialog'
+import { UnifiedAddEmployeeDialog } from '@/components/employees/unified-add-employee-dialog'
 import { AlertBanner } from '@/components/alerts/alert-banner'
 import { getUnacknowledgedAlertsAction } from '../actions'
 
@@ -15,6 +16,11 @@ const DashboardTour = nextDynamic(
 )
 
 export const dynamic = 'force-dynamic'
+
+export const metadata = {
+  title: 'Dashboard',
+  description: 'Employee Schengen 90/180-day compliance overview',
+}
 
 /** Default page size for employee list */
 const PAGE_SIZE = 25
@@ -87,6 +93,14 @@ async function EmployeeComplianceList({
 }
 
 /**
+ * Server component that fetches and displays the compliance briefing.
+ */
+async function BriefingSection() {
+  const briefing = await getComplianceBriefing()
+  return <ComplianceBriefing briefing={briefing} />
+}
+
+/**
  * Server component to fetch alerts
  */
 async function AlertSection() {
@@ -136,6 +150,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         <AlertSection />
       </Suspense>
 
+      {/* Compliance briefing panel */}
+      <Suspense fallback={<ComplianceBriefingSkeleton />}>
+        <BriefingSection />
+      </Suspense>
+
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div data-tour-id="tour-dashboard-home">
@@ -146,7 +165,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             Track Schengen 90/180-day compliance status
           </p>
         </div>
-        <AddEmployeeDialog />
+        <UnifiedAddEmployeeDialog source="dashboard_header" />
       </div>
 
       {/* Main content with suspense for streaming */}
