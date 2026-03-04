@@ -4,8 +4,23 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Plane, Calendar, Download, ArrowRight, Loader2 } from 'lucide-react';
+import {
+  Users,
+  Plane,
+  Calendar,
+  Download,
+  ArrowRight,
+  Loader2,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { FORMAT_OPTIONS, ImportFormat } from '@/types/import';
+import { showError } from '@/lib/toast';
+import {
+  DEFAULT_GANTT_TEMPLATE_OPTIONS,
+  downloadBlob,
+  generateGanttTemplateWorkbook,
+} from '@/lib/import/gantt/template-workbook';
+import { GanttTemplateDialog } from './GanttTemplateDialog';
 import { StepIndicator } from './StepIndicator';
 import { FirstTimeGuide } from './FirstTimeGuide';
 
@@ -15,10 +30,16 @@ const ICONS = {
   calendar: Calendar,
 } as const;
 
-export function FormatSelector() {
+interface FormatSelectorProps {
+  maxEmployees?: number | null;
+}
+
+export function FormatSelector({ maxEmployees = null }: FormatSelectorProps) {
   const router = useRouter();
   const [selectedFormat, setSelectedFormat] = useState<ImportFormat | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isGeneratingGanttTemplate, setIsGeneratingGanttTemplate] = useState(false);
+  const [isGanttTemplateDialogOpen, setIsGanttTemplateDialogOpen] = useState(false);
 
   const handleSelect = (format: ImportFormat) => {
     setSelectedFormat(format);
@@ -30,8 +51,34 @@ export function FormatSelector() {
     router.push(`/import/upload?format=${selectedFormat}`);
   };
 
-  const handleDownloadTemplate = (e: React.MouseEvent, templateUrl: string) => {
+  const handleDownloadTemplate = async (
+    e: React.MouseEvent,
+    format: (typeof FORMAT_OPTIONS)[number]
+  ) => {
     e.stopPropagation();
+    if (format.id === 'gantt') {
+      setIsGeneratingGanttTemplate(true);
+
+      try {
+        const { blob, filename } = await generateGanttTemplateWorkbook({
+          anchorDate: new Date(),
+          ...DEFAULT_GANTT_TEMPLATE_OPTIONS,
+        });
+        downloadBlob(blob, filename);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'We could not generate the Gantt template workbook.';
+        showError('Template Download Failed', message);
+      } finally {
+        setIsGeneratingGanttTemplate(false);
+      }
+
+      return;
+    }
+
+    const templateUrl = format.templateUrl;
     const filename = templateUrl.split('/').pop() || 'template.csv';
     const link = document.createElement('a');
     link.href = templateUrl;
@@ -91,15 +138,42 @@ export function FormatSelector() {
                   Columns: {format.columns.join(', ')}
                 </p>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full text-slate-600 hover:text-slate-900"
-                  onClick={(e) => handleDownloadTemplate(e, format.templateUrl)}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Template
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-slate-600 hover:text-slate-900"
+                    onClick={(e) => void handleDownloadTemplate(e, format)}
+                    disabled={format.id === 'gantt' && isGeneratingGanttTemplate}
+                  >
+                    {format.id === 'gantt' && isGeneratingGanttTemplate ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Building workbook...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Template
+                      </>
+                    )}
+                  </Button>
+
+                  {format.id === 'gantt' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-slate-500 hover:text-slate-900"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsGanttTemplateDialogOpen(true);
+                      }}
+                    >
+                      <SlidersHorizontal className="h-4 w-4 mr-2" />
+                      Customize
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           );
@@ -129,6 +203,12 @@ export function FormatSelector() {
           )}
         </Button>
       </div>
+
+      <GanttTemplateDialog
+        open={isGanttTemplateDialogOpen}
+        onOpenChange={setIsGanttTemplateDialogOpen}
+        maxEmployees={maxEmployees}
+      />
     </div>
   );
 }

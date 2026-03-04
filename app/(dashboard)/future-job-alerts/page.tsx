@@ -150,20 +150,13 @@ export default async function FutureJobAlertsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#0f172a_0%,#16233b_44%,#f8fafc_44%,#eff6ff_100%)] p-8 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.7)]">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.2),transparent_58%)]" />
-        <div className="relative max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-200/90">
-            Planning
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            Future Job Alerts
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
-            Surface upcoming trips that push people toward the Schengen limit,
-            then filter by severity before you commit the schedule.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">
+          Future Job Alerts
+        </h1>
+        <p className="mt-1 text-sm text-slate-600">
+          Review upcoming trips and their compliance status before scheduling.
+        </p>
       </div>
 
       <Suspense fallback={<FutureAlertsLoading />}>

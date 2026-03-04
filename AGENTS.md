@@ -69,14 +69,34 @@ CREATE POLICY "Users see own employees"
 - User-friendly error messages (not raw errors)
 - Toast notifications for user feedback
 
-### UI/UX Standards
+### UI/UX Standards (NON-NEGOTIABLE)
+
+**Spacing & Layout:**
 - **8px spacing system** for all margins, padding, gaps
-- **12px border radius everywhere** — no mixing
 - Mobile-first, responsive design
+- Clean grid alignment — no misaligned cards
+
+**Visual Consistency — DO NOT deviate from these:**
+- **12px border radius everywhere** (`rounded-xl` in Tailwind). Do NOT use `rounded-2xl`, `rounded-3xl`, `rounded-[28px]`, or any other value. No mixing.
+- **Small, intentional color palette** — no random gradients, diagonal splits, radial glows, or decorative colour effects
+- **Subtle hover effects only** — no aggressive drop shadows, lifting, or scaling. Standard card shadow is `shadow-sm`. Do NOT use `shadow-[0_24px_80px_...]` or similar custom large shadows.
+- **One heading font + one body font** — consistent weights and line-heights throughout
+- **No decorative hero banners** — page headers use plain `rounded-xl border border-slate-200 bg-white p-6 shadow-sm` like every other page
+
+**Functional Requirements:**
 - Loading states for ALL async actions
 - No placeholder "#" links — every button/link must work or be visibly disabled
 - Error states and empty states for all data displays
-- No sparkle emojis, fake testimonials, or generic filler copy
+- Specific copy — no generic "Build your dreams" filler
+
+**Red Flags — NEVER do these:**
+- Sparkle emojis as UI elements
+- Fake testimonials or placeholder content
+- Inconsistent spacing or border radiuses
+- Broken mobile responsiveness
+- Non-functional interactive elements
+- Over-styled components that look different from the rest of the app
+- Arbitrary Tailwind values like `rounded-[28px]`, `tracking-[0.28em]`, `shadow-[0_24px_...]`
 
 ---
 
@@ -175,3 +195,4 @@ npm run db:types         # Generate Supabase types
 - Test adjacent features after every change
 - Git commit after each working change
 - If something breaks unexpectedly, STOP and audit before fixing more
+- **Do not over-engineer.** Only make changes that are directly requested or clearly necessary. Don't add features, refactor code, or make "improvements" beyond what was asked. A bug fix doesn't need surrounding code cleaned up. A simple feature doesn't need extra configurability. Keep solutions simple and focused.
