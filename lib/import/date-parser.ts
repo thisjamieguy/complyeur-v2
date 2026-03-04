@@ -445,6 +445,37 @@ function parseGanttDate(input: string, referenceYear: number): DateParseResult {
 
   const remaining = parts.slice(startIdx);
 
+  // "04 Mar 2025" or "Mar 04 2025"
+  if (remaining.length === 3 && /^\d{4}$/.test(remaining[2])) {
+    const [first, second, year] = remaining;
+    const firstMonth = parseMonthName(first);
+    const secondMonth = parseMonthName(second);
+
+    let day: number | null = null;
+    let month: number | null = null;
+
+    if (firstMonth !== null && /^\d{1,2}$/.test(second)) {
+      month = firstMonth;
+      day = +second;
+    } else if (secondMonth !== null && /^\d{1,2}$/.test(first)) {
+      day = +first;
+      month = secondMonth;
+    }
+
+    if (day !== null && month !== null) {
+      const d = new Date(+year, month, day);
+      if (isValid(d) && d.getMonth() === month && d.getDate() === day) {
+        return {
+          date: format(d, 'yyyy-MM-dd'),
+          original: input,
+          format: 'GANTT_HEADER',
+          isAmbiguous: false,
+          confidence: 'high',
+        };
+      }
+    }
+  }
+
   // "06 Jan" or "Jan 06"
   if (remaining.length === 2) {
     const [first, second] = remaining;

@@ -26,7 +26,7 @@ interface FutureAlertsTableProps {
 
 export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
   return (
-    <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)]">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <Table>
         <TableHeader>
           <TableRow className="bg-slate-50/90">
