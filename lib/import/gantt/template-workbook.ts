@@ -5,6 +5,7 @@ import {
   addWeeks,
   differenceInCalendarDays,
   format,
+  startOfDay,
   subDays,
   subMonths,
   subWeeks,
@@ -154,7 +155,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
 }
 
 function normalizeAnchorDate(anchorDate: Date): Date {
-  return new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate());
+  return startOfDay(anchorDate);
 }
 
 function resolvePastDate(anchorDate: Date, range: GanttTemplateRange): Date {

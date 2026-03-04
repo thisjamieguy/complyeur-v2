@@ -16,8 +16,15 @@
  * NEVER use native JS Date constructor for parsing.
  */
 
-import { isValid, format } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 import { enGB } from 'date-fns/locale';
+
+/** Build ISO date string and validate with date-fns (avoids native Date constructor). */
+function toCalendarISO(year: number, month: number, day: number): string | null {
+  const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  const parsed = parseISO(iso);
+  return isValid(parsed) ? iso : null;
+}
 
 /**
  * Recognized date format types.
@@ -463,10 +470,10 @@ function parseGanttDate(input: string, referenceYear: number): DateParseResult {
     }
 
     if (day !== null && month !== null) {
-      const d = new Date(+year, month, day);
-      if (isValid(d) && d.getMonth() === month && d.getDate() === day) {
+      const iso = toCalendarISO(+year, month, day);
+      if (iso !== null) {
         return {
-          date: format(d, 'yyyy-MM-dd'),
+          date: iso,
           original: input,
           format: 'GANTT_HEADER',
           isAmbiguous: false,
@@ -494,10 +501,10 @@ function parseGanttDate(input: string, referenceYear: number): DateParseResult {
     }
 
     if (day !== null && month !== null) {
-      const d = new Date(referenceYear, month, day);
-      if (isValid(d) && d.getMonth() === month) {
+      const iso = toCalendarISO(referenceYear, month, day);
+      if (iso !== null) {
         return {
-          date: format(d, 'yyyy-MM-dd'),
+          date: iso,
           original: input,
           format: 'GANTT_HEADER',
           isAmbiguous: false,
@@ -511,17 +518,17 @@ function parseGanttDate(input: string, referenceYear: number): DateParseResult {
   // Just a number (day of current or next month)
   if (remaining.length === 1 && /^\d{1,2}$/.test(remaining[0])) {
     const day = +remaining[0];
-    // Assume current month
-    const now = new Date();
-    const d = new Date(referenceYear, now.getMonth(), day);
-    if (isValid(d)) {
+    const currentMonth = new Date().getMonth();
+    const iso = toCalendarISO(referenceYear, currentMonth, day);
+    if (iso !== null) {
+      const forDisplay = parseISO(`${iso}T12:00:00.000Z`);
       return {
-        date: format(d, 'yyyy-MM-dd'),
+        date: iso,
         original: input,
         format: 'GANTT_HEADER',
         isAmbiguous: true,
         confidence: 'low',
-        warning: `Only day number provided - assumed ${format(d, 'MMMM yyyy', { locale: enGB })}`,
+        warning: `Only day number provided - assumed ${format(forDisplay, 'MMMM yyyy', { locale: enGB })}`,
       };
     }
   }

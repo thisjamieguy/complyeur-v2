@@ -13,13 +13,13 @@ type CheckoutRequestBody = {
   promotionCode?: string
 }
 
-type CheckoutSource = 'pricing' | 'onboarding'
+type CheckoutSource = 'pricing' | 'onboarding' | 'settings'
 
 const VALID_BILLING_INTERVALS = new Set<BillingInterval>(['monthly', 'annual'])
 const VALID_PLAN_SLUGS: ReadonlySet<string> = new Set(
   SELF_SERVE_PLANS.map((plan) => plan.slug)
 )
-const VALID_CHECKOUT_SOURCES = new Set<CheckoutSource>(['pricing', 'onboarding'])
+const VALID_CHECKOUT_SOURCES = new Set<CheckoutSource>(['pricing', 'onboarding', 'settings'])
 const MAX_PROMOTION_CODE_LENGTH = 80
 
 type StripePromotionCodeLookupResponse = {
@@ -280,7 +280,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const redirectPath = source === 'onboarding' ? '/onboarding' : '/pricing'
+    const redirectPath = source === 'onboarding' ? '/onboarding' : source === 'settings' ? '/settings?section=billing' : '/pricing'
     const successUrl = new URL(redirectPath, request.url)
     successUrl.searchParams.set('checkout', 'success')
 

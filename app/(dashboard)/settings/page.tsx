@@ -25,7 +25,17 @@ const SETTINGS_SECTIONS = [
   {
     id: 'general',
     label: 'General',
-    description: 'Company defaults, security, and your personal notification preferences.',
+    description: 'Company configuration, personal preferences, and display settings.',
+  },
+  {
+    id: 'security',
+    label: 'Security',
+    description: 'Password, two-factor authentication, and account activity.',
+  },
+  {
+    id: 'billing',
+    label: 'Billing',
+    description: 'Subscription plan, trial status, and payment management.',
   },
   {
     id: 'workspace',
@@ -46,7 +56,7 @@ interface SettingsPageProps {
 }
 
 function getActiveSection(section: string | undefined): SettingsSection {
-  if (section === 'workspace' || section === 'privacy') {
+  if (section === 'workspace' || section === 'privacy' || section === 'security' || section === 'billing') {
     return section
   }
   return 'general'
@@ -96,16 +106,18 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   let hasStripeCustomer = false
 
   if (activeSection === 'general') {
-    const { companyId } = await requireCompanyAccessCached()
-
-    const [settingsResult, prefsResult, entitlementsResult, companyResult] = await Promise.all([
+    const [settingsResult, prefsResult] = await Promise.all([
       getCompanySettings(),
       getUserPreferencesWithFallback(),
-      getCompanyEntitlements(),
-      createClient().then(s => s.from('companies').select('stripe_customer_id').eq('id', companyId).single()),
     ])
     settings = settingsResult
     userPreferences = prefsResult
+  } else if (activeSection === 'billing') {
+    const { companyId } = await requireCompanyAccessCached()
+    const [entitlementsResult, companyResult] = await Promise.all([
+      getCompanyEntitlements(),
+      createClient().then(s => s.from('companies').select('stripe_customer_id').eq('id', companyId).single()),
+    ])
     entitlements = entitlementsResult
     hasStripeCustomer = !!companyResult.data?.stripe_customer_id
   }
@@ -152,13 +164,19 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           {settings ? (
             <>
               <SettingsForm settings={settings} canEdit={canEdit} />
-              <BillingSection
-                tierSlug={entitlements?.tier_slug ?? null}
-                isTrial={entitlements?.is_trial ?? false}
-                trialEndsAt={entitlements?.trial_ends_at ?? null}
-                subscriptionStatus={entitlements?.subscription_status ?? null}
-                hasStripeCustomer={hasStripeCustomer}
-              />
+              <DateFormatPreferences />
+              <div className="bg-white rounded-xl border shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-slate-900 mb-2">
+                  Your Personal Email Preferences
+                </h2>
+                <p className="text-sm text-slate-600 mb-6">
+                  Control which email notifications you receive personally.
+                  This only affects your inbox, not other team members.
+                </p>
+                <Suspense fallback={<div className="animate-pulse h-48 bg-slate-100 rounded" />}>
+                  <UserPreferencesForm preferences={userPreferences} disabled={false} />
+                </Suspense>
+              </div>
               <div className="bg-white rounded-xl border shadow-sm p-6">
                 <h2 className="text-lg font-semibold text-slate-900">
                   Dashboard Tour
@@ -173,21 +191,6 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   Replay guided tour
                 </Link>
               </div>
-              <DateFormatPreferences />
-              <SecuritySettings />
-
-              <div className="bg-white rounded-xl border shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-2">
-                  Your Personal Email Preferences
-                </h2>
-                <p className="text-sm text-slate-600 mb-6">
-                  Control which email notifications you receive personally.
-                  This only affects your inbox, not other team members.
-                </p>
-                <Suspense fallback={<div className="animate-pulse h-48 bg-slate-100 rounded" />}>
-                  <UserPreferencesForm preferences={userPreferences} disabled={false} />
-                </Suspense>
-              </div>
             </>
           ) : (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -197,6 +200,20 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             </div>
           )}
         </>
+      )}
+
+      {activeSection === 'security' && (
+        <SecuritySettings />
+      )}
+
+      {activeSection === 'billing' && (
+        <BillingSection
+          tierSlug={entitlements?.tier_slug ?? null}
+          isTrial={entitlements?.is_trial ?? false}
+          trialEndsAt={entitlements?.trial_ends_at ?? null}
+          subscriptionStatus={entitlements?.subscription_status ?? null}
+          hasStripeCustomer={hasStripeCustomer}
+        />
       )}
 
       {activeSection === 'workspace' && (
