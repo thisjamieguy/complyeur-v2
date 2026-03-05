@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Check, CreditCard, ExternalLink, Loader2 } from 'lucide-react'
-import { getTierDisplayName, getTierBadgeClassName, SELF_SERVE_PLANS, formatGbpPrice, type BillingInterval } from '@/lib/billing/plans'
+import { getTierDisplayName, SELF_SERVE_PLANS, formatGbpPrice, type BillingInterval } from '@/lib/billing/plans'
 import { cn } from '@/lib/utils'
 import {
   Dialog,
@@ -50,7 +50,6 @@ export function BillingSection({
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
   const tierName = getTierDisplayName(tierSlug)
-  const badgeClass = getTierBadgeClassName(tierSlug)
 
   const trialDaysLeft = trialEndsAt
     ? Math.max(0, Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
@@ -115,9 +114,7 @@ export function BillingSection({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate-600">Current plan</span>
-            <span className={cn('inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium', badgeClass)}>
-              {tierName}
-            </span>
+            <span className="text-sm font-medium text-slate-900">{tierName}</span>
           </div>
 
           {isTrial && trialDaysLeft !== null && (
