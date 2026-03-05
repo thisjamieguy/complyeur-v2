@@ -1,5 +1,3 @@
-'use client'
-
 import { Wrench } from 'lucide-react'
 import { config } from '@/lib/config'
 

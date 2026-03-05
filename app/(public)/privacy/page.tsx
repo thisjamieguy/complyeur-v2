@@ -1,6 +1,5 @@
-'use client'
-
 import Link from 'next/link'
+import { FooterCookieSettingsButton } from '@/components/layout/footer-cookie-settings-button'
 
 export default function PrivacyPage() {
   return (
@@ -248,17 +247,7 @@ export default function PrivacyPage() {
           </ul>
           <p className="text-base text-slate-700 leading-relaxed mt-4">
             For more information about the cookies we use, please see our{' '}
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined' && window.cookieyes) {
-                  window.cookieyes.showSettingsPopup()
-                }
-              }}
-              className="font-medium text-brand-700 hover:underline"
-            >
-              Cookie Settings
-            </button>
+            <FooterCookieSettingsButton className="font-medium text-brand-700 hover:underline" />
             .
           </p>
         </section>

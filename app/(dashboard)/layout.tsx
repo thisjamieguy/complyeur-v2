@@ -4,6 +4,7 @@ import { checkEntitlement } from '@/lib/billing/entitlements'
 import { redirect } from 'next/navigation'
 import { AppShell } from '@/components/layout/app-shell'
 import { DataRefreshHandler } from '@/components/data-refresh-handler'
+import { Toaster } from '@/components/ui/sonner'
 
 export default async function DashboardLayout({
   children,
@@ -62,6 +63,7 @@ export default async function DashboardLayout({
     <AppShell user={appUser}>
       <DataRefreshHandler />
       {children}
+      <Toaster />
     </AppShell>
   )
 }

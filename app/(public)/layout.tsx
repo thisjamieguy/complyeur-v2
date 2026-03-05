@@ -16,7 +16,7 @@ export default function PublicLayout({
           <div className="flex items-center justify-between gap-4">
             <Link href="/landing" className="inline-block hover:opacity-80 transition-opacity">
               <Image
-                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png"
+                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.avif"
                 alt="ComplyEur"
                 width={150}
                 height={40}

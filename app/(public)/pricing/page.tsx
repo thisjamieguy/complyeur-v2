@@ -10,7 +10,17 @@ import {
   formatGbpPrice,
 } from '@/lib/billing/plans'
 import { cn } from '@/lib/utils'
-import { trackEvent } from '@/lib/analytics/client'
+
+function trackPricingEvent(
+  event: string,
+  metadata: Record<string, string | number | boolean | undefined>
+) {
+  void import('@/lib/analytics/client')
+    .then(({ trackEvent }) => trackEvent(event, metadata))
+    .catch(() => {
+      // Fail open for UX: checkout flow should not be blocked by analytics loading issues.
+    })
+}
 
 function formatCap(value: number | null): string {
   if (value === null) return 'Unlimited'
@@ -44,7 +54,7 @@ function PricingPageContent() {
     const checkoutPromotionCode = (requestedPromotionCode ?? promotionCode).trim()
     setCheckoutError(null)
     setSubmittingPlan(planSlug)
-    trackEvent('begin_checkout', {
+    trackPricingEvent('begin_checkout', {
       source: 'pricing',
       plan: planSlug,
       billingInterval: checkoutInterval,
@@ -298,7 +308,7 @@ function PricingPageContent() {
                   <button
                     type="button"
                     onClick={() => {
-                      trackEvent('plan_select', {
+                      trackPricingEvent('plan_select', {
                         source: 'pricing',
                         plan: plan.slug,
                         billingInterval,

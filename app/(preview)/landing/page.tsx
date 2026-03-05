@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import nextDynamic from 'next/dynamic'
 import { BrowserFrame } from '@/components/marketing/browser-frame'
 import { DemoCalendar } from '@/components/marketing/demo-calendar'
 import { DemoEmployeeList } from '@/components/marketing/demo-employee-list'
@@ -8,7 +9,18 @@ import { FeatureTicker } from '@/components/marketing/feature-ticker'
 import { FeatureCards } from '@/components/marketing/feature-cards'
 import { SkipLink } from '@/components/ui/skip-link'
 import { createPageMetadata, X_HANDLE } from '@/lib/metadata'
-import { WaitlistForm } from './waitlist-form'
+
+const WaitlistForm = nextDynamic(
+  () => import('./waitlist-form').then((module) => module.WaitlistForm),
+  {
+    loading: () => (
+      <div className="space-y-3" aria-hidden="true">
+        <div className="h-12 w-full rounded-xl bg-slate-700/50" />
+        <div className="h-4 w-40 rounded bg-slate-700/40" />
+      </div>
+    ),
+  }
+)
 
 export const metadata: Metadata = {
   ...createPageMetadata({
@@ -123,7 +135,7 @@ export default function LandingPage() {
           <div className="mx-auto flex max-w-[88rem] items-center justify-between rounded-full border border-slate-200/90 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl sm:px-6">
             <Link href="/" className="shrink-0">
               <Image
-                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png"
+                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.avif"
                 alt="ComplyEur"
                 width={172}
                 height={46}

@@ -1,16 +1,6 @@
-'use client'
-
 import Link from 'next/link'
 import Image from 'next/image'
-import Script from 'next/script'
-import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
 import { SITE_URL } from '@/lib/metadata'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
 
 interface FAQItem {
   question: string
@@ -351,34 +341,30 @@ const faqStructuredData = {
 }
 
 function FAQItemComponent({ item }: { item: FAQItem }) {
-  const [isOpen, setIsOpen] = useState(false)
-
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex w-full items-center justify-between gap-4 border-b border-slate-200 py-4 text-left text-base font-medium text-slate-900 transition-colors hover:text-slate-700">
+    <details className="group border-b border-slate-200 py-2 last:border-b-0">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-2 text-left text-base font-medium text-slate-900 transition-colors hover:text-slate-700">
         <span>{item.question}</span>
-        <ChevronDown
-          className={`h-5 w-5 text-slate-500 transition-transform duration-200 ${
-            isOpen ? 'rotate-180' : ''
-          }`}
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="overflow-hidden">
-        <div className="pb-4 pt-2 text-base text-slate-700 leading-relaxed">
-          {item.answer}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+        <span
+          aria-hidden="true"
+          className="text-slate-500 transition-transform duration-200 group-open:rotate-180"
+        >
+          ▾
+        </span>
+      </summary>
+      <div className="pb-4 pt-2 text-base leading-relaxed text-slate-700">
+        {item.answer}
+      </div>
+    </details>
   )
 }
 
 export default function FAQPage() {
   return (
     <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">
-      <Script
+      <script
         id="faq-structured-data"
         type="application/ld+json"
-        strategy="beforeInteractive"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(faqStructuredData),
         }}

@@ -1,17 +1,10 @@
-'use client'
-
 import Link from 'next/link'
 import Image from 'next/image'
 import { X_HANDLE } from '@/lib/metadata'
+import { FooterCookieSettingsButton } from '@/components/layout/footer-cookie-settings-button'
 
 export function Footer() {
   const xProfileUrl = `https://x.com/${X_HANDLE.replace(/^@/, '')}`
-
-  const handleCookieSettings = () => {
-    if (typeof window !== 'undefined' && window.cookieyes) {
-      window.cookieyes.showSettingsPopup()
-    }
-  }
 
   return (
     <footer className="border-t border-brand-100 bg-white">
@@ -73,13 +66,7 @@ export function Footer() {
             >
               Terms of Service
             </Link>
-            <button
-              type="button"
-              onClick={handleCookieSettings}
-              className="hover:text-brand-700 transition-colors"
-            >
-              Cookie Settings
-            </button>
+            <FooterCookieSettingsButton className="hover:text-brand-700 transition-colors" />
             <Link
               href="/accessibility"
               className="hover:text-brand-700 transition-colors"

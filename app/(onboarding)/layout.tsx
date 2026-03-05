@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { Toaster } from '@/components/ui/sonner'
 
 export default function OnboardingLayout({
   children,
@@ -20,6 +21,7 @@ export default function OnboardingLayout({
         </div>
         {children}
       </div>
+      <Toaster />
     </div>
   )
 }

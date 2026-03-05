@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Montserrat, Open_Sans } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
 import { ConsentAwareGoogleAnalytics } from "@/components/analytics/consent-aware-google-analytics";
 import { defaultMetadata, SITE_URL, X_HANDLE } from "@/lib/metadata";
@@ -127,7 +126,6 @@ export default function RootLayout({
         />
         <MaintenanceBanner />
         {children}
-        <Toaster />
         {enableSpeedInsights && <SpeedInsights />}
         {process.env.NODE_ENV === 'production' && (
           <ConsentAwareGoogleAnalytics gaId="G-PKKZZFWD63" />

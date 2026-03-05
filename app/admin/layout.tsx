@@ -1,6 +1,7 @@
 import { requireSuperAdmin } from '@/lib/admin/auth'
 import { AdminSidebar } from '@/components/admin/admin-sidebar'
 import { AdminHeader } from '@/components/admin/admin-header'
+import { Toaster } from '@/components/ui/sonner'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +27,7 @@ export default async function AdminLayout({
           <main className="p-4 sm:p-6 lg:p-8">
             {children}
           </main>
+          <Toaster />
         </div>
       </div>
     )

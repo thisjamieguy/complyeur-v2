@@ -2,6 +2,7 @@ import Image from 'next/image'
 import { AuthShell } from '@/components/auth/auth-shell'
 import { Footer } from '@/components/layout/footer'
 import { SkipLink } from '@/components/ui/skip-link'
+import { Toaster } from '@/components/ui/sonner'
 
 export default function AuthLayout({
   children,
@@ -38,6 +39,7 @@ export default function AuthLayout({
       <div className="relative z-10">
         <Footer />
       </div>
+      <Toaster />
     </div>
   )
 }

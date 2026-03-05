@@ -21,13 +21,31 @@ export function ConsentAwareGoogleAnalytics({
   const [hasConsent, setHasConsent] = useState(false)
 
   useEffect(() => {
+    let isDisposed = false
+    let retryCount = 0
+    let retryTimeoutId: number | undefined
+
     const syncConsent = () => {
+      if (isDisposed) {
+        return
+      }
       setHasConsent(hasAnalyticsConsent())
     }
 
-    // CookieYes is loaded asynchronously. Poll as a fallback and listen for updates.
+    // CookieYes is loaded asynchronously. Do a bounded retry instead of perpetual polling.
     syncConsent()
-    const intervalId = window.setInterval(syncConsent, 2000)
+    const scheduleRetry = () => {
+      if (window.cookieyes || retryCount >= 5) {
+        return
+      }
+
+      retryTimeoutId = window.setTimeout(() => {
+        retryCount += 1
+        syncConsent()
+        scheduleRetry()
+      }, 1000)
+    }
+    scheduleRetry()
 
     const consentEvents = [
       'cookieyes_consent_update',
@@ -41,7 +59,10 @@ export function ConsentAwareGoogleAnalytics({
     }
 
     return () => {
-      window.clearInterval(intervalId)
+      isDisposed = true
+      if (retryTimeoutId) {
+        window.clearTimeout(retryTimeoutId)
+      }
       for (const eventName of consentEvents) {
         window.removeEventListener(eventName, syncConsent)
       }

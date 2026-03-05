@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { MfaEnrollmentPanel } from '@/components/mfa/mfa-enrollment'
+import { Toaster } from '@/components/ui/sonner'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,7 @@ export default async function MfaPage() {
       <div className="bg-white rounded-xl border shadow-sm p-6">
         <MfaEnrollmentPanel required />
       </div>
+      <Toaster />
     </div>
   )
 }
