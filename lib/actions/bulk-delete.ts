@@ -15,9 +15,6 @@ import { isOwnerOrAdmin } from '@/lib/permissions'
  */
 const BATCH_SIZE = 100
 
-/** Maximum total IDs across all entity types in a single bulk delete request. */
-const MAX_TOTAL_IDS = 500
-
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
@@ -226,7 +223,6 @@ export async function getTripsForDeletion(): Promise<TripItem[]> {
     .select('id, country, entry_date, exit_date, employee:employees!trips_employee_id_fkey(name)')
     .eq('company_id', profile.company_id)
     .order('entry_date', { ascending: false })
-    .limit(500) // Reasonable limit for UI
 
   if (error) {
     console.error('[BulkDelete] Failed to fetch trips:', error)
@@ -304,7 +300,6 @@ export async function getHistoryForDeletion(): Promise<HistoryItem[]> {
     .eq('company_id', profile.company_id)
     .in('status', ['completed', 'failed'])
     .order('created_at', { ascending: false })
-    .limit(500)
 
   if (error) {
     console.error('[BulkDelete] Failed to fetch history:', error)
@@ -342,17 +337,6 @@ export async function bulkDeleteData(params: BulkDeleteParams): Promise<BulkDele
     ...params.mappingIds,
     ...params.historyIds,
   ]
-
-  if (allIds.length > MAX_TOTAL_IDS) {
-    return {
-      success: false,
-      employees: 0,
-      trips: 0,
-      mappings: 0,
-      history: 0,
-      errors: [`Too many IDs: ${allIds.length} exceeds maximum of ${MAX_TOTAL_IDS}`],
-    }
-  }
 
   if (allIds.some((id) => !UUID_RE.test(id))) {
     return {
