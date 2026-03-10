@@ -82,8 +82,6 @@ describe('CalendarView', () => {
 
     expect(historyDay?.trip.id).toBe('history-1')
     expect(historyDay?.displayMode).toBe('historical')
-    expect(historyDay?.currentDaysRemaining).toBe(employee.currentDaysRemaining)
-    expect(historyDay?.currentRiskLevel).toBe(employee.currentRiskLevel)
 
     expect(startDay?.trip.id).toBe('current-1')
     expect(preBreachDay?.trip.id).toBe('current-1')

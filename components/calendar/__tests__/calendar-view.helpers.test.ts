@@ -43,13 +43,9 @@ function makeComplianceMap(
 
 function makeDayMapContext(overrides: {
   today?: Date
-  currentDaysRemaining?: number
-  currentRiskLevel?: 'green' | 'amber' | 'red' | 'breach'
 } = {}) {
   return {
     today: new Date('2026-02-02T00:00:00.000Z'),
-    currentDaysRemaining: 10,
-    currentRiskLevel: 'amber' as const,
     ...overrides,
   }
 }
@@ -119,8 +115,6 @@ describe('calendar-view helpers', () => {
     expect(dayMap.get('2026-02-01')?.riskLevel).toBe('amber')
     expect(dayMap.get('2026-02-02')?.riskLevel).toBe('amber')
     expect(dayMap.get('2026-02-03')?.isBreachDay).toBe(true)
-    expect(dayMap.get('2026-02-01')?.currentDaysRemaining).toBe(10)
-    expect(dayMap.get('2026-02-01')?.currentRiskLevel).toBe('amber')
   })
 
   it('keeps first trip when overlap occurs on the same day', () => {

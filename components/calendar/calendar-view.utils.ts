@@ -1,4 +1,4 @@
-import type { DailyCompliance, RiskLevel } from '@/lib/compliance'
+import type { DailyCompliance } from '@/lib/compliance'
 import type { ProcessedTrip, ProcessedTripDay } from './types'
 
 /** Milliseconds in one UTC day */
@@ -36,8 +36,6 @@ export function buildDateRange(startDate: Date, endDate: Date): Date[] {
 
 interface DayMapContext {
   today: Date
-  currentDaysRemaining: number
-  currentRiskLevel: RiskLevel
 }
 
 /**
@@ -82,8 +80,6 @@ export function buildDayMap(
           daysRemaining: dayCompliance?.daysRemaining ?? 90,
           riskLevel: dayCompliance?.riskLevel ?? 'green',
           isBreachDay: (dayCompliance?.daysUsed ?? 0) >= 90,
-          currentDaysRemaining: context.currentDaysRemaining,
-          currentRiskLevel: context.currentRiskLevel,
         })
       }
     }

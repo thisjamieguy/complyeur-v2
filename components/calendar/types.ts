@@ -21,8 +21,6 @@ export interface ProcessedTripDay {
   daysRemaining: number
   riskLevel: RiskLevel
   isBreachDay: boolean
-  currentDaysRemaining: number
-  currentRiskLevel: RiskLevel
 }
 
 export interface ProcessedEmployee {

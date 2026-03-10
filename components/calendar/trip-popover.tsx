@@ -68,12 +68,7 @@ export function TripPopover({ tripDay }: TripPopoverProps) {
     tripDay.riskLevel,
     tripDay.isBreachDay
   )
-  const currentPlanningRiskLevel = getDisplayRiskLevel(
-    tripDay.currentRiskLevel,
-    tripDay.currentDaysRemaining <= 0
-  )
   const config = riskConfig[planningRiskLevel]
-  const currentConfig = riskConfig[currentPlanningRiskLevel]
   const flag = getCountryFlag(trip.country)
   const displayCountry = trip.isPrivate ? 'Private Trip' : trip.country
 
@@ -108,46 +103,23 @@ export function TripPopover({ tripDay }: TripPopoverProps) {
       </div>
 
       {isHistorical ? (
-        <>
-          <div className="pt-3 space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Trip day:</span>
-              <span className="text-slate-700">
-                {format(tripDay.referenceDate, 'MMM d, yyyy')}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm items-center">
-              <span className="text-slate-500">Status:</span>
-              <span className="flex items-center gap-1.5">
-                <span className={cn('h-2 w-2 rounded-full', historicalConfig.dotColor)} />
-                <span className={cn('font-medium', historicalConfig.textColor)}>
-                  {historicalConfig.label}
-                </span>
-              </span>
-            </div>
+        <div className="pt-3 space-y-1.5">
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-500">Trip day:</span>
+            <span className="text-slate-700">
+              {format(tripDay.referenceDate, 'MMM d, yyyy')}
+            </span>
           </div>
-
-          <div className="pt-3 mt-3 border-t border-slate-100 space-y-1.5">
-            <div className="text-sm font-medium text-slate-700">
-              Current planning status
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Days remaining:</span>
-              <span className={cn('font-medium', currentConfig.textColor)}>
-                {tripDay.currentDaysRemaining}
+          <div className="flex justify-between text-sm items-center">
+            <span className="text-slate-500">Status:</span>
+            <span className="flex items-center gap-1.5">
+              <span className={cn('h-2 w-2 rounded-full', historicalConfig.dotColor)} />
+              <span className={cn('font-medium', historicalConfig.textColor)}>
+                {historicalConfig.label}
               </span>
-            </div>
-            <div className="flex justify-between text-sm items-center">
-              <span className="text-slate-500">Status:</span>
-              <span className="flex items-center gap-1.5">
-                <span className={cn('h-2 w-2 rounded-full', currentConfig.dotColor)} />
-                <span className={cn('font-medium', currentConfig.textColor)}>
-                  {currentConfig.label}
-                </span>
-              </span>
-            </div>
+            </span>
           </div>
-        </>
+        </div>
       ) : (
         <div className="pt-3 space-y-1.5">
           <div className="flex justify-between text-sm">

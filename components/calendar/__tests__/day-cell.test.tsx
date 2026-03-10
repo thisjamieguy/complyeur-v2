@@ -25,8 +25,6 @@ function makeTripDay(overrides: Partial<ProcessedTripDay> = {}): ProcessedTripDa
     daysRemaining: 11,
     riskLevel: 'amber',
     isBreachDay: false,
-    currentDaysRemaining: 11,
-    currentRiskLevel: 'amber',
     ...overrides,
   }
 }
@@ -62,15 +60,13 @@ describe('DayCell', () => {
     expect(screen.getByText('11')).toBeInTheDocument()
   })
 
-  it('renders past trip days as neutral history and shows current planning context', () => {
+  it('renders past trip days as neutral history with recap copy', () => {
     const tripDay = makeTripDay({
       referenceDate: new Date('2026-03-08T00:00:00.000Z'),
       displayMode: 'historical',
       daysUsed: 85,
       daysRemaining: 5,
       riskLevel: 'red',
-      currentDaysRemaining: 7,
-      currentRiskLevel: 'red',
     })
 
     renderCell(tripDay)
@@ -82,10 +78,9 @@ describe('DayCell', () => {
     fireEvent.click(trigger)
 
     expect(screen.getByText('Historical trip')).toBeInTheDocument()
-    expect(screen.getByText('Current planning status')).toBeInTheDocument()
-    expect(screen.getByText('Critical')).toBeInTheDocument()
-    expect(screen.getByText('7')).toBeInTheDocument()
+    expect(screen.getByText('Trip day:')).toBeInTheDocument()
     expect(screen.queryByText('Status date:')).not.toBeInTheDocument()
+    expect(screen.queryByText('Current planning status')).not.toBeInTheDocument()
   })
 
   it('shows a later red day in the same trip as critical', () => {
