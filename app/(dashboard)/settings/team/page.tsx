@@ -2,6 +2,8 @@ import { Users } from 'lucide-react'
 import { listTeamMembersAndInvites } from './actions'
 import { TeamManagementClient } from './team-management-client'
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Team',
   description: 'Manage user access for your company account',

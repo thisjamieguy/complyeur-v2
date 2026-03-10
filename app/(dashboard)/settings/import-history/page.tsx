@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { getImportSessionsPaginated } from '../../import/actions';
 import { ImportHistoryList } from './import-history-list';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Import History',
   description: 'View your past import sessions and results',

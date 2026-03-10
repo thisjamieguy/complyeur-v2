@@ -3,6 +3,8 @@ import { loadSavedMappings } from '@/app/(dashboard)/import/actions';
 import { MappingsList } from './mappings-list';
 import { Skeleton } from '@/components/ui/skeleton';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Column Mappings',
   description: 'Manage your saved column mappings for data imports',
