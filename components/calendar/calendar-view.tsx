@@ -5,12 +5,11 @@ import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   calculateCompliance,
+  computeComplianceVectorOptimized,
   isSchengenCountry,
-  getComplianceAtDates,
   parseDateOnlyAsUTC,
+  type DailyCompliance,
   type Trip as ComplianceTrip,
-  type ComplianceResult,
-  type RiskLevel,
 } from '@/lib/compliance'
 import {
   addUtcDays,
@@ -130,27 +129,8 @@ export function CalendarView({ employees }: CalendarViewProps) {
         overlapsVisibleRange(trip.entryDate, trip.exitDate, startDate, endDate)
       )
 
-      const uniqueSchengenExitDates = Array.from(
-        new Map(
-          tripsInRange
-            .filter((trip) => trip.isSchengen)
-            .map((trip) => [toDateKey(trip.exitDate), trip.exitDate])
-        ).values()
-      )
-
-      const complianceAtExitDate: Map<string, ComplianceResult> =
-        uniqueSchengenExitDates.length > 0
-          ? getComplianceAtDates(complianceTrips, uniqueSchengenExitDates)
-          : new Map<string, ComplianceResult>()
-
       const processedTrips: ProcessedTrip[] = tripsInRange.map((trip) => {
         const duration = differenceInUtcDays(trip.exitDate, trip.entryDate) + 1
-        const tripCompliance = trip.isSchengen
-          ? complianceAtExitDate.get(toDateKey(trip.exitDate))
-          : undefined
-        const riskLevel: RiskLevel = trip.isSchengen
-          ? (tripCompliance?.riskLevel ?? 'green')
-          : 'green'
 
         return {
           id: trip.id,
@@ -158,15 +138,22 @@ export function CalendarView({ employees }: CalendarViewProps) {
           entryDate: trip.entryDate,
           exitDate: trip.exitDate,
           duration,
-          daysRemaining: tripCompliance?.daysRemaining ?? 90,
-          riskLevel,
           purpose: trip.purpose,
           isPrivate: trip.is_private,
           isSchengen: trip.isSchengen,
         }
       })
 
-      const dayMap = buildDayMap(processedTrips)
+      const complianceByDate: Map<string, DailyCompliance> = complianceTrips.length > 0
+        ? new Map(
+            computeComplianceVectorOptimized(complianceTrips, startDate, endDate, {
+              mode: 'audit',
+              referenceDate: endDate,
+            }).map((result) => [toDateKey(result.date), result])
+          )
+        : new Map()
+
+      const dayMap = buildDayMap(processedTrips, startDate, endDate, complianceByDate)
 
       return {
         id: employee.id,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { DailyCompliance } from '@/lib/compliance'
 import {
   buildDateRange,
   buildDayMap,
@@ -14,13 +15,30 @@ function makeTrip(overrides: Partial<ProcessedTrip> = {}): ProcessedTrip {
     entryDate: new Date('2026-02-01T00:00:00.000Z'),
     exitDate: new Date('2026-02-03T00:00:00.000Z'),
     duration: 3,
-    daysRemaining: 40,
-    riskLevel: 'amber',
     purpose: null,
     isPrivate: false,
     isSchengen: true,
     ...overrides,
   }
+}
+
+function makeCompliance(
+  date: string,
+  overrides: Partial<DailyCompliance> = {}
+): DailyCompliance {
+  return {
+    date: new Date(`${date}T00:00:00.000Z`),
+    daysUsed: 80,
+    daysRemaining: 10,
+    riskLevel: 'amber',
+    ...overrides,
+  }
+}
+
+function makeComplianceMap(
+  items: DailyCompliance[]
+): Map<string, DailyCompliance> {
+  return new Map(items.map((item) => [toDateKey(item.date), item]))
 }
 
 describe('calendar-view helpers', () => {
@@ -67,12 +85,24 @@ describe('calendar-view helpers', () => {
 
   it('builds day map with one entry per day', () => {
     const trip = makeTrip()
-    const dayMap = buildDayMap([trip])
+    const dayMap = buildDayMap(
+      [trip],
+      new Date('2026-02-01T00:00:00.000Z'),
+      new Date('2026-02-03T00:00:00.000Z'),
+      makeComplianceMap([
+        makeCompliance('2026-02-01', { daysUsed: 79, daysRemaining: 11, riskLevel: 'amber' }),
+        makeCompliance('2026-02-02', { daysUsed: 80, daysRemaining: 10, riskLevel: 'amber' }),
+        makeCompliance('2026-02-03', { daysUsed: 90, daysRemaining: 0, riskLevel: 'red' }),
+      ])
+    )
 
     expect(dayMap.size).toBe(3)
-    expect(dayMap.get('2026-02-01')?.id).toBe('trip-1')
-    expect(dayMap.get('2026-02-02')?.id).toBe('trip-1')
-    expect(dayMap.get('2026-02-03')?.id).toBe('trip-1')
+    expect(dayMap.get('2026-02-01')?.trip.id).toBe('trip-1')
+    expect(dayMap.get('2026-02-02')?.trip.id).toBe('trip-1')
+    expect(dayMap.get('2026-02-03')?.trip.id).toBe('trip-1')
+    expect(dayMap.get('2026-02-01')?.riskLevel).toBe('amber')
+    expect(dayMap.get('2026-02-02')?.riskLevel).toBe('amber')
+    expect(dayMap.get('2026-02-03')?.isBreachDay).toBe(true)
   })
 
   it('keeps first trip when overlap occurs on the same day', () => {
@@ -84,9 +114,42 @@ describe('calendar-view helpers', () => {
       duration: 3,
     })
 
-    const dayMap = buildDayMap([first, second])
+    const dayMap = buildDayMap(
+      [first, second],
+      new Date('2026-02-01T00:00:00.000Z'),
+      new Date('2026-02-04T00:00:00.000Z'),
+      makeComplianceMap([
+        makeCompliance('2026-02-01'),
+        makeCompliance('2026-02-02'),
+        makeCompliance('2026-02-03'),
+        makeCompliance('2026-02-04'),
+      ])
+    )
 
-    expect(dayMap.get('2026-02-02')?.id).toBe('first')
-    expect(dayMap.get('2026-02-04')?.id).toBe('second')
+    expect(dayMap.get('2026-02-02')?.trip.id).toBe('first')
+    expect(dayMap.get('2026-02-04')?.trip.id).toBe('second')
+  })
+
+  it('uses day-specific compliance instead of trip-end status for the whole trip', () => {
+    const trip = makeTrip({
+      entryDate: new Date('2026-02-10T00:00:00.000Z'),
+      exitDate: new Date('2026-02-12T00:00:00.000Z'),
+      duration: 3,
+    })
+
+    const dayMap = buildDayMap(
+      [trip],
+      new Date('2026-02-10T00:00:00.000Z'),
+      new Date('2026-02-12T00:00:00.000Z'),
+      makeComplianceMap([
+        makeCompliance('2026-02-10', { daysUsed: 74, daysRemaining: 16, riskLevel: 'green' }),
+        makeCompliance('2026-02-11', { daysUsed: 75, daysRemaining: 15, riskLevel: 'amber' }),
+        makeCompliance('2026-02-12', { daysUsed: 90, daysRemaining: 0, riskLevel: 'red' }),
+      ])
+    )
+
+    expect(dayMap.get('2026-02-10')?.riskLevel).toBe('green')
+    expect(dayMap.get('2026-02-11')?.riskLevel).toBe('amber')
+    expect(dayMap.get('2026-02-12')?.riskLevel).toBe('red')
   })
 })

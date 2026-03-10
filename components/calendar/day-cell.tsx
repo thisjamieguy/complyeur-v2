@@ -9,13 +9,13 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { TripPopover } from './trip-popover'
-import type { ProcessedTrip } from './types'
+import type { ProcessedTripDay } from './types'
 
 /** Fixed height for each grid row */
 export const GRID_ROW_HEIGHT = 32
 
 interface DayCellProps {
-  trip: ProcessedTrip | undefined
+  tripDay: ProcessedTripDay | undefined
   date: Date
   dayWidth: number
   isWeekend: boolean
@@ -73,7 +73,7 @@ const nonSchengenTripStyles = {
  * Shows country code when employee is traveling, empty otherwise.
  */
 export const DayCell = memo(function DayCell({
-  trip,
+  tripDay,
   date,
   dayWidth,
   isWeekend,
@@ -86,7 +86,8 @@ export const DayCell = memo(function DayCell({
   isTripStart,
   isTripEnd,
 }: DayCellProps) {
-  const showCountryLabel = Boolean(trip && isTripStart)
+  const trip = tripDay?.trip
+  const showCountryLabel = Boolean(tripDay && isTripStart)
   const cellContent = showCountryLabel
     ? trip?.isPrivate
       ? '--'
@@ -114,7 +115,7 @@ export const DayCell = memo(function DayCell({
 
   const tripStyles = trip
     ? trip.isSchengen
-      ? schengenTripStyles[trip.riskLevel]
+      ? schengenTripStyles[tripDay?.riskLevel ?? 'green']
       : nonSchengenTripStyles
     : null
 
@@ -158,7 +159,7 @@ export const DayCell = memo(function DayCell({
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-4" align="center" side="top">
-        <TripPopover trip={trip} />
+        <TripPopover tripDay={tripDay!} />
       </PopoverContent>
     </Popover>
   )

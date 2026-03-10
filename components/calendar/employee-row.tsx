@@ -23,23 +23,27 @@ export const EmployeeRow = memo(function EmployeeRow({
   dayWidth,
   hoveredEmployeeId,
 }: EmployeeRowProps) {
-  const tripByDate = dateMeta.map((dm) => employee.dayMap.get(dm.key))
+  const tripDayByDate = dateMeta.map((dm) => employee.dayMap.get(dm.key))
   const isRowHovered = hoveredEmployeeId === employee.id
 
   return (
     <div className="flex" style={{ height: GRID_ROW_HEIGHT }}>
       {dateMeta.map((dm, index) => {
-        const trip = tripByDate[index]
-        const prevTrip = index > 0 ? tripByDate[index - 1] : undefined
+        const tripDay = tripDayByDate[index]
+        const prevTripDay = index > 0 ? tripDayByDate[index - 1] : undefined
         const nextTrip =
-          index < tripByDate.length - 1 ? tripByDate[index + 1] : undefined
-        const isTripStart = Boolean(trip && (!prevTrip || prevTrip.id !== trip.id))
-        const isTripEnd = Boolean(trip && (!nextTrip || nextTrip.id !== trip.id))
+          index < tripDayByDate.length - 1 ? tripDayByDate[index + 1] : undefined
+        const isTripStart = Boolean(
+          tripDay && (!prevTripDay || prevTripDay.trip.id !== tripDay.trip.id)
+        )
+        const isTripEnd = Boolean(
+          tripDay && (!nextTrip || nextTrip.trip.id !== tripDay.trip.id)
+        )
 
         return (
           <DayCell
             key={dm.key}
-            trip={trip}
+            tripDay={tripDay}
             date={dm.date}
             dayWidth={dayWidth}
             isWeekend={dm.isWeekend}

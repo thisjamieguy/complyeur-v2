@@ -3,18 +3,10 @@
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import type { RiskLevel } from '@/lib/compliance'
+import type { ProcessedTripDay } from './types'
 
 interface TripPopoverProps {
-  trip: {
-    country: string
-    entryDate: Date
-    exitDate: Date
-    duration: number
-    daysRemaining: number
-    riskLevel: RiskLevel
-    purpose: string | null
-    isPrivate: boolean
-  }
+  tripDay: ProcessedTripDay
 }
 
 const riskConfig = {
@@ -59,8 +51,10 @@ function getCountryFlag(countryCode: string): string {
 /**
  * Popover content showing trip details
  */
-export function TripPopover({ trip }: TripPopoverProps) {
-  const config = riskConfig[trip.riskLevel]
+export function TripPopover({ tripDay }: TripPopoverProps) {
+  const trip = tripDay.trip
+  const displayRiskLevel: RiskLevel = tripDay.isBreachDay ? 'breach' : tripDay.riskLevel
+  const config = riskConfig[displayRiskLevel]
   const flag = getCountryFlag(trip.country)
   const displayCountry = trip.isPrivate ? 'Private Trip' : trip.country
 
@@ -97,9 +91,15 @@ export function TripPopover({ trip }: TripPopoverProps) {
       {/* Compliance status */}
       <div className="pt-3 space-y-1.5">
         <div className="flex justify-between text-sm">
+          <span className="text-slate-500">Status date:</span>
+          <span className="text-slate-700">
+            {format(tripDay.referenceDate, 'MMM d, yyyy')}
+          </span>
+        </div>
+        <div className="flex justify-between text-sm">
           <span className="text-slate-500">Days remaining:</span>
           <span className={cn('font-medium', config.textColor)}>
-            {trip.daysRemaining}
+            {tripDay.daysRemaining}
           </span>
         </div>
         <div className="flex justify-between text-sm items-center">

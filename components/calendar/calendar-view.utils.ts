@@ -1,4 +1,5 @@
-import type { ProcessedTrip } from './types'
+import type { DailyCompliance } from '@/lib/compliance'
+import type { ProcessedTrip, ProcessedTripDay } from './types'
 
 /** Milliseconds in one UTC day */
 const MS_PER_DAY = 24 * 60 * 60 * 1000
@@ -36,18 +37,43 @@ export function buildDateRange(startDate: Date, endDate: Date): Date[] {
 /**
  * Build day map for O(1) day-cell lookups.
  */
-export function buildDayMap(trips: ProcessedTrip[]): Map<string, ProcessedTrip> {
-  const dayMap = new Map<string, ProcessedTrip>()
+export function buildDayMap(
+  trips: ProcessedTrip[],
+  startDate: Date,
+  endDate: Date,
+  complianceByDate: Map<string, DailyCompliance>
+): Map<string, ProcessedTripDay> {
+  const dayMap = new Map<string, ProcessedTripDay>()
+  const startTime = startDate.getTime()
+  const endTime = endDate.getTime()
 
   for (const trip of trips) {
-    for (let ts = trip.entryDate.getTime(); ts <= trip.exitDate.getTime(); ts += MS_PER_DAY) {
-      const key = toDateKey(new Date(ts))
+    const visibleStart = Math.max(trip.entryDate.getTime(), startTime)
+    const visibleEnd = Math.min(trip.exitDate.getTime(), endTime)
+
+    if (visibleStart > visibleEnd) {
+      continue
+    }
+
+    for (let ts = visibleStart; ts <= visibleEnd; ts += MS_PER_DAY) {
+      const referenceDate = new Date(ts)
+      const key = toDateKey(referenceDate)
       if (!dayMap.has(key)) {
-        dayMap.set(key, trip)
+        const dayCompliance = trip.isSchengen
+          ? complianceByDate.get(key)
+          : undefined
+
+        dayMap.set(key, {
+          trip,
+          referenceDate,
+          daysUsed: dayCompliance?.daysUsed ?? 0,
+          daysRemaining: dayCompliance?.daysRemaining ?? 90,
+          riskLevel: dayCompliance?.riskLevel ?? 'green',
+          isBreachDay: (dayCompliance?.daysUsed ?? 0) >= 90,
+        })
       }
     }
   }
 
   return dayMap
 }
-
