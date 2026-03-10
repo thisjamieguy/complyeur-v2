@@ -1,5 +1,7 @@
 import type { RiskLevel } from '@/lib/compliance'
 
+export type TripDayDisplayMode = 'historical' | 'planning'
+
 export interface ProcessedTrip {
   id: string
   country: string
@@ -14,10 +16,13 @@ export interface ProcessedTrip {
 export interface ProcessedTripDay {
   trip: ProcessedTrip
   referenceDate: Date
+  displayMode: TripDayDisplayMode
   daysUsed: number
   daysRemaining: number
   riskLevel: RiskLevel
   isBreachDay: boolean
+  currentDaysRemaining: number
+  currentRiskLevel: RiskLevel
 }
 
 export interface ProcessedEmployee {

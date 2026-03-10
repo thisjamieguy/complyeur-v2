@@ -42,7 +42,7 @@ describe('CalendarView', () => {
     vi.useRealTimers()
   })
 
-  it('keeps earlier days compliant and only colours trailing days red within the same trip', () => {
+  it('marks past days as historical while keeping planning risk for today and future dates', () => {
     render(
       <CalendarView
         employees={[
@@ -75,14 +75,23 @@ describe('CalendarView', () => {
     )
 
     const [employee] = getDesktopEmployees()
+    const historyDay = employee.dayMap.get('2026-02-10')
     const startDay = employee.dayMap.get('2026-03-10')
     const preBreachDay = employee.dayMap.get('2026-03-20')
     const breachDay = employee.dayMap.get('2026-03-21')
+
+    expect(historyDay?.trip.id).toBe('history-1')
+    expect(historyDay?.displayMode).toBe('historical')
+    expect(historyDay?.currentDaysRemaining).toBe(employee.currentDaysRemaining)
+    expect(historyDay?.currentRiskLevel).toBe(employee.currentRiskLevel)
 
     expect(startDay?.trip.id).toBe('current-1')
     expect(preBreachDay?.trip.id).toBe('current-1')
     expect(breachDay?.trip.id).toBe('current-1')
 
+    expect(startDay?.displayMode).toBe('planning')
+    expect(preBreachDay?.displayMode).toBe('planning')
+    expect(breachDay?.displayMode).toBe('planning')
     expect(startDay?.riskLevel).toBe('amber')
     expect(startDay?.isBreachDay).toBe(false)
     expect(preBreachDay?.riskLevel).toBe('amber')

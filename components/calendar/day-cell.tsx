@@ -60,6 +60,14 @@ const schengenTripStyles = {
   },
 } as const
 
+const historicalTripStyles = {
+  base: 'bg-slate-100',
+  weekend: 'bg-slate-200/60',
+  text: 'text-slate-600',
+  hover: 'hover:bg-slate-200/80',
+  border: 'border-slate-300',
+} as const
+
 const nonSchengenTripStyles = {
   base: 'bg-slate-100',
   weekend: 'bg-slate-200/60',
@@ -114,7 +122,9 @@ export const DayCell = memo(function DayCell({
   )
 
   const tripStyles = trip
-    ? trip.isSchengen
+    ? tripDay?.displayMode === 'historical'
+      ? historicalTripStyles
+      : trip.isSchengen
       ? schengenTripStyles[tripDay?.riskLevel ?? 'green']
       : nonSchengenTripStyles
     : null

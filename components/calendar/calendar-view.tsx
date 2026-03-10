@@ -153,7 +153,11 @@ export function CalendarView({ employees }: CalendarViewProps) {
           )
         : new Map()
 
-      const dayMap = buildDayMap(processedTrips, startDate, endDate, complianceByDate)
+      const dayMap = buildDayMap(processedTrips, startDate, endDate, complianceByDate, {
+        today,
+        currentDaysRemaining: currentCompliance.daysRemaining,
+        currentRiskLevel: currentCompliance.riskLevel,
+      })
 
       return {
         id: employee.id,

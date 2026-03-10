@@ -20,10 +20,13 @@ function makeTripDay(overrides: Partial<ProcessedTripDay> = {}): ProcessedTripDa
       isSchengen: true,
     },
     referenceDate: new Date('2026-03-10T00:00:00.000Z'),
+    displayMode: 'planning',
     daysUsed: 79,
     daysRemaining: 11,
     riskLevel: 'amber',
     isBreachDay: false,
+    currentDaysRemaining: 11,
+    currentRiskLevel: 'amber',
     ...overrides,
   }
 }
@@ -57,6 +60,32 @@ describe('DayCell', () => {
     expect(screen.getAllByText('Mar 10, 2026')).toHaveLength(2)
     expect(screen.getByText('Warning')).toBeInTheDocument()
     expect(screen.getByText('11')).toBeInTheDocument()
+  })
+
+  it('renders past trip days as neutral history and shows current planning context', () => {
+    const tripDay = makeTripDay({
+      referenceDate: new Date('2026-03-08T00:00:00.000Z'),
+      displayMode: 'historical',
+      daysUsed: 85,
+      daysRemaining: 5,
+      riskLevel: 'red',
+      currentDaysRemaining: 7,
+      currentRiskLevel: 'red',
+    })
+
+    renderCell(tripDay)
+
+    const trigger = screen.getByRole('button', { name: /FR trip on Mar 8/i })
+    expect(trigger).toHaveClass('bg-slate-100')
+    expect(trigger).not.toHaveClass('bg-red-100')
+
+    fireEvent.click(trigger)
+
+    expect(screen.getByText('Historical trip')).toBeInTheDocument()
+    expect(screen.getByText('Current planning status')).toBeInTheDocument()
+    expect(screen.getByText('Critical')).toBeInTheDocument()
+    expect(screen.getByText('7')).toBeInTheDocument()
+    expect(screen.queryByText('Status date:')).not.toBeInTheDocument()
   })
 
   it('shows a later red day in the same trip as critical', () => {

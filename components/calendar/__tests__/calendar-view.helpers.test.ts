@@ -41,6 +41,19 @@ function makeComplianceMap(
   return new Map(items.map((item) => [toDateKey(item.date), item]))
 }
 
+function makeDayMapContext(overrides: {
+  today?: Date
+  currentDaysRemaining?: number
+  currentRiskLevel?: 'green' | 'amber' | 'red' | 'breach'
+} = {}) {
+  return {
+    today: new Date('2026-02-02T00:00:00.000Z'),
+    currentDaysRemaining: 10,
+    currentRiskLevel: 'amber' as const,
+    ...overrides,
+  }
+}
+
 describe('calendar-view helpers', () => {
   it('creates stable ISO date keys', () => {
     expect(toDateKey(new Date('2026-02-03T00:00:00.000Z'))).toBe('2026-02-03')
@@ -93,16 +106,21 @@ describe('calendar-view helpers', () => {
         makeCompliance('2026-02-01', { daysUsed: 79, daysRemaining: 11, riskLevel: 'amber' }),
         makeCompliance('2026-02-02', { daysUsed: 80, daysRemaining: 10, riskLevel: 'amber' }),
         makeCompliance('2026-02-03', { daysUsed: 90, daysRemaining: 0, riskLevel: 'red' }),
-      ])
+      ]),
+      makeDayMapContext()
     )
 
     expect(dayMap.size).toBe(3)
     expect(dayMap.get('2026-02-01')?.trip.id).toBe('trip-1')
     expect(dayMap.get('2026-02-02')?.trip.id).toBe('trip-1')
     expect(dayMap.get('2026-02-03')?.trip.id).toBe('trip-1')
+    expect(dayMap.get('2026-02-01')?.displayMode).toBe('historical')
+    expect(dayMap.get('2026-02-02')?.displayMode).toBe('planning')
     expect(dayMap.get('2026-02-01')?.riskLevel).toBe('amber')
     expect(dayMap.get('2026-02-02')?.riskLevel).toBe('amber')
     expect(dayMap.get('2026-02-03')?.isBreachDay).toBe(true)
+    expect(dayMap.get('2026-02-01')?.currentDaysRemaining).toBe(10)
+    expect(dayMap.get('2026-02-01')?.currentRiskLevel).toBe('amber')
   })
 
   it('keeps first trip when overlap occurs on the same day', () => {
@@ -123,7 +141,8 @@ describe('calendar-view helpers', () => {
         makeCompliance('2026-02-02'),
         makeCompliance('2026-02-03'),
         makeCompliance('2026-02-04'),
-      ])
+      ]),
+      makeDayMapContext()
     )
 
     expect(dayMap.get('2026-02-02')?.trip.id).toBe('first')
@@ -145,9 +164,12 @@ describe('calendar-view helpers', () => {
         makeCompliance('2026-02-10', { daysUsed: 74, daysRemaining: 16, riskLevel: 'green' }),
         makeCompliance('2026-02-11', { daysUsed: 75, daysRemaining: 15, riskLevel: 'amber' }),
         makeCompliance('2026-02-12', { daysUsed: 90, daysRemaining: 0, riskLevel: 'red' }),
-      ])
+      ]),
+      makeDayMapContext({ today: new Date('2026-02-11T00:00:00.000Z') })
     )
 
+    expect(dayMap.get('2026-02-10')?.displayMode).toBe('historical')
+    expect(dayMap.get('2026-02-11')?.displayMode).toBe('planning')
     expect(dayMap.get('2026-02-10')?.riskLevel).toBe('green')
     expect(dayMap.get('2026-02-11')?.riskLevel).toBe('amber')
     expect(dayMap.get('2026-02-12')?.riskLevel).toBe('red')
