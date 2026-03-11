@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import { Montserrat, Open_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
@@ -11,16 +11,18 @@ import "./globals.css";
 // Import CookieYes types for global window augmentation
 import "@/lib/cookieyes";
 
-const openSans = Open_Sans({
-  subsets: ["latin"],
+const openSans = localFont({
+  src: [{ path: "./fonts/open-sans-latin-var.woff2", weight: "300 800", style: "normal" }],
   variable: "--font-body",
   display: "swap",
+  fallback: ["Segoe UI", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
 });
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
+const montserrat = localFont({
+  src: [{ path: "./fonts/montserrat-latin-var.woff2", weight: "100 900", style: "normal" }],
   variable: "--font-heading",
   display: "swap",
+  fallback: ["Avenir Next", "Segoe UI", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"],
 });
 
 export const viewport: Viewport = {
