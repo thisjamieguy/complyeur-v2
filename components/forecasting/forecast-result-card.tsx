@@ -73,7 +73,7 @@ export function ForecastResultCard({
 
         <div>
           <div className="text-xs font-medium uppercase text-slate-500">
-            Days After Trip
+            Peak During Trip
           </div>
           <div
             className={cn(
@@ -122,8 +122,9 @@ export function ForecastResultCard({
                 This trip exceeds the 90-day limit
               </div>
               <div className="text-sm text-red-700">
-                The employee will be {Math.abs(result.daysRemainingAfterTrip)}{' '}
-                days over the limit after this trip.
+                {result.firstViolationDay
+                  ? `The employee exceeds the limit on day ${result.firstViolationDay} of this trip (peak: ${result.daysAfterTrip}/90 days).`
+                  : `The employee will be ${Math.abs(result.daysRemainingAfterTrip)} days over the limit during this trip.`}
               </div>
               {result.compliantFromDate && (
                 <div className="mt-2 text-sm text-red-700">
