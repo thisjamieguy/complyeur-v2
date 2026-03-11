@@ -218,7 +218,7 @@ export function calculateFutureJobCompliance(
       { ...baseConfig, referenceDate: tripExitDate }
     );
 
-    let peakDays = 0;
+    let peakDays = daysUsedBeforeTrip;
     for (let i = 0; i < tripDuration; i++) {
       const checkDate = addUtcDays(tripEntryDate, i);
       const dailyUsed = daysUsedInWindow(presenceWithTrip, checkDate, baseConfig);
@@ -350,13 +350,31 @@ export function calculateCompliantFromDate(
       referenceDate: checkDate,
     };
 
-    const presence = presenceDays(tripsBeforeCheck, complianceConfig);
-    const daysUsedBefore = daysUsedInWindow(presence, checkDate, complianceConfig);
+    // Build presence including all days of the shifted trip starting at checkDate
+    const shiftedTripEnd = addUtcDays(checkDate, tripDuration - 1);
+    const shiftedTripAsCompliance: ComplianceTrip = {
+      id: futureTrip.id,
+      entryDate: checkDate,
+      exitDate: shiftedTripEnd,
+      country: futureTrip.country,
+    };
+    const presenceWithShiftedTrip = presenceDays(
+      [...tripsBeforeCheck, shiftedTripAsCompliance],
+      { ...complianceConfig, referenceDate: shiftedTripEnd }
+    );
 
-    // Check if trip would be compliant starting on this date
-    const daysAfterTrip = daysUsedBefore + tripDuration;
+    // The shifted trip is compliant only if no single day during it hits the limit
+    let shiftedTripCompliant = true;
+    for (let d = 0; d < tripDuration; d++) {
+      const dayToCheck = addUtcDays(checkDate, d);
+      const dailyUsed = daysUsedInWindow(presenceWithShiftedTrip, dayToCheck, complianceConfig);
+      if (dailyUsed >= limit) {
+        shiftedTripCompliant = false;
+        break;
+      }
+    }
 
-    if (daysAfterTrip < limit) {
+    if (shiftedTripCompliant) {
       return checkDate;
     }
   }
