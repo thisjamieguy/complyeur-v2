@@ -71,6 +71,7 @@ export const GanttChart = memo(function GanttChart({
   dates,
 }: GanttChartProps) {
   const [overscan, setOverscan] = useState(BASE_OVERSCAN)
+  const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(null)
   const mountStartedAtRef = useRef<number>(
     typeof performance !== 'undefined' ? performance.now() : 0
   )
@@ -323,8 +324,17 @@ export const GanttChart = memo(function GanttChart({
                 <div
                   key={employee.id}
                   className={cn(
-                    'absolute left-0 w-full px-3 border-b border-slate-100 bg-slate-50/60 flex items-center transition-colors hover:bg-sky-50/60'
+                    'absolute left-0 w-full px-3 border-b border-slate-100 flex items-center transition-colors',
+                    hoveredEmployeeId === employee.id
+                      ? 'bg-sky-50/60'
+                      : 'bg-slate-50/60 hover:bg-sky-50/60'
                   )}
+                  onMouseEnter={() => setHoveredEmployeeId(employee.id)}
+                  onMouseLeave={() => {
+                    setHoveredEmployeeId((current) =>
+                      current === employee.id ? null : current
+                    )
+                  }}
                   style={{
                     height: GRID_ROW_HEIGHT,
                     transform: `translate3d(0, ${virtualRow.start}px, 0)`,
@@ -365,6 +375,12 @@ export const GanttChart = memo(function GanttChart({
                     <div
                       key={employee.id}
                       className="absolute left-0 w-full border-b border-slate-100"
+                      onMouseEnter={() => setHoveredEmployeeId(employee.id)}
+                      onMouseLeave={() => {
+                        setHoveredEmployeeId((current) =>
+                          current === employee.id ? null : current
+                        )
+                      }}
                       style={{
                         height: GRID_ROW_HEIGHT,
                         transform: `translate3d(0, ${virtualRow.start}px, 0)`,
@@ -375,6 +391,7 @@ export const GanttChart = memo(function GanttChart({
                         employee={employee}
                         dateMeta={dateMeta}
                         dayWidth={DAY_WIDTH}
+                        isHovered={hoveredEmployeeId === employee.id}
                       />
                     </div>
                   )

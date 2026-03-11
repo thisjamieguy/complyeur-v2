@@ -18,6 +18,7 @@ interface DayCellProps {
   tripDay: ProcessedTripDay | undefined
   date: Date
   dayWidth: number
+  isRowHovered: boolean
   isWeekend: boolean
   isToday: boolean
   isMonthStart: boolean
@@ -83,6 +84,7 @@ export const DayCell = memo(function DayCell({
   tripDay,
   date,
   dayWidth,
+  isRowHovered,
   isWeekend,
   isToday,
   isMonthStart,
@@ -108,11 +110,11 @@ export const DayCell = memo(function DayCell({
     !trip && isWeekend && !isToday && !isInRollingWindow && 'bg-slate-50',
     !trip && isWeekend && !isToday && isInRollingWindow && 'bg-sky-50/55',
     !trip && isToday && 'bg-blue-50',
-    !trip && 'group-hover/employee-row:bg-slate-100/70',
+    !trip && isRowHovered && 'bg-slate-100/70',
     isMonthStart && !(trip && !isTripStart) && 'border-l border-l-slate-300/80',
     // Today's travel cells should preserve trip color while still standing out
     trip && isToday && 'ring-1 ring-inset ring-blue-300',
-    trip && 'group-hover/employee-row:ring-1 group-hover/employee-row:ring-inset group-hover/employee-row:ring-slate-200/80',
+    trip && isRowHovered && 'ring-1 ring-inset ring-slate-200/80',
     // Make trip bars solid — no internal borders
     trip && !isTripEnd && 'border-r-0',
     !trip && isRollingWindowStart && 'border-l border-l-sky-400',

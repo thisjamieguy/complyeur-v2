@@ -11,6 +11,7 @@ interface EmployeeRowProps {
   employee: ProcessedEmployee
   dateMeta: DateMeta[]
   dayWidth: number
+  isHovered: boolean
 }
 
 /**
@@ -22,6 +23,7 @@ export const EmployeeRow = memo(function EmployeeRow({
   employee,
   dateMeta,
   dayWidth,
+  isHovered,
 }: EmployeeRowProps) {
   const tripDayByDate = useMemo(() => {
     if (dateMeta.length === 0) {
@@ -43,7 +45,7 @@ export const EmployeeRow = memo(function EmployeeRow({
   }, [dateMeta, employee.complianceByDate, employee.trips])
 
   return (
-    <div className="group/employee-row flex" style={{ height: GRID_ROW_HEIGHT }}>
+    <div className="flex" style={{ height: GRID_ROW_HEIGHT }}>
       {dateMeta.map((dm, index) => {
         const tripDay = tripDayByDate[index]
         const prevTripDay = index > 0 ? tripDayByDate[index - 1] : undefined
@@ -62,6 +64,7 @@ export const EmployeeRow = memo(function EmployeeRow({
             tripDay={tripDay}
             date={dm.date}
             dayWidth={dayWidth}
+            isRowHovered={isHovered}
             isWeekend={dm.isWeekend}
             isToday={dm.isToday}
             isMonthStart={dm.isMonthStart}

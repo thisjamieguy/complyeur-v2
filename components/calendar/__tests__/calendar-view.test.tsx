@@ -4,6 +4,7 @@
 
 import { render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { calculateCompliance, parseDateOnlyAsUTC } from '@/lib/compliance'
 import { buildDayMap } from '../calendar-view.utils'
 
 const dynamicProps: Array<Record<string, unknown>> = []
@@ -72,6 +73,15 @@ describe('CalendarView', () => {
                 is_private: false,
                 ghosted: false,
               },
+              {
+                id: 'future-1',
+                country: 'ES',
+                entry_date: '2026-04-05',
+                exit_date: '2026-04-12',
+                purpose: 'Conference',
+                is_private: false,
+                ghosted: false,
+              },
             ],
           },
         ]}
@@ -111,5 +121,32 @@ describe('CalendarView', () => {
     expect(preBreachDay?.isBreachDay).toBe(false)
     expect(breachDay?.riskLevel).toBe('red')
     expect(breachDay?.isBreachDay).toBe(true)
+
+    const expectedCurrent = calculateCompliance(
+      [
+        {
+          country: 'FR',
+          entryDate: parseDateOnlyAsUTC('2025-12-01'),
+          exitDate: parseDateOnlyAsUTC('2026-02-16'),
+        },
+        {
+          country: 'DE',
+          entryDate: parseDateOnlyAsUTC('2026-03-10'),
+          exitDate: parseDateOnlyAsUTC('2026-03-21'),
+        },
+        {
+          country: 'ES',
+          entryDate: parseDateOnlyAsUTC('2026-04-05'),
+          exitDate: parseDateOnlyAsUTC('2026-04-12'),
+        },
+      ],
+      {
+        mode: 'audit',
+        referenceDate: new Date('2026-03-10T00:00:00.000Z'),
+      }
+    )
+
+    expect(employee.currentDaysRemaining).toBe(expectedCurrent.daysRemaining)
+    expect(employee.currentRiskLevel).toBe(expectedCurrent.riskLevel)
   })
 })

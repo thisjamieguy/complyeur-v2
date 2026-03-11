@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
+  calculateCompliance,
   computeComplianceVectorOptimized,
   isSchengenCountry,
   parseDateOnlyAsUTC,
@@ -98,7 +99,6 @@ export function CalendarView({ employees }: CalendarViewProps) {
   // Process employees and their trips with per-employee batched compliance work.
   const processedEmployees = useMemo((): ProcessedEmployee[] => {
     const today = toUTCMidnight(new Date())
-    const todayKey = toDateKey(today)
 
     return employees.map((employee) => {
       const parsedTrips: ParsedTrip[] = employee.trips
@@ -118,6 +118,13 @@ export function CalendarView({ employees }: CalendarViewProps) {
         .filter((trip) => trip.isSchengen)
         .map(toComplianceTrip)
 
+      const currentCompliance = complianceTrips.length > 0
+        ? calculateCompliance(complianceTrips, {
+            mode: 'audit',
+            referenceDate: today,
+          })
+        : null
+
       const complianceByDate = complianceTrips.length > 0
         ? new Map(
             computeComplianceVectorOptimized(complianceTrips, startDate, endDate, {
@@ -127,7 +134,6 @@ export function CalendarView({ employees }: CalendarViewProps) {
           )
         : new Map()
 
-      const currentCompliance = complianceByDate.get(todayKey)
       const processedTrips: ProcessedTrip[] = parsedTrips
         .filter((trip) =>
           overlapsVisibleRange(trip.entryDate, trip.exitDate, startDate, endDate)

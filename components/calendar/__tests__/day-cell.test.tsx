@@ -29,12 +29,18 @@ function makeTripDay(overrides: Partial<ProcessedTripDay> = {}): ProcessedTripDa
   }
 }
 
-function renderCell(tripDay: ProcessedTripDay) {
+function renderCell(
+  tripDay: ProcessedTripDay,
+  options: {
+    isRowHovered?: boolean
+  } = {}
+) {
   return render(
     <DayCell
       tripDay={tripDay}
       date={tripDay.referenceDate}
       dayWidth={32}
+      isRowHovered={options.isRowHovered ?? false}
       isWeekend={false}
       isToday={false}
       isMonthStart={false}
@@ -113,5 +119,13 @@ describe('DayCell', () => {
 
     expect(screen.getByText('Breach')).toBeInTheDocument()
     expect(screen.getByText('0')).toBeInTheDocument()
+  })
+
+  it('applies row hover styling when the frozen employee column is hovered', () => {
+    renderCell(makeTripDay(), { isRowHovered: true })
+
+    expect(
+      screen.getByRole('button', { name: /FR trip on Mar 10/i })
+    ).toHaveClass('ring-slate-200/80')
   })
 })
