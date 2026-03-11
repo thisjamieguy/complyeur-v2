@@ -41,7 +41,6 @@ function renderCell(tripDay: ProcessedTripDay) {
       isInRollingWindow={false}
       isRollingWindowStart={false}
       isRollingWindowEnd={false}
-      isRowHovered={false}
       isTripStart
       isTripEnd={false}
     />

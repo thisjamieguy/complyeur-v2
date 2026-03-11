@@ -71,7 +71,6 @@ export const GanttChart = memo(function GanttChart({
   dates,
 }: GanttChartProps) {
   const [overscan, setOverscan] = useState(BASE_OVERSCAN)
-  const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(null)
   const mountStartedAtRef = useRef<number>(
     typeof performance !== 'undefined' ? performance.now() : 0
   )
@@ -267,10 +266,6 @@ export const GanttChart = memo(function GanttChart({
   const virtualRows = virtualizer.getVirtualItems()
   const visibleRows = virtualRows.length
 
-  const clearHover = () => {
-    setHoveredEmployeeId(null)
-  }
-
   useEffect(() => {
     emitCalendarMetric('calendar_mount', {
       employees: employees.length,
@@ -320,7 +315,6 @@ export const GanttChart = memo(function GanttChart({
           data-testid="calendar-names-viewport"
           className="overflow-y-hidden overflow-x-hidden"
           style={{ maxHeight: MAX_HEIGHT, contain: 'layout paint' }}
-          onMouseLeave={clearHover}
         >
           <div className="relative" style={{ height: totalHeight }}>
             {virtualRows.map((virtualRow) => {
@@ -329,15 +323,13 @@ export const GanttChart = memo(function GanttChart({
                 <div
                   key={employee.id}
                   className={cn(
-                    'absolute left-0 w-full px-3 border-b border-slate-100 bg-slate-50/60 flex items-center transition-colors',
-                    hoveredEmployeeId === employee.id && 'bg-sky-50/60'
+                    'absolute left-0 w-full px-3 border-b border-slate-100 bg-slate-50/60 flex items-center transition-colors hover:bg-sky-50/60'
                   )}
                   style={{
                     height: GRID_ROW_HEIGHT,
                     transform: `translate3d(0, ${virtualRow.start}px, 0)`,
                     willChange: 'transform',
                   }}
-                  onMouseEnter={() => setHoveredEmployeeId(employee.id)}
                 >
                   <span className="text-sm font-medium text-slate-700 truncate">
                     {employee.name}
@@ -365,7 +357,6 @@ export const GanttChart = memo(function GanttChart({
               data-testid="calendar-timeline-viewport"
               className="overflow-y-auto bg-white"
               style={{ maxHeight: MAX_HEIGHT, contain: 'layout paint' }}
-              onMouseLeave={clearHover}
             >
               <div className="relative" style={{ height: totalHeight }}>
                 {virtualRows.map((virtualRow) => {
@@ -379,13 +370,11 @@ export const GanttChart = memo(function GanttChart({
                         transform: `translate3d(0, ${virtualRow.start}px, 0)`,
                         willChange: 'transform',
                       }}
-                      onMouseEnter={() => setHoveredEmployeeId(employee.id)}
                     >
                       <EmployeeRow
                         employee={employee}
                         dateMeta={dateMeta}
                         dayWidth={DAY_WIDTH}
-                        hoveredEmployeeId={hoveredEmployeeId}
                       />
                     </div>
                   )

@@ -1,4 +1,4 @@
-import type { RiskLevel } from '@/lib/compliance'
+import type { DailyCompliance, RiskLevel } from '@/lib/compliance'
 
 export type TripDayDisplayMode = 'historical' | 'planning'
 
@@ -27,7 +27,7 @@ export interface ProcessedEmployee {
   id: string
   name: string
   trips: ProcessedTrip[]
-  dayMap: Map<string, ProcessedTripDay>
+  complianceByDate: Map<string, DailyCompliance>
   currentDaysRemaining: number
   currentRiskLevel: RiskLevel
   tripsInRange: number

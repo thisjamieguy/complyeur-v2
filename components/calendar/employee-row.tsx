@@ -1,6 +1,8 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
+import { toUTCMidnight } from '@/lib/compliance/date-utils'
+import { buildDayMap } from './calendar-view.utils'
 import { DayCell, GRID_ROW_HEIGHT } from './day-cell'
 import type { ProcessedEmployee } from './types'
 import type { DateMeta } from './gantt-chart'
@@ -9,7 +11,6 @@ interface EmployeeRowProps {
   employee: ProcessedEmployee
   dateMeta: DateMeta[]
   dayWidth: number
-  hoveredEmployeeId: string | null
 }
 
 /**
@@ -21,13 +22,28 @@ export const EmployeeRow = memo(function EmployeeRow({
   employee,
   dateMeta,
   dayWidth,
-  hoveredEmployeeId,
 }: EmployeeRowProps) {
-  const tripDayByDate = dateMeta.map((dm) => employee.dayMap.get(dm.key))
-  const isRowHovered = hoveredEmployeeId === employee.id
+  const tripDayByDate = useMemo(() => {
+    if (dateMeta.length === 0) {
+      return []
+    }
+
+    const startDate = dateMeta[0].date
+    const endDate = dateMeta[dateMeta.length - 1].date
+    const today = dateMeta.find((dm) => dm.isToday)?.date ?? toUTCMidnight(new Date())
+    const dayMap = buildDayMap(
+      employee.trips,
+      startDate,
+      endDate,
+      employee.complianceByDate,
+      { today }
+    )
+
+    return dateMeta.map((dm) => dayMap.get(dm.key))
+  }, [dateMeta, employee.complianceByDate, employee.trips])
 
   return (
-    <div className="flex" style={{ height: GRID_ROW_HEIGHT }}>
+    <div className="group/employee-row flex" style={{ height: GRID_ROW_HEIGHT }}>
       {dateMeta.map((dm, index) => {
         const tripDay = tripDayByDate[index]
         const prevTripDay = index > 0 ? tripDayByDate[index - 1] : undefined
@@ -52,7 +68,6 @@ export const EmployeeRow = memo(function EmployeeRow({
             isInRollingWindow={dm.isInRollingWindow}
             isRollingWindowStart={dm.isRollingWindowStart}
             isRollingWindowEnd={dm.isRollingWindowEnd}
-            isRowHovered={isRowHovered}
             isTripStart={isTripStart}
             isTripEnd={isTripEnd}
           />

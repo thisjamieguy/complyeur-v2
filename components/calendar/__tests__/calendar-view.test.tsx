@@ -4,6 +4,7 @@
 
 import { render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildDayMap } from '../calendar-view.utils'
 
 const dynamicProps: Array<Record<string, unknown>> = []
 
@@ -19,7 +20,7 @@ vi.mock('next/dynamic', () => ({
 import { CalendarView } from '../calendar-view'
 import type { ProcessedEmployee } from '../types'
 
-function getDesktopEmployees(): ProcessedEmployee[] {
+function getDesktopProps(): { employees: ProcessedEmployee[]; dates: Date[] } {
   const desktopProps = [...dynamicProps]
     .reverse()
     .find((props) => Array.isArray(props.dates))
@@ -28,7 +29,10 @@ function getDesktopEmployees(): ProcessedEmployee[] {
     throw new Error('Desktop calendar props were not captured')
   }
 
-  return desktopProps.employees as ProcessedEmployee[]
+  return {
+    employees: desktopProps.employees as ProcessedEmployee[],
+    dates: desktopProps.dates as Date[],
+  }
 }
 
 describe('CalendarView', () => {
@@ -74,11 +78,22 @@ describe('CalendarView', () => {
       />
     )
 
-    const [employee] = getDesktopEmployees()
-    const historyDay = employee.dayMap.get('2026-02-10')
-    const startDay = employee.dayMap.get('2026-03-10')
-    const preBreachDay = employee.dayMap.get('2026-03-20')
-    const breachDay = employee.dayMap.get('2026-03-21')
+    const { employees: desktopEmployees, dates } = getDesktopProps()
+    const [employee] = desktopEmployees
+    expect(employee).not.toHaveProperty('dayMap')
+
+    const dayMap = buildDayMap(
+      employee.trips,
+      dates[0],
+      dates[dates.length - 1],
+      employee.complianceByDate,
+      { today: new Date('2026-03-10T00:00:00.000Z') }
+    )
+
+    const historyDay = dayMap.get('2026-02-10')
+    const startDay = dayMap.get('2026-03-10')
+    const preBreachDay = dayMap.get('2026-03-20')
+    const breachDay = dayMap.get('2026-03-21')
 
     expect(historyDay?.trip.id).toBe('history-1')
     expect(historyDay?.displayMode).toBe('historical')

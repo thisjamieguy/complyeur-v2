@@ -4,11 +4,9 @@ import { useState, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
-  calculateCompliance,
   computeComplianceVectorOptimized,
   isSchengenCountry,
   parseDateOnlyAsUTC,
-  type DailyCompliance,
   type Trip as ComplianceTrip,
 } from '@/lib/compliance'
 import {
@@ -19,7 +17,6 @@ import {
 import { RangeSelector } from './range-selector'
 import {
   buildDateRange,
-  buildDayMap,
   overlapsVisibleRange,
   toDateKey,
 } from './calendar-view.utils'
@@ -101,6 +98,7 @@ export function CalendarView({ employees }: CalendarViewProps) {
   // Process employees and their trips with per-employee batched compliance work.
   const processedEmployees = useMemo((): ProcessedEmployee[] => {
     const today = toUTCMidnight(new Date())
+    const todayKey = toDateKey(today)
 
     return employees.map((employee) => {
       const parsedTrips: ParsedTrip[] = employee.trips
@@ -120,31 +118,7 @@ export function CalendarView({ employees }: CalendarViewProps) {
         .filter((trip) => trip.isSchengen)
         .map(toComplianceTrip)
 
-      const currentCompliance = calculateCompliance(complianceTrips, {
-        mode: 'audit',
-        referenceDate: today,
-      })
-
-      const tripsInRange = parsedTrips.filter((trip) =>
-        overlapsVisibleRange(trip.entryDate, trip.exitDate, startDate, endDate)
-      )
-
-      const processedTrips: ProcessedTrip[] = tripsInRange.map((trip) => {
-        const duration = differenceInUtcDays(trip.exitDate, trip.entryDate) + 1
-
-        return {
-          id: trip.id,
-          country: trip.is_private ? 'XX' : trip.country,
-          entryDate: trip.entryDate,
-          exitDate: trip.exitDate,
-          duration,
-          purpose: trip.purpose,
-          isPrivate: trip.is_private,
-          isSchengen: trip.isSchengen,
-        }
-      })
-
-      const complianceByDate: Map<string, DailyCompliance> = complianceTrips.length > 0
+      const complianceByDate = complianceTrips.length > 0
         ? new Map(
             computeComplianceVectorOptimized(complianceTrips, startDate, endDate, {
               mode: 'audit',
@@ -153,18 +127,34 @@ export function CalendarView({ employees }: CalendarViewProps) {
           )
         : new Map()
 
-      const dayMap = buildDayMap(processedTrips, startDate, endDate, complianceByDate, {
-        today,
-      })
+      const currentCompliance = complianceByDate.get(todayKey)
+      const processedTrips: ProcessedTrip[] = parsedTrips
+        .filter((trip) =>
+          overlapsVisibleRange(trip.entryDate, trip.exitDate, startDate, endDate)
+        )
+        .map((trip) => {
+          const duration = differenceInUtcDays(trip.exitDate, trip.entryDate) + 1
+
+          return {
+            id: trip.id,
+            country: trip.is_private ? 'XX' : trip.country,
+            entryDate: trip.entryDate,
+            exitDate: trip.exitDate,
+            duration,
+            purpose: trip.purpose,
+            isPrivate: trip.is_private,
+            isSchengen: trip.isSchengen,
+          }
+        })
 
       return {
         id: employee.id,
         name: employee.name,
         trips: processedTrips,
-        dayMap,
-        currentDaysRemaining: currentCompliance.daysRemaining,
-        currentRiskLevel: currentCompliance.riskLevel,
-        tripsInRange: tripsInRange.length,
+        complianceByDate,
+        currentDaysRemaining: currentCompliance?.daysRemaining ?? 90,
+        currentRiskLevel: currentCompliance?.riskLevel ?? 'green',
+        tripsInRange: processedTrips.length,
       }
     })
   }, [employees, startDate, endDate])
