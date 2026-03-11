@@ -2,9 +2,10 @@
  * @vitest-environment jsdom
  */
 
-import { render } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { calculateCompliance, parseDateOnlyAsUTC } from '@/lib/compliance'
+import { CALENDAR_HIDE_NO_SCHENGEN_COOKIE } from '@/lib/calendar/filter-preferences'
 import { buildDayMap } from '../calendar-view.utils'
 
 const dynamicProps: Array<Record<string, unknown>> = []
@@ -39,6 +40,7 @@ function getDesktopProps(): { employees: ProcessedEmployee[]; dates: Date[] } {
 describe('CalendarView', () => {
   beforeEach(() => {
     dynamicProps.length = 0
+    document.cookie = `${CALENDAR_HIDE_NO_SCHENGEN_COOKIE}=; Max-Age=0; Path=/`
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-03-10T00:00:00.000Z'))
   })
@@ -148,5 +150,70 @@ describe('CalendarView', () => {
 
     expect(employee.currentDaysRemaining).toBe(expectedCurrent.daysRemaining)
     expect(employee.currentRiskLevel).toBe(expectedCurrent.riskLevel)
+  })
+
+  it('persists the Schengen-only filter and excludes non-Schengen or out-of-range employees', async () => {
+    render(
+      <CalendarView
+        employees={[
+          {
+            id: 'employee-1',
+            name: 'Alice Schengen',
+            trips: [
+              {
+                id: 'trip-1',
+                country: 'FR',
+                entry_date: '2026-03-12',
+                exit_date: '2026-03-16',
+                purpose: 'Client visit',
+                is_private: false,
+                ghosted: false,
+              },
+            ],
+          },
+          {
+            id: 'employee-2',
+            name: 'Bob Non-Schengen',
+            trips: [
+              {
+                id: 'trip-2',
+                country: 'US',
+                entry_date: '2026-03-13',
+                exit_date: '2026-03-14',
+                purpose: 'Conference',
+                is_private: false,
+                ghosted: false,
+              },
+            ],
+          },
+          {
+            id: 'employee-3',
+            name: 'Cara Later Schengen',
+            trips: [
+              {
+                id: 'trip-3',
+                country: 'DE',
+                entry_date: '2026-05-01',
+                exit_date: '2026-05-03',
+                purpose: 'Future meeting',
+                is_private: false,
+                ghosted: false,
+              },
+            ],
+          },
+        ]}
+      />
+    )
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole('switch', { name: /only show employees with schengen trips/i })
+      )
+      await Promise.resolve()
+    })
+
+    const { employees: desktopEmployees } = getDesktopProps()
+    expect(desktopEmployees.map((employee) => employee.name)).toEqual(['Alice Schengen'])
+    expect(document.cookie).toContain(`${CALENDAR_HIDE_NO_SCHENGEN_COOKIE}=1`)
   })
 })

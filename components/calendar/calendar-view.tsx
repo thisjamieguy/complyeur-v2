@@ -1,8 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   calculateCompliance,
   computeComplianceVectorOptimized,
@@ -21,6 +25,8 @@ import {
   overlapsVisibleRange,
   toDateKey,
 } from './calendar-view.utils'
+import { CalendarEmptyState } from './calendar-empty-state'
+import { serializeHideNoSchengenCookie } from '@/lib/calendar/filter-preferences'
 import type { ProcessedTrip, ProcessedEmployee } from './types'
 
 const GanttChart = dynamic(
@@ -57,6 +63,7 @@ interface EmployeeWithTrips {
 
 interface CalendarViewProps {
   employees: EmployeeWithTrips[]
+  initialHideEmployeesWithoutSchengenTrips?: boolean
 }
 
 interface ParsedTrip extends DbTrip {
@@ -80,11 +87,34 @@ function toComplianceTrip(trip: ParsedTrip): ComplianceTrip {
 /**
  * Main calendar view component - orchestrates Gantt chart and mobile view
  */
-export function CalendarView({ employees }: CalendarViewProps) {
+export function CalendarView({
+  employees,
+  initialHideEmployeesWithoutSchengenTrips = false,
+}: CalendarViewProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [weeksForward, setWeeksForward] = useState(DEFAULT_WEEKS_FORWARD)
+  const [hideEmployeesWithoutSchengenTrips, setHideEmployeesWithoutSchengenTrips] =
+    useState(initialHideEmployeesWithoutSchengenTrips)
+
+  useEffect(() => {
+    setHideEmployeesWithoutSchengenTrips(initialHideEmployeesWithoutSchengenTrips)
+  }, [initialHideEmployeesWithoutSchengenTrips])
+
+  const updateHideEmployeesWithoutSchengenTrips = (enabled: boolean) => {
+    setHideEmployeesWithoutSchengenTrips(enabled)
+
+    if (typeof document !== 'undefined') {
+      document.cookie = serializeHideNoSchengenCookie(enabled)
+    }
+
+    startTransition(() => {
+      router.refresh()
+    })
+  }
 
   // Calculate date range
-  const { startDate, endDate, dates } = useMemo(() => {
+  const { startDate, endDate, dates, startDateKey, endDateKey } = useMemo(() => {
     const today = toUTCMidnight(new Date())
     const start = addUtcDays(today, -DAYS_BACK)
     const end = addUtcDays(today, weeksForward * 7)
@@ -93,14 +123,36 @@ export function CalendarView({ employees }: CalendarViewProps) {
       startDate: start,
       endDate: end,
       dates: buildDateRange(start, end),
+      startDateKey: toDateKey(start),
+      endDateKey: toDateKey(end),
     }
   }, [weeksForward])
+
+  const shouldApplySchengenFilter =
+    initialHideEmployeesWithoutSchengenTrips || hideEmployeesWithoutSchengenTrips
+
+  const filteredEmployees = useMemo(() => {
+    if (!shouldApplySchengenFilter) {
+      return employees
+    }
+
+    return employees.filter((employee) =>
+      employee.trips.some((trip) => {
+        if (trip.ghosted || !isSchengenCountry(trip.country)) {
+          return false
+        }
+
+        // ISO date-only strings can be compared lexicographically.
+        return trip.entry_date <= endDateKey && trip.exit_date >= startDateKey
+      })
+    )
+  }, [employees, endDateKey, shouldApplySchengenFilter, startDateKey])
 
   // Process employees and their trips with per-employee batched compliance work.
   const processedEmployees = useMemo((): ProcessedEmployee[] => {
     const today = toUTCMidnight(new Date())
 
-    return employees.map((employee) => {
+    return filteredEmployees.map((employee) => {
       const parsedTrips: ParsedTrip[] = employee.trips
         .filter((trip) => !trip.ghosted)
         .map((trip) => {
@@ -163,10 +215,95 @@ export function CalendarView({ employees }: CalendarViewProps) {
         tripsInRange: processedTrips.length,
       }
     })
-  }, [employees, startDate, endDate])
+  }, [filteredEmployees, startDate, endDate])
+
+  if (processedEmployees.length === 0) {
+    if (!shouldApplySchengenFilter) {
+      return <CalendarEmptyState />
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-900">Calendar filters</p>
+              <p className="text-xs text-slate-500">
+                Showing 0 employees
+                {isPending ? ' · refreshing…' : ' · saved for your next visit'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                id="calendar-hide-no-schengen"
+                checked={hideEmployeesWithoutSchengenTrips}
+                onCheckedChange={updateHideEmployeesWithoutSchengenTrips}
+                disabled={isPending}
+              />
+              <Label
+                htmlFor="calendar-hide-no-schengen"
+                className="cursor-pointer text-sm text-slate-700"
+              >
+                Only show employees with Schengen trips
+              </Label>
+            </div>
+          </div>
+        </div>
+
+        <Card className="rounded-xl border-slate-200 shadow-sm">
+          <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-slate-900">
+                No employees match this filter
+              </h2>
+              <p className="max-w-md text-sm text-slate-500">
+                Turn the filter off to see every employee, or extend the forward range if
+                you&apos;re expecting later Schengen travel.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => updateHideEmployeesWithoutSchengenTrips(false)}
+              disabled={isPending}
+            >
+              Show all employees
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-slate-900">Calendar filters</p>
+            <p className="text-xs text-slate-500">
+              Showing {processedEmployees.length}{' '}
+              {processedEmployees.length === 1 ? 'employee' : 'employees'}
+              {isPending ? ' · refreshing…' : ' · saved for your next visit'}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch
+              id="calendar-hide-no-schengen"
+              checked={hideEmployeesWithoutSchengenTrips}
+              onCheckedChange={updateHideEmployeesWithoutSchengenTrips}
+              disabled={isPending}
+            />
+            <Label
+              htmlFor="calendar-hide-no-schengen"
+              className="cursor-pointer text-sm text-slate-700"
+            >
+              Only show employees with Schengen trips
+            </Label>
+          </div>
+        </div>
+      </div>
+
       {/* Desktop view - Gantt chart */}
       <div className="hidden md:block">
         <Card className="rounded-xl overflow-hidden border-slate-200 shadow-sm">
@@ -209,6 +346,6 @@ export function CalendarView({ employees }: CalendarViewProps) {
       <div className="md:hidden">
         <MobileCalendarView employees={processedEmployees} />
       </div>
-    </>
+    </div>
   )
 }
