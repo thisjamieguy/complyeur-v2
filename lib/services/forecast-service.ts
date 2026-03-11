@@ -180,30 +180,55 @@ export function calculateFutureJobCompliance(
     return isBefore(tripEntry, tripEntryDate);
   });
 
-  // Convert to compliance trips for the presence calculation
+  // Convert historical trips to compliance format
   const complianceTrips: ComplianceTrip[] = tripsBeforeJob.map(toComplianceTrip);
 
-  // Calculate presence days using 'planning' mode to include all trips
-  // We use the trip entry date as reference and look back 180 days
-  const complianceConfig: ComplianceConfig = {
+  // Base config — referenceDate here is used for presence set construction only
+  const baseConfig: ComplianceConfig = {
     mode: 'planning',
     referenceDate: tripEntryDate,
     complianceStartDate: DEFAULT_COMPLIANCE_START_DATE,
     limit,
   };
 
-  const presence = presenceDays(complianceTrips, complianceConfig);
+  // Snapshot of days used at entry date — displayed in "Days Before Trip" column
+  const historicalPresence = presenceDays(complianceTrips, baseConfig);
+  const daysUsedBeforeTrip = daysUsedInWindow(historicalPresence, tripEntryDate, baseConfig);
 
-  // Calculate days used in the 180-day window BEFORE the trip starts
-  // The window is [entryDate - 179, entryDate] (180 days inclusive)
-  const daysUsedBeforeTrip = daysUsedInWindow(presence, tripEntryDate, complianceConfig);
+  // For Schengen trips: check each day of the trip individually.
+  // The 180-day window slides forward each day, so old days drop off as new ones
+  // accumulate. A traveller is in violation only if any single day hits 90+.
+  // We track the peak (worst-case day) as the compliance figure.
+  let daysAfterTrip = daysUsedBeforeTrip; // non-Schengen: unchanged
+  let firstViolationDay: number | undefined;
 
-  // Calculate days after the trip
-  // If Schengen: add the trip duration
-  // If non-Schengen: days remain the same (trip doesn't count)
-  const daysAfterTrip = isSchengen
-    ? daysUsedBeforeTrip + tripDuration
-    : daysUsedBeforeTrip;
+  if (isSchengen) {
+    // Include all planned trip days in the presence set so daysUsedInWindow
+    // correctly counts them when the reference date falls within the trip.
+    // Using tripExitDate as the config referenceDate ensures presenceDays
+    // (in planning mode) includes the full trip range.
+    const plannedTripAsCompliance: ComplianceTrip = {
+      id: futureTrip.id,
+      entryDate: tripEntryDate,
+      exitDate: tripExitDate,
+      country: futureTrip.country,
+    };
+    const presenceWithTrip = presenceDays(
+      [...complianceTrips, plannedTripAsCompliance],
+      { ...baseConfig, referenceDate: tripExitDate }
+    );
+
+    let peakDays = 0;
+    for (let i = 0; i < tripDuration; i++) {
+      const checkDate = addUtcDays(tripEntryDate, i);
+      const dailyUsed = daysUsedInWindow(presenceWithTrip, checkDate, baseConfig);
+      if (dailyUsed > peakDays) peakDays = dailyUsed;
+      if (dailyUsed >= limit && firstViolationDay === undefined) {
+        firstViolationDay = i + 1; // 1-indexed day number within the trip
+      }
+    }
+    daysAfterTrip = peakDays;
+  }
 
   // Calculate days remaining (can be negative if over limit)
   const daysRemainingAfterTrip = limit - daysAfterTrip;
@@ -245,6 +270,7 @@ export function calculateFutureJobCompliance(
     riskLevel,
     isCompliant,
     compliantFromDate,
+    firstViolationDay,
     tripsInWindow: tripsBeforeJob,
   };
 }
