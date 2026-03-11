@@ -13,16 +13,47 @@ import { useRouter } from 'next/navigation';
 import { TripForecastForm } from '@/components/forecasting/trip-forecast-form';
 import { ForecastScenarioList } from '@/components/forecasting/forecast-scenario-list';
 import { calculateMultiTripScenario, getCountryName } from '@/lib/services/forecast-service';
-import { addTripAction } from '@/app/(dashboard)/actions';
+import { addTripAction, updateTripAction } from '@/app/(dashboard)/actions';
+import { checkTripOverlap } from '@/lib/validations/trip-overlap';
 import { showSuccess, showError } from '@/lib/toast';
 import type {
   ForecastEmployee,
   ForecastTrip,
   ForecastResult,
+  ScenarioTripConflict,
   ScenarioTripEntry,
 } from '@/types/forecast';
 
 const MAX_TRIPS = 10;
+
+function getSaveErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return 'Please try again';
+}
+
+function getScenarioSavePayload(scenario: ScenarioTripEntry) {
+  return {
+    employee_id: scenario.input.employeeId,
+    country: scenario.input.country,
+    entry_date: scenario.input.startDate,
+    exit_date: scenario.input.endDate,
+  };
+}
+
+function getScenarioReplacePayload(scenario: ScenarioTripEntry) {
+  return {
+    country: scenario.input.country,
+    entry_date: scenario.input.startDate,
+    exit_date: scenario.input.endDate,
+    purpose: null,
+    job_ref: null,
+    is_private: false,
+    ghosted: false,
+  };
+}
 
 interface TripForecastCalculatorProps {
   employees: ForecastEmployee[];
@@ -42,6 +73,7 @@ export function TripForecastCalculator({ employees, tripsMap }: TripForecastCalc
   const [scenarios, setScenarios] = useState<ScenarioTripEntry[]>([]);
   const [results, setResults] = useState<ForecastResult[]>([]);
   const [savingKeys, setSavingKeys] = useState<Set<string>>(new Set());
+  const [pendingConflict, setPendingConflict] = useState<ScenarioTripConflict | null>(null);
 
   const lockedEmployeeId = scenarios.length > 0 ? scenarios[0].input.employeeId : undefined;
 
@@ -117,6 +149,96 @@ export function TripForecastCalculator({ employees, tripsMap }: TripForecastCalc
     setResults([]);
   }, []);
 
+  const finalizeSaveAll = useCallback(
+    (
+      currentScenarios: ScenarioTripEntry[],
+      savedCount: number,
+      failedScenarioKeys: string[],
+      failureMessage: string | null
+    ) => {
+      const failed = currentScenarios.filter((scenario) =>
+        failedScenarioKeys.includes(scenario.key)
+      );
+
+      setScenarios(failed);
+      recalculate(failed);
+      router.refresh();
+
+      if (failed.length === 0) {
+        showSuccess(`${savedCount} ${savedCount === 1 ? 'trip' : 'trips'} saved`);
+      } else {
+        showError(
+          `${failed.length} ${failed.length === 1 ? 'trip' : 'trips'} failed to save`,
+          failureMessage ?? `${savedCount} saved successfully`
+        );
+      }
+
+      setSavingKeys(new Set());
+    },
+    [recalculate, router]
+  );
+
+  const continueSaveAll = useCallback(
+    async (
+      currentScenarios: ScenarioTripEntry[],
+      scenarioQueue: ScenarioTripEntry[],
+      savedCount: number,
+      failedScenarioKeys: string[],
+      failureMessage: string | null
+    ) => {
+      for (let index = 0; index < scenarioQueue.length; index++) {
+        const scenario = scenarioQueue[index];
+
+        try {
+          const overlapResult = await checkTripOverlap(
+            scenario.input.employeeId,
+            scenario.input.startDate,
+            scenario.input.endDate
+          );
+
+          if (overlapResult.hasOverlap) {
+            if (!overlapResult.conflictingTrip?.id) {
+              failedScenarioKeys.push(scenario.key);
+              failureMessage ??=
+                overlapResult.message ?? 'This trip overlaps with an existing trip.';
+              continue;
+            }
+
+            setSavingKeys(new Set());
+            setPendingConflict({
+              scenarioKey: scenario.key,
+              conflictingTripId: overlapResult.conflictingTrip.id,
+              message:
+                overlapResult.message ?? 'This trip overlaps with an existing trip.',
+              saveMode: 'all',
+              savedCount,
+              remainingScenarioKeys: scenarioQueue
+                .slice(index + 1)
+                .map((entry) => entry.key),
+              failureMessage,
+              failedScenarioKeys: [...failedScenarioKeys],
+            });
+            return;
+          }
+
+          await addTripAction(getScenarioSavePayload(scenario));
+          savedCount++;
+        } catch (error) {
+          failedScenarioKeys.push(scenario.key);
+          failureMessage ??= getSaveErrorMessage(error);
+        }
+      }
+
+      finalizeSaveAll(
+        currentScenarios,
+        savedCount,
+        failedScenarioKeys,
+        failureMessage
+      );
+    },
+    [finalizeSaveAll]
+  );
+
   const handleSaveTrip = useCallback(
     async (key: string) => {
       const scenario = scenarios.find((s) => s.key === key);
@@ -124,19 +246,39 @@ export function TripForecastCalculator({ employees, tripsMap }: TripForecastCalc
 
       setSavingKeys((prev) => new Set(prev).add(key));
       try {
-        await addTripAction({
-          employee_id: scenario.input.employeeId,
-          country: scenario.input.country,
-          entry_date: scenario.input.startDate,
-          exit_date: scenario.input.endDate,
-        });
+        const overlapResult = await checkTripOverlap(
+          scenario.input.employeeId,
+          scenario.input.startDate,
+          scenario.input.endDate
+        );
+
+        if (overlapResult.hasOverlap) {
+          if (!overlapResult.conflictingTrip?.id) {
+            showError(
+              'Trip overlap detected',
+              overlapResult.message ?? 'This trip overlaps with an existing trip.'
+            );
+            return;
+          }
+
+          setPendingConflict({
+            scenarioKey: scenario.key,
+            conflictingTripId: overlapResult.conflictingTrip.id,
+            message:
+              overlapResult.message ?? 'This trip overlaps with an existing trip.',
+            saveMode: 'single',
+          });
+          return;
+        }
+
+        await addTripAction(getScenarioSavePayload(scenario));
         const updated = scenarios.filter((s) => s.key !== key);
         setScenarios(updated);
         recalculate(updated);
         router.refresh();
         showSuccess('Trip saved', `${scenario.countryName} trip added to schedule`);
-      } catch {
-        showError('Failed to save trip', 'Please try again');
+      } catch (error) {
+        showError('Failed to save trip', getSaveErrorMessage(error));
       } finally {
         setSavingKeys((prev) => {
           const next = new Set(prev);
@@ -148,44 +290,74 @@ export function TripForecastCalculator({ employees, tripsMap }: TripForecastCalc
     [scenarios, recalculate, router]
   );
 
+  const handleReplaceConflictTrip = useCallback(async () => {
+    if (!pendingConflict) return;
+
+    const conflict = pendingConflict;
+    const scenario = scenarios.find((entry) => entry.key === conflict.scenarioKey);
+    if (!scenario) {
+      setPendingConflict(null);
+      return;
+    }
+
+    setSavingKeys((prev) => new Set(prev).add(scenario.key));
+    setPendingConflict(null);
+
+    try {
+      await updateTripAction(
+        conflict.conflictingTripId,
+        scenario.input.employeeId,
+        getScenarioReplacePayload(scenario)
+      );
+
+      const updatedScenarios = scenarios.filter((entry) => entry.key !== scenario.key);
+
+      if (conflict.saveMode === 'all') {
+        setScenarios(updatedScenarios);
+        recalculate(updatedScenarios);
+
+        const remainingScenarioKeys = conflict.remainingScenarioKeys ?? [];
+        const remainingScenarios = updatedScenarios.filter((entry) =>
+          remainingScenarioKeys.includes(entry.key)
+        );
+
+        await continueSaveAll(
+          updatedScenarios,
+          remainingScenarios,
+          (conflict.savedCount ?? 0) + 1,
+          conflict.failedScenarioKeys ?? [],
+          conflict.failureMessage ?? null
+        );
+      } else {
+        setScenarios(updatedScenarios);
+        recalculate(updatedScenarios);
+        router.refresh();
+        showSuccess(
+          'Trip replaced',
+          `${scenario.countryName} trip replaced the existing trip.`
+        );
+        setSavingKeys(new Set());
+      }
+    } catch (error) {
+      showError('Failed to replace trip', getSaveErrorMessage(error));
+      setSavingKeys(new Set());
+    } finally {
+      if (conflict.saveMode === 'single') {
+        setSavingKeys((prev) => {
+          const next = new Set(prev);
+          next.delete(scenario.key);
+          return next;
+        });
+      }
+    }
+  }, [continueSaveAll, pendingConflict, recalculate, router, scenarios]);
+
   const handleSaveAll = useCallback(async () => {
     if (scenarios.length === 0) return;
 
-    const allKeys = new Set(scenarios.map((s) => s.key));
-    setSavingKeys(allKeys);
-
-    let savedCount = 0;
-    const failed: ScenarioTripEntry[] = [];
-
-    for (const scenario of scenarios) {
-      try {
-        await addTripAction({
-          employee_id: scenario.input.employeeId,
-          country: scenario.input.country,
-          entry_date: scenario.input.startDate,
-          exit_date: scenario.input.endDate,
-        });
-        savedCount++;
-      } catch {
-        failed.push(scenario);
-      }
-    }
-
-    setScenarios(failed);
-    recalculate(failed);
-    router.refresh();
-
-    if (failed.length === 0) {
-      showSuccess(`${savedCount} ${savedCount === 1 ? 'trip' : 'trips'} saved`);
-    } else {
-      showError(
-        `${failed.length} ${failed.length === 1 ? 'trip' : 'trips'} failed to save`,
-        `${savedCount} saved successfully`
-      );
-    }
-
-    setSavingKeys(new Set());
-  }, [scenarios, recalculate, router]);
+    setSavingKeys(new Set(scenarios.map((scenario) => scenario.key)));
+    await continueSaveAll(scenarios, scenarios, 0, [], null);
+  }, [continueSaveAll, scenarios]);
 
   return (
     <div className="space-y-6">
@@ -217,6 +389,9 @@ export function TripForecastCalculator({ employees, tripsMap }: TripForecastCalc
         onSaveAll={handleSaveAll}
         onEditTrip={handleEditTrip}
         savingKeys={savingKeys}
+        pendingConflict={pendingConflict}
+        onReplaceConflictTrip={handleReplaceConflictTrip}
+        onDismissConflictDialog={() => setPendingConflict(null)}
       />
     </div>
   );

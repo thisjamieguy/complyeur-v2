@@ -13,6 +13,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -28,7 +38,12 @@ import {
 import { ForecastResultCard } from './forecast-result-card';
 import { ForecastRiskBadge } from './forecast-risk-badge';
 import { getSchengenCountries } from '@/lib/compliance';
-import type { ForecastResult, ScenarioTripEntry, ForecastRiskLevel } from '@/types/forecast';
+import type {
+  ForecastResult,
+  ScenarioTripConflict,
+  ScenarioTripEntry,
+  ForecastRiskLevel,
+} from '@/types/forecast';
 
 interface ForecastScenarioListProps {
   scenarios: ScenarioTripEntry[];
@@ -39,6 +54,9 @@ interface ForecastScenarioListProps {
   onSaveAll: () => void;
   onEditTrip: (key: string, updates: { startDate: string; endDate: string; country: string }) => void;
   savingKeys: Set<string>;
+  pendingConflict: ScenarioTripConflict | null;
+  onReplaceConflictTrip: () => void;
+  onDismissConflictDialog: () => void;
 }
 
 const RISK_SEVERITY: Record<ForecastRiskLevel, number> = {
@@ -56,6 +74,9 @@ export function ForecastScenarioList({
   onSaveAll,
   onEditTrip,
   savingKeys,
+  pendingConflict,
+  onReplaceConflictTrip,
+  onDismissConflictDialog,
 }: ForecastScenarioListProps) {
   const isSavingAny = savingKeys.size > 0;
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -70,6 +91,12 @@ export function ForecastScenarioList({
   const editingScenario = editingKey
     ? scenarios.find((s) => s.key === editingKey)
     : null;
+  const conflictScenario = pendingConflict
+    ? scenarios.find((s) => s.key === pendingConflict.scenarioKey)
+    : null;
+  const isReplacingConflict = pendingConflict
+    ? savingKeys.has(pendingConflict.scenarioKey)
+    : false;
 
   function openEdit(scenario: ScenarioTripEntry) {
     setEditCountry(scenario.input.country);
@@ -86,6 +113,13 @@ export function ForecastScenarioList({
       country: editCountry,
     });
     setEditingKey(null);
+  }
+
+  function handleConflictEdit() {
+    if (conflictScenario) {
+      openEdit(conflictScenario);
+    }
+    onDismissConflictDialog();
   }
 
   // Determine worst risk across all results
@@ -257,6 +291,39 @@ export function ForecastScenarioList({
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={pendingConflict !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            onDismissConflictDialog();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Trip overlap detected</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingConflict?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <p className="text-sm text-slate-600">
+            You can edit the forecasted trip or replace the existing trip entirely.
+          </p>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleConflictEdit}>
+              Edit trip
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onReplaceConflictTrip}
+              disabled={!conflictScenario || isReplacingConflict}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {isReplacingConflict ? 'Replacing...' : 'Replace trip entirely'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

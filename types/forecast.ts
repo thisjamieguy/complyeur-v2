@@ -308,3 +308,25 @@ export interface ScenarioTripEntry {
   /** Resolved country display name */
   countryName: string;
 }
+
+/**
+ * Conflict state for a scenario trip that overlaps an existing trip.
+ */
+export interface ScenarioTripConflict {
+  /** Scenario entry key that triggered the conflict */
+  scenarioKey: string;
+  /** Existing trip id that conflicts with the scenario */
+  conflictingTripId: string;
+  /** User-facing message describing the overlap */
+  message: string;
+  /** Whether the conflict came from single-save or save-all */
+  saveMode: 'single' | 'all';
+  /** Number of scenarios already saved in a bulk-save flow */
+  savedCount?: number;
+  /** Keys of scenarios still waiting to be processed in a bulk-save flow */
+  remainingScenarioKeys?: string[];
+  /** First non-conflict failure message captured during bulk save */
+  failureMessage?: string | null;
+  /** Keys of scenarios that already failed during bulk save */
+  failedScenarioKeys?: string[];
+}
