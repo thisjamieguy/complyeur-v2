@@ -68,7 +68,8 @@ export interface ForecastResult {
   isSchengen: boolean;
   /** Days used in the 180-day window BEFORE this trip starts */
   daysUsedBeforeTrip: number;
-  /** Days that will be used AFTER this trip completes */
+  /** Peak days used on any single day during this trip (the highest daysUsedInWindow
+   * value across all days from entry to exit). For non-Schengen trips equals daysUsedBeforeTrip. */
   daysAfterTrip: number;
   /** Days remaining after trip (90 - daysAfterTrip). Can be negative. */
   daysRemainingAfterTrip: number;
@@ -78,6 +79,9 @@ export interface ForecastResult {
   isCompliant: boolean;
   /** If not compliant, earliest date when trip would become compliant */
   compliantFromDate: Date | null;
+  /** If not compliant, the 1-indexed day number of the trip when the 90-day
+   * limit is first reached or exceeded. Undefined when trip is compliant or non-Schengen. */
+  firstViolationDay?: number;
   /** Trips that fall within the calculation window */
   tripsInWindow: ForecastTrip[];
 }
