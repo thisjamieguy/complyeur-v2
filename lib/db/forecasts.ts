@@ -47,10 +47,11 @@ export async function getFutureTrips(): Promise<
     .select(
       `
       *,
-      employee:employees!trips_employee_id_fkey!inner(name)
+      employee:employees!trips_employee_id_fkey!inner(name, deleted_at)
     `
     )
     .eq('company_id', companyId)
+    .is('employees.deleted_at', null)
     .gte('entry_date', today)
     .eq('ghosted', false)
     .order('entry_date', { ascending: true });
@@ -109,6 +110,7 @@ export async function getAllTripsGroupedByEmployee(): Promise<
     .from('employees')
     .select('id, name')
     .eq('company_id', companyId)
+    .is('deleted_at', null)
     .order('name', { ascending: true })
     .limit(1000);
 
@@ -165,6 +167,7 @@ export async function getEmployeesForSelect(): Promise<ForecastEmployee[]> {
     .from('employees')
     .select('id, name')
     .eq('company_id', companyId)
+    .is('deleted_at', null)
     .order('name', { ascending: true })
     .limit(500);
 
