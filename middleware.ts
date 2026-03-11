@@ -35,6 +35,7 @@ export async function middleware(request: NextRequest) {
     '/',
     '/landing',
     '/about',
+    '/blog',
     '/contact',
     '/faq',
     '/pricing',
@@ -52,8 +53,9 @@ export async function middleware(request: NextRequest) {
   )
   const isProtectedApiRoute = isApiRoute && !isPublicApiRoute
   const isLandingVariantRoute = pathname.startsWith('/landing')
+  const isBlogRoute = pathname === '/blog' || pathname.startsWith('/blog/')
   const isPublicMarketingRoute =
-    publicMarketingRoutes.includes(pathname) || isLandingVariantRoute
+    publicMarketingRoutes.includes(pathname) || isLandingVariantRoute || isBlogRoute
 
   // Legacy landing variant route: always promote traffic to current landing page.
   if (pathname === '/landing-v2' || pathname === '/landing-v3' || pathname === '/landing-21st') {

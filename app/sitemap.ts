@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { getAllBlogPosts } from '@/lib/blog'
 
 /**
  * Generates sitemap.xml for search engine discovery
@@ -61,6 +62,12 @@ const deploymentLastModified = getDeploymentLastModified()
 
 const PUBLIC_SITEMAP_PAGES: PublicSitemapPage[] = [
   {
+    path: '/blog',
+    lastModified: deploymentLastModified,
+    changeFrequency: 'weekly',
+    priority: 0.85,
+  },
+  {
     path: '/landing',
     lastModified: deploymentLastModified,
     changeFrequency: 'weekly',
@@ -110,13 +117,24 @@ const PUBLIC_SITEMAP_PAGES: PublicSitemapPage[] = [
   },
 ]
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const siteOrigin = getSiteOrigin()
+export const runtime = 'nodejs'
 
-  return PUBLIC_SITEMAP_PAGES.map((page) => ({
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const siteOrigin = getSiteOrigin()
+  const staticPages = PUBLIC_SITEMAP_PAGES.map((page) => ({
     url: toAbsoluteUrl(siteOrigin, page.path),
     lastModified: page.lastModified,
     changeFrequency: page.changeFrequency,
     priority: page.priority,
   }))
+
+  const blogPosts = await getAllBlogPosts()
+  const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+    url: toAbsoluteUrl(siteOrigin, `/blog/${post.slug}`),
+    lastModified: new Date(`${post.updatedAt}T00:00:00.000Z`),
+    changeFrequency: 'monthly',
+    priority: 0.7,
+  }))
+
+  return [...staticPages, ...blogPages]
 }

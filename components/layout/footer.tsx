@@ -42,6 +42,12 @@ export function Footer() {
               FAQ
             </Link>
             <Link
+              href="/blog"
+              className="hover:text-brand-700 transition-colors"
+            >
+              Blog
+            </Link>
+            <Link
               href="/pricing"
               className="hover:text-brand-700 transition-colors"
             >

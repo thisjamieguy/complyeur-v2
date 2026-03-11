@@ -48,23 +48,14 @@ export default function PublicLayout({
             <Link href="/pricing" className="font-medium text-slate-600 transition hover:text-slate-900">
               Pricing
             </Link>
-            <Link href="/about" className="font-medium text-slate-600 transition hover:text-slate-900">
-              About
-            </Link>
             <Link href="/faq" className="font-medium text-slate-600 transition hover:text-slate-900">
               FAQ
             </Link>
-            <Link href="/contact" className="font-medium text-slate-600 transition hover:text-slate-900">
-              Contact
+            <Link href="/blog" className="font-medium text-slate-600 transition hover:text-slate-900">
+              Resources
             </Link>
-            <Link href="/privacy" className="font-medium text-slate-600 transition hover:text-slate-900">
-              Privacy
-            </Link>
-            <Link href="/terms" className="font-medium text-slate-600 transition hover:text-slate-900">
-              Terms
-            </Link>
-            <Link href="/accessibility" className="font-medium text-slate-600 transition hover:text-slate-900">
-              Accessibility
+            <Link href="/blog" className="font-medium text-slate-600 transition hover:text-slate-900">
+              Blog
             </Link>
           </nav>
         </div>
