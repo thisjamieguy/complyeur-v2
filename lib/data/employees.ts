@@ -53,6 +53,7 @@ export interface PaginationParams {
  */
 export interface PaginatedEmployeeResult {
   employees: EmployeeCompliance[]
+  hasEmployees: boolean
   pagination: {
     page: number
     pageSize: number
@@ -283,6 +284,13 @@ export const getEmployeeComplianceData = cache(async (
     // Use days-used based status calculation with configurable thresholds
     const riskLevel = getStatusFromDaysUsed(compliance.daysUsed, thresholds)
 
+    // Calculate additional info for tooltips
+    const presenceSet = presenceDays(trips, { mode: 'audit', referenceDate: today })
+    const projections = projectExpiringDays(presenceSet, today, 180)
+    // Find first date where expiringDays > 0 (skipping index 0 which is today)
+    const nextExpiring = projections.slice(1).find((p) => p.expiringDays > 0)
+    const maxStay = maxStayDays(presenceSet, today)
+
     return {
       id: employee.id,
       name: employee.name,
@@ -293,6 +301,9 @@ export const getEmployeeComplianceData = cache(async (
       last_trip_date: lastTrip?.exit_date || null,
       total_trips: (employee.trips || []).filter((t) => !t.ghosted).length,
       is_compliant: compliance.isCompliant,
+      max_stay_days: maxStay,
+      next_expiring_date: nextExpiring ? nextExpiring.date.toISOString().split('T')[0] : null,
+      next_expiring_count: nextExpiring ? nextExpiring.expiringDays : 0,
     }
   })
 })
@@ -407,6 +418,7 @@ export async function getEmployeeComplianceDataPaginated(
 
     return {
       employees: pageEmployees,
+      hasEmployees: allEmployees.length > 0,
       pagination: {
         page,
         pageSize,

@@ -153,6 +153,15 @@ export function Turnstile({
     onExpire?.()
   }, [onExpire])
 
+  const handleLoadFailure = useCallback(
+    (err: unknown) => {
+      console.error('[Turnstile] Failed to load:', err)
+      setLoadError(true)
+      onError?.()
+    },
+    [onError]
+  )
+
   useEffect(() => {
     if (!siteKey || !containerRef.current) {
       return
@@ -193,11 +202,7 @@ export function Turnstile({
           'refresh-expired': 'auto',
         })
       })
-      .catch((err) => {
-        console.error('[Turnstile] Failed to load:', err)
-        setLoadError(true)
-        onError?.()
-      })
+      .catch(handleLoadFailure)
 
     return () => {
       mounted = false
@@ -210,7 +215,18 @@ export function Turnstile({
         widgetIdRef.current = null
       }
     }
-  }, [siteKey, theme, size, appearance, action, responseFieldName, handleVerify, handleError, handleExpire])
+  }, [
+    siteKey,
+    theme,
+    size,
+    appearance,
+    action,
+    responseFieldName,
+    handleVerify,
+    handleError,
+    handleExpire,
+    handleLoadFailure,
+  ])
 
   // If Turnstile fails to load, render a hidden input with empty value
   // The server should handle this gracefully

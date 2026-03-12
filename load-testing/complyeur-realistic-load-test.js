@@ -72,7 +72,7 @@ export function setup() {
   };
 }
 
-export default function (data) {
+export default function complyeurRealisticLoadTest(data) {
   // Each VU picks a consistent user based on their VU ID
   const vuId = exec.vu.idInTest;
   const userIndex = (vuId - 1) % TEST_USERS.length;

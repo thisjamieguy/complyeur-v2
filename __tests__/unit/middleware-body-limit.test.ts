@@ -26,7 +26,7 @@ vi.mock('@/lib/security/csp', () => ({
   buildContentSecurityPolicy: buildContentSecurityPolicyMock,
 }))
 
-import { middleware } from '@/middleware'
+import { proxy as middleware } from '@/proxy'
 
 describe('middleware body size limits', () => {
   beforeEach(() => {

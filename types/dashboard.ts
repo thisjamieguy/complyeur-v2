@@ -34,6 +34,12 @@ export interface EmployeeCompliance {
   total_trips: number
   /** Whether currently compliant (days_used < 90; 90 is a breach) */
   is_compliant: boolean
+  /** How long they can stay if entering today (ISO 90/180 calculation) */
+  max_stay_days?: number
+  /** When their next day drops off the 180-day window (ISO string) */
+  next_expiring_date?: string | null
+  /** How many days drop off on that next expiring date */
+  next_expiring_count?: number
 }
 
 /**

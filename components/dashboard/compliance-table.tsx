@@ -21,6 +21,12 @@ import { EmptyState } from './empty-state'
 // DashboardStats removed — replaced by ComplianceBriefing in the dashboard page
 import { EmployeeSearch } from './employee-search'
 import { Pagination } from '@/components/ui/pagination'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 const QuickAddTripModal = dynamic(
   () => import('./quick-add-trip-modal').then(m => m.QuickAddTripModal),
@@ -45,6 +51,8 @@ interface PaginationInfo {
 
 interface ComplianceTableProps {
   employees: EmployeeCompliance[]
+  /** Whether the company has any employees before search/filtering */
+  hasEmployees: boolean
   /** Pre-calculated stats from all employees (not just current page) */
   stats?: ComplianceStats
   /** Pagination info from server */
@@ -149,14 +157,21 @@ const EmployeeCard = memo(function EmployeeCard({
             </div>
             <div>
               <span className="text-brand-400">Remaining:</span>
-              <span
-                className={cn(
-                  'ml-2 font-medium',
-                  getDaysRemainingClassName(employee.risk_level)
-                )}
-              >
-                {employee.days_remaining}
-              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={cn(
+                      'ml-2 font-medium cursor-help underline decoration-slate-200 decoration-dotted underline-offset-2',
+                      getDaysRemainingClassName(employee.risk_level)
+                    )}
+                  >
+                    {employee.days_remaining}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="w-64 p-3 shadow-xl border-slate-200 bg-white" side="bottom">
+                  <ComplianceCalculationTrace employee={employee} />
+                </TooltipContent>
+              </Tooltip>
             </div>
           </>
         )}
@@ -177,6 +192,73 @@ const EmployeeCard = memo(function EmployeeCard({
 })
 
 /**
+ * Get dynamic styles for a table row based on risk level.
+ * Adds background tints and a status-colored left border for visual urgency.
+ */
+function getRowRiskStyles(riskLevel: EmployeeCompliance['risk_level']): string {
+  switch (riskLevel) {
+    case 'breach':
+      return 'bg-rose-50/40 hover:bg-rose-100/60 border-l-2 border-l-rose-600'
+    case 'red':
+      return 'bg-orange-50/30 hover:bg-orange-100/50 border-l-2 border-l-orange-500'
+    case 'amber':
+      return 'bg-amber-50/20 hover:bg-amber-100/40 border-l-2 border-l-amber-400'
+    case 'green':
+      return 'hover:bg-emerald-50/30 border-l-2 border-l-transparent'
+    case 'exempt':
+    default:
+      return 'hover:bg-slate-50 border-l-2 border-l-transparent'
+  }
+}
+
+/**
+ * Tooltip content that explains the 90/180-day compliance math.
+ * Built from the extended EmployeeCompliance fields.
+ */
+function ComplianceCalculationTrace({ employee }: { employee: EmployeeCompliance }) {
+  if (employee.risk_level === 'exempt') return null
+
+  return (
+    <div className="space-y-3 py-1">
+      <div className="border-b border-slate-100 pb-1.5">
+        <h4 className="font-semibold text-slate-900 text-sm leading-none">Calculation Trace</h4>
+        <p className="text-[10px] text-slate-400 uppercase font-medium mt-1">Schengen 90/180-day rule</p>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex justify-between items-center text-xs">
+          <span className="text-slate-500">Current Window Use:</span>
+          <span className="font-bold text-slate-900">{employee.days_used} / 90 days</span>
+        </div>
+
+        {employee.max_stay_days !== undefined && (
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-slate-500">Max Stay if Entering Today:</span>
+            <span className="font-semibold text-brand-600">{employee.max_stay_days} days</span>
+          </div>
+        )}
+
+        {employee.next_expiring_date && (
+          <div className="pt-1.5 border-t border-slate-100">
+            <div className="flex justify-between items-start text-xs">
+              <span className="text-slate-500 italic">Next day back:</span>
+              <div className="text-right">
+                <div className="font-semibold text-slate-900">
+                  {formatDate(employee.next_expiring_date)}
+                </div>
+                <div className="text-[10px] text-emerald-600 font-medium">
+                  +{employee.next_expiring_count} {employee.next_expiring_count === 1 ? 'day' : 'days'} recovered
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
  * Main compliance table component with filtering and sorting.
  * Displays employee compliance data with status badges and days remaining.
  * Responsive: converts to card layout on mobile.
@@ -185,6 +267,7 @@ const EmployeeCard = memo(function EmployeeCard({
  */
 export function ComplianceTable({
   employees,
+  hasEmployees,
   stats: serverStats,
   pagination,
   initialSearch: initialSearchProp,
@@ -330,14 +413,14 @@ export function ComplianceTable({
   const filteredAndSorted = employees
 
   // Show empty state if no employees at all (check stats.total for accurate count with pagination)
-  const totalEmployees = serverStats?.total ?? employees.length
-  if (totalEmployees === 0 && employees.length === 0) {
+  if (!hasEmployees) {
     return <EmptyState />
   }
 
   return (
-    <div className="space-y-8">
-      {inlineMessage && (
+    <TooltipProvider delayDuration={200}>
+      <div className="space-y-8">
+        {inlineMessage && (
         <Alert>
           <AlertDescription className="flex items-center justify-between gap-4">
             <span>{inlineMessage}</span>
@@ -411,7 +494,10 @@ export function ComplianceTable({
                 return (
                   <TableRow
                     key={employee.id}
-                    className="hover:bg-brand-50/60 cursor-pointer transition-colors"
+                    className={cn(
+                      'cursor-pointer transition-all',
+                      getRowRiskStyles(employee.risk_level)
+                    )}
                     onClick={() => router.push(`/employee/${employee.id}`)}
                   >
                     <TableCell className="font-medium">
@@ -433,14 +519,22 @@ export function ComplianceTable({
                       {isExempt ? (
                         <span className="text-brand-300">-</span>
                       ) : (
-                        <span
-                          className={cn(
-                            'font-medium',
-                            getDaysRemainingClassName(employee.risk_level)
-                          )}
-                        >
-                          {employee.days_remaining} days
-                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span
+                              className={cn(
+                                'font-medium cursor-help underline decoration-slate-200 decoration-dotted underline-offset-4',
+                                getDaysRemainingClassName(employee.risk_level)
+                              )}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {employee.days_remaining} days
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="w-64 p-3 shadow-xl border-slate-200 bg-white" side="top">
+                            <ComplianceCalculationTrace employee={employee} />
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                     </TableCell>
                     <TableCell className="text-brand-400">
@@ -512,5 +606,6 @@ export function ComplianceTable({
         onOpenChange={handleAddTripOpenChange}
       />
     </div>
+  </TooltipProvider>
   )
 }

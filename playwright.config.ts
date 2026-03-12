@@ -3,16 +3,19 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 const authFile = path.join(__dirname, '.auth/user.json');
+const e2eBaseUrl = 'http://127.0.0.1:3000';
+const e2eReadyUrl = `${e2eBaseUrl}/login`;
+const configuredWorkers = Number(process.env.PLAYWRIGHT_WORKERS ?? '1');
 
 // Check if auth file exists - only use it if it does
 const authFileExists = fs.existsSync(authFile);
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: Number.isFinite(configuredWorkers) && configuredWorkers > 0 ? configuredWorkers : 1,
   reporter: [
     ['html', { outputFolder: '.test-output/playwright-report' }],
     ['json', { outputFile: '.test-output/playwright-report/results.json' }],
@@ -21,7 +24,7 @@ export default defineConfig({
   // Global setup for authentication
   globalSetup: require.resolve('./e2e/auth.setup.ts'),
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: e2eBaseUrl,
     trace: 'on-first-retry',
     video: 'on-first-retry',
     screenshot: 'only-on-failure',
@@ -55,8 +58,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm next dev',
-    url: 'http://localhost:3000',
+    command: 'pnpm exec next dev --webpack --hostname 127.0.0.1 --port 3000',
+    url: e2eReadyUrl,
     reuseExistingServer: !process.env.CI,
     env: {
       ...process.env,

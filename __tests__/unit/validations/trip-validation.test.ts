@@ -8,7 +8,7 @@
  * - Date boundary validation
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   tripSchema,
   tripUpdateSchema,

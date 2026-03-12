@@ -6,7 +6,6 @@
  */
 
 import { writeFileSync } from 'fs';
-import { join } from 'path';
 import { formatNumber, formatDuration } from './utils';
 import { COUNTRY_NAMES, SCHENGEN_SET } from './constants';
 import type {
@@ -77,7 +76,6 @@ export function compareValues(
   // Compare per-country metrics
   console.log('\nPer-Country Comparison (sample):');
   let countryMatches = 0;
-  let countryMismatches = 0;
 
   for (const [code, expectedCountry] of expected.perCountry) {
     const actualCountry = actual.perCountry.get(code);
@@ -91,14 +89,12 @@ export function compareValues(
         actual: 0,
         difference: -expectedCountry.trips,
       });
-      countryMismatches++;
       continue;
     }
 
     if (expectedCountry.trips === actualCountry.trips && expectedCountry.rawDays === actualCountry.rawDays) {
       countryMatches++;
     } else {
-      countryMismatches++;
       if (expectedCountry.trips !== actualCountry.trips) {
         discrepancies.push({
           type: 'count',
@@ -126,7 +122,6 @@ export function compareValues(
   // Compare per-employee metrics (sample)
   console.log('\nPer-Employee Comparison (sample):');
   let employeeMatches = 0;
-  let employeeMismatches = 0;
 
   // Build map by email for actual values
   const actualByEmail = new Map<string, typeof actual.perEmployee extends Map<string, infer V> ? V : never>();
@@ -148,7 +143,6 @@ export function compareValues(
         actual: 0,
         difference: -expectedEmp.totalTrips,
       });
-      employeeMismatches++;
       continue;
     }
 
@@ -158,7 +152,6 @@ export function compareValues(
     if (tripsMatch && daysMatch) {
       employeeMatches++;
     } else {
-      employeeMismatches++;
       if (!tripsMatch) {
         discrepancies.push({
           type: 'count',

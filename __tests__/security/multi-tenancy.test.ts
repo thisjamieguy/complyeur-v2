@@ -12,12 +12,9 @@
  * 4. Direct ID access prevention
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   createMockSupabaseClient,
-  createMockUser,
-  createMockSession,
-  createMockAuthError,
 } from '../utils/mock-supabase';
 import { createMultiTenantScenario } from '../utils/factories';
 

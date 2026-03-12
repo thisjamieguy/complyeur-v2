@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
-import type { ImportFormat, ImportStatus, DuplicateOptions } from '@/types/import';
+import type { ImportFormat } from '@/types/import';
 
 // ============================================================================
 // Test Helpers
@@ -64,9 +64,6 @@ function createServerActionMock(options: {
   insertResult?: Record<string, unknown> | null;
   insertError?: { message: string } | null;
   canBulkImport?: boolean;
-  mfaOk?: boolean;
-  rateLimitAllowed?: boolean;
-  rateLimitError?: string;
 }) {
   const {
     user = { id: 'test-user-id' },
@@ -78,9 +75,6 @@ function createServerActionMock(options: {
     insertResult = null,
     insertError = null,
     canBulkImport = true,
-    mfaOk = true,
-    rateLimitAllowed = true,
-    rateLimitError = 'Rate limit exceeded',
   } = options;
 
   // Create chainable builder

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Shield, Key, Lock, History } from "lucide-react"
+import { Shield, Lock } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -24,7 +24,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
 import { updatePasswordAction } from "@/lib/actions/security"
 import { MfaEnrollmentPanel } from "@/components/mfa/mfa-enrollment"
 
@@ -156,42 +155,7 @@ export function SecuritySettings() {
           <p className="text-sm text-slate-500">
             Use an app like Google Authenticator or Authy to generate verification codes.
           </p>
-          <Separator />
           <MfaEnrollmentPanel />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-slate-600" />
-            <CardTitle>Recent Activity</CardTitle>
-          </div>
-          <CardDescription>
-            Recent security events on your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[
-              { event: "Password changed", location: "London, UK", time: "2 minutes ago", icon: Key },
-              { event: "New login", location: "London, UK", time: "2 hours ago", icon: Shield },
-              { event: "Security settings updated", location: "London, UK", time: "1 day ago", icon: Lock },
-            ].map((activity, i) => (
-              <div key={i} className="flex items-center justify-between py-2 border-b last:border-0">
-                <div className="flex items-center gap-4">
-                  <div className="p-2 bg-slate-100 rounded-full">
-                    <activity.icon className="h-4 w-4 text-slate-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{activity.event}</p>
-                    <p className="text-xs text-slate-500">{activity.location}</p>
-                  </div>
-                </div>
-                <span className="text-xs text-slate-400">{activity.time}</span>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -81,7 +81,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   // Admin: Full access to everything
   admin: Object.values(PERMISSIONS),
 
-  // Manager: Can manage employees and trips, view reports, but not manage users/settings
+  // Manager: Can manage employees and trips, and view read-only settings
   manager: [
     PERMISSIONS.EMPLOYEES_CREATE,
     PERMISSIONS.EMPLOYEES_READ,
@@ -98,9 +98,10 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.FORECAST_CREATE,
     PERMISSIONS.ALERTS_VIEW,
     PERMISSIONS.ALERTS_MANAGE,
+    PERMISSIONS.SETTINGS_VIEW,
   ],
 
-  // Viewer: Read-only access
+  // Viewer: Read-only access, including personal/settings pages
   viewer: [
     PERMISSIONS.EMPLOYEES_READ,
     PERMISSIONS.TRIPS_READ,
@@ -108,6 +109,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.CALENDAR_VIEW,
     PERMISSIONS.FORECAST_VIEW,
     PERMISSIONS.ALERTS_VIEW,
+    PERMISSIONS.SETTINGS_VIEW,
   ],
 
   // -------------------------------------------------

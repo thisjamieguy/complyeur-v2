@@ -7,7 +7,7 @@ import {
   getMaxRequestBodyBytesForPath,
 } from '@/lib/constants/request-limits'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow static assets from /public to bypass auth/session checks.

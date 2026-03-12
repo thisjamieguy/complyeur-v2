@@ -11,7 +11,7 @@
  * - Verify UI feedback at each step
  */
 
-import { test, expect, Page, BrowserContext } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 import { generateEmployeeCSV, generateTripCSV } from '../__tests__/utils/csv-generator';
@@ -140,18 +140,26 @@ async function selectImportFormat(page: Page, format: 'employees' | 'trips' | 'g
  * Upload a CSV file via the dropzone
  */
 async function uploadFile(page: Page, filePath: string): Promise<void> {
-  // Find the file input (hidden, but Playwright can interact with it)
-  const fileInput = page.locator('input[type="file"]');
+  const chooseFileButton = page.getByRole('button', { name: /choose file/i });
+  const hasChooserButton = await chooseFileButton.isVisible().catch(() => false);
 
-  // Upload the file
-  await fileInput.setInputFiles(filePath);
+  if (hasChooserButton) {
+    const [fileChooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      chooseFileButton.click(),
+    ]);
 
-  // Wait for file to be shown in UI
-  await page.waitForTimeout(500);
+    await fileChooser.setFiles(filePath);
+  } else {
+    await page.locator('input[type="file"]').setInputFiles(filePath);
+  }
+
+  // Wait for the uploaded file to be reflected in the UI
+  await expect(page.getByText(path.basename(filePath))).toBeVisible({ timeout: 10000 });
 
   // Click the Validate & Preview button
   const validateButton = page.getByRole('button', { name: /validate.*preview/i });
-  await expect(validateButton).toBeVisible({ timeout: 10000 });
+  await expect(validateButton).toBeEnabled({ timeout: 10000 });
   await validateButton.click();
 
   // Wait for validation/processing to complete (preview or mapping page)
@@ -187,7 +195,7 @@ async function confirmImport(page: Page): Promise<void> {
 
 test.describe('Import Workflow E2E', () => {
   // Setup: Login and ensure authenticated state
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async () => {
     ensureScratchpadDir();
   });
 

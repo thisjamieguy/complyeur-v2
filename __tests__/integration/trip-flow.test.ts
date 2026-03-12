@@ -8,21 +8,16 @@
  * - Breach detection and warnings
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
-  presenceDays,
-  calculateDaysRemaining,
   calculateCompliance,
-  getRiskLevel,
 } from '@/lib/compliance';
 import {
   createTrip,
   createConfig,
   createTripsWithDaysUsed,
   createOverlappingTrips,
-  createMixedCountryTrips,
 } from '../utils/factories';
-import type { Trip, ComplianceConfig } from '@/lib/compliance/types';
 
 describe('Trip management flow', () => {
   describe('add trip → recalculates days remaining', () => {

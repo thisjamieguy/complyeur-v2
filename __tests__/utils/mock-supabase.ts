@@ -6,8 +6,7 @@
  */
 
 import { vi } from 'vitest';
-import type { SupabaseClient, User, Session, AuthError } from '@supabase/supabase-js';
-import type { Database } from '@/types/database';
+import type { User, Session, AuthError } from '@supabase/supabase-js';
 
 // Type-safe mock factory
 type MockSupabaseClient = {

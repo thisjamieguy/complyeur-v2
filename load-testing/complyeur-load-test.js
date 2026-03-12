@@ -46,7 +46,7 @@ export function setup() {
   return { startTime: new Date() };
 }
 
-export default function () {
+export default function complyeurLoadTest() {
   // Each virtual user picks a random test account
   const user = TEST_USERS[Math.floor(Math.random() * TEST_USERS.length)];
 

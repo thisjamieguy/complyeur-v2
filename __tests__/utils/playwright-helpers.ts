@@ -4,7 +4,7 @@
  * Common page interactions and utilities for E2E tests.
  */
 
-import { Page, expect, BrowserContext } from '@playwright/test';
+import { Page, BrowserContext } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -111,7 +111,7 @@ export async function uploadFile(
   page: Page,
   fileContent: string,
   filename: string,
-  mimeType: string = 'text/csv'
+  _mimeType: string = 'text/csv'
 ): Promise<string> {
   // Write to temp file
   const tempDir = process.env.TEST_TEMP_DIR || '/tmp';

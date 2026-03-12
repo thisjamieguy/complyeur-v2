@@ -81,11 +81,11 @@ async function testEndpoint(
 }
 
 async function runTests(email?: string, password?: string) {
-  const testEmail = email || 'test@example.com'
-  const testPassword = password || 'TestPassword123!'
-
   console.log('🧪 Starting endpoint tests...\n')
   console.log(`Base URL: ${env.NEXT_PUBLIC_APP_URL}\n`)
+  if (email || password) {
+    console.log('Note: provided auth credentials are ignored by this script because it only tests HTTP endpoints.\n')
+  }
 
   // Test API Routes
   console.log('📡 Testing API Routes...')
@@ -152,6 +152,5 @@ runTests(email, password).catch((error) => {
   console.error('Fatal error:', error)
   process.exit(1)
 })
-
 
 

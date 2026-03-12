@@ -472,3 +472,57 @@ export async function updateNotificationPreferencesAction(
   revalidatePath('/settings')
   return prefs
 }
+
+// ============================================================================
+// RESET POPUPS & TOURS
+// ============================================================================
+
+/**
+ * Reset all dismissed popups, tours, and alert acknowledgments so the user
+ * can review them again. Resets:
+ * - Dashboard tour completion flag
+ * - All alert acknowledgments (marks them as unread)
+ */
+export async function resetPopupsAndToursAction(): Promise<{ tourReset: boolean; alertsReset: number }> {
+  const { userId, companyId } = await requireCompanyAccessCached()
+
+  const rateCheck = await checkServerActionRateLimit(userId, 'resetPopupsAndTours')
+  if (!rateCheck.allowed) throw new Error(rateCheck.error || 'Too many requests')
+
+  const supabase = await createClient()
+
+  // 1. Reset dashboard tour
+  const { error: tourError } = await supabase
+    .from('profiles')
+    .update({ dashboard_tour_completed_at: null })
+    .eq('id', userId)
+
+  if (tourError) {
+    console.error('[resetPopups] Failed to reset tour:', tourError)
+  }
+
+  // 2. Un-acknowledge all alerts for this company
+  const { data: resetAlerts, error: alertError } = await supabase
+    .from('alerts')
+    .update({
+      acknowledged: false,
+      acknowledged_at: null,
+      acknowledged_by: null,
+    })
+    .eq('company_id', companyId)
+    .eq('acknowledged', true)
+    .eq('resolved', false)
+    .select('id')
+
+  if (alertError) {
+    console.error('[resetPopups] Failed to reset alerts:', alertError)
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/settings')
+
+  return {
+    tourReset: !tourError,
+    alertsReset: resetAlerts?.length ?? 0,
+  }
+}

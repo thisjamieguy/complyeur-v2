@@ -9,7 +9,7 @@
  * - Protected route access
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   createMockSupabaseClient,
   createMockUser,
@@ -73,8 +73,6 @@ describe('Authentication flows', () => {
     });
 
     it('rejects signup with invalid email format', async () => {
-      const mockClient = createMockSupabaseClient();
-
       // Validation should fail before API call
       const input = signupSchema.safeParse({
         email: 'not-valid-email',

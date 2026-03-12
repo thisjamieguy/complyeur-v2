@@ -33,4 +33,11 @@ describe('permissions roles', () => {
     expect(hasPermission('owner', PERMISSIONS.USERS_MANAGE)).toBe(true)
     expect(hasPermission('owner', PERMISSIONS.SETTINGS_UPDATE)).toBe(true)
   })
+
+  it('allows manager and employee roles to view settings without granting settings updates', () => {
+    expect(hasPermission('manager', PERMISSIONS.SETTINGS_VIEW)).toBe(true)
+    expect(hasPermission('viewer', PERMISSIONS.SETTINGS_VIEW)).toBe(true)
+    expect(hasPermission('manager', PERMISSIONS.SETTINGS_UPDATE)).toBe(false)
+    expect(hasPermission('viewer', PERMISSIONS.SETTINGS_UPDATE)).toBe(false)
+  })
 })

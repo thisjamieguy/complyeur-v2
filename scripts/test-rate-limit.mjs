@@ -104,11 +104,9 @@ async function testRateLimitEnforcement() {
 
   let successCount = 0
   let rateLimitedCount = 0
-  let lastStatus = 0
 
   for (let i = 2; i <= 70; i++) {
     const result = await makeRequest('enforcement', i)
-    lastStatus = result.status
 
     if (result.status === 200) {
       successCount++

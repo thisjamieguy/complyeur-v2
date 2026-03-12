@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Generate combined test report from Vitest coverage and Playwright results.
  *
@@ -55,7 +56,6 @@ function generateReport() {
   const playwright = readJsonSafe(playwrightPath);
 
   // Calculate stats
-  let vitestStats = { passed: 0, failed: 0, skipped: 0, total: 0 };
   let e2eStats = { passed: 0, failed: 0, skipped: 0, total: 0 };
 
   if (playwright && playwright.suites) {
@@ -83,8 +83,6 @@ function generateReport() {
   const lines = totalCoverage.lines?.pct || 0;
   const branches = totalCoverage.branches?.pct || 0;
   const functions = totalCoverage.functions?.pct || 0;
-  const statements = totalCoverage.statements?.pct || 0;
-
   // Compliance-specific coverage
   let complianceCoverage = { lines: 0, branches: 0, functions: 0, statements: 0 };
   if (coverage) {

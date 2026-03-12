@@ -5,6 +5,8 @@ import { ListPlus } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -30,6 +32,9 @@ export function BulkAddTripsModal({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Bulk add trips for {employeeName}</DialogTitle>
+        </DialogHeader>
         <BulkAddTripsForm
           employeeId={employeeId}
           employeeName={employeeName}

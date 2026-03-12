@@ -208,8 +208,6 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
       return { success: false, error: 'Failed to create import session' };
     }
 
-    revalidatePath('/import');
-
     return { success: true, session: dbRowToImportSession(session) };
   } catch (error) {
     console.error('Upload error:', error);

@@ -18,7 +18,6 @@ import {
   randomInt,
   randomPick,
   formatDate,
-  calculateTripDays,
   isYearSpanning,
   includesLeapDay,
 } from './utils';

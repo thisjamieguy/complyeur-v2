@@ -1,4 +1,4 @@
-import { test, expect, Page, BrowserContext } from '@playwright/test'
+import { test, Page, BrowserContext } from '@playwright/test'
 import { deleteUserByEmail, ensureTestUser, hasAdminConfig } from '../utils/supabase-admin'
 
 // Helper function to generate a unique email for signup tests

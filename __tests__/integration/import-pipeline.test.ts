@@ -5,14 +5,13 @@
  * Uses real implementations (not mocks) for parser.ts and validator.ts.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import ExcelJS from 'exceljs';
 import { parseFileRaw, sanitizeValue, normalizeHeader, formatDateValue } from '@/lib/import/parser';
-import { validateRows, getValidationSummary, getAllErrors, getAllWarnings } from '@/lib/import/validator';
+import { validateRows, getValidationSummary, getAllWarnings } from '@/lib/import/validator';
 import type {
   ParsedEmployeeRow,
   ParsedTripRow,
-  ImportFormat,
 } from '@/types/import';
 import { generateEmployeeCSV, generateTripCSV } from '../utils/csv-generator';
 import * as fs from 'fs';

@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { ChevronRight, FileSpreadsheet, History, Shield, Users } from 'lucide-react'
+import { ChevronRight, Shield } from 'lucide-react'
 import { SettingsForm } from '@/components/settings/settings-form'
 import { SecuritySettings } from '@/components/settings/security-settings'
 import { DangerZone } from '@/components/settings/danger-zone'
+import { ResetPopupsSection } from '@/components/settings/reset-popups-section'
 import { DateFormatPreferences } from '@/components/settings/date-format-preferences'
 import { UserPreferencesForm } from './user-preferences-form'
 import { getCompanySettings, canViewSettings, canUpdateSettings } from '@/lib/actions/settings'
@@ -25,17 +26,20 @@ const SETTINGS_SECTIONS = [
   {
     id: 'general',
     label: 'General',
-    description: 'Company defaults, security, and your personal notification preferences.',
+    eyebrow: 'Organisation defaults',
+    description: 'Retention, alerts, billing, and account controls.',
   },
   {
     id: 'workspace',
     label: 'Workspace',
-    description: 'Team access, import mappings, and import history.',
+    eyebrow: 'Operational tools',
+    description: 'Team access, saved import mappings, and import history.',
   },
   {
     id: 'privacy',
     label: 'Privacy',
-    description: 'GDPR workflows and destructive data operations.',
+    eyebrow: 'Compliance controls',
+    description: 'GDPR workflows and irreversible data operations.',
   },
 ] as const
 
@@ -94,9 +98,11 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   let userPreferences = defaultUserPreferences
   let entitlements: Awaited<ReturnType<typeof getCompanyEntitlements>> = null
   let hasStripeCustomer = false
+  let userId = ''
 
   if (activeSection === 'general') {
-    const { companyId } = await requireCompanyAccessCached()
+    const { companyId, userId: uid } = await requireCompanyAccessCached()
+    userId = uid
 
     const [settingsResult, prefsResult, entitlementsResult, companyResult] = await Promise.all([
       getCompanySettings(),
@@ -112,199 +118,226 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-slate-600 mt-1">
-          Configure how ComplyEur works for your organization.
-        </p>
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-2xl space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Settings
+            </p>
+            <h1 className="text-2xl font-semibold text-slate-950">Control how your workspace runs</h1>
+            <p className="text-sm text-slate-600">
+              Keep defaults, access, and compliance controls in one place without hunting through
+              separate tools.
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 lg:max-w-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Active section
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">{activeSectionMeta?.label}</p>
+            <p className="mt-1 text-sm text-slate-600">{activeSectionMeta?.description}</p>
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="border-b border-slate-200">
-          <nav className="flex gap-4 -mb-px overflow-x-auto" aria-label="Settings sections">
+      <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:items-start">
+        <aside className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+          <nav className="space-y-1" aria-label="Settings sections">
             {SETTINGS_SECTIONS.map((section) => {
               const isActive = activeSection === section.id
+
               return (
                 <Link
                   key={section.id}
                   href={`/settings?section=${section.id}`}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
-                    'px-1 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+                    'block rounded-xl px-3 py-3 transition-colors',
                     isActive
-                      ? 'border-slate-900 text-slate-900'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                      ? 'bg-slate-900 text-white'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   )}
                 >
-                  {section.label}
+                  <p className="text-sm font-semibold">{section.label}</p>
+                  <p
+                    className={cn(
+                      'mt-1 text-xs',
+                      isActive ? 'text-slate-300' : 'text-slate-500'
+                    )}
+                  >
+                    {section.eyebrow}
+                  </p>
                 </Link>
               )
             })}
           </nav>
-        </div>
-        <p className="text-sm text-slate-600">
-          {activeSectionMeta?.description}
-        </p>
-      </div>
+        </aside>
 
-      {activeSection === 'general' && (
-        <>
-          {settings ? (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {activeSectionMeta?.eyebrow}
+            </p>
+            <p className="mt-1 text-sm text-slate-700">{activeSectionMeta?.description}</p>
+          </div>
+
+          {activeSection === 'general' && (
             <>
-              <SettingsForm settings={settings} canEdit={canEdit} />
-              <BillingSection
-                tierSlug={entitlements?.tier_slug ?? null}
-                isTrial={entitlements?.is_trial ?? false}
-                trialEndsAt={entitlements?.trial_ends_at ?? null}
-                subscriptionStatus={entitlements?.subscription_status ?? null}
-                hasStripeCustomer={hasStripeCustomer}
-              />
-              <div className="bg-white rounded-xl border shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Dashboard Tour
-                </h2>
-                <p className="mt-1 text-sm text-slate-600">
-                  Need a refresher on the briefing, navigation shortcuts, and where key workflows live?
-                </p>
-                <Link
-                  href="/dashboard?tour=1"
-                  className="mt-4 inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-100"
-                >
-                  Replay guided tour
-                </Link>
-              </div>
-              <DateFormatPreferences />
-              <SecuritySettings />
-
-              <div className="bg-white rounded-xl border shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-2">
-                  Your Personal Email Preferences
-                </h2>
-                <p className="text-sm text-slate-600 mb-6">
-                  Control which email notifications you receive personally.
-                  This only affects your inbox, not other team members.
-                </p>
-                <Suspense fallback={<div className="animate-pulse h-48 bg-slate-100 rounded" />}>
-                  <UserPreferencesForm preferences={userPreferences} disabled={false} />
-                </Suspense>
-              </div>
-            </>
-          ) : (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-800">
-                Unable to load settings. Please try again or contact support.
-              </p>
-            </div>
-          )}
-        </>
-      )}
-
-      {activeSection === 'workspace' && (
-        <>
-          <Link
-            href="/settings/team"
-            className="block bg-white rounded-xl border shadow-sm p-6 hover:border-slate-300 transition-colors group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
-                  <Users className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900 group-hover:text-emerald-700 transition-colors">
-                    Team
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    Invite teammates, assign roles, and transfer ownership
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-emerald-700 transition-colors" />
-            </div>
-          </Link>
-
-          <Link
-            href="/settings/mappings"
-            className="block bg-white rounded-xl border shadow-sm p-6 hover:border-slate-300 transition-colors group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <FileSpreadsheet className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
-                    Column Mappings
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    Manage saved column mappings for data imports
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors" />
-            </div>
-          </Link>
-
-          <Link
-            href="/settings/import-history"
-            className="block bg-white rounded-xl border shadow-sm p-6 hover:border-slate-300 transition-colors group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
-                  <History className="h-5 w-5 text-slate-600" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-slate-900 group-hover:text-slate-700 transition-colors">
-                    Import History
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    View past import sessions and their results
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
-            </div>
-          </Link>
-        </>
-      )}
-
-      {activeSection === 'privacy' && (
-        <>
-          {canEdit ? (
-            <Link
-              href="/gdpr"
-              className="block bg-white rounded-xl border shadow-sm p-6 hover:border-slate-300 transition-colors group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
-                    <Shield className="h-5 w-5 text-indigo-600" />
+              {settings ? (
+                <>
+                  <SettingsForm settings={settings} canEdit={canEdit} />
+                  <BillingSection
+                    tierSlug={entitlements?.tier_slug ?? null}
+                    isTrial={entitlements?.is_trial ?? false}
+                    trialEndsAt={entitlements?.trial_ends_at ?? null}
+                    subscriptionStatus={entitlements?.subscription_status ?? null}
+                    hasStripeCustomer={hasStripeCustomer}
+                  />
+                  <div className="rounded-xl border bg-white p-6 shadow-sm">
+                    <h2 className="text-lg font-semibold text-slate-900">Dashboard tour</h2>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Replay the product walkthrough if you need a refresher on the briefing,
+                      navigation, and key workflows.
+                    </p>
+                    <Link
+                      href="/dashboard?tour=1"
+                      className="mt-4 inline-flex items-center rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-100"
+                    >
+                      Replay guided tour
+                    </Link>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors">
-                      GDPR & Privacy Tools
+                  <ResetPopupsSection userId={userId} />
+                  <DateFormatPreferences />
+                  <SecuritySettings />
+
+                  <div className="rounded-xl border bg-white p-6 shadow-sm">
+                    <h2 className="mb-2 text-lg font-semibold text-slate-900">
+                      Personal email preferences
+                    </h2>
+                    <p className="mb-6 text-sm text-slate-600">
+                      Choose which compliance emails you receive personally. These changes only
+                      affect your inbox.
+                    </p>
+                    <Suspense fallback={<div className="h-48 animate-pulse rounded bg-slate-100" />}>
+                      <UserPreferencesForm preferences={userPreferences} disabled={false} />
+                    </Suspense>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                  <p className="text-red-800">
+                    Unable to load settings. Please try again or contact support.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeSection === 'workspace' && (
+            <>
+              <Link
+                href="/settings/team"
+                className="block rounded-xl border bg-white p-6 shadow-sm transition-colors hover:border-slate-300 group"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Access
+                    </p>
+                    <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
+                      Team
                     </h2>
                     <p className="text-sm text-slate-600">
-                      Handle DSAR exports, anonymization, and audit trails
+                      Invite teammates, assign roles, and transfer ownership.
                     </p>
                   </div>
+                  <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600" />
                 </div>
-                <ChevronRight className="h-5 w-5 text-slate-400 group-hover:text-indigo-700 transition-colors" />
-              </div>
-            </Link>
-          ) : (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-amber-900">GDPR & Privacy Tools</h2>
-              <p className="text-sm text-amber-800 mt-1">
-                GDPR actions are only available to Owners and Admins.
-              </p>
-            </div>
+              </Link>
+
+              <Link
+                href="/settings/mappings"
+                className="block rounded-xl border bg-white p-6 shadow-sm transition-colors hover:border-slate-300 group"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Imports
+                    </p>
+                    <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
+                      Column mappings
+                    </h2>
+                    <p className="text-sm text-slate-600">
+                      Review and reuse saved field mappings for CSV and spreadsheet imports.
+                    </p>
+                  </div>
+                  <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600" />
+                </div>
+              </Link>
+
+              <Link
+                href="/settings/import-history"
+                className="block rounded-xl border bg-white p-6 shadow-sm transition-colors hover:border-slate-300 group"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Audit trail
+                    </p>
+                    <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
+                      Import history
+                    </h2>
+                    <p className="text-sm text-slate-600">
+                      Check past import sessions, outcomes, and follow-up issues.
+                    </p>
+                  </div>
+                  <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600" />
+                </div>
+              </Link>
+            </>
           )}
 
-          <DangerZone />
-        </>
-      )}
+          {activeSection === 'privacy' && (
+            <>
+              {canEdit ? (
+                <Link
+                  href="/gdpr"
+                  className="block rounded-xl border bg-white p-6 shadow-sm transition-colors hover:border-slate-300 group"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-4">
+                      <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
+                        <Shield className="h-5 w-5 text-slate-700" />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          GDPR
+                        </p>
+                        <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
+                          Privacy tools
+                        </h2>
+                        <p className="text-sm text-slate-600">
+                          Handle DSAR exports, anonymisation, and audit-ready privacy workflows.
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600" />
+                  </div>
+                </Link>
+              ) : (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
+                  <h2 className="text-lg font-semibold text-amber-900">Privacy tools</h2>
+                  <p className="mt-1 text-sm text-amber-800">
+                    GDPR actions are only available to owners and admins.
+                  </p>
+                </div>
+              )}
+
+              <DangerZone />
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

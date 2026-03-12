@@ -85,6 +85,7 @@ async function EmployeeComplianceList({
     return (
       <ComplianceTable
         employees={finalResult.employees}
+        hasEmployees={finalResult.hasEmployees}
         stats={finalResult.stats}
         pagination={finalResult.pagination}
         initialSearch={search}

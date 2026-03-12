@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi } from 'vitest'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import { AuthError, DatabaseError, NotFoundError } from '@/lib/errors'
@@ -106,9 +107,9 @@ describe('write paths', () => {
           error: null,
         }),
       },
-      from: vi.fn((table: string) => {
-        if (table === 'employees') return employeeReadChain
-        if (table === 'profiles') return profileChain
+      from: vi.fn((_table: string) => {
+        if (_table === 'employees') return employeeReadChain
+        if (_table === 'profiles') return profileChain
         return employeeReadChain
       }),
     }

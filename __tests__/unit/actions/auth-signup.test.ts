@@ -72,7 +72,7 @@ describe('signup action enumeration parity', () => {
     const { signup } = await import('@/app/(auth)/actions')
 
     await expect(signup(createSignupFormData())).rejects.toThrow(
-      'REDIRECT:/login?signup=check-email'
+      'REDIRECT:/check-email'
     )
     expect(supabase.rpc).not.toHaveBeenCalled()
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
@@ -120,7 +120,7 @@ describe('signup action enumeration parity', () => {
 
     await expect(
       signup(createSignupFormData({ email: 'new@example.com' }))
-    ).rejects.toThrow('REDIRECT:/login?signup=check-email')
+    ).rejects.toThrow('REDIRECT:/check-email')
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'create_company_and_profile',

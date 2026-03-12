@@ -5,7 +5,6 @@
  * All factories return valid data by default with easy overrides.
  */
 
-import { v4 as uuid } from 'crypto';
 import type { Trip } from '@/lib/compliance/types';
 
 // Simple UUID generator (no external dependency needed in tests)

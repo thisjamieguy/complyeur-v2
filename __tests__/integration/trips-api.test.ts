@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * @fileoverview Trips API integration tests
  *
@@ -21,7 +22,7 @@ import {
   reassignTrip,
 } from '@/lib/db/trips'
 import { createClient } from '@/lib/supabase/server'
-import { AuthError, DatabaseError, NotFoundError, ValidationError } from '@/lib/errors'
+import { NotFoundError, ValidationError } from '@/lib/errors'
 import type { Trip } from '@/types/database-helpers'
 
 // Mock Supabase client
@@ -33,39 +34,6 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('@/lib/security/tenant-access', () => ({
   requireCompanyAccess: vi.fn(),
 }))
-
-/**
- * Helper to create a mock Supabase client
- */
-function createMockSupabase(options: {
-  userId?: string
-  companyId?: string
-  mockData?: any
-  mockError?: any
-}) {
-  const { userId = 'user-1', companyId = 'company-a', mockData = null, mockError = null } = options
-
-  const chainableMethods = {
-    select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    neq: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data: mockData, error: mockError }),
-  }
-
-  return {
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: userId } },
-        error: null,
-      }),
-    },
-    from: vi.fn(() => chainableMethods),
-  }
-}
 
 /**
  * Mock trip data factory
@@ -557,7 +525,7 @@ describe('Trips API - CRUD Operations', () => {
       }
 
       const supabase = {
-        from: vi.fn((table: string) => {
+        from: vi.fn((_table: string) => {
           fromCallCount++
           if (fromCallCount === 1) return fetchChain
           return updateChain
@@ -603,7 +571,6 @@ describe('Trips API - CRUD Operations', () => {
     })
 
     it('throws NotFoundError when trip belongs to different company', async () => {
-      const existingTrip = createMockTrip()
       const { requireCompanyAccess } = await import('@/lib/security/tenant-access')
 
       vi.mocked(requireCompanyAccess).mockResolvedValue({
@@ -657,7 +624,7 @@ describe('Trips API - CRUD Operations', () => {
       }
 
       const supabase = {
-        from: vi.fn((table: string) => {
+        from: vi.fn((_table: string) => {
           fromCallCount++
           if (fromCallCount === 1) return fetchChain
           return deleteChain
@@ -834,7 +801,7 @@ describe('Trips API - CRUD Operations', () => {
       }
 
       const supabase = {
-        from: vi.fn((table: string) => {
+        from: vi.fn((_table: string) => {
           fromCallCount++
           if (fromCallCount === 1) return employeeChain
           if (fromCallCount === 2) return existingTripsChain
@@ -917,7 +884,7 @@ describe('Trips API - CRUD Operations', () => {
       }
 
       const supabase = {
-        from: vi.fn((table: string) => {
+        from: vi.fn((_table: string) => {
           fromCallCount++
           if (fromCallCount === 1) return employeeChain
           if (fromCallCount === 2) return existingTripsChain
@@ -990,7 +957,7 @@ describe('Trips API - CRUD Operations', () => {
       }
 
       const supabase = {
-        from: vi.fn((table: string) => {
+        from: vi.fn((_table: string) => {
           fromCallCount++
           if (fromCallCount === 1) return employeeChain
           if (fromCallCount === 2) return existingTripsChain
@@ -1173,7 +1140,7 @@ describe('Trips API - CRUD Operations', () => {
       }
 
       const supabase = {
-        from: vi.fn((table: string) => {
+        from: vi.fn((_table: string) => {
           fromCallCount++
           if (fromCallCount === 1) return tripChain // Get existing trip
           if (fromCallCount === 2) return newEmployeeChain // Verify new employee
@@ -1221,7 +1188,6 @@ describe('Trips API - CRUD Operations', () => {
     })
 
     it('throws NotFoundError when trip belongs to different company', async () => {
-      const existingTrip = createMockTrip({ company_id: 'company-b' })
       const { requireCompanyAccess } = await import('@/lib/security/tenant-access')
 
       vi.mocked(requireCompanyAccess).mockResolvedValue({
@@ -1277,7 +1243,7 @@ describe('Trips API - CRUD Operations', () => {
       }
 
       const supabase = {
-        from: vi.fn((table: string) => {
+        from: vi.fn((_table: string) => {
           fromCallCount++
           if (fromCallCount === 1) return tripChain
           return newEmployeeChain
@@ -1319,7 +1285,7 @@ describe('Trips API - CRUD Operations', () => {
       }
 
       const supabase = {
-        from: vi.fn((table: string) => {
+        from: vi.fn((_table: string) => {
           fromCallCount++
           if (fromCallCount === 1) return tripChain
           return newEmployeeChain
@@ -1372,7 +1338,7 @@ describe('Trips API - CRUD Operations', () => {
       })
 
       const supabase = {
-        from: vi.fn((table: string) => {
+        from: vi.fn((_table: string) => {
           fromCallCount++
           if (fromCallCount === 1) return tripChain
           if (fromCallCount === 2) return newEmployeeChain
