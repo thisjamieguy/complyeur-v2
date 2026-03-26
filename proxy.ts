@@ -9,20 +9,47 @@ import {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const cspHeader = buildContentSecurityPolicy()
 
   // Allow static assets from /public to bypass auth/session checks.
   // Without this, image/logo requests can be redirected as protected routes.
   const isStaticAssetRequest = /\.[^/]+$/.test(pathname)
   if (isStaticAssetRequest) {
-    return NextResponse.next()
+    const response = NextResponse.next()
+    response.headers.set('Content-Security-Policy', cspHeader)
+    return response
   }
-
-  const cspHeader = buildContentSecurityPolicy()
   const requestHeaders = new Headers(request.headers)
 
   const withSecurityHeaders = (response: NextResponse): NextResponse => {
     response.headers.set('Content-Security-Policy', cspHeader)
+    // Ensure redirect responses have Content-Type to avoid ZAP warning [10019]
+    if (!response.headers.has('Content-Type')) {
+      response.headers.set('Content-Type', 'text/html; charset=utf-8')
+    }
     return response
+  }
+
+  // Strip sensitive query parameters from auth pages to prevent credential leakage in URLs.
+  // ZAP flagged: "Information Disclosure - Sensitive Information in URL" when GET params
+  // like ?password=... appear. Forms already use POST, but this hardens against bookmarks/logs.
+  const sensitiveParams = ['password', 'confirmPassword']
+  const authPaths = ['/login', '/signup', '/forgot-password', '/reset-password']
+  if (authPaths.includes(pathname) && request.method === 'GET') {
+    const url = request.nextUrl.clone()
+    let stripped = false
+    for (const param of sensitiveParams) {
+      if (url.searchParams.has(param)) {
+        url.searchParams.delete(param)
+        stripped = true
+      }
+    }
+    if (stripped) {
+      const response = NextResponse.redirect(url, 302)
+      response.headers.set('Content-Security-Policy', cspHeader)
+      response.headers.set('Content-Type', 'text/html; charset=utf-8')
+      return response
+    }
   }
 
   const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', '/check-email']
