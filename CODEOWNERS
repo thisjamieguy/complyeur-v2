@@ -1,0 +1,2 @@
+# Require explicit review for CI/CD changes.
+/.github/workflows/* @thisjamieguy
