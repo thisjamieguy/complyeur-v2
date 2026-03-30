@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function AdminSettingsPage() {
   const { user, profile } = await requireSuperAdmin()
+  const hasAdminSupabaseKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
 
   return (
     <div className="space-y-6">
@@ -99,7 +100,7 @@ export default async function AdminSettingsPage() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">Service Role Key</span>
               <span className="text-sm text-slate-500">
-                {process.env.SUPABASE_SERVICE_ROLE_KEY ? (
+                {hasAdminSupabaseKey ? (
                   <Badge className="bg-green-100 text-green-800">Configured</Badge>
                 ) : (
                   <Badge variant="destructive">Missing</Badge>

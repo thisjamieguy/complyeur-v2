@@ -68,6 +68,7 @@ export async function proxy(request: NextRequest) {
     '/pricing',
     '/privacy',
     '/terms',
+    '/cookies',
     '/accessibility',
     '/sitemap.xml',
     '/robots.txt',

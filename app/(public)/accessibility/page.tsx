@@ -4,7 +4,7 @@ export default function AccessibilityPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
       <h1 className="text-3xl font-bold text-slate-900 mb-2">Accessibility Statement</h1>
-      <p className="text-sm text-slate-500 mb-12">Last updated: January 9, 2025</p>
+      <p className="text-sm text-slate-500 mb-12">Last updated: 30 March 2026</p>
 
       <div className="prose prose-slate max-w-none">
         {/* 1. Our Commitment */}
@@ -168,6 +168,11 @@ export default function AccessibilityPage() {
             <li>
               <Link href="/terms" className="text-blue-600 hover:text-blue-700 underline">
                 Terms of Service
+              </Link>
+            </li>
+            <li>
+              <Link href="/cookies" className="text-blue-600 hover:text-blue-700 underline">
+                Cookie Policy
               </Link>
             </li>
           </ul>

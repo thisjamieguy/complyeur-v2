@@ -256,6 +256,17 @@ CREATE POLICY "Users see own employees"
 - "Days remaining" = 90 minus days used in rolling window
 - Use ISO date strings (`'2025-10-12'`) for all calculations
 
+### Schengen Membership — Critical Edge Cases
+- **Ireland and Cyprus are EU members but NOT Schengen.** Trips there do not count toward the 90-day limit. This is a common mistake — do not add IE or CY to the Schengen country list.
+- **Romania and Bulgaria became full Schengen members on 1 January 2025** (land border checks removed). Trips to RO or BG on or after this date count toward the limit. Both are already in `constants.ts` with `since: '2025-01-01'`.
+- **Microstates count as Schengen:** Monaco (MC), Vatican City (VA), San Marino (SM), and Andorra (AD) have open borders with their Schengen neighbours. Days spent there count toward the 90-day limit. All four are in `SCHENGEN_COUNTRY_CODES`.
+
+### EU Entry/Exit System (EES)
+- The EU's Entry/Exit System went live in **October 2025**. It introduces biometric checks (fingerprints, facial image) at external Schengen borders for non-EU nationals.
+- EES records every entry and exit electronically, replacing manual passport stamping.
+- ComplyEUR is complementary to EES — it provides pre-trip forecasting and employer-side tracking. ComplyEUR does not connect to EES infrastructure.
+- EES makes accurate trip recording more important: border agencies can now cross-check electronic records against declared travel history.
+
 ### Core Entities
 - **Companies** — the paying customer (auth.uid() = company)
 - **Employees** — people being tracked (belong to a company)
