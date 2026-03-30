@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/thisjamieguy/complyeur-v2/compare/v1.0.0...HEAD)
 
+### Changed
+
+- restore lint as a required CI gate and clear the current lint error backlog
+- align production-readiness documentation with the current state of tests, proxy migration, and dependency audit findings
+
 ### Merged
 
 - Add comprehensive penetration testing checklist for ComplyEur [`#10`](https://github.com/thisjamieguy/complyeur-v2/pull/10)

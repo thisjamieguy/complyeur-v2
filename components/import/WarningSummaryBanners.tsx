@@ -1,16 +1,17 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
-import { ValidatedRow, ParsedRow, isParsedTripRow } from '@/types/import';
+import { useState } from 'react'
+import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react'
+import { ValidatedRow, ParsedRow, isParsedTripRow } from '@/types/import'
 import {
   formatIsoDateForDisplay,
+  DEFAULT_DATE_DISPLAY_FORMAT,
   getStoredDateDisplayFormat,
   type DateDisplayFormat,
-} from '@/lib/import/date-preferences';
+} from '@/lib/import/date-preferences'
 
 interface WarningSummaryBannersProps {
-  rows: ValidatedRow<ParsedRow>[];
+  rows: ValidatedRow<ParsedRow>[]
 }
 
 interface GroupedWarning {
@@ -23,7 +24,7 @@ interface GroupedWarning {
     country: string;
     entryDate: string;
     exitDate: string;
-  }[];
+  }[]
 }
 
 // Extract the base pattern from a warning message (removes specific values)
@@ -43,19 +44,21 @@ function extractCountryFromMessage(message: string): string | null {
 }
 
 export function WarningSummaryBanners({ rows }: WarningSummaryBannersProps) {
-  const [expandedPatterns, setExpandedPatterns] = useState<Set<string>>(new Set());
-  const [dateDisplayFormat, setDateDisplayFormat] = useState<DateDisplayFormat>('DD-MM-YYYY');
+  const [expandedPatterns, setExpandedPatterns] = useState<Set<string>>(new Set())
+  const [dateDisplayFormat] = useState<DateDisplayFormat>(() => {
+    if (typeof window === 'undefined') {
+      return DEFAULT_DATE_DISPLAY_FORMAT
+    }
 
-  useEffect(() => {
-    setDateDisplayFormat(getStoredDateDisplayFormat());
-  }, []);
+    return getStoredDateDisplayFormat()
+  })
 
   // Group warnings by pattern
-  const groupedWarnings = new Map<string, GroupedWarning>();
+  const groupedWarnings = new Map<string, GroupedWarning>()
 
   rows.forEach((row) => {
     row.warnings.forEach((warning) => {
-      const pattern = getWarningPattern(warning.message);
+      const pattern = getWarningPattern(warning.message)
 
       if (!groupedWarnings.has(pattern)) {
         groupedWarnings.set(pattern, {
@@ -63,16 +66,16 @@ export function WarningSummaryBanners({ rows }: WarningSummaryBannersProps) {
           message: warning.message,
           countries: new Set(),
           affectedRows: [],
-        });
+        })
       }
 
-      const group = groupedWarnings.get(pattern)!;
+      const group = groupedWarnings.get(pattern)!
 
       // Extract country for non-Schengen warnings
       if (pattern === 'non-schengen') {
-        const country = extractCountryFromMessage(warning.message);
+        const country = extractCountryFromMessage(warning.message)
         if (country) {
-          group.countries.add(country);
+          group.countries.add(country)
         }
       }
 
@@ -84,36 +87,36 @@ export function WarningSummaryBanners({ rows }: WarningSummaryBannersProps) {
           country: row.data.country,
           entryDate: row.data.entry_date,
           exitDate: row.data.exit_date,
-        });
+        })
       }
-    });
-  });
+    })
+  })
 
   // Convert to array and filter out empty groups
   const warningGroups = Array.from(groupedWarnings.values()).filter(
     (g) => g.affectedRows.length > 0
-  );
+  )
 
   if (warningGroups.length === 0) {
-    return null;
+    return null
   }
 
   const togglePattern = (pattern: string) => {
-    const newExpanded = new Set(expandedPatterns);
+    const newExpanded = new Set(expandedPatterns)
     if (newExpanded.has(pattern)) {
-      newExpanded.delete(pattern);
+      newExpanded.delete(pattern)
     } else {
-      newExpanded.add(pattern);
+      newExpanded.add(pattern)
     }
-    setExpandedPatterns(newExpanded);
-  };
+    setExpandedPatterns(newExpanded)
+  }
 
   return (
     <div className="space-y-3">
       {warningGroups.map((group) => {
-        const isExpanded = expandedPatterns.has(group.pattern);
-        const tripCount = group.affectedRows.length;
-        const countriesList = Array.from(group.countries).sort().join(', ');
+        const isExpanded = expandedPatterns.has(group.pattern)
+        const tripCount = group.affectedRows.length
+        const countriesList = Array.from(group.countries).sort().join(', ')
 
         return (
           <div
@@ -179,8 +182,8 @@ export function WarningSummaryBanners({ rows }: WarningSummaryBannersProps) {
               </div>
             )}
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }

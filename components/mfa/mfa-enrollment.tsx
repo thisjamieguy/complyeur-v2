@@ -65,22 +65,6 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
     loadStatus()
   }, [])
 
-  // Auto-start enrollment when MFA is required but not yet set up.
-  useEffect(() => {
-    if (required && status?.success && !status.hasVerifiedFactor && !enrollData) {
-      handleEnroll()
-    }
-  }, [required, status, enrollData])
-
-  useEffect(() => {
-    if (!backupCodes || !status?.success) return
-    if (status.backupCodesRemaining !== backupCodes.length) {
-      setBackupCodes(null)
-      setBackupCodesDownloaded(false)
-      setBackupCodesAcknowledged(false)
-    }
-  }, [backupCodes, status])
-
   const handleEnroll = () => {
     startTransition(async () => {
       const result = await enrollTotpAction()
@@ -92,6 +76,13 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
       toast.info('Scan the QR code and enter your 6-digit code to verify.')
     })
   }
+
+  // Auto-start enrollment when MFA is required but not yet set up.
+  useEffect(() => {
+    if (required && status?.success && !status.hasVerifiedFactor && !enrollData) {
+      handleEnroll()
+    }
+  }, [enrollData, required, status])
 
   const handleVerifyTotp = () => {
     const factorId = enrollData?.factorId ?? (status?.success ? status.totpFactorId : null)
@@ -195,12 +186,14 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
 
   const isVerified = status.currentLevel === 'aal2' || status.backupSessionValid
   const needsEnrollment = !status.hasVerifiedFactor
+  const currentBackupCodes =
+    backupCodes && status.backupCodesRemaining === backupCodes.length ? backupCodes : null
   const requiresBackupCodesBeforeContinue =
     required && isVerified && status.backupCodesRemaining < 1
   const requiresBackupCodeConfirmationBeforeContinue =
     required &&
     isVerified &&
-    Boolean(backupCodes) &&
+    Boolean(currentBackupCodes) &&
     (!backupCodesDownloaded || !backupCodesAcknowledged)
   const canContinueToDashboard =
     required &&
@@ -355,11 +348,11 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
             </div>
           )}
 
-          {backupCodes && (
+          {currentBackupCodes && (
             <div className="mt-3 rounded-lg border bg-slate-50 p-3 text-sm space-y-3">
               <div className="font-medium text-slate-900">Save these codes now:</div>
               <div className="grid grid-cols-2 gap-2 font-mono text-xs">
-                {backupCodes.map((codeItem) => (
+                {currentBackupCodes.map((codeItem) => (
                   <div key={codeItem} className="rounded border bg-white px-2 py-1 text-center">
                     {codeItem}
                   </div>

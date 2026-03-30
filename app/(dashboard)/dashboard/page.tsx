@@ -57,6 +57,8 @@ async function EmployeeComplianceList({
   sort: EmployeeSortOption
   status: string
 }) {
+  let finalResult: Awaited<ReturnType<typeof getEmployeeComplianceDataPaginated>>
+
   try {
     // Fetch settings and employee data in parallel (M-14 optimisation)
     const [settings, result] = await Promise.all([
@@ -71,7 +73,7 @@ async function EmployeeComplianceList({
     const hasCustomThresholds = settings &&
       (settings.status_green_max !== 68 || settings.status_amber_max !== 82 || settings.status_red_max !== 89)
 
-    const finalResult = hasCustomThresholds
+    finalResult = hasCustomThresholds
       ? await getEmployeeComplianceDataPaginated(
           { page, pageSize: PAGE_SIZE, search: search || undefined, sort, status: status || undefined },
           {
@@ -82,47 +84,54 @@ async function EmployeeComplianceList({
         )
       : result
 
-    return (
-      <ComplianceTable
-        employees={finalResult.employees}
-        hasEmployees={finalResult.hasEmployees}
-        stats={finalResult.stats}
-        pagination={finalResult.pagination}
-        initialSearch={search}
-        initialSort={sort}
-      />
-    )
   } catch (error) {
     console.error('[EmployeeComplianceList] Failed to load employee data:', error)
     throw error // Re-throw to show error boundary, but now with logging
   }
+
+  return (
+    <ComplianceTable
+      employees={finalResult.employees}
+      hasEmployees={finalResult.hasEmployees}
+      stats={finalResult.stats}
+      pagination={finalResult.pagination}
+      initialSearch={search}
+      initialSort={sort}
+    />
+  )
 }
 
 /**
  * Server component that fetches and displays the compliance briefing.
  */
 async function BriefingSection() {
+  let briefing: Awaited<ReturnType<typeof getComplianceBriefing>> | null = null
+
   try {
-    const briefing = await getComplianceBriefing()
-    return <ComplianceBriefing briefing={briefing} />
+    briefing = await getComplianceBriefing()
   } catch (error) {
     console.error('[BriefingSection] Failed to load compliance briefing:', error)
     // Don't break the dashboard if briefing fails
     return null
   }
+
+  return <ComplianceBriefing briefing={briefing} />
 }
 
 /**
  * Server component to fetch alerts
  */
 async function AlertSection() {
+  let alerts: Awaited<ReturnType<typeof getUnacknowledgedAlertsAction>>
+
   try {
-    const alerts = await getUnacknowledgedAlertsAction()
-    return <AlertBanner alerts={alerts} />
+    alerts = await getUnacknowledgedAlertsAction()
   } catch {
     // Silently fail for alerts - don't break the dashboard
     return null
   }
+
+  return <AlertBanner alerts={alerts} />
 }
 
 interface DashboardPageProps {

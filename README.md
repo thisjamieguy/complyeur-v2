@@ -108,6 +108,7 @@ pnpm start            # Start production server locally
 # Type checking & linting
 pnpm typecheck
 pnpm lint
+pnpm security:check
 
 # Testing
 pnpm test             # Run unit tests (Vitest)
@@ -150,6 +151,8 @@ See `__tests__/` for unit tests and `e2e/` for Playwright tests.
 ## Deployment
 
 The application deploys to Vercel automatically on push to `main`. The production Supabase project is in London. Preview deployments use the dev Supabase project in Frankfurt.
+
+The main CI validation job now treats lint as a required gate alongside typecheck, unit tests, and build.
 
 For full deployment steps, environment variable checklist, and go-live procedure, see:
 

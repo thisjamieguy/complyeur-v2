@@ -9,12 +9,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminDashboard() {
-  try {
+async function getAdminDashboardData() {
   await requireSuperAdmin()
   const supabase = createAdminClient()
 
-  // Fetch dashboard metrics in parallel
   const [
     companiesResult,
     usersResult,
@@ -45,18 +43,41 @@ export default async function AdminDashboard() {
       .limit(10),
   ])
 
-  const totalCompanies = companiesResult.count || 0
-  const totalUsers = usersResult.count || 0
-  const totalEmployees = employeesResult.count || 0
   const activeTrials = activeTrialsResult.data || []
-  const recentSignups = recentSignupsResult.data || []
-  const recentActivity = recentActivityResult.data || []
-
-  // Calculate trials expiring in 7 days
   const sevenDaysFromNow = addDays(new Date(), 7)
-  const trialsExpiringSoon = activeTrials.filter(t =>
-    parseISO(t.trial_ends_at) <= sevenDaysFromNow
-  )
+
+  return {
+    totalCompanies: companiesResult.count || 0,
+    totalUsers: usersResult.count || 0,
+    totalEmployees: employeesResult.count || 0,
+    activeTrials,
+    recentSignups: recentSignupsResult.data || [],
+    recentActivity: recentActivityResult.data || [],
+    trialsExpiringSoon: activeTrials.filter((trial) =>
+      parseISO(trial.trial_ends_at) <= sevenDaysFromNow
+    ),
+  }
+}
+
+export default async function AdminDashboard() {
+  let dashboardData: Awaited<ReturnType<typeof getAdminDashboardData>>
+
+  try {
+    dashboardData = await getAdminDashboardData()
+  } catch (err) {
+    console.error('[ADMIN PAGE ERROR]', err)
+    throw err
+  }
+
+  const {
+    totalCompanies,
+    totalUsers,
+    totalEmployees,
+    activeTrials,
+    recentSignups,
+    recentActivity,
+    trialsExpiringSoon,
+  } = dashboardData
 
   return (
     <div className="space-y-8">
@@ -146,8 +167,4 @@ export default async function AdminDashboard() {
       </div>
     </div>
   )
-  } catch (err) {
-    console.error('[ADMIN PAGE ERROR]', err)
-    throw err
-  }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Card,
   CardContent,
@@ -23,17 +23,17 @@ import {
 
 export function DateFormatPreferences() {
   const [importFormat, setImportFormat] = useState<PreferredImportDateFormat>(
-    DEFAULT_IMPORT_DATE_FORMAT
+    () =>
+      typeof window === 'undefined'
+        ? DEFAULT_IMPORT_DATE_FORMAT
+        : getStoredImportDateFormat()
   )
   const [displayFormat, setDisplayFormat] = useState<DateDisplayFormat>(
-    DEFAULT_DATE_DISPLAY_FORMAT
+    () =>
+      typeof window === 'undefined'
+        ? DEFAULT_DATE_DISPLAY_FORMAT
+        : getStoredDateDisplayFormat()
   )
-
-  useEffect(() => {
-    setImportFormat(getStoredImportDateFormat())
-    setDisplayFormat(getStoredDateDisplayFormat())
-  }, [])
-
   const handleImportFormatChange = (value: string) => {
     const next = value === 'MM/DD' ? 'MM/DD' : 'DD/MM'
     setImportFormat(next)
@@ -87,4 +87,3 @@ export function DateFormatPreferences() {
     </Card>
   )
 }
-

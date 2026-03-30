@@ -28,6 +28,7 @@ const eslintConfig = defineConfig([
     ".claude/**",
     "dist/**",
     "coverage/**",
+    ".test-output/**",
     "*.config.js",
     "*.config.mjs",
   ]),

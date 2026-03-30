@@ -14,21 +14,11 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  let adminData: Awaited<ReturnType<typeof requireSuperAdmin>>
+
   try {
     // This throws redirect if not superadmin
-    const { user, profile } = await requireSuperAdmin()
-
-    return (
-      <div className="min-h-screen bg-slate-50">
-        <AdminSidebar />
-        <div className="lg:pl-64">
-          <AdminHeader user={user} adminName={profile.full_name} />
-          <main className="p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
-        </div>
-      </div>
-    )
+    adminData = await requireSuperAdmin()
   } catch (err) {
     // Re-throw redirects (Next.js uses throw for redirect/notFound)
     if (err && typeof err === 'object' && 'digest' in err) {
@@ -40,4 +30,18 @@ export default async function AdminLayout({
     console.error('[ADMIN LAYOUT ERROR]', err)
     throw err
   }
+
+  const { user, profile } = adminData
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <AdminSidebar />
+      <div className="lg:pl-64">
+        <AdminHeader user={user} adminName={profile.full_name} />
+        <main className="p-4 sm:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
 }

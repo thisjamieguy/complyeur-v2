@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { BillingInterval, TierSlug } from '@/lib/billing/plans'
 import {
@@ -18,14 +18,28 @@ function formatCap(value: number | null): string {
 }
 
 function PricingPageContent() {
-  const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
-  const [submittingPlan, setSubmittingPlan] = useState<TierSlug | null>(null)
-  const [checkoutError, setCheckoutError] = useState<string | null>(null)
-  const [promotionCodeEnabled, setPromotionCodeEnabled] = useState(false)
-  const [promotionCode, setPromotionCode] = useState('')
-  const [autoCheckoutAttempted, setAutoCheckoutAttempted] = useState(false)
   const searchParams = useSearchParams()
   const checkoutStatus = searchParams.get('checkout')
+  const promoCodeFromUrl = (searchParams.get('promoCode') ?? '').trim()
+  const intervalFromUrl = searchParams.get('billingInterval')
+  const requestedBillingInterval: BillingInterval | null =
+    intervalFromUrl === 'monthly' || intervalFromUrl === 'annual'
+      ? intervalFromUrl
+      : null
+  const autoStartPlanFromUrl = searchParams.get('plan')
+  const autoStartEnabled = searchParams.get('autostart') === '1'
+  const autoCheckoutAttemptedRef = useRef(false)
+
+  const [billingIntervalOverride, setBillingIntervalOverride] = useState<BillingInterval | null>(null)
+  const [submittingPlan, setSubmittingPlan] = useState<TierSlug | null>(null)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [promotionCodeEnabled, setPromotionCodeEnabled] = useState(
+    promoCodeFromUrl.length > 0
+  )
+  const [promotionCodeOverride, setPromotionCodeOverride] = useState<string | null>(null)
+  const billingInterval = billingIntervalOverride ?? requestedBillingInterval ?? 'monthly'
+  const promotionCode = promotionCodeOverride ?? promoCodeFromUrl
+  const isPromotionCodeEnabled = promotionCodeEnabled || promoCodeFromUrl.length > 0
 
   const plans = useMemo(
     () =>
@@ -107,47 +121,29 @@ function PricingPageContent() {
   }, [billingInterval, promotionCode])
 
   useEffect(() => {
-    const promoCodeFromUrl = searchParams.get('promoCode')
-    if (!promoCodeFromUrl) {
+    if (autoCheckoutAttemptedRef.current || !autoStartEnabled) {
       return
     }
-
-    setPromotionCode((currentValue) => currentValue || promoCodeFromUrl)
-    setPromotionCodeEnabled(true)
-  }, [searchParams])
-
-  useEffect(() => {
-    const intervalFromUrl = searchParams.get('billingInterval')
-    if (intervalFromUrl !== 'monthly' && intervalFromUrl !== 'annual') {
-      return
-    }
-
-    setBillingInterval((current) =>
-      current === intervalFromUrl ? current : intervalFromUrl
-    )
-  }, [searchParams])
-
-  useEffect(() => {
-    if (autoCheckoutAttempted || searchParams.get('autostart') !== '1') {
-      return
-    }
-
-    const planFromUrl = searchParams.get('plan')
-    const intervalFromUrl = searchParams.get('billingInterval')
-    const promoCodeFromUrl = searchParams.get('promoCode')
 
     if (
-      !planFromUrl ||
-      !SELF_SERVE_PLANS.some((plan) => plan.slug === planFromUrl) ||
-      (intervalFromUrl !== 'monthly' && intervalFromUrl !== 'annual')
+      !autoStartPlanFromUrl ||
+      !requestedBillingInterval ||
+      !SELF_SERVE_PLANS.some((plan) => plan.slug === autoStartPlanFromUrl)
     ) {
       return
     }
 
-    setAutoCheckoutAttempted(true)
-    setBillingInterval(intervalFromUrl)
-    void startCheckout(planFromUrl as TierSlug, intervalFromUrl, promoCodeFromUrl ?? undefined)
-  }, [autoCheckoutAttempted, searchParams, startCheckout])
+    const autoCheckoutTimer = window.setTimeout(() => {
+      autoCheckoutAttemptedRef.current = true
+      void startCheckout(
+        autoStartPlanFromUrl as TierSlug,
+        requestedBillingInterval,
+        promoCodeFromUrl || undefined
+      )
+    }, 0)
+
+    return () => window.clearTimeout(autoCheckoutTimer)
+  }, [autoStartEnabled, autoStartPlanFromUrl, promoCodeFromUrl, requestedBillingInterval, startCheckout])
 
   return (
     <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">
@@ -196,7 +192,7 @@ function PricingPageContent() {
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               )}
-              onClick={() => setBillingInterval('monthly')}
+              onClick={() => setBillingIntervalOverride('monthly')}
               aria-pressed={billingInterval === 'monthly'}
             >
               Monthly
@@ -209,7 +205,7 @@ function PricingPageContent() {
                   ? 'bg-white text-slate-900 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               )}
-              onClick={() => setBillingInterval('annual')}
+              onClick={() => setBillingIntervalOverride('annual')}
               aria-pressed={billingInterval === 'annual'}
             >
               Annual
@@ -227,7 +223,7 @@ function PricingPageContent() {
             >
               i have a code
             </button>
-            {promotionCodeEnabled && (
+            {isPromotionCodeEnabled && (
               <div className="mt-2 max-w-xs">
                 <label htmlFor="pricing-promo-code" className="sr-only">
                   Promotional code
@@ -236,7 +232,7 @@ function PricingPageContent() {
                   id="pricing-promo-code"
                   type="text"
                   value={promotionCode}
-                  onChange={(event) => setPromotionCode(event.target.value)}
+                  onChange={(event) => setPromotionCodeOverride(event.target.value)}
                   placeholder="Enter promo code"
                   autoComplete="off"
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
