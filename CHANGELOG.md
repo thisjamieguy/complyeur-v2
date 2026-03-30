@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased](https://github.com/thisjamieguy/complyeur-v2/compare/v1.0.0...HEAD)
 
+### Security
+
+- Resolved all 25 dependency vulnerabilities (1 critical, 15 high, 8 moderate, 1 low) — audit is now clean
+- Removed `auto-changelog` (eliminated critical Handlebars.js injection CVEs)
+- Added `pnpm.overrides` to force patched transitive deps: `rollup`, `flatted`, `minimatch`, `picomatch`, `ajv`
+- Documented accepted exception: `eslint > @eslint/eslintrc > ajv` moderate ReDoS (dev-only, no production risk)
+
 ### Changed
 
 - restore lint as a required CI gate and clear the current lint error backlog
 - align production-readiness documentation with the current state of tests, proxy migration, and dependency audit findings
+- updated `PRODUCTION_READINESS_ASSESSMENT.md` — both blockers resolved, verdict updated to Go
 
 ### Merged
 
