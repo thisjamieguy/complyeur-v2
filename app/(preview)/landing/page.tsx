@@ -151,8 +151,20 @@ export default function LandingPage() {
                 >
                   Resources
                 </button>
-                <div className="invisible absolute left-1/2 top-full z-40 w-44 -translate-x-1/2 pt-2 opacity-0 transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                <div className="invisible absolute left-1/2 top-full z-40 w-48 -translate-x-1/2 pt-2 opacity-0 transition-all group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                   <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-900/10">
+                    <Link
+                      href="/pricing"
+                      className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+                    >
+                      Pricing
+                    </Link>
+                    <Link
+                      href="/faq"
+                      className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
+                    >
+                      FAQ
+                    </Link>
                     <Link
                       href="/blog"
                       className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"

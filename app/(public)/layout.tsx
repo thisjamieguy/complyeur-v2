@@ -52,9 +52,6 @@ export default function PublicLayout({
               FAQ
             </Link>
             <Link href="/blog" className="font-medium text-slate-600 transition hover:text-slate-900">
-              Resources
-            </Link>
-            <Link href="/blog" className="font-medium text-slate-600 transition hover:text-slate-900">
               Blog
             </Link>
           </nav>
