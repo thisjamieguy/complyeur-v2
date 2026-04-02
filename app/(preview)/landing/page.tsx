@@ -8,6 +8,7 @@ import { FeatureTicker } from '@/components/marketing/feature-ticker'
 import { FeatureCards } from '@/components/marketing/feature-cards'
 import { SkipLink } from '@/components/ui/skip-link'
 import { createPageMetadata, X_HANDLE } from '@/lib/metadata'
+import { LandingMobileMenu } from './landing-mobile-menu'
 import { WaitlistForm } from './waitlist-form'
 
 export const metadata: Metadata = {
@@ -175,10 +176,11 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="#early-access"
-                className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
+                className="hidden rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-800 sm:inline-flex"
               >
                 Request Early Access
               </Link>
+              <LandingMobileMenu />
             </div>
           </div>
         </nav>
