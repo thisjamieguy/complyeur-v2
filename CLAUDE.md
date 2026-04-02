@@ -417,6 +417,24 @@ npm run security:check        # Run dependency audit
 
 ---
 
+## Health Stack
+
+Commands aligned with `/health` (gstack) and quick repo sanity. Run from the project root; this repo uses **pnpm**.
+
+| Gate | Command | What it checks |
+|------|---------|----------------|
+| Typecheck | `pnpm typecheck` | TypeScript (`tsc --noEmit`) |
+| Lint | `pnpm lint` | ESLint |
+| Tests | `pnpm test` | Vitest (unit + integration in default config) |
+| Dependency hygiene | `pnpm knip` | Unused / unlisted **dependencies** and CLI references (`knip --dependencies`) |
+| Shell scripts | `pnpm shellcheck` | `scripts/*.sh`, `load-testing/run-load-test.sh`, `agent/scripts/*.sh` |
+
+**Deeper dead-code pass (optional):** `pnpm knip:full` runs full Knip (unused files, exports, types). Noisy on large Next.js apps until `knip.json` is tuned further.
+
+**Optional release gates (not in the default health composite):** `pnpm build` (production build), `pnpm run security:check` (`pnpm audit`).
+
+---
+
 ## Testing Workflow
 
 **When to run which tests:**

@@ -7,18 +7,12 @@ set -e
 
 # Colors for output using tput (more reliable than ANSI codes)
 if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
-    RED=$(tput setaf 1)
     GREEN=$(tput setaf 2)
-    YELLOW=$(tput setaf 3)
     BLUE=$(tput setaf 4)
-    BOLD=$(tput bold)
     NC=$(tput sgr0)
 else
-    RED=''
     GREEN=''
-    YELLOW=''
     BLUE=''
-    BOLD=''
     NC=''
 fi
 

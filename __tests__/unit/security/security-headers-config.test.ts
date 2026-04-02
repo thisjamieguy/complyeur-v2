@@ -14,12 +14,6 @@ import nextConfig from '@/next.config'
 
 type HeaderEntry = { key: string; value: string }
 
-function getGlobalHeaders(): HeaderEntry[] {
-  if (!nextConfig.headers) return []
-  // headers() is async — call it and extract the catch-all rule
-  return []
-}
-
 // Synchronously read headers from the config by calling the async function
 async function resolveHeaders(): Promise<HeaderEntry[]> {
   if (!nextConfig.headers) return []

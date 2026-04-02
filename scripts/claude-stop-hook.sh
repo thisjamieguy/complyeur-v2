@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Ensure common Node/npm paths are available (hooks run in a minimal environment).
+for p in /usr/local/bin /opt/homebrew/bin "$HOME/.nvm/versions/node"/*/bin; do
+  [ -d "$p" ] && export PATH="$p:$PATH"
+done
+
 # Consume hook payload from stdin so the pipe is drained.
 payload="$(cat || true)"
 

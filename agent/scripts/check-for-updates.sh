@@ -11,14 +11,12 @@ if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
     GREEN=$(tput setaf 2)
     YELLOW=$(tput setaf 3)
     BLUE=$(tput setaf 4)
-    BOLD=$(tput bold)
     NC=$(tput sgr0)
 else
     RED=''
     GREEN=''
     YELLOW=''
     BLUE=''
-    BOLD=''
     NC=''
 fi
 
@@ -47,10 +45,15 @@ if [ "$SILENT" = false ]; then
     echo "${BLUE}Checking for updates...${NC}"
 fi
 
+_download_ok=0
 if command -v curl &> /dev/null; then
-    curl -fsSL "$AGENT_MD_URL" -o /tmp/AGENT.md.latest 2>/dev/null
+    if curl -fsSL "$AGENT_MD_URL" -o /tmp/AGENT.md.latest 2>/dev/null; then
+        _download_ok=1
+    fi
 elif command -v wget &> /dev/null; then
-    wget -q "$AGENT_MD_URL" -O /tmp/AGENT.md.latest 2>/dev/null
+    if wget -q "$AGENT_MD_URL" -O /tmp/AGENT.md.latest 2>/dev/null; then
+        _download_ok=1
+    fi
 else
     if [ "$SILENT" = false ]; then
         echo "${RED}Error: Neither curl nor wget is available${NC}" >&2
@@ -58,7 +61,7 @@ else
     exit 2
 fi
 
-if [ $? -ne 0 ]; then
+if [ "$_download_ok" -ne 1 ]; then
     if [ "$SILENT" = false ]; then
         echo "${RED}Error: Failed to download latest AGENT.md${NC}" >&2
         echo "Please check your internet connection." >&2

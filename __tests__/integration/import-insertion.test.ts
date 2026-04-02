@@ -103,6 +103,7 @@ function createComprehensiveMock(options: {
   session?: { company_id: string } | null;
   sessionError?: { message: string } | null;
   existingEmployees?: Array<{ id: string; name: string; email?: string }>;
+  deletedEmployees?: Array<{ id: string; name: string; email?: string }>;
   insertedEmployees?: Array<{ id: string; name?: string; email?: string; company_id?: string }>;
   employeeInsertError?: { message: string } | null;
   employeeUpdateError?: { message: string } | null;
@@ -116,6 +117,7 @@ function createComprehensiveMock(options: {
     session = { company_id: 'company-123' },
     sessionError = null,
     existingEmployees = [],
+    deletedEmployees = [],
     insertedEmployees = [],
     employeeInsertError = null,
     employeeUpdateError = null,
@@ -153,10 +155,11 @@ function createComprehensiveMock(options: {
 
   // Employees builder with special handling for insert().select() chain
   const employeesBuilder: Record<string, Mock | ((fn: (val: unknown) => void) => void)> = {};
-  ['select', 'eq', 'not'].forEach(method => {
+  ['select', 'eq'].forEach(method => {
     employeesBuilder[method] = vi.fn(() => employeesBuilder);
   });
   employeesBuilder.is = vi.fn().mockResolvedValue({ data: existingEmployees, error: null });
+  employeesBuilder.not = vi.fn().mockResolvedValue({ data: deletedEmployees, error: null });
 
   // insert() returns a builder with select()
   const empInsertBuilder: Record<string, Mock> = {};
@@ -540,6 +543,102 @@ describe('Import Database Insertion', () => {
       expect(result.warnings.some(w => w.message.includes('already exists'))).toBe(true);
     });
 
+    it('skips duplicate trip rows that appear twice in the same import file', async () => {
+      const { createClient } = await import('@/lib/supabase/server');
+
+      const mockClient = createComprehensiveMock({
+        existingEmployees: [{ id: 'emp-123', name: 'John Doe', email: 'john.doe@test.com' }],
+        existingTrips: [],
+        insertedTrips: [{ id: 'trip-123' }],
+      });
+
+      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+
+      const { insertValidRows } = await import('@/lib/import/inserter');
+      const rows = [
+        createValidatedTripRow({
+          row_number: 2,
+          employee_email: 'john.doe@test.com',
+          entry_date: '2025-11-01',
+          exit_date: '2025-11-10',
+        }),
+        createValidatedTripRow({
+          row_number: 3,
+          employee_email: 'john.doe@test.com',
+          entry_date: '2025-11-01',
+          exit_date: '2025-11-10',
+        }),
+      ];
+
+      const result = await insertValidRows('session-123', 'trips', rows);
+
+      expect(result.trips_created).toBe(1);
+      expect(result.trips_skipped).toBe(1);
+      expect(result.warnings.some((w) => w.message.includes('already exists'))).toBe(true);
+    });
+
+    it('treats adjacent trips as distinct and inserts both', async () => {
+      const { createClient } = await import('@/lib/supabase/server');
+
+      const mockClient = createComprehensiveMock({
+        existingEmployees: [{ id: 'emp-123', name: 'John Doe', email: 'john.doe@test.com' }],
+        existingTrips: [],
+        insertedTrips: [{ id: 'trip-1' }, { id: 'trip-2' }],
+      });
+
+      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+
+      const { insertValidRows } = await import('@/lib/import/inserter');
+      const rows = [
+        createValidatedTripRow({
+          row_number: 2,
+          employee_email: 'john.doe@test.com',
+          entry_date: '2025-11-01',
+          exit_date: '2025-11-05',
+        }),
+        createValidatedTripRow({
+          row_number: 3,
+          employee_email: 'john.doe@test.com',
+          entry_date: '2025-11-06',
+          exit_date: '2025-11-10',
+        }),
+      ];
+
+      const result = await insertValidRows('session-123', 'trips', rows);
+
+      expect(result.trips_created).toBe(2);
+      expect(result.trips_skipped).toBe(0);
+    });
+
+    it('does not treat partial overlaps as exact duplicates', async () => {
+      const { createClient } = await import('@/lib/supabase/server');
+
+      const mockClient = createComprehensiveMock({
+        existingEmployees: [{ id: 'emp-123', name: 'John Doe', email: 'john.doe@test.com' }],
+        existingTrips: [{
+          id: 'existing-trip',
+          employee_id: 'emp-123',
+          entry_date: '2025-11-01',
+          exit_date: '2025-11-10',
+        }],
+        insertedTrips: [{ id: 'trip-124' }],
+      });
+
+      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+
+      const { insertValidRows } = await import('@/lib/import/inserter');
+      const rows = [createValidatedTripRow({
+        employee_email: 'john.doe@test.com',
+        entry_date: '2025-11-05',
+        exit_date: '2025-11-12',
+      })];
+
+      const result = await insertValidRows('session-123', 'trips', rows);
+
+      expect(result.trips_created).toBe(1);
+      expect(result.trips_skipped).toBe(0);
+    });
+
     it('auto-creates employees for unknown emails', async () => {
       const { createClient } = await import('@/lib/supabase/server');
 
@@ -559,6 +658,76 @@ describe('Import Database Insertion', () => {
 
       expect(result.employees_created).toBe(1);
       expect(result.trips_created).toBe(1);
+    });
+
+    it('restores a soft-deleted employee before importing trips for that email', async () => {
+      const { createClient } = await import('@/lib/supabase/server');
+
+      const mockClient = createComprehensiveMock({
+        existingEmployees: [],
+        deletedEmployees: [{ id: 'deleted-emp', name: 'Former Employee', email: 'former@test.com' }],
+        existingTrips: [],
+        insertedTrips: [{ id: 'trip-123' }],
+      });
+
+      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+
+      const { insertValidRows } = await import('@/lib/import/inserter');
+      const rows = [createValidatedTripRow({ employee_email: 'former@test.com' })];
+      const result = await insertValidRows('session-123', 'trips', rows);
+
+      expect(result.employees_created).toBe(1);
+      expect(result.trips_created).toBe(1);
+      expect(result.warnings.some((w) => w.message.includes('Restored previously deleted employee'))).toBe(true);
+    });
+
+    it('matches name-only trip imports to an existing unique employee', async () => {
+      const { createClient } = await import('@/lib/supabase/server');
+
+      const mockClient = createComprehensiveMock({
+        existingEmployees: [{ id: 'emp-123', name: 'John Doe', email: 'john.doe@test.com' }],
+        existingTrips: [],
+        insertedTrips: [{ id: 'trip-123' }],
+      });
+
+      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+
+      const { insertValidRows } = await import('@/lib/import/inserter');
+      const rows = [createValidatedTripRow({
+        employee_email: '',
+        employee_name: 'John Doe',
+      })];
+      const result = await insertValidRows('session-123', 'gantt', rows);
+
+      expect(result.trips_created).toBe(1);
+      expect(result.employees_created).toBe(0);
+    });
+
+    it('creates a new employee when name-only trip import matches multiple existing employees', async () => {
+      const { createClient } = await import('@/lib/supabase/server');
+
+      const mockClient = createComprehensiveMock({
+        existingEmployees: [
+          { id: 'emp-123', name: 'Alex Smith', email: 'alex.one@test.com' },
+          { id: 'emp-456', name: 'Alex Smith', email: 'alex.two@test.com' },
+        ],
+        insertedEmployees: [{ id: 'emp-789', name: 'Alex Smith', email: undefined }],
+        existingTrips: [],
+        insertedTrips: [{ id: 'trip-123' }],
+      });
+
+      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+
+      const { insertValidRows } = await import('@/lib/import/inserter');
+      const rows = [createValidatedTripRow({
+        employee_email: '',
+        employee_name: 'Alex Smith',
+      })];
+      const result = await insertValidRows('session-123', 'gantt', rows);
+
+      expect(result.employees_created).toBe(1);
+      expect(result.trips_created).toBe(1);
+      expect(result.warnings.some((w) => w.message.includes('Multiple employees found with name'))).toBe(true);
     });
   });
 

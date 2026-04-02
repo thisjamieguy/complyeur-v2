@@ -2,17 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { GoogleAnalytics } from '@next/third-parties/google'
+import { COOKIEYES_CONSENT_EVENTS, hasAnalyticsConsent } from '@/lib/analytics/consent'
 
 interface ConsentAwareGoogleAnalyticsProps {
   gaId: string
-}
-
-function hasAnalyticsConsent(): boolean {
-  if (typeof window === 'undefined') {
-    return false
-  }
-
-  return window.cookieyes?.hasConsent?.('analytics') === true
 }
 
 export function ConsentAwareGoogleAnalytics({
@@ -29,20 +22,13 @@ export function ConsentAwareGoogleAnalytics({
     syncConsent()
     const intervalId = window.setInterval(syncConsent, 2000)
 
-    const consentEvents = [
-      'cookieyes_consent_update',
-      'cookieyes_consent_accept',
-      'cookieyes_consent_reject',
-      'cookieyes_banner_close',
-    ]
-
-    for (const eventName of consentEvents) {
+    for (const eventName of COOKIEYES_CONSENT_EVENTS) {
       window.addEventListener(eventName, syncConsent)
     }
 
     return () => {
       window.clearInterval(intervalId)
-      for (const eventName of consentEvents) {
+      for (const eventName of COOKIEYES_CONSENT_EVENTS) {
         window.removeEventListener(eventName, syncConsent)
       }
     }

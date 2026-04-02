@@ -77,6 +77,10 @@ export const ADMIN_ACTIONS = {
   // Tier actions
   TIER_CREATED: 'tier.created',
   TIER_UPDATED: 'tier.updated',
+  TIER_ARCHIVED: 'tier.archived',
+  TIER_RESTORED: 'tier.restored',
+  TIER_DELETED: 'tier.deleted',
+  /** @deprecated Use TIER_ARCHIVED — retained for older audit rows */
   TIER_DEACTIVATED: 'tier.deactivated',
 } as const
 

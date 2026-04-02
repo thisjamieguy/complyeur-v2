@@ -7,7 +7,7 @@ set -e
 
 SERVICE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-$(supabase status -o json 2>/dev/null | grep service_role_key | cut -d'"' -f4)}"
 API_URL="http://localhost:54321"
-DB_URL="postgresql://postgres:postgres@localhost:54322/postgres"
+# Local Postgres (docker): postgresql://postgres:postgres@localhost:54322/postgres — use with psql if needed
 PASSWORD="Password123!"
 
 GREEN='\033[0;32m'

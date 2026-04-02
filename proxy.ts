@@ -23,8 +23,12 @@ export async function proxy(request: NextRequest) {
 
   const withSecurityHeaders = (response: NextResponse): NextResponse => {
     response.headers.set('Content-Security-Policy', cspHeader)
-    // Ensure redirect responses have Content-Type to avoid ZAP warning [10019]
-    if (!response.headers.has('Content-Type')) {
+    // Ensure redirect responses have Content-Type to avoid ZAP warning [10019].
+    // Only apply when the response has a Location header (i.e., it is an actual redirect).
+    // Do NOT set Content-Type on NextResponse.next() passthroughs — in Next.js 16 that
+    // overrides the route handler's Content-Type (e.g., 'text/x-component' for Server
+    // Actions), causing the client to throw "An unexpected response was received from the server."
+    if (response.headers.has('location') && !response.headers.has('Content-Type')) {
       response.headers.set('Content-Type', 'text/html; charset=utf-8')
     }
     return response
@@ -57,6 +61,9 @@ export async function proxy(request: NextRequest) {
     '/api/health',
     '/api/billing/webhook',
     '/api/gdpr/cron/retention',
+    // Vercel Cron has no Supabase session; route handlers enforce withCronAuth(CRON_SECRET).
+    '/api/cron/billing',
+    '/api/cron/onboarding',
   ]
   const publicMarketingRoutes = [
     '/',

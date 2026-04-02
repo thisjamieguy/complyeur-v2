@@ -11,14 +11,12 @@ if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
     GREEN=$(tput setaf 2)
     YELLOW=$(tput setaf 3)
     BLUE=$(tput setaf 4)
-    BOLD=$(tput bold)
     NC=$(tput sgr0)
 else
     RED=''
     GREEN=''
     YELLOW=''
     BLUE=''
-    BOLD=''
     NC=''
 fi
 
@@ -67,7 +65,7 @@ fi
 
 # Create temporary directory
 TEMP_DIR=$(mktemp -d)
-trap "rm -rf $TEMP_DIR" EXIT
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
 echo "Cloning repository..."
 if ! git clone --depth 1 "$REPO_URL" "$TEMP_DIR" &>/dev/null; then

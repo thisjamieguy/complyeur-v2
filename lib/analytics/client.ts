@@ -1,12 +1,6 @@
+import { hasAnalyticsConsent } from '@/lib/analytics/consent'
+
 type AnalyticsParams = Record<string, string | number | boolean | null | undefined>
-
-function hasAnalyticsConsent(): boolean {
-  if (typeof window === 'undefined') {
-    return false
-  }
-
-  return window.cookieyes?.hasConsent?.('analytics') === true
-}
 
 function getGtag(): ((...args: unknown[]) => void) | null {
   if (typeof window === 'undefined') {

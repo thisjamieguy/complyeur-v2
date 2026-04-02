@@ -137,6 +137,7 @@ export function TripForm({
     },
   })
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- RHF watch() is intentional
   const selectedCountry = form.watch('country')
   const entryDate = form.watch('entry_date')
   const exitDate = form.watch('exit_date')

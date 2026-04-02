@@ -133,6 +133,18 @@ Jane,Smith,jane.smith@test.com,US,CD789012`;
       expect(result.totalRows).toBe(2);
     });
 
+    it('parses minimal valid employee CSV with only required columns', async () => {
+      const csv = `first_name,last_name,email
+John,Doe,john.doe@test.com`;
+
+      const file = createCSVFile(csv);
+      const result = await parseFileRaw(file);
+
+      expect(result.success).toBe(true);
+      expect(result.rawData).toHaveLength(1);
+      expect(result.rawHeaders).toEqual(['first_name', 'last_name', 'email']);
+    });
+
     it('parses valid trip CSV with required columns', async () => {
       const csv = `email,entry_date,exit_date,country
 john@test.com,2025-11-01,2025-11-10,FR
@@ -238,6 +250,16 @@ Jane,Smith,jane@test.com
       expect(result.error).toContain('empty');
     });
 
+    it('rejects CSV files that only contain headers and no data rows', async () => {
+      const csv = 'first_name,last_name,email';
+
+      const file = createCSVFile(csv);
+      const result = await parseFileRaw(file);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('empty');
+    });
+
     it('sanitizes CSV injection attempts: fields starting with =, @, +, -', async () => {
       const csv = `first_name,last_name,email
 =cmd|' /C calc'!A0,Doe,john@test.com
@@ -331,6 +353,15 @@ Jane,Smith,jane@test.com
       // Dates should be parsed to strings
       expect(result.rawData![0]['entry_date']).toBeDefined();
     });
+
+    it('rejects corrupted Excel buffers with a parse error', async () => {
+      const corrupted = new TextEncoder().encode('not a real xlsx file').buffer;
+      const file = createExcelFile(corrupted, 'corrupted.xlsx');
+      const result = await parseFileRaw(file);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Failed to parse file');
+    });
   });
 
   // ============================================================================
@@ -396,6 +427,22 @@ Bob,Brown,missing@domain`;
       expect(validatedRows[1].errors.some(e => e.message.toLowerCase().includes('email'))).toBe(true);
     });
 
+    it('treats whitespace-only required employee fields as missing', async () => {
+      const csv = `first_name,last_name,email
+   ,Doe,john@test.com
+John,   ,jane@test.com
+Jane,Smith,   `;
+
+      const file = createCSVFile(csv);
+      const parseResult = await parseFileRaw(file);
+      const employeeRows = toEmployeeRows(parseResult.rawData!, parseResult.rawHeaders!);
+      const validatedRows = await validateRows(employeeRows, 'employees');
+
+      expect(validatedRows[0].errors.some(e => e.column === 'first_name')).toBe(true);
+      expect(validatedRows[1].errors.some(e => e.column === 'last_name')).toBe(true);
+      expect(validatedRows[2].errors.some(e => e.column === 'email')).toBe(true);
+    });
+
     it('validates date format and logic (exit >= entry)', async () => {
       const csv = `email,entry_date,exit_date,country
 valid@test.com,2025-11-01,2025-11-10,FR
@@ -436,6 +483,47 @@ other@test.com,2025-11-01,2025-11-10,ZZ`;
       expect(validatedRows[1].warnings.some(w => w.column === 'country')).toBe(true);
       expect(validatedRows[2].is_valid).toBe(true);
       expect(validatedRows[2].warnings.some(w => w.column === 'country')).toBe(true);
+    });
+
+    it('rejects unknown country names that cannot be normalized', async () => {
+      const csv = `email,entry_date,exit_date,country
+test@test.com,2025-11-01,2025-11-10,Wakanda`;
+
+      const file = createCSVFile(csv);
+      const parseResult = await parseFileRaw(file);
+      const tripRows = toTripRows(parseResult.rawData!, parseResult.rawHeaders!);
+      const validatedRows = await validateRows(tripRows, 'trips');
+
+      expect(validatedRows[0].is_valid).toBe(false);
+      expect(validatedRows[0].errors.some((e) => e.column === 'country')).toBe(true);
+    });
+
+    it('accepts single-day trips where entry and exit dates are the same', async () => {
+      const csv = `email,entry_date,exit_date,country
+test@test.com,2025-11-10,2025-11-10,FR`;
+
+      const file = createCSVFile(csv);
+      const parseResult = await parseFileRaw(file);
+      const tripRows = toTripRows(parseResult.rawData!, parseResult.rawHeaders!);
+      const validatedRows = await validateRows(tripRows, 'trips');
+
+      expect(validatedRows[0].is_valid).toBe(true);
+      expect(validatedRows[0].errors).toHaveLength(0);
+    });
+
+    it('handles leap-year dates and rejects impossible dates', async () => {
+      const csv = `email,entry_date,exit_date,country
+valid@test.com,2028-02-29,2028-03-01,FR
+invalid@test.com,2027-02-29,2027-03-01,FR`;
+
+      const file = createCSVFile(csv);
+      const parseResult = await parseFileRaw(file);
+      const tripRows = toTripRows(parseResult.rawData!, parseResult.rawHeaders!);
+      const validatedRows = await validateRows(tripRows, 'trips');
+
+      expect(validatedRows[0].is_valid).toBe(true);
+      expect(validatedRows[1].is_valid).toBe(false);
+      expect(validatedRows[1].errors.some((e) => e.column === 'entry_date')).toBe(true);
     });
 
     it('detects duplicate employees by name (returns warning)', async () => {
@@ -504,6 +592,20 @@ test@test.com,2025-11-01,2025-11-10,IE`;
       // Ireland (IE) is non-Schengen EU - should be valid (advisory handled in preview UI)
       expect(validatedRows[0].is_valid).toBe(true);
       expect(validatedRows[0].warnings.length).toBe(0);
+    });
+
+    it('allows overlapping and adjacent trips at validation stage for later duplicate handling', async () => {
+      const csv = `email,entry_date,exit_date,country
+test@test.com,2025-11-01,2025-11-05,FR
+test@test.com,2025-11-04,2025-11-08,FR
+test@test.com,2025-11-08,2025-11-10,DE`;
+
+      const file = createCSVFile(csv);
+      const parseResult = await parseFileRaw(file);
+      const tripRows = toTripRows(parseResult.rawData!, parseResult.rawHeaders!);
+      const validatedRows = await validateRows(tripRows, 'trips');
+
+      expect(validatedRows.every((row) => row.is_valid)).toBe(true);
     });
   });
 
@@ -583,6 +685,22 @@ test@test.com,2025-11-01,2025-11-10,IE`;
       // Generated data should be mostly valid
       const summary = getValidationSummary(validatedRows);
       expect(summary.valid / summary.total).toBeGreaterThan(0.9);
+    });
+
+    it('handles mixed historical and future trips in the same file', async () => {
+      const csv = `email,entry_date,exit_date,country
+test@test.com,2025-01-10,2025-01-12,FR
+test@test.com,2026-11-01,2026-11-05,DE`;
+
+      const file = createCSVFile(csv, 'historical-and-future-trips.csv');
+      const parseResult = await parseFileRaw(file);
+      const tripRows = toTripRows(parseResult.rawData!, parseResult.rawHeaders!);
+      const validatedRows = await validateRows(tripRows, 'trips');
+      const summary = getValidationSummary(validatedRows);
+
+      expect(parseResult.success).toBe(true);
+      expect(summary.total).toBe(2);
+      expect(summary.valid).toBe(2);
     });
 
     it('rejects files exceeding row limit', async () => {

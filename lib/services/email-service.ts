@@ -18,7 +18,21 @@ function getResendClient(): Resend | null {
 // Email configuration
 const FROM_EMAIL = process.env.EMAIL_FROM || 'ComplyEur Alerts <alerts@complyeur.com>'
 const REPLY_TO_EMAIL = process.env.EMAIL_REPLY_TO || 'support@complyeur.com'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://complyeur.com'
+
+function getEmailAppUrl(): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (appUrl) {
+    return appUrl.replace(/\/+$/, '')
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, '')
+  }
+
+  return 'http://localhost:3000'
+}
+
+const APP_URL = getEmailAppUrl()
 
 interface AlertEmailData {
   employeeName: string

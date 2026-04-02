@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { TIER_UNLIMITED_CAP } from '@/lib/constants/admin-tiers'
 
 /**
  * Admin validation schemas
@@ -186,3 +187,75 @@ export type UpdateNoteData = z.infer<typeof updateNoteSchema>
  * UUID validation for note IDs
  */
 export const noteIdSchema = z.string().uuid('Invalid note ID format')
+
+// ============================================================================
+// GLOBAL TIER MANAGEMENT (superadmin)
+// ============================================================================
+
+const tierCapSchema = z
+  .number()
+  .int()
+  .refine((n) => n === TIER_UNLIMITED_CAP || (n >= 1 && n < TIER_UNLIMITED_CAP), {
+    message: `Enter a positive limit or ${TIER_UNLIMITED_CAP} for unlimited`,
+  })
+
+const stripePriceIdNullable = z.preprocess(
+  (value) => {
+    if (value === undefined || value === null) return null
+    if (typeof value !== 'string') return value
+
+    const trimmed = value.trim()
+    return trimmed === '' ? null : trimmed
+  },
+  z.union([
+    z.null(),
+    z.string().regex(/^price_[a-zA-Z0-9]+$/, 'Must be a Stripe Price ID (price_…)'),
+  ])
+)
+
+const tierBooleanFlag = z.boolean()
+
+export const adminTierSlugParamSchema = z
+  .string()
+  .min(1)
+  .max(64)
+  .regex(
+    /^[a-z0-9][a-z0-9_-]*$/,
+    'Slug must start with a letter or number and contain only lowercase letters, numbers, hyphens, and underscores'
+  )
+
+const tierSharedFields = {
+  display_name: z.string().min(1, 'Name is required').max(120),
+  description: z
+    .string()
+    .max(2000)
+    .nullable()
+    .optional()
+    .transform((v) => v?.trim() || null),
+  max_employees: tierCapSchema,
+  max_users: tierCapSchema,
+  can_export_csv: tierBooleanFlag,
+  can_export_pdf: tierBooleanFlag,
+  can_forecast: tierBooleanFlag,
+  can_calendar: tierBooleanFlag,
+  can_bulk_import: tierBooleanFlag,
+  can_api_access: tierBooleanFlag,
+  can_sso: tierBooleanFlag,
+  can_audit_logs: tierBooleanFlag,
+  stripe_price_id_monthly: stripePriceIdNullable,
+  stripe_price_id_annual: stripePriceIdNullable,
+  sort_order: z.number().int().min(0).max(10000),
+  is_active: z.boolean(),
+}
+
+export const createTierFormSchema = z.object({
+  slug: adminTierSlugParamSchema,
+  ...tierSharedFields,
+})
+
+export const updateTierFormSchema = z.object({
+  ...tierSharedFields,
+})
+
+export type CreateTierFormData = z.infer<typeof createTierFormSchema>
+export type UpdateTierFormData = z.infer<typeof updateTierFormSchema>

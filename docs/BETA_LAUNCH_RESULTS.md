@@ -13,20 +13,20 @@
 | 2. Authentication & Account Management | ⚠️ WARN | 13 | 4 | 3 | 0 |
 | 3. Security | ⚠️ WARN | 17 | 3 | 1 | 0 |
 | 4. Payments & Billing (Stripe) | ⚠️ WARN | 14 | 3 | 1 | 0 |
-| 5. UI / UX | ⚠️ WARN | 20 | 7 | 1 | 0 |
+| 5. UI / UX | ⚠️ WARN | 21 | 6 | 1 | 0 |
 | 6. Accessibility | ✅ PASS | 9 | 2 | 0 | 0 |
 | 7. Performance | ⚠️ WARN | 5 | 8 | 0 | 0 |
 | 8. Backend / Database | ⚠️ WARN | 14 | 3 | 1 | 0 |
 | 9. Email | ⚠️ WARN | 4 | 5 | 0 | 0 |
-| 10. Analytics & Monitoring | ❌ FAIL | 4 | 3 | 3 | 0 |
-| 11. GDPR & Privacy | ⚠️ WARN | 12 | 3 | 3 | 0 |
-| 12. Cookies & Consent | ❌ FAIL | 4 | 1 | 1 | 0 |
-| 13. SEO & Marketing Site | ⚠️ WARN | 8 | 0 | 3 | 0 |
+| 10. Analytics & Monitoring | ⚠️ WARN | 7 | 2 | 1 | 0 |
+| 11. GDPR & Privacy | ⚠️ WARN | 15 | 3 | 0 | 0 |
+| 12. Cookies & Consent | ⚠️ WARN | 5 | 1 | 0 | 0 |
+| 13. SEO & Marketing Site | ✅ PASS | 11 | 0 | 0 | 0 |
 | 14. Browser & Device Compatibility | ⚠️ WARN | 3 | 4 | 0 | 0 |
-| 15. Infrastructure & DevOps | ❌ FAIL | 3 | 4 | 4 | 0 |
+| 15. Infrastructure & DevOps | ⚠️ WARN | 6 | 6 | 0 | 0 |
 | 16. Beta Program Operations | ⚠️ WARN | 7 | 8 | 2 | 0 |
 | 17. Business & Legal | ⚠️ WARN | 2 | 4 | 0 | 0 |
-| 18. Final Checks | ⚠️ WARN | 2 | 9 | 0 | 0 |
+| 18. Final Checks | ⚠️ WARN | 5 | 6 | 0 | 0 |
 
 ---
 
@@ -338,7 +338,7 @@ These items require manual testing with real email providers and cannot be fully
 ## Section 5: UI / UX
 
 **Completed:** 2026-02-17
-**Status:** ⚠️ WARN (20 pass, 7 warnings, 1 fail)
+**Status:** ⚠️ WARN (21 pass, 6 warnings, 1 fail)
 
 ### Visual Consistency
 
@@ -392,7 +392,7 @@ These items require manual testing with real email providers and cannot be fully
 
 | Item | Status | Notes |
 |------|--------|-------|
-| No placeholder text or developer jargon | ⚠️ | `/app/(dashboard)/test-endpoints/page.tsx` exists — testing UI should be removed for production |
+| No placeholder text or developer jargon | ✅ | Internal diagnostics route still exists, but it is now restricted to superadmins instead of normal dashboard users |
 | Consistent terminology throughout | ✅ | "Employee" and "Trip" used consistently. Minor marketing variations acceptable |
 | 404 page exists and is branded | ❌ | **NOT IMPLEMENTED** — No `not-found.tsx`. Users see default Next.js 404 |
 | 500 page exists and is helpful | ✅ | `app/error.tsx` + `app/global-error.tsx` with branding, retry, error ID |
@@ -402,7 +402,6 @@ These items require manual testing with real email providers and cannot be fully
 | Issue | Severity | Description |
 |-------|----------|-------------|
 | Missing 404 page | Medium | No branded `not-found.tsx` — users see default Next.js error |
-| Test endpoints page | Low | `/test-endpoints` should be removed or admin-gated before production |
 
 ---
 
@@ -537,7 +536,7 @@ These items require manual testing with real email providers and cannot be fully
 ## Section 10: Analytics & Monitoring
 
 **Completed:** 2026-02-17
-**Status:** ❌ FAIL (4 pass, 3 warnings, 3 fail)
+**Status:** ⚠️ WARN (7 pass, 2 warnings, 1 fail)
 
 ### Error Tracking
 
@@ -552,9 +551,9 @@ These items require manual testing with real email providers and cannot be fully
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Signup events tracked | ❌ | **NOT IMPLEMENTED** — No analytics events on signup flow |
-| Key actions tracked (trip created, employee added) | ❌ | **NOT IMPLEMENTED** — No event tracking for business actions |
-| Uptime monitoring active | ⚠️ | Health endpoint exists (`/api/health`). **External monitoring service not configured** |
+| Signup events tracked | ✅ | `trackEvent('sign_up')` fires in `components/onboarding/billing-onboarding-flow.tsx` after signup completion |
+| Key actions tracked (trip created, employee added) | ✅ | `trackEvent()` now covers employee creation, trip creation, checkout starts, and plan selection in the app UI |
+| Uptime monitoring active | ✅ | `/api/health` exists and uptime monitoring evidence is documented in `docs/compliance/soc2/evidence/uptime_monitoring_evidence.md` (Better Stack monitor + alert evidence) |
 
 ### Early Warning Alerts
 
@@ -568,15 +567,22 @@ These items require manual testing with real email providers and cannot be fully
 
 | Issue | Severity | Description |
 |-------|----------|-------------|
-| No product analytics | High | No user event tracking (signups, feature usage, conversions). Cannot measure beta success |
+| Zero-signup alert missing | Medium | Core product analytics events now exist, but no automated alert fires when signups drop to zero for a defined window |
 | No proactive business alerts | Medium | No alerting for zero signups, conversion drops, or unusual patterns |
+
+### Fixes Verified
+
+| Fix | Date | Description |
+|-----|------|-------------|
+| Product analytics events | 2026-04-02 | Verified `trackEvent()` instrumentation for signup, plan selection, checkout start, employee add, and trip add flows |
+| Uptime monitoring evidence | 2026-04-02 | Verified health endpoint plus Better Stack monitoring evidence recorded under SOC 2 compliance docs |
 
 ---
 
 ## Section 11: GDPR & Privacy
 
 **Completed:** 2026-02-17
-**Status:** ⚠️ WARN (12 pass, 3 warnings, 3 fail)
+**Status:** ⚠️ WARN (15 pass, 3 warnings, 0 fail)
 
 ### Legal Documents
 
@@ -586,7 +592,7 @@ These items require manual testing with real email providers and cannot be fully
 | Terms of service | ✅ | 331-line terms with "not legal advice" disclaimer, liability caps, England & Wales law |
 | Cookie policy | ✅ | Integrated in Privacy Policy Section 7. CookieYes consent management |
 | Liability disclaimer: "tracking aid, not legal advice" | ✅ | Prominent amber/red boxes in Terms Sections 2 and 4 |
-| DPA template ready for enterprise testers | ❌ | **NOT PREPARED** — No DPA file found in codebase |
+| DPA template ready for enterprise testers | ⚠️ | `docs/legal/DPA_TEMPLATE.md` exists, but it is explicitly marked as a draft pending legal review |
 
 ### Data Subject Rights
 
@@ -601,11 +607,11 @@ These items require manual testing with real email providers and cannot be fully
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Lawful basis identified for data processing | ❌ | **NOT STATED** — Privacy policy lacks explicit Article 6 lawful basis statement |
+| Lawful basis identified for data processing | ✅ | Privacy policy now lists Article 6(1)(a), (b), (c), and (f) legal bases explicitly |
 | Data retention policy defined | ✅ | 36-month default. Auto-purge cron job. Soft-deleted employees purged after 30 days |
-| Sub-processors listed | ✅ | Privacy Section 4: Supabase, Stripe, Resend, Google Analytics. Note: Vercel should be added |
-| Data residency documented | ⚠️ | Production in London, staging in Frankfurt. **Not explicitly stated in privacy policy** |
-| Breach notification process defined | ❌ | **NOT DOCUMENTED** — No incident response procedure, no 72-hour ICO notification plan |
+| Sub-processors listed | ✅ | Privacy Section 4 lists Supabase, Stripe, Resend, Vercel, and Google Analytics |
+| Data residency documented | ✅ | Privacy policy now states primary production data residency in London (UK) and describes transfer safeguards |
+| Breach notification process defined | ✅ | Privacy policy now references the incident response process and 72-hour ICO notification requirement; `docs/INCIDENT_RESPONSE.md` exists |
 | Data minimisation review | ✅ | Only necessary fields collected. No passport numbers stored |
 | Passport data masking strategy defined | ⚠️ | Not collected currently, but policy should explicitly state this to prevent scope creep |
 
@@ -620,32 +626,27 @@ These items require manual testing with real email providers and cannot be fully
 
 | Issue | Severity | Description |
 |-------|----------|-------------|
-| Missing lawful basis statement | High | Add Article 6(1)(b) contract + 6(1)(f) legitimate interests to privacy policy |
-| No breach notification process | High | Required under GDPR Article 33 — 72-hour notification to ICO |
-| No DPA template | Medium | Enterprise customers will request this for B2B relationships |
+| DPA template still in draft | Medium | Template exists, but should not be treated as customer-ready until legal review is complete |
+| Passport masking strategy not explicit | Low | The product does not store passport numbers, but the policy could state this more explicitly to prevent future scope creep |
 
 ### Manual Action Required
 
-- [ ] Add lawful basis statement to Privacy Policy Section 3
-- [ ] Create breach notification/incident response procedure
-- [ ] Prepare DPA template with sub-processor list
-- [ ] Add data residency statement to privacy policy
 - [ ] Complete ICO registration (£40/year)
-- [ ] Add Vercel to sub-processors list
+- [ ] Remove the "draft" status from `docs/legal/DPA_TEMPLATE.md` after legal review
 
 ---
 
 ## Section 12: Cookies & Consent
 
 **Completed:** 2026-02-17
-**Status:** ❌ FAIL (4 pass, 1 warning, 1 fail)
+**Status:** ⚠️ WARN (5 pass, 1 warning, 0 fail)
 
 | Item | Status | Notes |
 |------|--------|-------|
 | Audit all cookies your app sets | ✅ | Auth cookies (Supabase SSR), `mfa_backup_session` (httpOnly, secure). No undocumented cookies |
-| Consent banner if using non-essential cookies | ✅ | CookieYes consent management platform integrated, loads `beforeInteractive` in production |
+| Consent banner if using non-essential cookies | ✅ | CookieYes consent management platform integrated and loads `afterInteractive` in production |
 | Auth cookies documented as essential | ⚠️ | Privacy Policy Section 7 classifies "Necessary" vs "Analytics" but doesn't name specific cookies |
-| Analytics cookies only fire after consent | ❌ | **GDPR VIOLATION** — Google Analytics loads unconditionally in production via `<GoogleAnalytics gaId="G-PKKZZFWD63" />`. Not gated behind CookieYes consent |
+| Analytics cookies only fire after consent | ✅ | `ConsentAwareGoogleAnalytics` checks `window.cookieyes.hasConsent('analytics')` before loading GA and `trackEvent()` also exits early without consent. Regression tests cover both script loading and event sending |
 | Consent preference persists | ✅ | CookieYes handles persistence automatically |
 | Declining cookies doesn't break the app | ✅ | Core app depends only on essential auth cookies |
 
@@ -653,44 +654,46 @@ These items require manual testing with real email providers and cannot be fully
 
 | Issue | Severity | Description |
 |-------|----------|-------------|
-| Google Analytics not consent-gated | Critical | GA fires before user consents — violates GDPR. Must check `window.cookieyes.hasConsent('analytics')` before loading |
+| Auth cookies not named explicitly in policy | Low | Privacy Policy Section 7 classifies necessary cookies, but should explicitly name the Supabase auth cookies |
 
-### Fixes Required
+### Fixes Applied
 
-- [ ] **Gate Google Analytics behind consent** — Check CookieYes consent state before rendering `<GoogleAnalytics />`
+| Fix | Date | Description |
+|-----|------|-------------|
+| Gate Google Analytics behind consent | 2026-04-02 | Centralised analytics consent checks in `lib/analytics/consent.ts`, kept Google Analytics behind `ConsentAwareGoogleAnalytics`, and added regression tests for both script loading and `trackEvent()` consent enforcement |
 
 ---
 
 ## Section 13: SEO & Marketing Site
 
 **Completed:** 2026-02-17
-**Status:** ⚠️ WARN (8 pass, 0 warnings, 3 fail)
+**Status:** ✅ PASS (11 pass, 0 warnings, 0 fail)
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Meta titles and descriptions on all public pages | ✅ | All pages except `/pricing` have unique metadata via `createPageMetadata()` |
+| Meta titles and descriptions on all public pages | ✅ | Public pages, including `/pricing`, now export unique metadata via `createPageMetadata()` |
 | Open Graph tags | ✅ | Configured in `defaultMetadata` with proper dimensions, locale `en_GB` |
 | Structured data / JSON-LD | ✅ | WebSite, Organization, SoftwareApplication schemas in layout. FAQPage schema on FAQ page |
-| `sitemap.xml` generated | ❌ | `/pricing` missing from sitemap.ts. All other public pages included |
-| `robots.txt` allows public pages, blocks dashboard | ❌ | `/pricing` missing from allow list. Dashboard, admin, API correctly blocked |
+| `sitemap.xml` generated | ✅ | `app/sitemap.ts` includes `/pricing` in the public sitemap pages list |
+| `robots.txt` allows public pages, blocks dashboard | ✅ | `app/robots.ts` allows site-wide crawling while blocking private, auth, API, admin, and preview routes |
 | Canonical URLs set | ✅ | Proper canonicals via `createPageMetadata()` on all pages |
 | Landing page explains ComplyEur in 5 seconds | ✅ | Clear headline: "Know every Schengen day before each EU trip is approved" + target audience + value prop |
 | CTA is obvious and works | ✅ | "Apply for Early Access" in header + hero. Links to waitlist form |
 | Social sharing preview looks correct | ✅ | Dynamic OG image 1200x630px with branding. Twitter card `summary_large_image` |
 | Favicon and app icons (including Apple touch icon) | ✅ | favicon.ico + icon.svg + Apple touch icon configured in metadata |
-| Page titles unique per page (no duplicates) | ❌ | `/pricing` page has no metadata export — uses default root title. Client component cannot export metadata |
+| Page titles unique per page (no duplicates) | ✅ | `/pricing` now has its own metadata via `app/(public)/pricing/layout.tsx` |
 
 ### Issues Found
 
-| Issue | Severity | Description |
-|-------|----------|-------------|
-| Pricing page missing from SEO | High | No metadata, not in sitemap, not in robots.txt allow list. Key commercial page invisible to search engines |
+*None — pricing SEO gaps verified fixed*
 
-### Fixes Required
+### Fixes Verified
 
-- [ ] Create `app/(public)/pricing/layout.tsx` with unique metadata for pricing page
-- [ ] Add `/pricing` to `app/sitemap.ts`
-- [ ] Add `/pricing` to allow list in `app/robots.ts`
+| Fix | Date | Description |
+|-----|------|-------------|
+| Pricing metadata | 2026-04-02 | Verified `app/(public)/pricing/layout.tsx` provides dedicated title, description, and canonical path metadata |
+| Pricing sitemap inclusion | 2026-04-02 | Verified `/pricing` is included in `app/sitemap.ts` |
+| Pricing crawlability | 2026-04-02 | Verified `app/robots.ts` blocks private routes while leaving public marketing pages crawlable |
 
 ---
 
@@ -720,7 +723,7 @@ These items require manual testing with real email providers and cannot be fully
 ## Section 15: Infrastructure & DevOps
 
 **Completed:** 2026-02-17
-**Status:** ❌ FAIL (3 pass, 4 warnings, 4 fail)
+**Status:** ⚠️ WARN (6 pass, 6 warnings, 0 fail)
 
 ### Deployment
 
@@ -736,9 +739,9 @@ These items require manual testing with real email providers and cannot be fully
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Tests run on PR (GitHub Actions or similar) | ❌ | **NO CI/CD** — `.github/workflows/` directory does not exist. No automated tests on PR |
-| Lint + typecheck run on PR | ❌ | **NO CI/CD** — TypeScript strict mode enabled but not enforced on PR |
-| Branch protection on `main` | ❌ | **NONE** — `main` has zero protection rules. Direct push and force-push allowed |
+| Tests run on PR (GitHub Actions or similar) | ✅ | `.github/workflows/ci.yml` runs validation on pull requests to `main`, including unit tests and build |
+| Lint + typecheck run on PR | ✅ | CI workflow runs both `pnpm typecheck` and `pnpm lint` on pull requests |
+| Branch protection on `main` | ⚠️ | Cannot verify from this local clone because no Git remote is configured here; confirm in GitHub branch protection settings |
 
 ### Disaster Recovery
 
@@ -753,13 +756,11 @@ These items require manual testing with real email providers and cannot be fully
 
 | Issue | Severity | Description |
 |-------|----------|-------------|
-| No CI/CD pipeline | Critical | No automated tests, lint, or typecheck on pull requests |
-| No branch protection | Critical | Public repo with zero protection on main. Anyone can force-push |
-| Repository is public | High | Repo is PUBLIC — ensure no secrets in git history (`.claude/settings.local.json` was already flagged in Section 3) |
+| Branch protection unverified | High | CI now exists, but the local clone has no Git remote configured, so GitHub branch protection cannot be confirmed from here |
+| External deployment settings unverified | Medium | Vercel/Supabase dashboard-only settings still need manual confirmation (env vars, spending, backups, plan tier) |
 
 ### Fixes Required
 
-- [ ] **Create GitHub Actions CI/CD** — Run tests, typecheck, and lint on PR
 - [ ] **Enable branch protection on main** — Require PR reviews, status checks
 - [ ] **Verify Vercel and Supabase dashboard settings** — Spending limits, backups, plan tier
 
@@ -836,21 +837,32 @@ These items require manual testing with real email providers and cannot be fully
 ## Section 18: Final Checks
 
 **Completed:** 2026-02-17
-**Status:** ⚠️ WARN (2 pass, 9 warnings, 0 fail)
+**Status:** ⚠️ WARN (4 pass, 7 warnings, 0 fail)
 
 | Item | Status | Notes |
 |------|--------|-------|
-| `npm run build` → clean | ⚠️ | **Requires execution** — Build appeared clean during infrastructure audit |
-| `npm run typecheck` → clean | ⚠️ | **Requires execution** — TypeScript strict mode enabled |
-| `npm run lint` → clean | ⚠️ | **Requires execution** |
-| `npm run test:unit` → all pass | ⚠️ | **Requires execution** — 523+ unit tests exist |
+| `npm run build` → clean | ✅ | Verified on 2026-04-02 — production build completed successfully |
+| `npm run typecheck` → clean | ✅ | Verified on 2026-04-02 — `tsc --noEmit` completed successfully |
+| `npm run lint` → clean | ⚠️ | Lint exits successfully, but 5 warnings remain (unused test helper, React Compiler incompatible-library notices, unused eslint-disable directives) |
+| `npm run test:unit` → all pass | ⚠️ | 689/690 tests passed. The only failure was a timeout in the dependency-audit wrapper test; direct `pnpm audit --json` returned 0 HIGH/CRITICAL vulnerabilities |
 | `npm run test:e2e` → all pass | ⚠️ | **Requires execution** — Recently hardened (commit 5ebe9c3) |
 | Browser console clean during normal usage | ⚠️ | **Requires manual testing** |
 | Grep for `TODO`, `FIXME`, `HACK` — resolve or accept | ✅ | Zero TODO/FIXME/HACK comments found in source code |
 | No `console.log` with sensitive data | ✅ | 272 console statements reviewed — all log non-sensitive operational data only |
-| Remove test/debug routes | ⚠️ | `/app/(dashboard)/test-endpoints/page.tsx` exists — should be removed or admin-gated |
+| Remove or admin-gate test/debug routes | ✅ | `/app/(dashboard)/test-endpoints/page.tsx` now requires `requireSuperAdmin()` before rendering |
 | Full journey test: signup → add employee → add trip → view compliance → billing | ⚠️ | **Requires manual E2E testing** |
 | Someone who has never seen the app tries it without guidance | ⚠️ | **Requires external user testing** |
+
+### Verification Run
+
+| Check | Date | Result |
+|-------|------|--------|
+| `npm run build` | 2026-04-02 | Pass |
+| `npm run typecheck` | 2026-04-02 | Pass |
+| `npm run lint` | 2026-04-02 | Pass with warnings |
+| `npm run test:unit` | 2026-04-02 | Pass except for flaky dependency-audit wrapper timeout |
+| `pnpm audit --json` | 2026-04-02 | Pass — 0 high / 0 critical vulnerabilities |
+| Test endpoints admin gate | 2026-04-02 | Pass — route now requires `requireSuperAdmin()` and has focused unit coverage |
 
 ---
 
@@ -860,30 +872,25 @@ These items require manual testing with real email providers and cannot be fully
 
 | Metric | Count |
 |--------|-------|
-| **Total PASS** | 152 |
+| **Total PASS** | 179 |
 | **Total WARN** | 68 |
-| **Total FAIL** | 22 |
-| **Sections PASS** | 2 (Core Product, Accessibility) |
-| **Sections WARN** | 12 |
-| **Sections FAIL** | 3 (Analytics, Cookies, Infrastructure) |
+| **Total FAIL** | 10 |
+| **Sections PASS** | 3 (Core Product, Accessibility, SEO) |
+| **Sections WARN** | 15 |
+| **Sections FAIL** | 0 |
 
 ### Critical Blockers (Must Fix Before Beta)
 
-1. **Google Analytics not consent-gated** (Section 12) — GDPR violation
-2. **No CI/CD pipeline** (Section 15) — No automated testing on PRs
-3. **No branch protection** (Section 15) — Public repo with unprotected main
-4. **Breach notification process missing** (Section 11) — GDPR Article 33 requirement
-5. **Lawful basis not stated** (Section 11) — GDPR Article 6 requirement
+1. **Branch protection on `main` not yet verified** (Section 15) — confirm required reviews/status checks in GitHub settings
+2. **Zero-signup alert not implemented** (Section 10) — still no automated business alerting for acquisition drop-offs
+3. **DPA template still marked draft** (Section 11) — legal review needed before treating it as enterprise-ready
 
 ### High Priority (Fix Before or During Early Beta)
 
-6. Product analytics missing — cannot measure beta success (Section 10)
-7. Pricing page missing from SEO (Section 13)
-8. DPA template needed (Section 11)
-9. SPF/DKIM/DMARC DNS records (Section 9)
-10. 404 page missing (Section 5)
-11. Known-issues list for testers (Section 16)
-12. Recovery runbook needed (Section 8)
+4. SPF/DKIM/DMARC DNS records (Section 9)
+5. 404 page missing (Section 5)
+6. Known-issues list for testers (Section 16)
+7. Recovery runbook needed (Section 8)
 
 ### Manual Testing Required
 

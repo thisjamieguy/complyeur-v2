@@ -83,4 +83,15 @@ describe('middleware API authentication defaults', () => {
     expect(checkRateLimitMock).toHaveBeenCalledTimes(1)
     expect(updateSessionMock).toHaveBeenCalledTimes(1)
   })
+
+  it('allows Vercel cron API routes through without a session (CRON_SECRET enforced in handler)', async () => {
+    for (const path of ['/api/cron/billing', '/api/cron/onboarding'] as const) {
+      const request = new NextRequest(`http://localhost:3000${path}`, { method: 'GET' })
+      const response = await middleware(request)
+      expect(response.status).toBe(200)
+      expect(response.headers.get('location')).toBeNull()
+    }
+    expect(checkRateLimitMock).toHaveBeenCalledTimes(2)
+    expect(updateSessionMock).toHaveBeenCalledTimes(2)
+  })
 })

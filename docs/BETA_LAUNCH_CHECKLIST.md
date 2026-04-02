@@ -1,7 +1,7 @@
 # ComplyEur — Pre-Beta Launch Checklist
 
-**Version:** 1.1
-**Last updated:** 2026-02-05
+**Version:** 1.2
+**Last updated:** 2026-04-02
 
 ---
 
@@ -18,6 +18,8 @@
 |         |            | early warning alerts, data minimisation, passport masking,     |
 |         |            | beta ops improvements (feedback owner, known-issues list,      |
 |         |            | changelog cadence, legal disclaimer in-app)                    |
+| 1.2     | 2026-04-02 | Synced checklist with current verification state for analytics, |
+|         |            | GDPR/privacy, cookies, SEO, CI, and final verification checks  |
 
 ---
 
@@ -345,21 +347,21 @@ This checklist is considered complete when:
 
 ### Error Tracking
 
-- [ ] Error tracking active (Sentry, LogRocket, or Vercel)
-- [ ] Client-side and server-side errors captured
-- [ ] Source maps uploaded
+- [x] Error tracking active (Sentry, LogRocket, or Vercel)
+- [x] Client-side and server-side errors captured
+- [x] Source maps uploaded
 - [ ] Alerting configured (email/Slack on error spikes)
 
 ### Product Analytics
 
 - [x] Signup events tracked
 - [x] Key actions tracked (trip created, employee added)
-- [ ] Uptime monitoring active (UptimeRobot, Checkly, etc.)
+- [x] Uptime monitoring active (UptimeRobot, Checkly, etc.)
 
 ### Early Warning Alerts
 
 - [ ] Alert on zero signups for X hours/days
-- [ ] Alert on webhook failures
+- [x] Alert on webhook failures
 - [ ] Alert on unusually high error rate per user/company
 
 ---
@@ -370,33 +372,33 @@ This checklist is considered complete when:
 
 ### Legal Documents
 
-- [ ] Privacy policy — real content, covers passport data
-- [ ] Terms of service
-- [ ] Cookie policy
-- [ ] Liability disclaimer: "tracking aid, not legal advice"
-- [x] DPA template ready for enterprise testers
+- [x] Privacy policy — real content, covers passport data
+- [x] Terms of service
+- [x] Cookie policy
+- [x] Liability disclaimer: "tracking aid, not legal advice"
+- [ ] DPA template ready for enterprise testers
 
 ### Data Subject Rights
 
-- [ ] Right to access: can you export user data on request?
-- [ ] Right to deletion: can you fully delete an account?
-- [ ] Right to portability: data export in CSV/JSON
-- [ ] Process documented (even if manual)
+- [x] Right to access: can you export user data on request?
+- [x] Right to deletion: can you fully delete an account?
+- [x] Right to portability: data export in CSV/JSON
+- [x] Process documented (even if manual)
 
 ### Data Handling
 
 - [x] Lawful basis identified for data processing
-- [ ] Data retention policy defined
+- [x] Data retention policy defined
 - [x] Sub-processors listed (Supabase, Vercel, Stripe)
 - [x] Data residency documented (which regions?)
 - [x] Breach notification process defined
-- [ ] Data minimisation review (are you storing anything you don't truly need?)
+- [x] Data minimisation review (are you storing anything you don't truly need?)
 - [ ] Passport data masking strategy defined (last 4 chars, etc.)
 
 ### UK-Specific
 
 - [ ] ICO registration (required for commercial personal data processing)
-- [ ] UK GDPR / Data Protection Act 2018 compliance
+- [x] UK GDPR / Data Protection Act 2018 compliance
 
 ---
 
@@ -404,12 +406,12 @@ This checklist is considered complete when:
 
 **Best tool:** Manual browser audit (DevTools → Application → Cookies)
 
-- [ ] Audit all cookies your app sets
-- [ ] Consent banner if using non-essential cookies
+- [x] Audit all cookies your app sets
+- [x] Consent banner if using non-essential cookies
 - [ ] Auth cookies documented as essential
 - [x] Analytics cookies only fire after consent
-- [ ] Consent preference persists
-- [ ] Declining cookies doesn't break the app
+- [x] Consent preference persists
+- [x] Declining cookies doesn't break the app
 
 ---
 
@@ -417,17 +419,17 @@ This checklist is considered complete when:
 
 **Best tool:** Lighthouse SEO audit + Claude Code (Sonnet) for meta tag review
 
-- [ ] Meta titles and descriptions on all public pages
-- [ ] Open Graph tags (test with LinkedIn/Twitter card validators)
-- [ ] Structured data / JSON-LD
-- [ ] `sitemap.xml` generated
-- [ ] `robots.txt` allows public pages, blocks dashboard
-- [ ] Canonical URLs set
-- [ ] Landing page explains ComplyEur in 5 seconds
-- [ ] CTA is obvious and works
-- [ ] Social sharing preview looks correct
-- [ ] Favicon and app icons (including Apple touch icon)
-- [ ] Page titles unique per page (no duplicates)
+- [x] Meta titles and descriptions on all public pages
+- [x] Open Graph tags (test with LinkedIn/Twitter card validators)
+- [x] Structured data / JSON-LD
+- [x] `sitemap.xml` generated
+- [x] `robots.txt` allows public pages, blocks dashboard
+- [x] Canonical URLs set
+- [x] Landing page explains ComplyEur in 5 seconds
+- [x] CTA is obvious and works
+- [x] Social sharing preview looks correct
+- [x] Favicon and app icons (including Apple touch icon)
+- [x] Page titles unique per page (no duplicates)
 
 ---
 
@@ -453,20 +455,20 @@ This checklist is considered complete when:
 
 - [ ] Production env variables set in Vercel
 - [ ] Custom domain configured with SSL
-- [ ] www redirect configured (pick one canonical)
-- [ ] Preview deployments working
-- [ ] `npm run build` clean
+- [x] www redirect configured (pick one canonical)
+- [x] Preview deployments working
+- [x] `npm run build` clean
 
 ### CI/CD
 
-- [ ] Tests run on PR (GitHub Actions or similar)
-- [ ] Lint + typecheck run on PR
+- [x] Tests run on PR (GitHub Actions or similar)
+- [x] Lint + typecheck run on PR
 - [ ] Branch protection on `main`
 
 ### Disaster Recovery
 
 - [ ] Database backup tested (restore at least once)
-- [ ] Rollback plan: can redeploy previous Vercel deployment
+- [x] Rollback plan: can redeploy previous Vercel deployment
 - [ ] Vercel spending limits set
 - [ ] Supabase plan appropriate for expected usage
 
@@ -524,14 +526,14 @@ This checklist is considered complete when:
 
 **Best tool:** CLI commands + one full manual walkthrough
 
-- [ ] `npm run build` → clean
-- [ ] `npm run typecheck` → clean
+- [x] `npm run build` → clean
+- [x] `npm run typecheck` → clean
 - [ ] `npm run lint` → clean
 - [ ] `npm run test:unit` → all pass
 - [ ] `npm run test:e2e` → all pass
 - [ ] Browser console clean during normal usage
-- [ ] Grep for `TODO`, `FIXME`, `HACK` — resolve or accept
-- [ ] No `console.log` with sensitive data
-- [ ] Remove test/debug routes
+- [x] Grep for `TODO`, `FIXME`, `HACK` — resolve or accept
+- [x] No `console.log` with sensitive data
+- [x] Remove or admin-gate test/debug routes
 - [ ] Full journey test: signup → add employee → add trip → view compliance → billing
 - [ ] Someone who has never seen the app tries it without guidance

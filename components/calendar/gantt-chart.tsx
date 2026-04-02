@@ -89,6 +89,7 @@ export const GanttChart = memo(function GanttChart({
   const timelineScrollRef = useRef<HTMLDivElement>(null)
 
   // Set up virtualizer for employee rows — fixed height, no per-row calculation
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: employees.length,
     getScrollElement: () => timelineScrollRef.current,

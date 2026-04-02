@@ -28,10 +28,13 @@ if ! command -v k6 &> /dev/null; then
     exit 1
 fi
 
-# Load environment variables from .env.local if it exists
+# Load environment variables from .env.local if it exists (shell-compatible KEY=value lines)
 if [ -f .env.local ]; then
     echo -e "${GREEN}Loading environment from .env.local${NC}"
-    export $(cat .env.local | grep -v '^#' | xargs)
+    set -a
+    # shellcheck disable=SC1091
+    . ./.env.local
+    set +a
 fi
 
 # Check required environment variables
@@ -63,7 +66,7 @@ echo "  3) Medium load (50 users, 5 minutes)"
 echo "  4) Heavy load (100+ users, 10 minutes)"
 echo "  5) Stress test (ramp to breaking point)"
 echo ""
-read -p "Enter choice [1-5]: " test_type
+read -r -p "Enter choice [1-5]: " test_type
 
 case $test_type in
     1)
@@ -105,13 +108,15 @@ echo ""
 # Create results directory
 mkdir -p load-test-results
 
-# Run the test
-k6 run $OPTIONS \
-    --out json=load-test-results/${TEST_NAME}-$(date +%Y%m%d-%H%M%S).json \
+# Run the test (split OPTIONS into words for safe expansion)
+read -r -a K6_OPTIONS <<< "$OPTIONS"
+RESULT_JSON="load-test-results/${TEST_NAME}-$(date +%Y%m%d-%H%M%S).json"
+k6 run "${K6_OPTIONS[@]}" \
+    --out "json=${RESULT_JSON}" \
     -e BASE_URL="$BASE_URL" \
     -e SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
     -e SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
-    $SCRIPT
+    "$SCRIPT"
 
 echo ""
 echo -e "${GREEN}Test complete!${NC}"

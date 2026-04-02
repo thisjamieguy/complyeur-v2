@@ -43,6 +43,64 @@ jobs:
       - name: Build
         run: pnpm build
 
+  e2e-baseline:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@9fd676a19091d4595eefd76e4bd31c97133911f1 # v4.2.0
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@d347ba47d3fb7eeeddbbc793bc8d4779caf773ea # v1.5.0
+        with:
+          version: 2.75.0
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Run baseline E2E coverage
+        run: pnpm test:e2e:baseline
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_LOCAL_SERVICE_ROLE_KEY }}
+          TEST_USER_EMAIL: e2e-test@complyeur.test
+          TEST_USER_PASSWORD: E2ETestPassword123!
+          TEST_USER_COMPANY: Playwright Test Company
+
+      - name: Upload baseline Playwright report
+        if: always()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: playwright-report-baseline
+          path: |
+            .test-output/playwright-report
+            .test-output/test-results
+          if-no-files-found: ignore
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+
   tenant-isolation:
     needs: validate
     runs-on: ubuntu-latest

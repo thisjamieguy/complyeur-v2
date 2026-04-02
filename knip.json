@@ -1,0 +1,5 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["__tests__/utils/test-utils.tsx"],
+  "ignoreBinaries": ["shellcheck", "supabase"]
+}
