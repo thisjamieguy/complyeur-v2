@@ -153,10 +153,24 @@ export async function proxy(request: NextRequest) {
 
   const isOnboardingRoute = pathname.startsWith('/onboarding')
 
-  // Protected routes: everything that isn't public or auth or onboarding
-  // This covers all (dashboard) route group pages: /calendar, /import, /settings,
-  // /employee, /exports, /gdpr, /trip-forecast, /future-job-alerts, etc.
-  const isProtectedRoute = !isApiRoute && !isPublicRoute && !isAuthRoute && !isOnboardingRoute
+  // Protected routes: explicitly listed dashboard route prefixes.
+  // Unknown routes NOT in this list fall through to Next.js 404 handling.
+  const protectedRoutePrefixes = [
+    '/dashboard',
+    '/employee',
+    '/import',
+    '/settings',
+    '/calendar',
+    '/exports',
+    '/gdpr',
+    '/trip-forecast',
+    '/future-job-alerts',
+    '/test-endpoints',
+    '/mfa',
+  ]
+  const isProtectedRoute = protectedRoutePrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
+  )
 
   const redirectWithCookies = (url: URL) => {
     const response = NextResponse.redirect(url)
