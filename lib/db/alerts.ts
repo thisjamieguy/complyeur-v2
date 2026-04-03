@@ -21,6 +21,11 @@ interface AuthContext {
   companyId: string
 }
 
+type CompanySettingsRowResult = {
+  data: CompanySettings | null
+  error: { code?: string } | null
+}
+
 /**
  * Verify user is authenticated and get their company_id.
  * Uses the cached variant — deduplicated within a single server request.
@@ -28,6 +33,22 @@ interface AuthContext {
 async function getAuthenticatedUserCompany(): Promise<AuthContext> {
   const { userId, companyId } = await requireCompanyAccessCached()
   return { userId, companyId }
+}
+
+async function fetchCompanySettingsRow(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  companyId: string
+): Promise<CompanySettingsRowResult> {
+  const { data, error } = await supabase
+    .from('company_settings')
+    .select('*')
+    .eq('company_id', companyId)
+    .single()
+
+  return {
+    data: (data as CompanySettings | null) ?? null,
+    error: error ? { code: error.code } : null,
+  }
 }
 
 // ============================================================================
@@ -327,11 +348,7 @@ export const getCompanySettings = cache(async (): Promise<CompanySettings> => {
   const supabase = await createClient()
   const { companyId } = await getAuthenticatedUserCompany()
 
-  const { data, error } = await supabase
-    .from('company_settings')
-    .select('*')
-    .eq('company_id', companyId)
-    .single()
+  const { data, error } = await fetchCompanySettingsRow(supabase, companyId)
 
   if (error && error.code !== 'PGRST116') {
     console.error('Error fetching company settings:', error)
@@ -356,12 +373,22 @@ export const getCompanySettings = cache(async (): Promise<CompanySettings> => {
       .select()
       .single()
 
+    if (insertError?.code === '23505') {
+      const retry = await fetchCompanySettingsRow(supabase, companyId)
+      if (retry.data) {
+        return retry.data
+      }
+
+      console.error('Error re-fetching company settings after insert race:', retry.error)
+      throw new DatabaseError('Failed to fetch settings')
+    }
+
     if (insertError) {
       console.error('Error creating company settings:', insertError)
       throw new DatabaseError('Failed to create settings')
     }
 
-    return newSettings
+    return newSettings as CompanySettings
   }
 
   return data
