@@ -147,10 +147,6 @@ export async function proxy(request: NextRequest) {
   // 2. Auth & Session Management
   const { supabaseResponse, user, needsOnboarding } = await updateSession(request, requestHeaders)
 
-  // Public routes that don't require authentication
-  const isPublicRoute =
-    isPublicMarketingRoute || isPublicApiRoute || pathname.startsWith('/auth/')
-
   const isOnboardingRoute = pathname.startsWith('/onboarding')
 
   // Protected routes: explicitly listed dashboard route prefixes.
