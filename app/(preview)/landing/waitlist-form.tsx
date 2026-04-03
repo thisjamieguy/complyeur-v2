@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState, useState } from 'react'
 import { Turnstile } from '@/components/ui/turnstile'
 import { cn } from '@/lib/utils'
 import { joinWaitlist, type WaitlistState } from './actions'
@@ -12,7 +12,6 @@ export function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'm
     success: false,
     message: '',
   })
-  const formRef = useRef<HTMLFormElement>(null)
   const [turnstileError, setTurnstileError] = useState(false)
   const [shouldLoadTurnstile, setShouldLoadTurnstile] = useState(false)
   const [clientError, setClientError] = useState('')
@@ -20,13 +19,6 @@ export function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'm
   const companyId = `companyName-${variant}`
   const errorId = `waitlist-error-${variant}`
   const statusId = `waitlist-status-${variant}`
-
-  useEffect(() => {
-    if (state.success && formRef.current) {
-      formRef.current.reset()
-      setClientError('')
-    }
-  }, [state.success])
 
   if (state.success) {
     return (
@@ -55,7 +47,6 @@ export function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'm
 
   return (
     <form
-      ref={formRef}
       action={(formData) => {
         const email = formData.get('email') as string
         if (!email || !email.trim()) {
