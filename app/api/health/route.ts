@@ -41,21 +41,40 @@ function isMissingPingProbe(error: unknown) {
   return code === 'PGRST202' || haystack.includes('public.ping')
 }
 
+async function runPingProbe() {
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const admin = createAdminClient()
+    const { error } = await admin.rpc('ping')
+    return { admin, error, probe: 'admin-rpc' as const }
+  }
+
+  const supabase = await createClient()
+  const { error } = await (supabase.rpc as unknown as (fn: string) => Promise<{ error: unknown }>)('ping')
+
+  return { admin: null, error, probe: 'server-rpc' as const }
+}
+
 // Rate limiting: handled by middleware (60 req/min per IP for all /api/* routes)
 export async function GET() {
   try {
     // Lightweight probe — validates a live DB round-trip without touching business tables.
+    // Prefer the explicit admin client in server environments so health checks do not depend on request cookies.
     // Type assertion needed until `npm run db:types` is run after the ping() migration.
-    const supabase = await createClient()
-    const { error } = await (supabase.rpc as unknown as (fn: string) => Promise<{ error: unknown }>)('ping')
+    const { admin, error, probe } = await runPingProbe()
 
     if (!error) return createHealthyResponse()
 
     if (process.env.SUPABASE_SERVICE_ROLE_KEY && isMissingPingProbe(error)) {
-      logger.warn('[Health] ping() probe unavailable, falling back to admin probe', { error })
+      logger.warn('[Health] ping() probe unavailable, falling back to admin table probe', {
+        error,
+        probe,
+      })
 
-      const admin = createAdminClient()
-      const { error: adminError } = await admin.from('profiles').select('id', { head: true }).limit(1)
+      const fallbackAdmin = admin ?? createAdminClient()
+      const { error: adminError } = await fallbackAdmin
+        .from('profiles')
+        .select('id', { head: true })
+        .limit(1)
 
       if (!adminError) return createHealthyResponse()
 

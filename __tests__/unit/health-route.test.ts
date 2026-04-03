@@ -49,14 +49,11 @@ describe('/api/health route', () => {
 
   it('falls back to the admin probe when ping() is unavailable', async () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key'
-
-    createClientMock.mockResolvedValue({
-      rpc: vi.fn().mockResolvedValue({
-        error: {
-          code: 'PGRST202',
-          message: 'Could not find the function public.ping without parameters in the schema cache',
-        },
-      }),
+    const rpcMock = vi.fn().mockResolvedValue({
+      error: {
+        code: 'PGRST202',
+        message: 'Could not find the function public.ping without parameters in the schema cache',
+      },
     })
 
     const limitMock = vi.fn().mockResolvedValue({ error: null })
@@ -64,6 +61,7 @@ describe('/api/health route', () => {
     const fromMock = vi.fn().mockReturnValue({ select: selectMock })
 
     createAdminClientMock.mockReturnValue({
+      rpc: rpcMock,
       from: fromMock,
     })
 
@@ -72,6 +70,7 @@ describe('/api/health route', () => {
 
     expect(response.status).toBe(200)
     expect(body).toEqual({ status: 'ok' })
+    expect(rpcMock).toHaveBeenCalledWith('ping')
     expect(fromMock).toHaveBeenCalledWith('profiles')
     expect(selectMock).toHaveBeenCalledWith('id', { head: true })
     expect(limitMock).toHaveBeenCalledWith(1)
