@@ -45,6 +45,10 @@ function LoginForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('next') || '/dashboard'
+  const signupHref =
+    redirectTo === '/dashboard'
+      ? '/signup'
+      : `/signup?next=${encodeURIComponent(redirectTo)}`
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -200,7 +204,7 @@ function LoginForm() {
           </Link>
           <div className="text-sm text-slate-600">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-brand-700 hover:underline py-2">
+            <Link href={signupHref} className="text-brand-700 hover:underline py-2">
               Sign up
             </Link>
           </div>

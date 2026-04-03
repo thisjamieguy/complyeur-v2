@@ -26,6 +26,7 @@ function createSignupFormData(overrides?: Partial<{
   companyName: string
   password: string
   confirmPassword: string
+  redirectTo: string
 }>): FormData {
   const formData = new FormData()
   formData.append('name', overrides?.name ?? 'Test User')
@@ -33,6 +34,9 @@ function createSignupFormData(overrides?: Partial<{
   formData.append('companyName', overrides?.companyName ?? 'Test Company')
   formData.append('password', overrides?.password ?? 'SecurePass123')
   formData.append('confirmPassword', overrides?.confirmPassword ?? 'SecurePass123')
+  if (overrides?.redirectTo) {
+    formData.append('redirectTo', overrides.redirectTo)
+  }
   return formData
 }
 
@@ -130,5 +134,57 @@ describe('signup action enumeration parity', () => {
       })
     )
     expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+  })
+
+  it('preserves a validated redirect target through the post-signup flow', async () => {
+    const { createClient } = await import('@/lib/supabase/server')
+    const { rateLimit } = await import('@/lib/rate-limit')
+    const { redirect } = await import('next/navigation')
+
+    const updateEq = vi.fn().mockResolvedValue({ error: null })
+    const update = vi.fn(() => ({ eq: updateEq }))
+
+    const supabase = {
+      auth: {
+        signUp: vi.fn().mockResolvedValue({
+          data: {
+            user: {
+              id: 'user-456',
+              email: 'buyer@example.com',
+              identities: [{ id: 'identity-2' }],
+            },
+            session: { access_token: 'access-token' },
+          },
+          error: null,
+        }),
+        signOut: vi.fn().mockResolvedValue({ error: null }),
+      },
+      rpc: vi.fn().mockResolvedValue({ data: 'company-456', error: null }),
+      from: vi.fn(() => ({ update })),
+    }
+
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+    vi.mocked(rateLimit).mockResolvedValue({
+      success: true,
+      limit: 10,
+      remaining: 9,
+      reset: Date.now() + 60_000,
+    })
+    vi.mocked(redirect).mockImplementation(((path: string) => {
+      throw new Error(`REDIRECT:${path}`)
+    }) as never)
+
+    const { signup } = await import('@/app/(auth)/actions')
+
+    await expect(
+      signup(
+        createSignupFormData({
+          email: 'buyer@example.com',
+          redirectTo: '/pricing?autostart=1&plan=starter&billingInterval=monthly',
+        })
+      )
+    ).rejects.toThrow(
+      'REDIRECT:/check-email?next=%2Fpricing%3Fautostart%3D1%26plan%3Dstarter%26billingInterval%3Dmonthly'
+    )
   })
 })
