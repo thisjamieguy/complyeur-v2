@@ -58,3 +58,4 @@ next-env.d.ts
 # Local tool configs
 squirrel.toml
 .auth/
+.env*.local
