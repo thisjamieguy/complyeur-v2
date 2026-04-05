@@ -1,0 +1,841 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Snapshot: batchCalculateCompliance > 6a. batch of three employees with different compliance levels 1`] = `
+{
+  "emp-amber": {
+    "daysRemaining": 15,
+    "daysUsed": 75,
+    "isCompliant": true,
+    "referenceDate": 2026-01-01T00:00:00.000Z,
+    "riskLevel": "amber",
+  },
+  "emp-green": {
+    "daysRemaining": 80,
+    "daysUsed": 10,
+    "isCompliant": true,
+    "referenceDate": 2026-01-01T00:00:00.000Z,
+    "riskLevel": "green",
+  },
+  "emp-over-limit": {
+    "daysRemaining": 0,
+    "daysUsed": 90,
+    "isCompliant": false,
+    "referenceDate": 2026-01-01T00:00:00.000Z,
+    "riskLevel": "red",
+  },
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1a. empty trips — zero days used, fully green 1`] = `
+{
+  "daysRemaining": 90,
+  "daysUsed": 0,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "green",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1b. single 10-day trip in window (Dec 22–31) 1`] = `
+{
+  "daysRemaining": 80,
+  "daysUsed": 10,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "green",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1c. 74 days used → green (just below amber threshold) 1`] = `
+{
+  "daysRemaining": 16,
+  "daysUsed": 74,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "green",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1d. 75 days used → amber (just over threshold) 1`] = `
+{
+  "daysRemaining": 15,
+  "daysUsed": 75,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "amber",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1e. 89 days used → amber (1 day remaining, still compliant) 1`] = `
+{
+  "daysRemaining": 1,
+  "daysUsed": 89,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "amber",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1f. 90 days used → red (violation, isCompliant=false) 1`] = `
+{
+  "daysRemaining": 0,
+  "daysUsed": 90,
+  "isCompliant": false,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "red",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1g. multi-trip complex scenario (several countries, gaps) 1`] = `
+{
+  "daysRemaining": 30,
+  "daysUsed": 60,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "green",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1h. overlapping trips are deduplicated in the count 1`] = `
+{
+  "daysRemaining": 60,
+  "daysUsed": 30,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "green",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1i. non-Schengen trips (GB, IE, US) are excluded from count 1`] = `
+{
+  "daysRemaining": 80,
+  "daysUsed": 10,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "green",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1j. microstates (MC, AD, SM, VA) count toward the 90-day limit 1`] = `
+{
+  "daysRemaining": 70,
+  "daysUsed": 20,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "green",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1k. active trip (null exit) counts through the reference date 1`] = `
+{
+  "daysRemaining": 79,
+  "daysUsed": 11,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "green",
+}
+`;
+
+exports[`Snapshot: calculateCompliance > 1l. compliance start date clips old trips correctly 1`] = `
+{
+  "daysRemaining": 65,
+  "daysUsed": 25,
+  "isCompliant": true,
+  "referenceDate": 2026-01-01T00:00:00.000Z,
+  "riskLevel": "green",
+}
+`;
+
+exports[`Snapshot: computeMonthCompliance > 5a. January 2026 with a December trip — shows declining days as trip ages 1`] = `
+[
+  {
+    "date": 2069-10-01T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-02T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-03T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-04T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-05T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-06T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-07T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-08T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-09T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-10T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-11T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-12T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-13T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-14T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-15T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-16T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-17T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-18T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-19T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-20T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-21T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-22T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-23T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-24T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-25T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-26T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-27T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-28T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-29T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-30T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2069-10-31T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+]
+`;
+
+exports[`Snapshot: computeMonthCompliance > 5b. clean month with no trips — all days at 0 used 1`] = `
+[
+  {
+    "date": 2074-09-01T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-02T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-03T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-04T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-05T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-06T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-07T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-08T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-09T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-10T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-11T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-12T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-13T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-14T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-15T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-16T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-17T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-18T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-19T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-20T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-21T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-22T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-23T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-24T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-25T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-26T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-27T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-28T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-29T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2074-09-30T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+]
+`;
+
+exports[`Snapshot: computeMonthCompliance > 5c. month spanning amber and red — captures risk level transitions 1`] = `
+[
+  {
+    "date": 2079-09-01T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-02T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-03T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-04T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-05T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-06T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-07T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-08T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-09T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-10T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-11T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-12T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-13T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-14T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-15T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-16T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-17T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-18T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-19T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-20T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-21T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-22T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-23T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-24T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-25T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-26T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-27T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-28T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-29T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+  {
+    "date": 2079-09-30T00:00:00.000Z,
+    "daysRemaining": 90,
+    "daysUsed": 0,
+    "riskLevel": "green",
+  },
+]
+`;
+
+exports[`Snapshot: getSafeEntryInfo > 2a. no trips — can enter today, no wait needed 1`] = `
+{
+  "canEnterToday": true,
+  "daysUntilCompliant": 0,
+  "daysUsedOnEntry": 0,
+  "earliestSafeDate": null,
+}
+`;
+
+exports[`Snapshot: getSafeEntryInfo > 2b. 90 days used — cannot enter today, must wait for window to clear 1`] = `
+{
+  "canEnterToday": false,
+  "daysUntilCompliant": 1,
+  "daysUsedOnEntry": 89,
+  "earliestSafeDate": 2026-01-02T00:00:00.000Z,
+}
+`;
+
+exports[`Snapshot: getSafeEntryInfo > 2c. 74 days used — can enter today 1`] = `
+{
+  "canEnterToday": true,
+  "daysUntilCompliant": 0,
+  "daysUsedOnEntry": 74,
+  "earliestSafeDate": null,
+}
+`;
+
+exports[`Snapshot: getSafeEntryInfo > 2d. at limit (90 days) — cannot enter, must wait for oldest days to expire 1`] = `
+{
+  "canEnterToday": false,
+  "daysUntilCompliant": 1,
+  "daysUsedOnEntry": 89,
+  "earliestSafeDate": 2026-01-02T00:00:00.000Z,
+}
+`;
+
+exports[`Snapshot: maxStayDays > 3b. 80 days already used — maxStayDays accounts for sliding window expiry 1`] = `10`;
+
+exports[`Snapshot: projectExpiringDays > 4a. projects day-by-day expiry for next 14 days with a known trip 1`] = `
+[
+  {
+    "date": 2026-01-01T00:00:00.000Z,
+    "daysRemaining": 75,
+    "daysUsed": 15,
+    "expiringDays": 0,
+  },
+  {
+    "date": 2026-01-02T00:00:00.000Z,
+    "daysRemaining": 76,
+    "daysUsed": 14,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-03T00:00:00.000Z,
+    "daysRemaining": 77,
+    "daysUsed": 13,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-04T00:00:00.000Z,
+    "daysRemaining": 78,
+    "daysUsed": 12,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-05T00:00:00.000Z,
+    "daysRemaining": 79,
+    "daysUsed": 11,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-06T00:00:00.000Z,
+    "daysRemaining": 80,
+    "daysUsed": 10,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-07T00:00:00.000Z,
+    "daysRemaining": 81,
+    "daysUsed": 9,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-08T00:00:00.000Z,
+    "daysRemaining": 82,
+    "daysUsed": 8,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-09T00:00:00.000Z,
+    "daysRemaining": 83,
+    "daysUsed": 7,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-10T00:00:00.000Z,
+    "daysRemaining": 84,
+    "daysUsed": 6,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-11T00:00:00.000Z,
+    "daysRemaining": 85,
+    "daysUsed": 5,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-12T00:00:00.000Z,
+    "daysRemaining": 86,
+    "daysUsed": 4,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-13T00:00:00.000Z,
+    "daysRemaining": 87,
+    "daysUsed": 3,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-14T00:00:00.000Z,
+    "daysRemaining": 88,
+    "daysUsed": 2,
+    "expiringDays": 1,
+  },
+  {
+    "date": 2026-01-15T00:00:00.000Z,
+    "daysRemaining": 89,
+    "daysUsed": 1,
+    "expiringDays": 1,
+  },
+]
+`;
