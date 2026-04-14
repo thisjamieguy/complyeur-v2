@@ -5,6 +5,11 @@ import { BrowserFrame } from '@/components/marketing/browser-frame'
 import { DemoCalendar } from '@/components/marketing/demo-calendar'
 import { DemoEmployeeList } from '@/components/marketing/demo-employee-list'
 import { SkipLink } from '@/components/ui/skip-link'
+import { marketingPrimaryCta } from '@/lib/marketing-primary-cta'
+import { LandingMobileMenu } from './landing-mobile-menu'
+
+// All data on this page is module-level constants — no dynamic dependencies.
+export const dynamic = 'force-static'
 
 export const metadata: Metadata = {
   title: 'ComplyEur — Schengen Compliance Software for UK Travel Teams',
@@ -236,11 +241,12 @@ export default function LandingPage() {
               Sign in
             </Link>
             <Link
-              href="/signup"
-              className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
+              href={marketingPrimaryCta.href}
+              className="hidden rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-800 sm:inline-flex"
             >
-              Create account
+              {marketingPrimaryCta.label}
             </Link>
+            <LandingMobileMenu />
           </div>
         </div>
       </header>
@@ -259,10 +265,10 @@ export default function LandingPage() {
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href="/signup"
+                  href={marketingPrimaryCta.href}
                   className="rounded-full bg-slate-900 px-8 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
                 >
-                  Create account
+                  {marketingPrimaryCta.label}
                 </Link>
                 <Link
                   href="/landing/preview"
@@ -491,10 +497,10 @@ export default function LandingPage() {
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href="/signup"
+                  href={marketingPrimaryCta.href}
                   className="rounded-full bg-slate-900 px-8 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
                 >
-                  Create account
+                  {marketingPrimaryCta.label}
                 </Link>
                 <Link
                   href="/pricing"

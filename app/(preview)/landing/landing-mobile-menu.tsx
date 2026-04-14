@@ -3,14 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
+import { marketingPrimaryCta } from '@/lib/marketing-primary-cta'
 
 const mobileNavLinks = [
-  { href: '#features', label: 'Features' },
+  { href: '#product', label: 'Product' },
+  { href: '#why-switch', label: 'Why switch' },
   { href: '#how-it-works', label: 'How it works' },
-  { href: '/landing/preview', label: 'Preview' },
-  { href: '/pricing', label: 'Pricing' },
-  { href: '/faq', label: 'FAQ' },
-  { href: '/blog', label: 'Blog' },
+  { href: '/landing/preview', label: 'Interactive preview' },
 ]
 
 export function LandingMobileMenu() {
@@ -56,11 +55,11 @@ export function LandingMobileMenu() {
                 Sign in
               </Link>
               <Link
-                href="#early-access"
+                href={marketingPrimaryCta.href}
                 onClick={() => setIsOpen(false)}
                 className="mt-1 rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white transition hover:bg-brand-800"
               >
-                Request Early Access
+                {marketingPrimaryCta.label}
               </Link>
             </nav>
           </div>
