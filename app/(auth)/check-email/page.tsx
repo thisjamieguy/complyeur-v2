@@ -2,13 +2,29 @@ import Link from 'next/link'
 import { Mail } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { validateRedirectUrl } from '@/lib/utils/redirect'
 
 export const metadata = {
   title: 'Check your email',
   description: 'Confirm your email address to continue',
 }
 
-export default function CheckEmailPage() {
+interface CheckEmailPageProps {
+  searchParams: Promise<{ next?: string }>
+}
+
+export default async function CheckEmailPage({ searchParams }: CheckEmailPageProps) {
+  const params = await searchParams
+  const redirectTo = validateRedirectUrl(params.next)
+  const loginHref =
+    redirectTo === '/dashboard'
+      ? '/login'
+      : `/login?next=${encodeURIComponent(redirectTo)}`
+  const signupHref =
+    redirectTo === '/dashboard'
+      ? '/signup'
+      : `/signup?next=${encodeURIComponent(redirectTo)}`
+
   return (
     <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10">
       <div className="h-1 w-full bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400" />
@@ -32,12 +48,12 @@ export default function CheckEmailPage() {
         </div>
 
         <Button asChild className="w-full">
-          <Link href="/login">Go to sign in</Link>
+          <Link href={loginHref}>Go to sign in</Link>
         </Button>
 
         <p className="text-xs text-slate-500">
           Wrong email?{' '}
-          <Link href="/signup" className="font-medium text-brand-700 hover:underline">
+          <Link href={signupHref} className="font-medium text-brand-700 hover:underline">
             Sign up again
           </Link>
         </p>

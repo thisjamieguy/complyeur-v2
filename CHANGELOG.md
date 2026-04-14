@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.1.0] - 2026-04-14
+
+### Added
+
+- Landing page is now the primary public-facing page — `/landing` replaces the old sandbox and goes live as the main marketing page
+- Mobile hamburger menu on the landing page: mobile users can now access all nav links and the primary CTA from any screen size
+- Centralised marketing CTA (`lib/marketing-primary-cta.ts`): one place to change the primary call-to-action label and destination across the entire public site
+- Admin routes now protected at the middleware level (`/admin` added to `protectedRoutePrefixes`), adding a fast-path auth gate before any server component fires
+- Supabase health probe with automatic fallback: if the custom `ping()` RPC is unavailable, the health check falls back to a direct table query so the app stays observable during migrations
+
+### Changed
+
+- Landing page is statically pre-rendered at build time (`force-static`) — fastest possible response for the highest-traffic public page
+- Middleware route protection switched from deny-by-default to an explicit allowlist, so unrecognised routes return a proper 404 instead of being redirected to the landing page
+- Sentry is only initialised when all required environment variables are present — prevents startup errors in local and preview environments
+- Primary CTA on all public pages and the public layout header updated to "Create account" linking to `/signup`
+- Dependency overrides: `vite` pinned to `>=7.3.2` (two HIGH vulnerabilities patched, dev-only)
+
+### Fixed
+
+- `next` upgraded to 16.2.3 — patches a Denial of Service vulnerability in Server Components (CVE via GHSA-q4gf-8mx6-v5v3)
+- Race condition in `getNotificationPreferences`: concurrent first-login requests no longer throw when both try to insert the default preferences row simultaneously
+- Race condition in `getCompanySettings`: same fix applied — concurrent requests handle the unique constraint violation gracefully
+- Waitlist form now shows a client-side validation error before submitting if the email field is empty
+- Navigation links on the landing page and sub-pages are consistent — no broken or placeholder `#` anchors
+- Health probe instrumentation loads safely even when Sentry environment variables are absent
+
 ## [Unreleased](https://github.com/thisjamieguy/complyeur-v2/compare/v1.0.0...HEAD)
 
 ### Security

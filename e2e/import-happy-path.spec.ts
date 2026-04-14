@@ -134,8 +134,11 @@ test.describe('Import happy path', () => {
     await importButton.click();
 
     await Promise.race([
-      page.waitForURL(/\/import\/success/, { timeout: 60000 }),
-      expect(page.getByText(/import complete|successfully imported/i).first()).toBeVisible({ timeout: 60000 }),
+      page.waitForURL(/\/import\/success/, { timeout: 60000, waitUntil: 'domcontentloaded' }),
+      expect(page.getByRole('heading', { name: /you're all set!|import failed/i })).toBeVisible({ timeout: 60000 }),
+      expect(page.getByText(/go to dashboard|employees are now ready to track|trips have been added/i).first()).toBeVisible({
+        timeout: 60000,
+      }),
     ]);
   });
 });

@@ -63,6 +63,11 @@ function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const searchParams = useSearchParams()
+  const redirectTo = searchParams.get('next') || '/dashboard'
+  const loginHref =
+    redirectTo === '/dashboard'
+      ? '/login'
+      : `/login?next=${encodeURIComponent(redirectTo)}`
 
   const form = useForm<EmailSignupInput>({
     resolver: zodResolver(emailSignupSchema),
@@ -95,6 +100,7 @@ function SignupForm() {
       formData.append('companyName', data.companyName)
       formData.append('password', data.password)
       formData.append('confirmPassword', data.confirmPassword)
+      formData.append('redirectTo', redirectTo)
       await signup(formData)
     } catch (error) {
       if (typeof window !== 'undefined') {
@@ -112,7 +118,7 @@ function SignupForm() {
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(SIGNUP_INTENT_KEY, 'google')
       }
-      await signInWithGoogle()
+      await signInWithGoogle(redirectTo)
     } catch (error) {
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem(SIGNUP_INTENT_KEY)
@@ -294,7 +300,7 @@ function SignupForm() {
 
         <p className="mt-4 text-sm text-slate-600">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-brand-700 hover:underline">
+          <Link href={loginHref} className="font-medium text-brand-700 hover:underline">
             Sign in
           </Link>
         </p>

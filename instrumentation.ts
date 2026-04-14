@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nextjs'
 import { installConsoleRedaction } from '@/lib/logger.mjs'
+import { isSentryRuntimeEnabled } from '@/lib/monitoring/sentry'
 
 export async function register() {
   installConsoleRedaction()
@@ -11,11 +12,15 @@ export async function register() {
     const { validateCronSecretConfigured } = await import('@/lib/security/cron-auth')
     validateCronSecretConfigured()
 
-    await import('./sentry.server.config')
+    if (isSentryRuntimeEnabled) {
+      await import('./sentry.server.config')
+    }
   }
 
   if (process.env.NEXT_RUNTIME === 'edge') {
-    await import('./sentry.edge.config')
+    if (isSentryRuntimeEnabled) {
+      await import('./sentry.edge.config')
+    }
   }
 }
 

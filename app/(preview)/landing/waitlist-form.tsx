@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useActionState, useState } from 'react'
 import { Turnstile } from '@/components/ui/turnstile'
 import { cn } from '@/lib/utils'
 import { joinWaitlist, type WaitlistState } from './actions'
@@ -12,19 +12,13 @@ export function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'm
     success: false,
     message: '',
   })
-  const formRef = useRef<HTMLFormElement>(null)
   const [turnstileError, setTurnstileError] = useState(false)
   const [shouldLoadTurnstile, setShouldLoadTurnstile] = useState(false)
+  const [clientError, setClientError] = useState('')
   const emailId = `email-${variant}`
   const companyId = `companyName-${variant}`
   const errorId = `waitlist-error-${variant}`
   const statusId = `waitlist-status-${variant}`
-
-  useEffect(() => {
-    if (state.success && formRef.current) {
-      formRef.current.reset()
-    }
-  }, [state.success])
 
   if (state.success) {
     return (
@@ -53,8 +47,19 @@ export function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'm
 
   return (
     <form
-      ref={formRef}
-      action={formAction}
+      action={(formData) => {
+        const email = formData.get('email') as string
+        if (!email || !email.trim()) {
+          setClientError('Please enter your email address.')
+          return
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          setClientError('Please enter a valid email address.')
+          return
+        }
+        setClientError('')
+        formAction(formData)
+      }}
       className="space-y-4"
       noValidate
       onFocusCapture={() => setShouldLoadTurnstile(true)}
@@ -73,9 +78,15 @@ export function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'm
             placeholder="you@company.com"
             required
             aria-required="true"
-            aria-invalid={state.error === 'validation' ? 'true' : undefined}
-            aria-describedby={state.message && !state.success ? errorId : statusId}
-            className="h-12 w-full rounded-xl border border-slate-300/80 bg-white px-4 text-slate-900 placeholder:text-slate-500 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-300/60"
+            aria-invalid={clientError || state.error === 'validation' ? 'true' : undefined}
+            aria-describedby={clientError || (state.message && !state.success) ? errorId : statusId}
+            onChange={() => { if (clientError) setClientError('') }}
+            className={cn(
+              'h-12 w-full rounded-xl border bg-white px-4 text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2',
+              clientError || state.error === 'validation'
+                ? 'border-red-400 focus:border-red-400 focus:ring-red-200/60'
+                : 'border-slate-300/80 focus:border-brand-400 focus:ring-brand-300/60'
+            )}
           />
         </div>
         {variant === 'default' && (
@@ -143,7 +154,13 @@ export function WaitlistForm({ variant = 'default' }: { variant?: 'default' | 'm
         />
       )}
 
-      {state.message && !state.success && (
+      {clientError && (
+        <p id={errorId} className="mt-2 text-sm text-red-600" role="alert">
+          {clientError}
+        </p>
+      )}
+
+      {!clientError && state.message && !state.success && (
         <p id={errorId} className="mt-2 text-sm text-red-600" role="alert">
           {state.message}
         </p>

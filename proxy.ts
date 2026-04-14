@@ -7,6 +7,22 @@ import {
   getMaxRequestBodyBytesForPath,
 } from '@/lib/constants/request-limits'
 
+// Hoisted to module scope: allocated once at load time, not on every request.
+const protectedRoutePrefixes = [
+  '/admin',
+  '/dashboard',
+  '/employee',
+  '/import',
+  '/settings',
+  '/calendar',
+  '/exports',
+  '/gdpr',
+  '/trip-forecast',
+  '/future-job-alerts',
+  '/test-endpoints',
+  '/mfa',
+]
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const cspHeader = buildContentSecurityPolicy()
@@ -147,16 +163,13 @@ export async function proxy(request: NextRequest) {
   // 2. Auth & Session Management
   const { supabaseResponse, user, needsOnboarding } = await updateSession(request, requestHeaders)
 
-  // Public routes that don't require authentication
-  const isPublicRoute =
-    isPublicMarketingRoute || isPublicApiRoute || pathname.startsWith('/auth/')
-
   const isOnboardingRoute = pathname.startsWith('/onboarding')
 
-  // Protected routes: everything that isn't public or auth or onboarding
-  // This covers all (dashboard) route group pages: /calendar, /import, /settings,
-  // /employee, /exports, /gdpr, /trip-forecast, /future-job-alerts, etc.
-  const isProtectedRoute = !isApiRoute && !isPublicRoute && !isAuthRoute && !isOnboardingRoute
+  // Protected routes: explicitly listed route prefixes (see module-scope array above).
+  // Unknown routes NOT in this list fall through to Next.js 404 handling.
+  const isProtectedRoute = protectedRoutePrefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
+  )
 
   const redirectWithCookies = (url: URL) => {
     const response = NextResponse.redirect(url)

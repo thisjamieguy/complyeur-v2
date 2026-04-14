@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import { hasSentryBuildConfiguration } from "./lib/monitoring/sentry";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -127,4 +128,6 @@ const sentryWebpackPluginOptions = {
   },
 };
 
-export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+export default hasSentryBuildConfiguration
+  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
+  : nextConfig;

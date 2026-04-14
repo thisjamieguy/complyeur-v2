@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Footer } from '@/components/layout/footer'
 import { SkipLink } from '@/components/ui/skip-link'
+import { marketingPrimaryCta } from '@/lib/marketing-primary-cta'
 
 export default function PublicLayout({
   children,
@@ -34,10 +35,10 @@ export default function PublicLayout({
                 Sign in
               </Link>
               <Link
-                href="/landing#early-access"
+                href={marketingPrimaryCta.href}
                 className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-800"
               >
-                Request Early Access
+                {marketingPrimaryCta.label}
               </Link>
             </div>
           </div>
@@ -50,9 +51,6 @@ export default function PublicLayout({
             </Link>
             <Link href="/faq" className="font-medium text-slate-600 transition hover:text-slate-900">
               FAQ
-            </Link>
-            <Link href="/blog" className="font-medium text-slate-600 transition hover:text-slate-900">
-              Resources
             </Link>
             <Link href="/blog" className="font-medium text-slate-600 transition hover:text-slate-900">
               Blog

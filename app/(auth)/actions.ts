@@ -24,6 +24,16 @@ import {
 
 const SIGNUP_PARITY_REDIRECT = '/check-email'
 
+function getSignupRedirectPath(redirectTo: string | null | undefined): string {
+  const validatedRedirect = validateRedirectUrl(redirectTo)
+
+  if (validatedRedirect === '/dashboard') {
+    return SIGNUP_PARITY_REDIRECT
+  }
+
+  return `${SIGNUP_PARITY_REDIRECT}?next=${encodeURIComponent(validatedRedirect)}`
+}
+
 function isExistingAccountErrorMessage(message: string): boolean {
   const normalized = message.toLowerCase()
   return (
@@ -117,6 +127,9 @@ export async function signup(formData: FormData) {
   if (!rl.success) throw new AuthError('Too many signup attempts. Please wait a moment and try again.')
 
   const supabase = await createClient()
+  const signupRedirectPath = getSignupRedirectPath(
+    formData.get('redirectTo') as string | null
+  )
 
   const rawData = {
     name: formData.get('name') as string,
@@ -149,7 +162,7 @@ export async function signup(formData: FormData) {
     const err = authError!
     const errorMessage = err.message ?? ''
     if (isExistingAccountErrorMessage(errorMessage)) {
-      redirect(SIGNUP_PARITY_REDIRECT)
+      redirect(signupRedirectPath)
     }
     if (errorMessage.includes('Email address') && errorMessage.includes('is invalid') && normalizedEmail.includes('+')) {
       throw new AuthError('Email addresses with special characters like "+" may not be supported. Please try using a different email address or contact support.')
@@ -161,7 +174,7 @@ export async function signup(formData: FormData) {
   // Supabase can return obfuscated user data when an account already exists and
   // anti-enumeration protections are enabled. Treat this as a parity-success path.
   if (!authData.user || authData.user.identities?.length === 0) {
-    redirect(SIGNUP_PARITY_REDIRECT)
+    redirect(signupRedirectPath)
   }
 
   const user = authData.user!
@@ -220,7 +233,7 @@ export async function signup(formData: FormData) {
   await supabase.auth.signOut({ scope: 'local' })
 
   revalidatePath('/', 'layout')
-  redirect(SIGNUP_PARITY_REDIRECT)
+  redirect(signupRedirectPath)
 }
 
 export async function forgotPassword(formData: FormData) {
