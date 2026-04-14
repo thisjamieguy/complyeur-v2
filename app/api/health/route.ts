@@ -88,8 +88,3 @@ export async function GET() {
     return createUnhealthyResponse()
   }
 }
-
-// Support POST as well for flexibility
-export async function POST() {
-  return GET()
-}

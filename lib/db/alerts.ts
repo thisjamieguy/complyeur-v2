@@ -546,6 +546,17 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
       .select()
       .single()
 
+    if (insertError?.code === '23505') {
+      // Race condition: another concurrent request created the row first — fetch it.
+      const { data: existing } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      if (existing) return existing
+      throw new DatabaseError('Failed to fetch preferences after insert race')
+    }
+
     if (insertError) {
       console.error('Error creating notification preferences:', insertError)
       throw new DatabaseError('Failed to create preferences')

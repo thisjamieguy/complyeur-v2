@@ -7,6 +7,22 @@ import {
   getMaxRequestBodyBytesForPath,
 } from '@/lib/constants/request-limits'
 
+// Hoisted to module scope: allocated once at load time, not on every request.
+const protectedRoutePrefixes = [
+  '/admin',
+  '/dashboard',
+  '/employee',
+  '/import',
+  '/settings',
+  '/calendar',
+  '/exports',
+  '/gdpr',
+  '/trip-forecast',
+  '/future-job-alerts',
+  '/test-endpoints',
+  '/mfa',
+]
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const cspHeader = buildContentSecurityPolicy()
@@ -149,21 +165,8 @@ export async function proxy(request: NextRequest) {
 
   const isOnboardingRoute = pathname.startsWith('/onboarding')
 
-  // Protected routes: explicitly listed dashboard route prefixes.
+  // Protected routes: explicitly listed route prefixes (see module-scope array above).
   // Unknown routes NOT in this list fall through to Next.js 404 handling.
-  const protectedRoutePrefixes = [
-    '/dashboard',
-    '/employee',
-    '/import',
-    '/settings',
-    '/calendar',
-    '/exports',
-    '/gdpr',
-    '/trip-forecast',
-    '/future-job-alerts',
-    '/test-endpoints',
-    '/mfa',
-  ]
   const isProtectedRoute = protectedRoutePrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(prefix + '/')
   )
