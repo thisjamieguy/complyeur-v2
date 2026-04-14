@@ -17,6 +17,7 @@
     "test:endpoints": "echo 'Use the test page at /test-endpoints or install tsx: pnpm add -D tsx && pnpm tsx scripts/test-endpoints.ts'",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:compliance": "vitest run lib/compliance/__tests__",
     "test:unit": "vitest run lib/compliance/__tests__ __tests__/unit",
     "test:integration": "vitest run __tests__/integration",
     "test:coverage": "vitest run --coverage",
