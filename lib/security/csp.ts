@@ -37,6 +37,20 @@ export function buildContentSecurityPolicy(): string {
   const directives = [
     "default-src 'self'",
     `script-src ${scriptSrc.join(' ')}`,
+    // style-src 'unsafe-inline' is required because multiple dependencies set
+    // dynamic inline style attributes at runtime that cannot be nonce- or
+    // hash-bound:
+    //   - @tanstack/react-virtual (dynamic transforms for virtualized rows)
+    //   - @radix-ui/react-{popover,dialog,dropdown-menu,select,tooltip,
+    //     scroll-area} (floating-element position/transform via inline styles)
+    //   - sonner (toast transform/opacity animations)
+    //   - cmdk, react-day-picker (positioning)
+    //   - CookieYes third-party consent banner (https://cdn-cookieyes.com)
+    // CSP style-src nonces only apply to <style> elements, not to style="..."
+    // attributes. The only strict alternative is 'unsafe-hashes' with a SHA256
+    // per literal inline style value, which is not feasible against libraries
+    // that compute style values dynamically per render. Revisit if any of the
+    // named libraries publish a nonce-friendly mode.
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data: https://*.supabase.co",
     "font-src 'self'",
