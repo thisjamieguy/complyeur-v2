@@ -543,11 +543,12 @@ test.describe('Dashboard Verification E2E', () => {
       // Search for non-existent name
       await searchInput.fill('ZZZZNONEXISTENT12345');
 
-      // Wait for filtering
-      await page.waitForTimeout(500);
+      await page.waitForURL(/search=ZZZZNONEXISTENT12345/, { timeout: 10000 });
 
       // Should show no results message
-      await expect(page.getByText(/no employees match/i).first()).toBeVisible();
+      await expect(page.getByRole('cell', { name: /no employees match/i })).toBeVisible({
+        timeout: 15000,
+      });
     });
   });
 

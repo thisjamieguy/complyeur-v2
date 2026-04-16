@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 const authFile = path.join(__dirname, '.auth/user.json');
-const e2eBaseUrl = 'http://127.0.0.1:3000';
+const e2eBaseUrl = 'http://localhost:3000';
 const e2eReadyUrl = `${e2eBaseUrl}/login`;
 const configuredWorkers = Number(process.env.PLAYWRIGHT_WORKERS ?? '1');
 
