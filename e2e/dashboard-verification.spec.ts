@@ -405,12 +405,13 @@ test.describe('Dashboard Verification E2E', () => {
         return;
       }
 
-      // Look for filter buttons
-      await expect(page.getByRole('button', { name: /all/i })).toBeVisible();
+      // Look for filter buttons by their full accessible labels. The page also
+      // has alert controls such as "Dismiss All", so broad label matches are ambiguous.
+      await expect(page.getByRole('button', { name: /^Filter by All,/i })).toBeVisible();
 
       // Additional filters should be visible
-      const complianceFilter = page.getByRole('button', { name: /compliant/i });
-      const riskFilter = page.getByRole('button', { name: /risk|amber/i });
+      const complianceFilter = page.getByRole('button', { name: /^Filter by Compliant,/i });
+      const riskFilter = page.getByRole('button', { name: /^Filter by At Risk,/i });
 
       await expect(complianceFilter.or(riskFilter).first()).toBeVisible();
     });
@@ -431,13 +432,13 @@ test.describe('Dashboard Verification E2E', () => {
       // Click a filter (if there are employees)
       if (initialRows > 0) {
         // Try clicking "At Risk" filter
-        const riskFilter = page.getByRole('button', { name: /at risk/i });
+        const riskFilter = page.getByRole('button', { name: /^Filter by At Risk,/i });
         if (await riskFilter.isVisible().catch(() => false)) {
           await riskFilter.click();
           await expect(riskFilter).toHaveAttribute('aria-pressed', 'true');
 
           // Click "All" to reset
-          const allFilter = page.getByRole('button', { name: /all/i });
+          const allFilter = page.getByRole('button', { name: /^Filter by All,/i });
           await allFilter.click();
           await expect(allFilter).toHaveAttribute('aria-pressed', 'true');
         }

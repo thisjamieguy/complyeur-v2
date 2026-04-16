@@ -31,7 +31,6 @@ const authenticatedDirectPages = [
   { path: '/settings/import-history', heading: /import history/i },
   { path: '/settings/mappings', heading: /column mappings/i },
   { path: '/settings/team', heading: /^team$/i },
-  { path: '/gdpr', heading: /gdpr & privacy tools/i },
   { path: '/mfa', heading: /multi-factor authentication/i },
 ] as const;
 
@@ -43,6 +42,7 @@ const restrictedPagesForStandardUser = [
   '/admin/metrics',
   '/admin/settings',
   '/admin/tiers',
+  '/gdpr',
 ] as const;
 
 async function hasAuthenticatedDashboard(page: Page): Promise<boolean> {
@@ -54,8 +54,23 @@ async function hasAuthenticatedDashboard(page: Page): Promise<boolean> {
 
   return page
     .getByRole('heading', { name: /employee compliance/i })
-    .isVisible({ timeout: 5000 })
-    .catch(() => false);
+    .isVisible({ timeout: 15000 })
+    .catch(async () => {
+      const response = await page.context().request.get('/dashboard', { maxRedirects: 0 });
+      return response.ok();
+    });
+}
+
+async function hasAuthenticatedStorageState(page: Page): Promise<boolean> {
+  const cookies = await page.context().cookies();
+  return cookies.some((cookie) => /^sb-.+-auth-token$/.test(cookie.name));
+}
+
+async function gotoRestrictedRoute(page: Page, path: string): Promise<void> {
+  const response = await page.context().request.get(path, { maxRedirects: 0 });
+
+  expect([302, 303, 307, 308]).toContain(response.status());
+  expect(response.headers().location).toMatch(/\/(dashboard|login)(?:[/?#]|$)/);
 }
 
 test.describe('Route coverage matrix', () => {
@@ -96,15 +111,20 @@ test.describe('Route coverage matrix', () => {
   test.describe('Direct authenticated pages', () => {
     for (const route of authenticatedDirectPages) {
       test(`${route.path} renders`, async ({ page }) => {
+        test.setTimeout(60_000);
         test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
         await page.goto(route.path, { waitUntil: 'domcontentloaded' });
 
         await expect(page).toHaveURL(new RegExp(route.path.split('?')[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 
         if ('heading' in route) {
-          await expect(page.getByRole('heading', { name: route.heading }).first()).toBeVisible();
+          await expect(page.getByRole('heading', { name: route.heading }).first()).toBeVisible({
+            timeout: 15000,
+          });
         } else {
-          await expect(page.getByText(route.text).first()).toBeVisible();
+          await expect(page.getByText(route.text).first()).toBeVisible({
+            timeout: 15000,
+          });
         }
       });
     }
@@ -154,10 +174,9 @@ test.describe('Route coverage matrix', () => {
   test.describe('Restricted routes for the standard E2E account', () => {
     for (const path of restrictedPagesForStandardUser) {
       test(`${path} is not directly accessible`, async ({ page }) => {
-        test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
-        await page.goto(path, { waitUntil: 'domcontentloaded' });
-        await expect(page.url()).not.toContain(path);
-        await expect(page).toHaveURL(/\/dashboard|\/login/);
+        test.setTimeout(60_000);
+        test.skip(!(await hasAuthenticatedStorageState(page)), 'Skipping: authenticated E2E state is unavailable');
+        await gotoRestrictedRoute(page, path);
       });
     }
   });

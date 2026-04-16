@@ -66,6 +66,10 @@ export default defineConfig({
       CRON_SECRET: process.env.CRON_SECRET ?? 'playwright-cron-secret',
       DISABLE_MFA_FOR_E2E: 'true',
       MFA_BYPASS_CONTEXT: 'playwright',
+      // Keep local Playwright runs independent from developer-specific Upstash
+      // credentials. Next.js will not replace existing env values from .env.local.
+      UPSTASH_REDIS_REST_URL: '',
+      UPSTASH_REDIS_REST_TOKEN: '',
     },
   },
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { FileDropzone } from '@/components/import/FileDropzone';
@@ -50,7 +50,18 @@ const STAGE_MESSAGES: Record<ProcessingStage, string> = {
 // UPLOAD PAGE COMPONENT
 // ============================================================
 
-export default function UploadPage() {
+function UploadFallback() {
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <StepIndicator currentStep={2} />
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      </div>
+    </div>
+  );
+}
+
+function UploadPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const formatParam = searchParams.get('format');
@@ -471,5 +482,13 @@ export default function UploadPage() {
       <StepIndicator currentStep={2} />
       <FileDropzone format={format} onFileSelect={handleFileSelect} isProcessing={isProcessing} />
     </div>
+  );
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense fallback={<UploadFallback />}>
+      <UploadPageContent />
+    </Suspense>
   );
 }

@@ -30,10 +30,10 @@ PROGRESS SUMMARY — update this as items complete:
   Phase 1 — Quality Gates:          [x] 6/6 done
   Phase 2 — Security Hardening:     [x] 2/2 done
   Phase 3 — Feature Verification:   [ ] 4/5 done (3.4 manual pending)
-  Phase 4 — E2E Tests:              [ ] 0/4 done
+  Phase 4 — E2E Tests:              [x] 4/4 done
   Phase 5 — Staging Deploy:         [ ] 0/5 done
   Phase 6 — Production Deploy:      [ ] 0/5 done
-  TOTAL:                            [ ] 12/27 done
+  TOTAL:                            [ ] 16/27 done
 
 SCOPE CHANGE (2026-04-16, REVERTED): Saved Jobs feature previously deferred
 past v1. Stashed work reinstated 2026-04-16 after successful Phase 3 verification.
@@ -302,7 +302,7 @@ All Phase 3 items executed; 3.4 (manual smoke test) pending user execution.
 
 ---
 
-- [ ] **4.1 — Auth and public page tests**
+- [x] **4.1 — Auth and public page tests**
 
   **Type:** Automated
   ```bash
@@ -317,7 +317,7 @@ All Phase 3 items executed; 3.4 (manual smoke test) pending user execution.
 
 ---
 
-- [ ] **4.2 — Multi-tenant isolation test**
+- [x] **4.2 — Multi-tenant isolation test**
 
   **Type:** Automated
   ```bash
@@ -327,7 +327,7 @@ All Phase 3 items executed; 3.4 (manual smoke test) pending user execution.
 
 ---
 
-- [ ] **4.3 — Dashboard and import workflow tests**
+- [x] **4.3 — Dashboard and import workflow tests**
 
   **Type:** Automated
   ```bash
@@ -339,7 +339,7 @@ All Phase 3 items executed; 3.4 (manual smoke test) pending user execution.
 
 ---
 
-- [ ] **4.4 — Record coverage baseline**
+- [x] **4.4 — Record coverage baseline**
 
   **Type:** Automated
   ```bash
@@ -347,7 +347,7 @@ All Phase 3 items executed; 3.4 (manual smoke test) pending user execution.
   ```
   **Done criteria:** Command completes. Record the overall coverage percentage below for future releases. No threshold enforcement — this is a baseline record only.
 
-  **Coverage at this release: ____%**
+  **Coverage at this release: 89.97%**
 
 ---
 

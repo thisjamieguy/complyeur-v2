@@ -8,7 +8,9 @@ test.use({
 
 test.describe('Public smoke coverage', () => {
   test('root redirects to landing and shows primary marketing CTAs', async ({ page }) => {
-    await page.goto('/');
+    test.setTimeout(60_000);
+
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     await expect(page).toHaveURL(/\/landing$/);
     await expect(

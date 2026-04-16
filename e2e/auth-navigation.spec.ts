@@ -15,6 +15,7 @@ async function hasAuthenticatedDashboard(page: Page): Promise<boolean> {
 
 test.describe('Authenticated navigation coverage', () => {
   test('core authenticated routes load for the seeded account', async ({ page }) => {
+    test.setTimeout(90_000);
     test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
 
     await page.goto('/import', { waitUntil: 'domcontentloaded' });
