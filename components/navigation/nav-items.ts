@@ -6,6 +6,7 @@ import {
   Bell,
   TrendingUp,
   Settings,
+  BriefcaseBusiness,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -62,6 +63,13 @@ export const navItems: NavItem[] = [
   },
 
   // Planning
+  {
+    href: '/jobs',
+    label: 'Jobs',
+    icon: BriefcaseBusiness,
+    section: 'Planning',
+    tourId: 'tour-nav-jobs',
+  },
   {
     href: '/future-job-alerts',
     label: 'Future Alerts',

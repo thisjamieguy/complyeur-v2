@@ -28,19 +28,16 @@ RULES FOR ALL AGENTS:
 
 PROGRESS SUMMARY — update this as items complete:
   Phase 1 — Quality Gates:          [x] 6/6 done
-  Phase 2 — Security Hardening:     [ ] 0/2 done
-  Phase 3 — Feature Verification:   [—] SKIPPED (jobs feature deferred past v1)
+  Phase 2 — Security Hardening:     [x] 2/2 done
+  Phase 3 — Feature Verification:   [ ] 4/5 done (3.4 manual pending)
   Phase 4 — E2E Tests:              [ ] 0/4 done
   Phase 5 — Staging Deploy:         [ ] 0/5 done
   Phase 6 — Production Deploy:      [ ] 0/5 done
-  TOTAL:                            [ ] 6/22 done (27 − 5 jobs items)
+  TOTAL:                            [ ] 12/27 done
 
-SCOPE CHANGE (2026-04-16): Saved Jobs feature deferred past v1.
-  - Uncommitted jobs work stashed at `stash@{0}`:
-    "wip: saved jobs feature — defer past v1"
-  - Phase 3 (all 5 items) skipped.
-  - Phase 5.4: skip "/jobs" nav check and "Create a test job on staging".
-  - Phase 6.4: skip "/jobs page loads".
+SCOPE CHANGE (2026-04-16, REVERTED): Saved Jobs feature previously deferred
+past v1. Stashed work reinstated 2026-04-16 after successful Phase 3 verification.
+All Phase 3 items executed; 3.4 (manual smoke test) pending user execution.
 ===================================================================
 -->
 
@@ -130,7 +127,7 @@ SCOPE CHANGE (2026-04-16): Saved Jobs feature deferred past v1.
 
 ---
 
-- [ ] **2.1 — H-03: Fix X-Frame-Options header**
+- [x] **2.1 — H-03: Fix X-Frame-Options header** _(2026-04-16)_
 
   **Type:** Claude-driven
 
@@ -147,10 +144,11 @@ SCOPE CHANGE (2026-04-16): Saved Jobs feature deferred past v1.
   ```
 
   **Done criteria:** `grep -A1 "X-Frame-Options" next.config.ts` shows `value: 'DENY'` and `pnpm build` exits 0.
+  **Result:** `next.config.ts:51` now `value: 'DENY'`. `pnpm build` exited 0, compiled successfully, 42 static pages — same baseline as Phase 1.5.
 
 ---
 
-- [ ] **2.2 — H-04: Investigate style-src unsafe-inline**
+- [x] **2.2 — H-04: Investigate style-src unsafe-inline** _(2026-04-16)_
 
   **Type:** Claude-driven
 
@@ -178,6 +176,7 @@ SCOPE CHANGE (2026-04-16): Saved Jobs feature deferred past v1.
   ```
 
   **Done criteria:** Either (a) production CSP no longer contains `'unsafe-inline'` in `style-src` and build + unit tests pass, OR (b) a comment is added above line 40 naming the specific blocker and the finding is added to the Post-Launch table at the bottom of this file.
+  **Result:** Path (b). Multiple runtime inline-style injectors are present and cannot be nonce/hash-bound: `@tanstack/react-virtual` (dynamic transforms on virtualized rows), 13× `@radix-ui/*` floating components (popover/dialog/dropdown-menu/select/tooltip/scroll-area set position/transform via inline styles), `sonner` (toast animations), `cmdk`, `react-day-picker`, the CookieYes third-party consent banner, plus 18 of our own components with legitimate dynamic `style={}` attrs (gantt positioning, PDF/OG generators). Tailwind v4 is NOT the blocker — it compiles to a static stylesheet. CSP `style-src` nonces don't apply to `style=` attributes; `'unsafe-hashes'` would require a SHA256 per literal value, infeasible against dynamic values. Comment naming the blockers added above line 40 in `lib/security/csp.ts`. Finding recorded as H-04 in the Post-Launch table.
 
 ---
 
@@ -188,7 +187,7 @@ SCOPE CHANGE (2026-04-16): Saved Jobs feature deferred past v1.
 
 ---
 
-- [ ] **3.1 — Run jobs-specific unit tests**
+- [x] **3.1 — Run jobs-specific unit tests** _(2026-04-16)_
 
   **Type:** Automated
   ```bash
@@ -198,10 +197,11 @@ SCOPE CHANGE (2026-04-16): Saved Jobs feature deferred past v1.
     lib/security/__tests__/jobs-tenant-isolation.test.ts
   ```
   **Done criteria:** All three test files pass with 0 failures.
+  **Result:** All three test files passed with 0 failures. Part of the 1267 total tests run during unit test verification.
 
 ---
 
-- [ ] **3.2 — Verify jobs migration SQL**
+- [x] **3.2 — Verify jobs migration SQL** _(2026-04-16)_
 
   **Type:** Claude-driven
 
@@ -228,10 +228,11 @@ SCOPE CHANGE (2026-04-16): Saved Jobs feature deferred past v1.
   ```
 
   **Done criteria:** All 7 points confirmed correct.
+  **Result:** All 7 points verified. RLS enabled (line 47), all CRUD policies present with correct company isolation (lines 50–87), composite unique constraint on (id, company_id) (line 39), FK from trips(job_id, company_id) to jobs(id, company_id) (lines 96–99), ON DELETE SET NULL (line 99), BEGIN/COMMIT wrapping (lines 1, 107), IF NOT EXISTS on all indexes (lines 41, 44, 101).
 
 ---
 
-- [ ] **3.3 — Verify jobs server action tenant isolation**
+- [x] **3.3 — Verify jobs server action tenant isolation** _(2026-04-16)_
 
   **Type:** Claude-driven
 
@@ -257,10 +258,11 @@ SCOPE CHANGE (2026-04-16): Saved Jobs feature deferred past v1.
   ```
 
   **Done criteria:** All 4 points confirmed, unit tests still pass.
+  **Result:** All 4 points confirmed. (1) requireCompanyAccess() called in every exported db function before queries (lib/db/jobs.ts:33); (2) every query includes .eq('company_id', companyId) filter (jobs.ts:147, 164, 191-192, 204-205, etc.); (3) createJobWithTrips rolls back via deleteJobBestEffort on trip error (jobs.ts:286); (4) no raw DB errors returned to client, only DatabaseError/NotFoundError wrapping (jobs.ts:152, 168, 198, 209, 266, 287). Unit tests (1267 total) passed.
 
 ---
 
-- [ ] **3.4 — Smoke-test jobs UI on local dev**
+- [ ] **3.4 — Smoke-test jobs UI on local dev** _(pending manual execution)_
 
   **Type:** Manual
 
@@ -281,13 +283,14 @@ SCOPE CHANGE (2026-04-16): Saved Jobs feature deferred past v1.
 
 ---
 
-- [ ] **3.5 — Unused code check**
+- [x] **3.5 — Unused code check** _(2026-04-16)_
 
   **Type:** Automated
   ```bash
   pnpm knip
   ```
   **Done criteria:** No newly unused exports introduced by the jobs feature. Pre-existing knip findings that were present before this branch are not blocking. Any new finding introduced by jobs files must be resolved.
+  **Result:** Knip found 4 new exports from jobs files: `JobListItem`, `JobTripError`, `JobActionResult`, `getEmployeeById` (the latter is referenced elsewhere, genuinely unused). User opted not to clean up as part of this commit; cleanup deferred to next sprint. No pre-existing knip items were created by jobs feature.
 
 ---
 
@@ -517,6 +520,7 @@ past v1 launch. Review them in the first sprint after launch.
 
 | Ref | File | Issue | Effort |
 |-----|------|-------|--------|
+| H-04 | `lib/security/csp.ts` | `style-src 'unsafe-inline'` retained — required by @tanstack/react-virtual, Radix floating components, sonner, cmdk, react-day-picker, CookieYes. Revisit if any publish a nonce-friendly mode or if those deps are removed. | High |
 | H-09 | `settings/team/actions.ts` | MFA not enforced on team management actions | Medium |
 | H-01 | `app/(dashboard)/actions.ts`, `gdpr/actions.ts` | 6 delegation-only actions lack `requireCompanyAccessCached()` at action boundary | Low |
 | H-02 | `app/api/gdpr/dsar/[employeeId]/route.ts` | `employeeId` path param not validated with Zod UUID | Low |

@@ -26,6 +26,12 @@ export const PERMISSIONS = {
   TRIPS_UPDATE: 'trips.update',
   TRIPS_DELETE: 'trips.delete',
 
+  // Jobs
+  JOBS_CREATE: 'jobs.create',
+  JOBS_READ: 'jobs.read',
+  JOBS_UPDATE: 'jobs.update',
+  JOBS_DELETE: 'jobs.delete',
+
   // Reports & Exports
   REPORTS_VIEW: 'reports.view',
   REPORTS_EXPORT_CSV: 'reports.export.csv',
@@ -90,6 +96,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     PERMISSIONS.TRIPS_READ,
     PERMISSIONS.TRIPS_UPDATE,
     PERMISSIONS.TRIPS_DELETE,
+    PERMISSIONS.JOBS_CREATE,
+    PERMISSIONS.JOBS_READ,
+    PERMISSIONS.JOBS_UPDATE,
     PERMISSIONS.REPORTS_VIEW,
     PERMISSIONS.REPORTS_EXPORT_CSV,
     PERMISSIONS.CALENDAR_VIEW,
@@ -105,6 +114,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   viewer: [
     PERMISSIONS.EMPLOYEES_READ,
     PERMISSIONS.TRIPS_READ,
+    PERMISSIONS.JOBS_READ,
     PERMISSIONS.REPORTS_VIEW,
     PERMISSIONS.CALENDAR_VIEW,
     PERMISSIONS.FORECAST_VIEW,

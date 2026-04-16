@@ -3,11 +3,13 @@ import nextDynamic from 'next/dynamic'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { getDashboardTourState } from '@/lib/db/profiles'
 import { getEmployeeComplianceDataPaginated, getComplianceBriefing, type EmployeeSortOption } from '@/lib/data'
+import { getEmployeesForSelect } from '@/lib/db'
 import { getCompanySettings } from '@/lib/actions/settings'
 import { ComplianceTable } from '@/components/dashboard/compliance-table'
 import { ComplianceBriefing, ComplianceBriefingSkeleton } from '@/components/dashboard/compliance-briefing'
 import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { UnifiedAddEmployeeDialog } from '@/components/employees/unified-add-employee-dialog'
+import { JobCreateDialog } from '@/components/jobs/job-create-dialog'
 import { AlertBanner } from '@/components/alerts/alert-banner'
 import { getUnacknowledgedAlertsAction } from '../actions'
 
@@ -158,7 +160,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const forceTour = params.tour === '1'
 
   // Cached fetcher — deduplicated within this request
-  const tourCompletedAt = await getDashboardTourState(userId)
+  const [tourCompletedAt, employeesForJobs] = await Promise.all([
+    getDashboardTourState(userId),
+    getEmployeesForSelect(),
+  ])
   const shouldAutoStartTour = !tourCompletedAt
   const shouldShowTour = forceTour || shouldAutoStartTour
 
@@ -186,7 +191,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             Track Schengen 90/180-day compliance status
           </p>
         </div>
-        <UnifiedAddEmployeeDialog source="dashboard_header" />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <JobCreateDialog employees={employeesForJobs} />
+          <UnifiedAddEmployeeDialog source="dashboard_header" />
+        </div>
       </div>
 
       {/* Main content with suspense for streaming */}

@@ -34,6 +34,7 @@ export type Company = Tables['companies']['Row']
 export type Profile = Tables['profiles']['Row']
 export type Employee = Tables['employees']['Row']
 export type Trip = Tables['trips']['Row']
+export type Job = Tables['jobs']['Row']
 export type Alert = Tables['alerts']['Row']
 export type AuditLog = Tables['audit_log']['Row']
 export type SchengenCountry = Tables['schengen_countries']['Row']
@@ -65,6 +66,7 @@ export type CompanyInput = Tables['companies']['Insert']
 export type ProfileInput = Tables['profiles']['Insert']
 export type EmployeeInput = Tables['employees']['Insert']
 export type TripInput = Tables['trips']['Insert']
+export type JobInput = Tables['jobs']['Insert']
 export type AlertInput = Tables['alerts']['Insert']
 export type AuditLogInput = Tables['audit_log']['Insert']
 export type ImportSessionInput = Tables['import_sessions']['Insert']
@@ -103,6 +105,7 @@ export type CompanyUpdate = Tables['companies']['Update']
 export type ProfileUpdate = Tables['profiles']['Update']
 export type EmployeeUpdate = Tables['employees']['Update']
 export type TripUpdate = Tables['trips']['Update']
+export type JobUpdate = Tables['jobs']['Update']
 export type AlertUpdate = Tables['alerts']['Update']
 export type AuditLogUpdate = Tables['audit_log']['Update']
 export type ImportSessionUpdate = Tables['import_sessions']['Update']
@@ -172,6 +175,14 @@ export type EmployeeWithTrips = Employee & {
  */
 export type TripWithEmployee = Trip & {
   employee: Employee
+}
+
+/**
+ * Job with linked trips and employee details.
+ * Used in saved job detail views.
+ */
+export type JobWithTrips = Job & {
+  trips: Array<Trip & { employee: Pick<Employee, 'id' | 'name'> | null }>
 }
 
 /**

@@ -896,6 +896,53 @@ export type Database = {
           },
         ]
       }
+      jobs: {
+        Row: {
+          company_id: string
+          country: string
+          created_at: string
+          customer: string
+          entry_date: string
+          exit_date: string
+          id: string
+          job_ref: string
+          purpose: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          country: string
+          created_at?: string
+          customer: string
+          entry_date: string
+          exit_date: string
+          id?: string
+          job_ref: string
+          purpose?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          country?: string
+          created_at?: string
+          customer?: string
+          entry_date?: string
+          exit_date?: string
+          id?: string
+          job_ref?: string
+          purpose?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_log: {
         Row: {
           alert_id: string | null
@@ -1181,6 +1228,7 @@ export type Database = {
           ghosted: boolean | null
           id: string
           is_private: boolean | null
+          job_id: string | null
           job_ref: string | null
           purpose: string | null
           travel_days: number | null
@@ -1196,6 +1244,7 @@ export type Database = {
           ghosted?: boolean | null
           id?: string
           is_private?: boolean | null
+          job_id?: string | null
           job_ref?: string | null
           purpose?: string | null
           travel_days?: number | null
@@ -1211,12 +1260,20 @@ export type Database = {
           ghosted?: boolean | null
           id?: string
           is_private?: boolean | null
+          job_id?: string | null
           job_ref?: string | null
           purpose?: string | null
           travel_days?: number | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "trips_job_id_fkey"
+            columns: ["job_id", "company_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id", "company_id"]
+          },
           {
             foreignKeyName: "trips_company_id_fkey"
             columns: ["company_id"]
