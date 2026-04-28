@@ -46,6 +46,15 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
       testMatch: /phase-regression\.spec\.ts/,
     },
+    // Mobile breakpoint tests — Pixel 7 viewport
+    {
+      name: 'mobile',
+      use: {
+        ...devices['Pixel 7'],
+        ...(authFileExists ? { storageState: authFile } : {}),
+      },
+      testMatch: /mobile-breakpoints\.spec\.ts/,
+    },
     // Stress test project with extended timeout
     {
       name: 'stress',

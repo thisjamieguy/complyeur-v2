@@ -1,0 +1,41 @@
+{
+  "ci": {
+    "collect": {
+      "numberOfRuns": 3,
+      "url": [
+        "http://localhost:3000/landing",
+        "http://localhost:3000/login",
+        "http://localhost:3000/pricing",
+        "http://localhost:3000/about"
+      ],
+      "startServerCommand": "",
+      "startServerReadyPattern": "Ready",
+      "startServerReadyTimeout": 60000,
+      "settings": {
+        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"]
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["warn", { "minScore": 0.8 }],
+        "categories:accessibility": ["warn", { "minScore": 0.9 }],
+        "categories:best-practices": ["error", { "minScore": 0.85 }],
+        "categories:seo": ["error", { "minScore": 0.8 }]
+      },
+      "budgets": [
+        {
+          "path": "/*",
+          "timings": [
+            { "metric": "first-contentful-paint", "budget": 3000 },
+            { "metric": "largest-contentful-paint", "budget": 5000 },
+            { "metric": "total-blocking-time", "budget": 600 },
+            { "metric": "cumulative-layout-shift", "budget": 0.1 }
+          ]
+        }
+      ]
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

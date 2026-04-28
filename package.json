@@ -29,6 +29,10 @@
     "test:e2e:calendar-performance": "playwright test e2e/performance/calendar-performance.spec.ts",
     "test:regression": "playwright test e2e/phase-regression.spec.ts",
     "test:regression:ui": "playwright test e2e/phase-regression.spec.ts --ui",
+    "lighthouse": "lhci autorun",
+    "lighthouse:open": "lhci open",
+    "test:e2e:a11y": "playwright test e2e/a11y.spec.ts",
+    "test:e2e:mobile": "playwright test e2e/mobile-breakpoints.spec.ts --project=mobile",
     "test:all": "npm run test:coverage && npm run test:e2e",
     "test:report": "node scripts/generate-test-report.js",
     "billing:prices:sync": "tsx scripts/syncStripePrices.ts --mapping scripts/stripe-price-mapping.beta.template.json --interval both",
@@ -99,8 +103,10 @@
     }
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.2",
     "@commitlint/cli": "^20.4.1",
     "@commitlint/config-conventional": "^20.4.1",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
