@@ -291,7 +291,7 @@ export default function PreviewPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Validation Preview</h1>
-        <p className="mt-2 text-slate-500">
+        <p className="mt-2 text-slate-600">
           Review the data before importing. Fix any errors in your file and re-upload if needed.
         </p>
       </div>
@@ -300,7 +300,7 @@ export default function PreviewPage() {
       <div className="bg-slate-50 rounded-xl p-4 flex items-center justify-between">
         <div>
           <p className="font-medium text-slate-900">{session.file_name}</p>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-600">
             Format: {session.format.charAt(0).toUpperCase() + session.format.slice(1)}
           </p>
         </div>
@@ -358,7 +358,7 @@ export default function PreviewPage() {
       )}
 
       {/* Duplicate handling info */}
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-slate-600">
         Existing employees will be updated. Duplicate trips will be skipped.
         {isEmployeeImport && ` Duplicate-name mode: ${duplicateNameModeLabel}.`}
       </p>
@@ -402,7 +402,7 @@ export default function PreviewPage() {
         <div className="flex flex-col items-end gap-2">
           {/* Progress Stage Indicator */}
           {isImporting && summary.valid > 50 && (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-600">
               {importStage === 'preparing' && 'Preparing import...'}
               {importStage === 'saving' && `Saving ${summary.valid} records...`}
               {importStage === 'finalizing' && 'Finalizing...'}

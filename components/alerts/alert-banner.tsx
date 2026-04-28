@@ -27,18 +27,18 @@ const alertConfig: Record<AlertType, {
 }> = {
   warning: {
     icon: AlertTriangle,
-    headerBg: 'bg-amber-500 dark:bg-amber-700',
+    headerBg: 'bg-amber-700 dark:bg-amber-800',
     headerText: 'text-white',
-    borderColor: 'border-amber-500 dark:border-amber-700',
+    borderColor: 'border-amber-700 dark:border-amber-800',
     itemTextColor: 'text-amber-700 dark:text-amber-200',
     badgeVariant: 'outline',
     label: 'Warning',
   },
   urgent: {
     icon: AlertCircle,
-    headerBg: 'bg-orange-600 dark:bg-orange-700',
+    headerBg: 'bg-orange-700 dark:bg-orange-800',
     headerText: 'text-white',
-    borderColor: 'border-orange-600 dark:border-orange-700',
+    borderColor: 'border-orange-700 dark:border-orange-800',
     itemTextColor: 'text-orange-700 dark:text-orange-200',
     badgeVariant: 'secondary',
     label: 'Urgent',
@@ -200,9 +200,10 @@ export function AlertBanner({ alerts }: AlertBannerProps) {
             variant="ghost"
             size="icon-sm"
             onClick={() => setIsExpanded(false)}
+            aria-label="Collapse alerts"
             className={cn(config.headerText, 'hover:bg-white/20')}
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
       </div>

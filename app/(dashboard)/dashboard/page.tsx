@@ -187,7 +187,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           <h1 className="text-xl sm:text-2xl font-semibold text-brand-900">
             Employee Compliance
           </h1>
-          <p className="text-sm sm:text-base text-brand-400 mt-1">
+          <p className="text-sm sm:text-base text-brand-600 mt-1">
             Track Schengen 90/180-day compliance status
           </p>
         </div>

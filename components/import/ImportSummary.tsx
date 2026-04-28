@@ -133,7 +133,7 @@ export function ImportSummary({ result, format }: ImportSummaryProps) {
         <h1 className="text-3xl font-bold text-slate-900">
           {isSuccess ? "You're all set!" : 'Import Failed'}
         </h1>
-        <p className="mt-2 text-slate-500">{getSubheadline()}</p>
+        <p className="mt-2 text-slate-600">{getSubheadline()}</p>
       </div>
 
       {/* Stats Cards with staggered animation */}

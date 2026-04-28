@@ -16,7 +16,7 @@ export function ValidationSummary({ summary }: ValidationSummaryProps) {
       icon: FileSpreadsheet,
       bgColor: 'bg-slate-100',
       textColor: 'text-slate-600',
-      iconColor: 'text-slate-500',
+      iconColor: 'text-slate-600',
     },
     {
       label: 'Valid',
@@ -58,7 +58,7 @@ export function ValidationSummary({ summary }: ValidationSummaryProps) {
             </div>
             <div>
               <p className={`text-2xl font-bold ${card.textColor}`}>{card.value}</p>
-              <p className="text-sm text-slate-500">{card.label}</p>
+              <p className="text-sm text-slate-600">{card.label}</p>
             </div>
           </div>
         );

@@ -301,12 +301,12 @@ export function TeamManagementClient({
                   <TableRow key={member.id}>
                     <TableCell>
                       <div className="font-medium text-slate-900">{memberDisplayName(member)}</div>
-                      <div className="text-xs text-slate-500">{member.email ?? 'No email'}</div>
+                      <div className="text-xs text-slate-600">{member.email ?? 'No email'}</div>
                     </TableCell>
                     <TableCell>
                       <Badge className={roleBadgeClass(role)}>{getRoleLabel(role)}</Badge>
                     </TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="text-slate-600">
                       {member.created_at
                         ? formatDistanceToNow(new Date(member.created_at), { addSuffix: true })
                         : '-'}
@@ -409,7 +409,7 @@ export function TeamManagementClient({
                         {invite.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="text-slate-600">
                       {formatDistanceToNow(new Date(invite.expires_at), { addSuffix: true })}
                     </TableCell>
                     <TableCell className="text-right">

@@ -86,7 +86,7 @@ function ConfidenceBadge({
       );
     case 'skipped':
       return (
-        <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">
+        <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">
           Skipped
         </Badge>
       );
@@ -101,7 +101,7 @@ function ConfidenceBadge({
         );
       }
       return (
-        <Badge variant="outline" className="bg-slate-50 text-slate-500 border-slate-200">
+        <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">
           Not mapped
         </Badge>
       );
@@ -187,7 +187,7 @@ function MappingRow({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="skip">
-              <span className="text-slate-500">Skip this column</span>
+              <span className="text-slate-600">Skip this column</span>
             </SelectItem>
             {mapping.targetField && !availableFields.includes(mapping.targetField) && (
               <SelectItem value={mapping.targetField}>
@@ -295,7 +295,7 @@ export function ColumnMappingUI({
         {/* Header */}
         <div>
           <h2 className="text-xl font-semibold text-slate-900 mb-2">Map Columns</h2>
-          <p className="text-slate-500">
+          <p className="text-slate-600">
             Some columns in your file weren&apos;t recognized. Please map them to the
             correct ComplyEur fields.
           </p>

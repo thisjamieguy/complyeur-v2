@@ -86,7 +86,7 @@ export function ValidationTable({
 
   if (filteredRows.length === 0) {
     return (
-      <div className="text-center py-8 text-slate-500">
+      <div className="text-center py-8 text-slate-600">
         {showOnlyErrors ? 'No errors or warnings found.' : 'No data to display.'}
       </div>
     );
@@ -122,7 +122,7 @@ export function ValidationTable({
                     `}
                     onClick={() => isExpandable && toggleRow(row.row_number)}
                   >
-                    <TableCell className="font-mono text-sm text-slate-500">
+                    <TableCell className="font-mono text-sm text-slate-600">
                       {row.row_number}
                     </TableCell>
                     <TableCell>{getStatusIcon(row)}</TableCell>

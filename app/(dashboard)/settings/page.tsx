@@ -121,7 +121,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
               Settings
             </p>
             <h1 className="text-2xl font-semibold text-slate-950">Control how your workspace runs</h1>
@@ -131,7 +131,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
             </p>
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 lg:max-w-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
               Active section
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-900">{activeSectionMeta?.label}</p>
@@ -162,7 +162,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   <p
                     className={cn(
                       'mt-1 text-xs',
-                      isActive ? 'text-slate-300' : 'text-slate-500'
+                      isActive ? 'text-slate-300' : 'text-slate-600'
                     )}
                   >
                     {section.eyebrow}
@@ -175,7 +175,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
         <div className="space-y-4">
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
               {activeSectionMeta?.eyebrow}
             </p>
             <p className="mt-1 text-sm text-slate-700">{activeSectionMeta?.description}</p>
@@ -241,7 +241,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Access
                     </p>
                     <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
@@ -261,7 +261,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Imports
                     </p>
                     <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
@@ -281,7 +281,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Audit trail
                     </p>
                     <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
@@ -310,7 +310,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                         <Shield className="h-5 w-5 text-slate-700" />
                       </div>
                       <div className="space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                           GDPR
                         </p>
                         <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">

@@ -43,7 +43,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
               <span
                 className={`
                   mt-2 text-xs font-medium
-                  ${isCurrent ? 'text-blue-600' : 'text-slate-500'}
+                  ${isCurrent ? 'text-blue-600' : 'text-slate-600'}
                 `}
               >
                 {step.label}

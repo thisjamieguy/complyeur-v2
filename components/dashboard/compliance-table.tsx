@@ -80,9 +80,9 @@ function getDaysRemainingClassName(
 ): string {
   switch (riskLevel) {
     case 'green':
-      return 'text-emerald-600'
+      return 'text-emerald-700'
     case 'amber':
-      return 'text-amber-600'
+      return 'text-amber-700'
     case 'red':
       return 'text-rose-600'
     case 'breach':
@@ -138,6 +138,7 @@ const EmployeeCard = memo(function EmployeeCard({
               e.stopPropagation()
               onOpenAddTrip(employee.id, employee.name)
             }}
+            aria-label={`Add trip for ${employee.name}`}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -147,16 +148,16 @@ const EmployeeCard = memo(function EmployeeCard({
       <div className="grid grid-cols-2 gap-2 text-sm">
         {isExempt ? (
           <div className="col-span-2">
-            <span className="text-brand-400">EU/Schengen citizen — exempt from 90/180-day tracking</span>
+            <span className="text-brand-600">EU/Schengen citizen — exempt from 90/180-day tracking</span>
           </div>
         ) : (
           <>
             <div>
-              <span className="text-brand-400">Days Used:</span>
+              <span className="text-brand-600">Days Used:</span>
               <span className="ml-2 font-medium">{employee.days_used} / 90</span>
             </div>
             <div>
-              <span className="text-brand-400">Remaining:</span>
+              <span className="text-brand-600">Remaining:</span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
@@ -176,7 +177,7 @@ const EmployeeCard = memo(function EmployeeCard({
           </>
         )}
         <div className="col-span-2">
-          <span className="text-brand-400">Last Trip:</span>
+          <span className="text-brand-600">Last Trip:</span>
           <span className="ml-2">{formatDate(employee.last_trip_date)}</span>
         </div>
       </div>
@@ -246,7 +247,7 @@ function ComplianceCalculationTrace({ employee }: { employee: EmployeeCompliance
                 <div className="font-semibold text-slate-900">
                   {formatDate(employee.next_expiring_date)}
                 </div>
-                <div className="text-[10px] text-emerald-600 font-medium">
+                <div className="text-[10px] text-emerald-700 font-medium">
                   +{employee.next_expiring_count} {employee.next_expiring_count === 1 ? 'day' : 'days'} recovered
                 </div>
               </div>
@@ -483,7 +484,7 @@ export function ComplianceTable({
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="text-center py-8 text-brand-400"
+                  className="text-center py-8 text-brand-600"
                 >
                   No employees match the selected filter.
                 </TableCell>
@@ -537,7 +538,7 @@ export function ComplianceTable({
                         </Tooltip>
                       )}
                     </TableCell>
-                    <TableCell className="text-brand-400">
+                    <TableCell className="text-brand-600">
                       {formatDate(employee.last_trip_date)}
                     </TableCell>
                     <TableCell>
@@ -550,6 +551,7 @@ export function ComplianceTable({
                             e.stopPropagation()
                             openAddTripModal(employee.id, employee.name)
                           }}
+                          aria-label={`Add trip for ${employee.name}`}
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -574,7 +576,7 @@ export function ComplianceTable({
       {/* Mobile card view */}
       <div className="md:hidden space-y-4">
         {filteredAndSorted.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-brand-400">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-brand-600">
             No employees match the selected filter.
           </div>
         ) : (

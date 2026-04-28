@@ -88,7 +88,7 @@ export function Sidebar({ user }: SidebarProps) {
         {visibleSections.map((section) => (
           <div key={section.title} className="mb-6">
             {isOpen && (
-              <h3 className="px-3 mb-2 text-xs font-semibold text-brand-400 uppercase tracking-wider">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-brand-300 uppercase tracking-wider">
                 {section.title}
               </h3>
             )}
@@ -145,7 +145,7 @@ export function Sidebar({ user }: SidebarProps) {
               {isOpen && (
                 <>
                   <span className="text-sm font-medium truncate">Feedback</span>
-                  <span className="ml-auto rounded-full border border-brand-500 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-400">
+                  <span className="ml-auto rounded-full border border-brand-500 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-300">
                     Beta
                   </span>
                 </>

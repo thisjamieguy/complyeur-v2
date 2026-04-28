@@ -152,7 +152,7 @@ export function SecuritySettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-600">
             Use an app like Google Authenticator or Authy to generate verification codes.
           </p>
           <MfaEnrollmentPanel />

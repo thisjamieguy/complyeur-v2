@@ -50,7 +50,7 @@ export function FirstTimeGuide() {
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(false)}
-              className="text-slate-500"
+              className="text-slate-600"
             >
               Got it
             </Button>
@@ -75,7 +75,7 @@ function Step({ number, title, children }: StepProps) {
       </div>
       <div>
         <p className="font-medium text-slate-900 text-sm">{title}</p>
-        <p className="text-sm text-slate-500 mt-0.5">{children}</p>
+        <p className="text-sm text-slate-600 mt-0.5">{children}</p>
       </div>
     </div>
   );

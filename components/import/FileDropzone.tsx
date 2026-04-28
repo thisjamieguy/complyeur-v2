@@ -109,7 +109,7 @@ export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzon
         <h2 className="text-xl font-semibold text-slate-900 mb-2">
           Upload {format === 'employees' ? 'Employees' : 'Trips'} File
         </h2>
-        <p className="text-slate-500">
+        <p className="text-slate-600">
           Upload your Excel or CSV file. We&apos;ll validate the data before importing.
         </p>
       </div>
@@ -142,7 +142,7 @@ export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzon
                 <p className="text-lg font-medium text-slate-700">
                   Drag and drop your file here, or click to browse
                 </p>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-600">
                   Supports .xlsx, .xls, and .csv files up to 10MB
                 </p>
               </>
@@ -158,7 +158,7 @@ export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzon
               </div>
               <div>
                 <p className="font-medium text-slate-900">{selectedFile.name}</p>
-                <p className="text-sm text-slate-500">{formatFileSize(selectedFile.size)}</p>
+                <p className="text-sm text-slate-600">{formatFileSize(selectedFile.size)}</p>
               </div>
             </div>
             <Button

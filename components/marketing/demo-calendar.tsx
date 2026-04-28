@@ -74,9 +74,9 @@ const defaultEmployees: CalendarEmployeeRow[] = [
 const DEFAULT_TOTAL_DAYS = 28
 
 const riskStyles = {
-  green: 'bg-green-500',
-  amber: 'bg-amber-500',
-  red: 'bg-red-500',
+  green: 'bg-green-400 text-green-900',
+  amber: 'bg-amber-400 text-amber-900',
+  red: 'bg-red-400 text-red-900',
 } satisfies Record<RiskLevel, string>
 
 function startOfDay(date: Date): Date {
@@ -259,7 +259,7 @@ function TripBar({ trip, dayWidth }: { trip: DemoTrip; dayWidth: number }) {
   return (
     <div
       className={cn(
-        'absolute flex h-6 items-center justify-center rounded-md text-xs font-medium text-white shadow-sm',
+        'absolute flex h-6 items-center justify-center rounded-md text-xs font-medium shadow-sm',
         riskStyles[trip.riskLevel]
       )}
       style={{
@@ -413,15 +413,15 @@ export function DemoCalendar({
 
       <div className="flex items-center gap-4 border-t border-slate-200 bg-slate-50 px-3 py-2">
         <div className="flex items-center gap-1.5">
-          <div className="h-3 w-3 rounded-sm bg-green-500" />
+          <div className="h-3 w-3 rounded-sm bg-green-400" />
           <span className="text-xs text-slate-600">Compliant</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-3 w-3 rounded-sm bg-amber-500" />
+          <div className="h-3 w-3 rounded-sm bg-amber-400" />
           <span className="text-xs text-slate-600">At Risk</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-3 w-3 rounded-sm bg-red-500" />
+          <div className="h-3 w-3 rounded-sm bg-red-400" />
           <span className="text-xs text-slate-600">High Risk</span>
         </div>
       </div>

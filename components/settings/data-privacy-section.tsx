@@ -65,6 +65,7 @@ export function DataPrivacySection({ disabled }: DataPrivacySectionProps) {
                     onValueChange={([value]) => field.onChange(value)}
                     disabled={disabled}
                     className="w-full"
+                    aria-label="Data retention period in months"
                   />
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>12 months</span>

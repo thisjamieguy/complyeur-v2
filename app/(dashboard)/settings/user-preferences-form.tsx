@@ -79,7 +79,7 @@ export function UserPreferencesForm({ preferences, disabled = false }: UserPrefe
             <Label htmlFor="receive-warning" className="text-sm font-medium">
               Warning Alerts
             </Label>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Early warnings when employees approach limits
             </p>
           </div>
@@ -97,7 +97,7 @@ export function UserPreferencesForm({ preferences, disabled = false }: UserPrefe
             <Label htmlFor="receive-urgent" className="text-sm font-medium">
               Urgent Alerts
             </Label>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Critical warnings when very close to limits
             </p>
           </div>
@@ -115,7 +115,7 @@ export function UserPreferencesForm({ preferences, disabled = false }: UserPrefe
             <Label htmlFor="receive-breach" className="text-sm font-medium">
               Breach Alerts
             </Label>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Alerts when legal limit is exceeded
             </p>
           </div>

@@ -58,7 +58,7 @@ export default async function ImportHistoryPage({ searchParams }: PageProps) {
             </div>
             <h1 className="text-2xl font-bold text-slate-900">Import History</h1>
           </div>
-          <p className="text-slate-500">
+          <p className="text-slate-600">
             View your past import sessions and their results.
           </p>
         </div>

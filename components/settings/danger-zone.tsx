@@ -445,7 +445,7 @@ export function DangerZone() {
                 <DialogTitle className="flex items-center gap-2">
                   <button
                     onClick={handleBack}
-                    className="text-slate-500 hover:text-slate-700 transition-colors"
+                    className="text-slate-600 hover:text-slate-700 transition-colors"
                   >
                     <ChevronRight className="h-5 w-5 rotate-180" />
                   </button>
@@ -599,7 +599,7 @@ function CategorySection({
           />
           <span className="font-medium text-slate-900">{title}</span>
           {recoverable && (
-            <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+            <span className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
               recoverable
             </span>
           )}
@@ -611,11 +611,11 @@ function CategorySection({
         </div>
         <div className="flex items-center gap-2">
           {selectedCount > 0 && (
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-slate-600">
               {selectedCount} selected
             </span>
           )}
-          <span className="text-sm text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full min-w-[2rem] text-center">
+          <span className="text-sm text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full min-w-[2rem] text-center">
             {count}
           </span>
           {hasItems && (

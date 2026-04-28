@@ -155,7 +155,7 @@ export function GanttTemplateDialog({
               value={employeeRows}
               onChange={(event) => setEmployeeRows(event.target.value)}
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               {maxEmployees
                 ? `Up to ${maxRows} rows on your current plan.`
                 : `Up to ${maxRows} rows per workbook.`}

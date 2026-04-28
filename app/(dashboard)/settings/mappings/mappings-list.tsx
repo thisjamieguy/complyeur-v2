@@ -105,7 +105,7 @@ export function MappingsList({ initialMappings }: MappingsListProps) {
                     <p className="text-sm text-slate-600">{mapping.description}</p>
                   )}
 
-                  <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                  <div className="flex flex-wrap gap-4 text-sm text-slate-600">
                     <div className="flex items-center gap-1.5">
                       <Hash className="h-4 w-4" />
                       <span>

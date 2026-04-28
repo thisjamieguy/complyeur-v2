@@ -162,7 +162,7 @@ export function DateFormatConfirmation({
                   }`}
                 >
                   <span className="text-lg font-semibold text-slate-900">{fmt}/YYYY</span>
-                  <span className="mt-1 text-sm text-slate-500">
+                  <span className="mt-1 text-sm text-slate-600">
                     {fmt === 'DD/MM' ? 'UK/European' : 'US'} format
                   </span>
                   <code className="mt-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">

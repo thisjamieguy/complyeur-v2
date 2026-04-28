@@ -416,7 +416,7 @@ function UploadPageContent() {
         <StepIndicator currentStep={2} />
         <div>
           <h2 className="text-xl font-semibold text-slate-900 mb-2">Confirm Date Format</h2>
-          <p className="text-slate-500">
+          <p className="text-slate-600">
             We detected some dates that could be interpreted in different ways.
           </p>
         </div>

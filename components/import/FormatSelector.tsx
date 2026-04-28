@@ -94,7 +94,7 @@ export function FormatSelector({ maxEmployees = null }: FormatSelectorProps) {
 
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Import Data</h1>
-        <p className="mt-2 text-slate-500">
+        <p className="mt-2 text-slate-600">
           Select the format that matches your file type, then continue to upload.
           Templates are available for employee lists, trip lists, and Gantt-style schedules.
         </p>
@@ -130,7 +130,7 @@ export function FormatSelector({ maxEmployees = null }: FormatSelectorProps) {
                   <Icon className="h-5 w-5" />
                 </div>
                 <CardTitle className="text-xl">{format.title}</CardTitle>
-                <CardDescription className="text-slate-500">{format.description}</CardDescription>
+                <CardDescription className="text-slate-600">{format.description}</CardDescription>
               </CardHeader>
 
               <CardContent className="space-y-4">
@@ -163,7 +163,7 @@ export function FormatSelector({ maxEmployees = null }: FormatSelectorProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full text-slate-500 hover:text-slate-900"
+                      className="w-full text-slate-600 hover:text-slate-900"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsGanttTemplateDialogOpen(true);

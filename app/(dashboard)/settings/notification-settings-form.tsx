@@ -109,7 +109,7 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
           step={1}
           className="w-full"
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-600">
           Trigger a warning alert when days used reaches this threshold (50-85)
         </p>
       </div>
@@ -133,7 +133,7 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
           step={1}
           className="w-full"
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-600">
           Trigger an urgent alert when days used reaches this threshold (60-89)
         </p>
       </div>
@@ -156,7 +156,7 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
           disabled
           className="w-full opacity-50"
         />
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-600">
           Legal limit - cannot be changed (fixed at 90 days per EU Regulation 610/2013)
         </p>
       </div>
@@ -217,7 +217,7 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
             <Label htmlFor="email-notifications" className="text-sm">
               Enable email notifications
             </Label>
-            <p className="text-xs text-slate-500">Master switch for all email alerts</p>
+            <p className="text-xs text-slate-600">Master switch for all email alerts</p>
           </div>
           <Switch
             id="email-notifications"
@@ -255,7 +255,7 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
               <Label htmlFor="breach-email" className="text-sm">
                 Breach alerts
               </Label>
-              <p className="text-xs text-slate-500">Strongly recommended</p>
+              <p className="text-xs text-slate-600">Strongly recommended</p>
             </div>
             <Switch
               id="breach-email"

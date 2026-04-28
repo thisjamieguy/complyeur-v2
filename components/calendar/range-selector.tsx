@@ -30,7 +30,7 @@ export function RangeSelector({ value, onChange }: RangeSelectorProps) {
         value={String(value)}
         onValueChange={(v) => onChange(Number(v))}
       >
-        <SelectTrigger className="w-28" size="sm">
+        <SelectTrigger className="w-28" size="sm" aria-label="Forward date range">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

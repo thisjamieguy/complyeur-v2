@@ -70,7 +70,7 @@ export function ResetPopupsSection({ userId }: ResetPopupsSectionProps) {
         {isPending ? 'Resetting...' : 'Reset all popups & tours'}
       </Button>
       {result && (
-        <p className="mt-3 text-sm text-slate-500">
+        <p className="mt-3 text-sm text-slate-600">
           {result.tourReset && 'Dashboard tour will show on next visit. '}
           {result.alertsReset > 0 && `${result.alertsReset} alert${result.alertsReset === 1 ? '' : 's'} marked as unread. `}
           {!result.tourReset && result.alertsReset === 0 && 'Nothing to reset — everything is already visible.'}

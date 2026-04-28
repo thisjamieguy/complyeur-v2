@@ -32,7 +32,7 @@ export function BrowserFrame({
         {/* URL bar */}
         {showUrlBar && title && (
           <div className="flex-1 flex justify-center">
-            <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-md border border-slate-200 text-xs text-slate-400">
+            <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-md border border-slate-200 text-xs text-slate-600">
               <svg
                 className="w-3 h-3"
                 fill="none"
@@ -53,7 +53,7 @@ export function BrowserFrame({
 
         {/* Simple title without URL bar */}
         {!showUrlBar && title && (
-          <span className="text-xs text-slate-400 font-medium">{title}</span>
+          <span className="text-xs text-slate-600 font-medium">{title}</span>
         )}
       </div>
 

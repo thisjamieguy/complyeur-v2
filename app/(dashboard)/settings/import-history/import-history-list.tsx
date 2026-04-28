@@ -45,7 +45,7 @@ export function ImportHistoryList({
       <div className="text-center py-16 bg-slate-50 rounded-xl">
         <FileSpreadsheet className="h-12 w-12 text-slate-300 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-slate-900 mb-2">No import history</h3>
-        <p className="text-slate-500 mb-6">
+        <p className="text-slate-600 mb-6">
           You haven&apos;t completed any imports yet.
         </p>
         <Button asChild>
@@ -88,7 +88,7 @@ export function ImportHistoryList({
                     {FORMAT_LABELS[session.format]}
                   </span>
                 </div>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-600">
                   {format(new Date(session.created_at), 'MMM d, yyyy \'at\' h:mm a')}
                 </p>
               </div>
@@ -98,7 +98,7 @@ export function ImportHistoryList({
                 <p className="font-medium text-slate-900">
                   {importedCount} imported
                 </p>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-600">
                   of {session.total_rows} rows
                 </p>
               </div>
@@ -125,7 +125,7 @@ export function ImportHistoryList({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-4 border-t">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-600">
             Showing {(currentPage - 1) * 20 + 1}–
             {Math.min(currentPage * 20, total)} of {total} imports
           </p>

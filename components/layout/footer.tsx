@@ -16,7 +16,7 @@ export function Footer() {
   return (
     <footer className="border-t border-brand-100 bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center text-sm text-brand-400">
+        <div className="text-center text-sm text-brand-600">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Image
               src="/images/Icons/03_Icon_Only/ComplyEur_Icon.svg"

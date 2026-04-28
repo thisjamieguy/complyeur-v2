@@ -80,7 +80,7 @@ export default async function ExportsPage() {
         <h1 className="text-2xl font-semibold text-slate-900">
           Export Compliance Data
         </h1>
-        <p className="text-slate-500 mt-1">
+        <p className="text-slate-600 mt-1">
           Generate reports for internal review or audit submissions
         </p>
       </div>
