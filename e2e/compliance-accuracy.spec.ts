@@ -57,9 +57,12 @@ async function extractAllComplianceRows(
   const remainingCount = await remainingElements.count();
 
   if (usedCount > 0 && usedCount === remainingCount) {
-    for (let i = 0; i < usedCount; i++) {
-      const usedText = (await usedElements.nth(i).textContent()) ?? '';
-      const remainingText = (await remainingElements.nth(i).textContent()) ?? '';
+    const usedTexts = await usedElements.allTextContents();
+    const remainingTexts = await remainingElements.allTextContents();
+
+    for (let i = 0; i < usedTexts.length; i++) {
+      const usedText = usedTexts[i] ?? '';
+      const remainingText = remainingTexts[i] ?? '';
 
       const used = parseInt(usedText.replace(/\D/g, ''), 10);
       const remaining = parseInt(remainingText.replace(/\D/g, ''), 10);
@@ -70,13 +73,32 @@ async function extractAllComplianceRows(
     }
   }
 
-  // Strategy 2: scan for "X / 90" or "X days" patterns in table cells
+  // Strategy 2: parse the employee detail compliance summary.
+  if (rows.length === 0) {
+    const mainText = await page.locator('main').innerText({ timeout: 5000 }).catch(() => '');
+    const usedMatch = mainText.match(/Days Used\s+(-?\d+)\s*\/\s*90/i);
+    const remainingMatch = mainText.match(/Days Remaining\s+(-?\d+)/i);
+
+    if (usedMatch && remainingMatch) {
+      const used = parseInt(usedMatch[1], 10);
+      const remaining = parseInt(remainingMatch[1], 10);
+
+      if (!isNaN(used) && !isNaN(remaining)) {
+        rows.push({
+          daysUsed: used,
+          daysRemaining: remaining,
+          text: `${usedMatch[0]} / ${remainingMatch[0]}`,
+        });
+      }
+    }
+  }
+
+  // Strategy 3: scan for "X / 90" patterns in table cells.
   if (rows.length === 0) {
     const cells = page.locator('td, [data-testid*="compliance"]');
-    const cellCount = await cells.count();
+    const cellTexts = (await cells.allTextContents()).slice(0, 100);
 
-    for (let i = 0; i < Math.min(cellCount, 100); i++) {
-      const text = (await cells.nth(i).textContent()) ?? '';
+    for (const text of cellTexts) {
       // Match patterns like "45 / 90" or "45 days used"
       const slashMatch = text.match(/(\d+)\s*\/\s*90/);
       if (slashMatch) {
@@ -193,9 +215,14 @@ test.describe('Compliance Accuracy', () => {
 
       const employeeLinks = page.locator(SEL.employeeLink);
       const count = await employeeLinks.count();
+      const hrefs = (
+        await Promise.all(
+          Array.from({ length: Math.min(count, 5) }, async (_, i) => employeeLinks.nth(i).getAttribute('href'))
+        )
+      ).filter((href): href is string => Boolean(href));
 
-      for (let i = 0; i < Math.min(count, 5); i++) {
-        await employeeLinks.nth(i).click();
+      for (const href of hrefs) {
+        await page.goto(href);
         await page.waitForLoadState('networkidle');
 
         const complianceRows = await extractAllComplianceRows(page);
@@ -213,9 +240,6 @@ test.describe('Compliance Accuracy', () => {
             expect(['amber', 'red']).toContain(riskLevel);
           }
         }
-
-        await page.goBack();
-        await page.waitForLoadState('networkidle');
       }
     });
   });
