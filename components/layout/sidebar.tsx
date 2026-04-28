@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { MessageSquarePlus, PanelLeftClose, PanelLeft, Shield } from 'lucide-react'
-import { navSections } from '@/components/navigation/nav-items'
+import { getNavSections } from '@/components/navigation/nav-items'
 import { FeedbackDialog } from '@/components/feedback/feedback-dialog'
 import { useSidebar } from '@/contexts/sidebar-context'
 import { UserMenu, type UserMenuUser } from './user-menu'
@@ -20,11 +20,14 @@ export function Sidebar({ user }: SidebarProps) {
   const canAccessItem = (href: string): boolean => {
     if (href === '/calendar') return user.canAccessCalendar === true
     if (href === '/trip-forecast') return user.canAccessForecast === true
+    if (href === '/jobs') return user.canAccessSavedJobs === true
     if (href === '/admin') return user.canAccessAdminPanel === true
     return true
   }
 
-  const sections = navSections.map((section) => {
+  const sections = getNavSections({
+    savedJobsEnabled: user.canAccessSavedJobs === true,
+  }).map((section) => {
     const baseItems = section.items.filter((item) => canAccessItem(item.href))
     if (section.title !== 'System' || !user.canAccessAdminPanel) {
       return {

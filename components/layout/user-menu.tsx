@@ -23,6 +23,7 @@ export interface UserMenuUser {
   canAccessAdminPanel?: boolean
   canAccessCalendar?: boolean
   canAccessForecast?: boolean
+  canAccessSavedJobs?: boolean
 }
 
 interface UserMenuProps {

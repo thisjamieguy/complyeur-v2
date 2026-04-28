@@ -13,7 +13,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { FeedbackDialog } from '@/components/feedback/feedback-dialog'
-import { navItems } from '@/components/navigation/nav-items'
+import { getNavItems } from '@/components/navigation/nav-items'
 import { useSidebar } from '@/contexts/sidebar-context'
 import { cn } from '@/lib/utils'
 import type { UserMenuUser } from '@/components/layout/user-menu'
@@ -28,10 +28,13 @@ export function MobileNav({ user }: MobileNavProps) {
   const canAccessItem = (href: string): boolean => {
     if (href === '/calendar') return user?.canAccessCalendar === true
     if (href === '/trip-forecast') return user?.canAccessForecast === true
+    if (href === '/jobs') return user?.canAccessSavedJobs === true
     if (href === '/admin') return user?.canAccessAdminPanel === true
     return true
   }
-  const baseItems = navItems.filter((item) => canAccessItem(item.href))
+  const baseItems = getNavItems({
+    savedJobsEnabled: user?.canAccessSavedJobs === true,
+  }).filter((item) => canAccessItem(item.href))
   const items = user?.canAccessAdminPanel
     ? [
         ...baseItems,

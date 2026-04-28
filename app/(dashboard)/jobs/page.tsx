@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { BriefcaseBusiness } from 'lucide-react'
 import { getEmployeesForSelect, getJobs } from '@/lib/db'
 import { getCountryName } from '@/lib/constants/schengen-countries'
 import { parseDateOnlyAsUTC } from '@/lib/compliance/date-utils'
+import { isSavedJobsEnabled } from '@/lib/features'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -30,6 +32,10 @@ function formatDate(dateString: string): string {
 }
 
 export default async function JobsPage() {
+  if (!isSavedJobsEnabled()) {
+    notFound()
+  }
+
   const [jobs, employees] = await Promise.all([
     getJobs(),
     getEmployeesForSelect(),

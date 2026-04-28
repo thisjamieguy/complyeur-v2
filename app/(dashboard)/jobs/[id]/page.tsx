@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getAllTripsGroupedByEmployee, getJobById } from '@/lib/db'
 import { calculateFutureJobCompliance } from '@/lib/services/forecast-service'
+import { isSavedJobsEnabled } from '@/lib/features'
 import { Button } from '@/components/ui/button'
 import { JobDetailClient } from '@/components/jobs/job-detail-client'
 import type { ForecastResult, ForecastTrip } from '@/types/forecast'
@@ -49,6 +50,10 @@ function toSummary(result: ForecastResult) {
 }
 
 export default async function JobDetailPage({ params }: JobDetailPageProps) {
+  if (!isSavedJobsEnabled()) {
+    notFound()
+  }
+
   const { id } = await params
   const [job, groupedData] = await Promise.all([
     getJobById(id),

@@ -58,7 +58,11 @@ SUPABASE_DB_PASSWORD
 NEXT_PUBLIC_APP_URL
 UPSTASH_REDIS_REST_URL
 UPSTASH_REDIS_REST_TOKEN
+FEATURE_SAVED_JOBS
 ```
+
+`FEATURE_SAVED_JOBS` defaults to disabled unless set to `true`. Keep it unset
+or set it to `false` for private beta.
 
 ---
 

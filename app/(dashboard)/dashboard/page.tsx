@@ -11,6 +11,7 @@ import { DashboardSkeleton } from '@/components/dashboard/loading-skeleton'
 import { UnifiedAddEmployeeDialog } from '@/components/employees/unified-add-employee-dialog'
 import { JobCreateDialog } from '@/components/jobs/job-create-dialog'
 import { AlertBanner } from '@/components/alerts/alert-banner'
+import { isSavedJobsEnabled } from '@/lib/features'
 import { getUnacknowledgedAlertsAction } from '../actions'
 
 const DashboardTour = nextDynamic(
@@ -158,11 +159,12 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     : 'days_remaining_asc'
   const status = params.status ?? ''
   const forceTour = params.tour === '1'
+  const savedJobsEnabled = isSavedJobsEnabled()
 
   // Cached fetcher — deduplicated within this request
   const [tourCompletedAt, employeesForJobs] = await Promise.all([
     getDashboardTourState(userId),
-    getEmployeesForSelect(),
+    savedJobsEnabled ? getEmployeesForSelect() : Promise.resolve([]),
   ])
   const shouldAutoStartTour = !tourCompletedAt
   const shouldShowTour = forceTour || shouldAutoStartTour
@@ -192,7 +194,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <JobCreateDialog employees={employeesForJobs} />
+          {savedJobsEnabled && <JobCreateDialog employees={employeesForJobs} />}
           <UnifiedAddEmployeeDialog source="dashboard_header" />
         </div>
       </div>

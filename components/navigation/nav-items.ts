@@ -25,6 +25,10 @@ export interface NavSectionGroup {
   items: NavItem[]
 }
 
+export interface NavFeatureOptions {
+  savedJobsEnabled?: boolean
+}
+
 /**
  * Flat array of all navigation items.
  * Used when you need to iterate over all items without section grouping.
@@ -95,10 +99,39 @@ export const navItems: NavItem[] = [
   },
 ]
 
+export function getNavItems({
+  savedJobsEnabled = true,
+}: NavFeatureOptions = {}): NavItem[] {
+  return navItems.filter((item) => savedJobsEnabled || item.href !== '/jobs')
+}
+
 /**
  * Navigation items grouped by section.
  * Used for rendering sidebar with section headers.
  */
+export function getNavSections(options: NavFeatureOptions = {}): NavSectionGroup[] {
+  const items = getNavItems(options)
+
+  return [
+    {
+      title: 'Main',
+      items: items.filter((item) => item.section === 'Main'),
+    },
+    {
+      title: 'Data',
+      items: items.filter((item) => item.section === 'Data'),
+    },
+    {
+      title: 'Planning',
+      items: items.filter((item) => item.section === 'Planning'),
+    },
+    {
+      title: 'System',
+      items: items.filter((item) => item.section === 'System'),
+    },
+  ]
+}
+
 export const navSections: NavSectionGroup[] = [
   {
     title: 'Main',
