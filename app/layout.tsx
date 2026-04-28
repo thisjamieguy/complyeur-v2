@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
 import { ConsentAwareGoogleAnalytics } from "@/components/analytics/consent-aware-google-analytics";
+import { ConsentAwareMicrosoftClarity } from "@/components/analytics/consent-aware-microsoft-clarity";
 import { defaultMetadata, SITE_URL, X_HANDLE } from "@/lib/metadata";
 import "./globals.css";
 
@@ -133,6 +134,9 @@ export default function RootLayout({
         {enableSpeedInsights && <SpeedInsights />}
         {process.env.NODE_ENV === 'production' && (
           <ConsentAwareGoogleAnalytics gaId="G-PKKZZFWD63" />
+        )}
+        {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_CLARITY_ID && (
+          <ConsentAwareMicrosoftClarity clarityId={process.env.NEXT_PUBLIC_CLARITY_ID} />
         )}
       </body>
     </html>
