@@ -24,6 +24,7 @@ export function buildContentSecurityPolicy(): string {
         'https://*.supabase.co',
         'https://*.vercel-scripts.com',
         'https://cdn-cookieyes.com',
+        'https://www.clarity.ms',
       ]
     : [
         "'self'",
@@ -32,6 +33,7 @@ export function buildContentSecurityPolicy(): string {
         'https://*.supabase.co',
         'https://*.vercel-scripts.com',
         'https://cdn-cookieyes.com',
+        'https://www.clarity.ms',
       ]
 
   const directives = [
@@ -52,11 +54,11 @@ export function buildContentSecurityPolicy(): string {
     // that compute style values dynamically per render. Revisit if any of the
     // named libraries publish a nonce-friendly mode.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data: https://*.supabase.co",
+    "img-src 'self' blob: data: https://*.supabase.co https://c.clarity.ms",
     "font-src 'self'",
     "object-src 'none'",
     "worker-src 'self'",
-    "connect-src 'self' https://*.supabase.co https://*.sentry.io https://cdn-cookieyes.com https://log.cookieyes.com",
+    "connect-src 'self' https://*.supabase.co https://*.sentry.io https://cdn-cookieyes.com https://log.cookieyes.com https://www.clarity.ms https://c.clarity.ms",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
