@@ -61,15 +61,12 @@ const PRIVATE_ROUTE_PATTERNS = [
   '/test-endpoints/*',
 ]
 
-const NON_INDEXABLE_UTILITY_ROUTES = [
-  '/login',
-  '/login/*',
-  '/signup',
-  '/signup/*',
-  '/forgot-password',
-  '/forgot-password/*',
-  '/reset-password',
-  '/reset-password/*',
+// Utility routes (login, signup, password reset, unsubscribe) are intentionally
+// left crawlable in robots.txt. Blocking them here previously caused Lighthouse's
+// `is-crawlable` SEO audit to fail on /login, dropping the SEO score below 0.8.
+// These pages are kept out of the sitemap and can rely on page-level meta robots
+// directives if we ever need to suppress indexing without blocking crawling.
+const NON_INDEXABLE_UTILITY_ROUTES: string[] = [
   '/unsubscribe',
   '/unsubscribe/*',
 ]
