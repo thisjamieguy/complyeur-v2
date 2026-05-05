@@ -607,6 +607,26 @@ describe('inviteTeamMember', () => {
     expect(dispatchInviteEmail).toHaveBeenCalledWith(admin, 'new@company.com', '/settings/team')
   })
 
+  it('supports custom invite redirect and revalidation targets for reused invite flows', async () => {
+    const admin = makeAdmin(
+      [
+        { data: null, error: null },
+        { data: { id: 'inv-999' }, error: null },
+      ],
+      { data: SEAT_OK, error: null }
+    )
+    vi.mocked(createAdminClient).mockReturnValue(admin as never)
+    vi.mocked(dispatchInviteEmail).mockResolvedValue({ success: true, recoverableExistingUser: false })
+
+    const result = await inviteTeamMember('new@company.com', 'manager', {
+      redirectPath: '/onboarding',
+      revalidateTarget: '/onboarding',
+    })
+
+    expect(result).toEqual({ success: true })
+    expect(dispatchInviteEmail).toHaveBeenCalledWith(admin, 'new@company.com', '/onboarding')
+  })
+
   it('accepts all valid team roles (admin, manager, viewer)', async () => {
     for (const role of ['admin', 'manager', 'viewer'] as const) {
       vi.clearAllMocks()

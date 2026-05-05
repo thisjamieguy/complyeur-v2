@@ -30,6 +30,11 @@ interface ActionResult<T = void> {
   warning?: string
 }
 
+export interface InviteTeamMemberOptions {
+  redirectPath?: string
+  revalidateTarget?: string
+}
+
 export interface TeamMember {
   id: string
   email: string | null
@@ -276,7 +281,14 @@ export async function listTeamMembersAndInvites(): Promise<ActionResult<TeamSnap
   }
 }
 
-export async function inviteTeamMember(email: string, role: TeamRole): Promise<ActionResult> {
+export async function inviteTeamMember(
+  email: string,
+  role: TeamRole,
+  options: InviteTeamMemberOptions = {}
+): Promise<ActionResult> {
+  const redirectPath = options.redirectPath ?? '/settings/team'
+  const revalidateTarget = options.revalidateTarget ?? '/settings/team'
+
   const actorResult = await getPrivilegedActorContext(
     'inviteTeamMember',
     'invite',
@@ -344,7 +356,7 @@ export async function inviteTeamMember(email: string, role: TeamRole): Promise<A
     return { success: false, error: 'Failed to create invite' }
   }
 
-  const dispatchResult = await dispatchInviteEmail(admin, normalizedEmail, '/settings/team')
+  const dispatchResult = await dispatchInviteEmail(admin, normalizedEmail, redirectPath)
   if (!dispatchResult.success) {
     await admin
       .from('company_user_invites')
@@ -369,14 +381,14 @@ export async function inviteTeamMember(email: string, role: TeamRole): Promise<A
   })
 
   if (dispatchResult.recoverableExistingUser) {
-    revalidatePath('/settings/team')
+    revalidatePath(revalidateTarget)
     return {
       success: true,
       warning: 'Invite saved. This user already has an account, so ask them to use the invite link to join your company.',
     }
   }
 
-  revalidatePath('/settings/team')
+  revalidatePath(revalidateTarget)
   return { success: true }
 }
 

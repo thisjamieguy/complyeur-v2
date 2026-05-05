@@ -4,12 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { companyNameSchema, addEmployeeSchema, inviteTeamSchema } from '@/lib/validations/onboarding'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { ValidationError, DatabaseError } from '@/lib/errors'
-import {
-  dispatchInviteEmail,
-  normalizeInviteEmail,
-} from '@/lib/services/team-invites'
+import { inviteTeamMember } from '@/app/(dashboard)/settings/team/actions'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 async function getAuthenticatedUser() {
@@ -102,56 +98,28 @@ export async function inviteTeamMembers(formData: FormData) {
     throw new ValidationError(result.error.issues[0]?.message ?? 'Invalid email address')
   }
 
-  const { user, companyId } = await getAuthenticatedUser()
-
-  const rateLimit = await checkServerActionRateLimit(user.id, 'inviteTeamMembers')
-  if (!rateLimit.allowed) {
-    throw new Error(rateLimit.error ?? 'Rate limit exceeded')
-  }
-
   const validEmails = result.data.emails.filter((e) => e !== '')
 
   if (validEmails.length === 0) return
 
-  const admin = createAdminClient()
-
   for (const email of validEmails) {
-    const normalizedEmail = normalizeInviteEmail(email)
-    if (normalizedEmail === normalizeInviteEmail(user.email ?? '')) continue
+    const inviteResult = await inviteTeamMember(email, 'manager', {
+      redirectPath: '/onboarding',
+      revalidateTarget: '/onboarding',
+    })
 
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-
-    const { data: inviteRow, error } = await admin
-      .from('company_user_invites')
-      .insert({
-        company_id: companyId,
-        email: normalizedEmail,
-        role: 'manager',
-        status: 'pending',
-        invited_by: user.id,
-        expires_at: expiresAt,
-      })
-      .select('id')
-      .single()
-
-    if (error) {
-      // Skip duplicates silently
-      if (error.code === '23505' || error.message?.toLowerCase().includes('duplicate')) {
-        continue
-      }
-      console.error('Failed to invite team member:', error)
+    if (inviteResult.success) {
       continue
     }
 
-    const dispatchResult = await dispatchInviteEmail(admin, normalizedEmail, '/onboarding')
-    if (!dispatchResult.success) {
-      await admin
-        .from('company_user_invites')
-        .update({ status: 'revoked', updated_at: new Date().toISOString() })
-        .eq('id', inviteRow.id)
-
-      console.error('Failed to send onboarding invite email:', dispatchResult.error)
+    if (
+      inviteResult.error === 'You cannot invite yourself' ||
+      inviteResult.error === 'An active invite already exists for this email.'
+    ) {
+      continue
     }
+
+    throw new Error(inviteResult.error ?? 'Failed to invite team member')
   }
 
   revalidatePath('/onboarding')
