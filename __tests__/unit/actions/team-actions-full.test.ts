@@ -20,6 +20,7 @@ vi.mock('@/lib/security/authorization', () => ({
   requireOwnerMutation: vi.fn(),
 }))
 vi.mock('@/lib/rate-limit', () => ({ checkServerActionRateLimit: vi.fn() }))
+vi.mock('@/lib/security/team-audit', () => ({ logTeamAudit: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
 import { createClient } from '@/lib/supabase/server'
@@ -30,6 +31,7 @@ import {
   requireOwnerMutation,
 } from '@/lib/security/authorization'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { logTeamAudit } from '@/lib/security/team-audit'
 import {
   listTeamMembersAndInvites,
   inviteTeamMember,
@@ -546,8 +548,8 @@ describe('inviteTeamMember', () => {
     const result = await inviteTeamMember('new@company.com', 'manager')
 
     expect(result.success).toBe(false)
-    expect(result.error).toContain('Failed to send invite email')
-    expect(result.error).toContain('SMTP timeout')
+    expect(result.error).toBe('Failed to send invite email. Please try again.')
+    expect(result.error).not.toContain('SMTP timeout')
     // Three from() calls: expire, insert, revoke
     expect(admin.from).toHaveBeenCalledTimes(3)
   })
@@ -935,8 +937,8 @@ describe('transferOwnership', () => {
     )
     const result = await transferOwnership('new-owner')
     expect(result.success).toBe(false)
-    expect(result.error).toContain('Failed to transfer ownership')
-    expect(result.error).toContain('Unique constraint violated')
+    expect(result.error).toBe('Failed to transfer ownership')
+    expect(result.error).not.toContain('Unique constraint violated')
   })
 
   it('returns success when RPC succeeds', async () => {
@@ -1035,5 +1037,162 @@ describe('revokeInvite', () => {
 
     const chain = (admin.from as ReturnType<typeof vi.fn>).mock.results[0].value
     expect(chain.eq).toHaveBeenCalledWith('status', 'pending')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Audit logging — privileged team mutations write audit_log entries
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('team management audit logging', () => {
+  beforeEach(() => {
+    vi.mocked(requireMutationPermission).mockResolvedValue(ACTOR_SUCCESS)
+    vi.mocked(requireOwnerMutation).mockResolvedValue(ACTOR_SUCCESS)
+  })
+
+  it('writes an audit_log entry on successful invite', async () => {
+    vi.mocked(createAdminClient).mockReturnValue(
+      makeAdmin(
+        [
+          { data: null, error: null },
+          { data: { id: 'inv-audit-1' }, error: null },
+        ],
+        { data: SEAT_OK, error: null }
+      ) as never
+    )
+    vi.mocked(dispatchInviteEmail).mockResolvedValue({ success: true, recoverableExistingUser: false })
+
+    await inviteTeamMember('audit@company.com', 'manager')
+
+    expect(logTeamAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'team.invite_created',
+        entityType: 'invite',
+        entityId: 'inv-audit-1',
+        actorUserId: 'owner-id',
+        companyId: 'company-1',
+      })
+    )
+  })
+
+  it('does NOT write an audit_log entry when invite email dispatch fails', async () => {
+    vi.mocked(createAdminClient).mockReturnValue(
+      makeAdmin(
+        [
+          { data: null, error: null },
+          { data: { id: 'inv-fail' }, error: null },
+          { data: null, error: null },
+        ],
+        { data: SEAT_OK, error: null }
+      ) as never
+    )
+    vi.mocked(dispatchInviteEmail).mockResolvedValue({
+      success: false,
+      recoverableExistingUser: false,
+      error: 'SMTP timeout',
+    })
+
+    await inviteTeamMember('audit@company.com', 'manager')
+
+    expect(logTeamAudit).not.toHaveBeenCalled()
+  })
+
+  it('writes an audit_log entry on role update', async () => {
+    vi.mocked(createAdminClient).mockReturnValue(
+      makeAdmin([
+        { data: { id: 'target', company_id: 'company-1', role: 'viewer' }, error: null },
+        { data: null, error: null },
+      ]) as never
+    )
+    await updateTeamMemberRole('target', 'manager')
+    expect(logTeamAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'team.member_role_updated',
+        entityType: 'member',
+        entityId: 'target',
+      })
+    )
+  })
+
+  it('writes an audit_log entry on member removal', async () => {
+    vi.mocked(createAdminClient).mockReturnValue(
+      makeAdmin([
+        { data: { id: 'target', company_id: 'company-1', role: 'manager', email: null }, error: null },
+        { data: null, error: null },
+      ]) as never
+    )
+    await removeTeamMember('target')
+    expect(logTeamAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'team.member_removed',
+        entityType: 'member',
+        entityId: 'target',
+      })
+    )
+  })
+
+  it('writes an audit_log entry on ownership transfer', async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      makeActorClient(
+        [{ data: { id: 'new-owner', company_id: 'company-1' }, error: null }],
+        { data: true, error: null }
+      ) as never
+    )
+    await transferOwnership('new-owner')
+    expect(logTeamAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'team.ownership_transferred',
+        entityType: 'company',
+      })
+    )
+  })
+
+  it('writes an audit_log entry on invite revoke', async () => {
+    vi.mocked(createAdminClient).mockReturnValue(
+      makeAdmin([{ data: null, error: null }]) as never
+    )
+    await revokeInvite('inv-revoked-1')
+    expect(logTeamAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'team.invite_revoked',
+        entityType: 'invite',
+        entityId: 'inv-revoked-1',
+      })
+    )
+  })
+
+  it('does NOT leak raw transferError.message to client', async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      makeActorClient(
+        [{ data: { id: 'new-owner', company_id: 'company-1' }, error: null }],
+        { data: null, error: { message: 'PG pool exhausted: details=secret' } }
+      ) as never
+    )
+    const result = await transferOwnership('new-owner')
+    expect(result.error).toBe('Failed to transfer ownership')
+    expect(result.error).not.toContain('PG pool exhausted')
+    expect(result.error).not.toContain('secret')
+  })
+
+  it('does NOT leak raw dispatchResult.error to client', async () => {
+    vi.mocked(createAdminClient).mockReturnValue(
+      makeAdmin(
+        [
+          { data: null, error: null },
+          { data: { id: 'inv-leak' }, error: null },
+          { data: null, error: null },
+        ],
+        { data: SEAT_OK, error: null }
+      ) as never
+    )
+    vi.mocked(dispatchInviteEmail).mockResolvedValue({
+      success: false,
+      recoverableExistingUser: false,
+      error: 'Resend internal token=abc123',
+    })
+    const result = await inviteTeamMember('leak@company.com', 'viewer')
+    expect(result.error).toBe('Failed to send invite email. Please try again.')
+    expect(result.error).not.toContain('token=')
+    expect(result.error).not.toContain('abc123')
   })
 })

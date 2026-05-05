@@ -17,6 +17,7 @@ import {
   requireOwnerMutation,
 } from '@/lib/security/authorization'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { logTeamAudit } from '@/lib/security/team-audit'
 
 type TeamRole = Exclude<UserRole, 'owner'>
 
@@ -350,8 +351,22 @@ export async function inviteTeamMember(email: string, role: TeamRole): Promise<A
       .update({ status: 'revoked', updated_at: new Date().toISOString() })
       .eq('id', inviteRow.id)
 
-    return { success: false, error: `Failed to send invite email: ${dispatchResult.error}` }
+    console.error('[inviteTeamMember] dispatch failed:', dispatchResult.error)
+    return { success: false, error: 'Failed to send invite email. Please try again.' }
   }
+
+  await logTeamAudit({
+    companyId: actor.companyId,
+    actorUserId: actor.userId,
+    action: 'team.invite_created',
+    entityType: 'invite',
+    entityId: inviteRow.id,
+    metadata: {
+      invited_email: normalizedEmail,
+      role,
+      recoverable_existing_user: dispatchResult.recoverableExistingUser,
+    },
+  })
 
   if (dispatchResult.recoverableExistingUser) {
     revalidatePath('/settings/team')
@@ -427,6 +442,18 @@ export async function updateTeamMemberRole(
     return { success: false, error: 'Failed to update role' }
   }
 
+  await logTeamAudit({
+    companyId: actor.companyId,
+    actorUserId: actor.userId,
+    action: 'team.member_role_updated',
+    entityType: 'member',
+    entityId: targetUserId,
+    metadata: {
+      previous_role: targetProfile.role,
+      new_role: role,
+    },
+  })
+
   revalidatePath('/settings/team')
   return { success: true }
 }
@@ -495,6 +522,17 @@ export async function removeTeamMember(targetUserId: string): Promise<ActionResu
       .eq('status', 'pending')
   }
 
+  await logTeamAudit({
+    companyId: actor.companyId,
+    actorUserId: actor.userId,
+    action: 'team.member_removed',
+    entityType: 'member',
+    entityId: targetUserId,
+    metadata: {
+      removed_role: targetProfile.role,
+    },
+  })
+
   revalidatePath('/settings/team')
   return { success: true }
 }
@@ -541,8 +579,21 @@ export async function transferOwnership(newOwnerUserId: string): Promise<ActionR
   })
 
   if (transferError) {
-    return { success: false, error: `Failed to transfer ownership: ${transferError.message}` }
+    console.error('[transferOwnership] RPC failed:', transferError)
+    return { success: false, error: 'Failed to transfer ownership' }
   }
+
+  await logTeamAudit({
+    companyId: actor.companyId,
+    actorUserId: actor.userId,
+    action: 'team.ownership_transferred',
+    entityType: 'company',
+    entityId: actor.companyId,
+    metadata: {
+      previous_owner_id: actor.userId,
+      new_owner_id: newOwnerUserId,
+    },
+  })
 
   revalidatePath('/settings/team')
   return { success: true }
@@ -585,6 +636,14 @@ export async function revokeInvite(inviteId: string): Promise<ActionResult> {
   if (revokeError) {
     return { success: false, error: 'Failed to revoke invite' }
   }
+
+  await logTeamAudit({
+    companyId: actor.companyId,
+    actorUserId: actor.userId,
+    action: 'team.invite_revoked',
+    entityType: 'invite',
+    entityId: inviteId,
+  })
 
   revalidatePath('/settings/team')
   return { success: true }
