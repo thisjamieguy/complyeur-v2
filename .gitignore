@@ -62,3 +62,15 @@ squirrel.toml
 
 # Lighthouse CI run output
 .lighthouseci/
+
+# Local audit / prompts
+audit/
+docs/security/
+*_prompt.md
+
+
+# Local audit / prompts
+audit/
+docs/security/
+*_prompt.md
+
