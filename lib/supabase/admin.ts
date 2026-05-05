@@ -69,6 +69,7 @@ export interface AdminDatabase {
           event_type: string
           payload: Record<string, unknown>
           processing_status: 'processing' | 'processed' | 'failed'
+          processing_started_at: string | null
           last_error: string | null
           received_at: string
           processed_at: string | null

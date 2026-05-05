@@ -16,6 +16,13 @@ const HANDLED_EVENT_TYPES = new Set<string>([
 ])
 
 type WebhookLogStatus = 'processing' | 'processed' | 'failed'
+const WEBHOOK_PROCESSING_STALE_AFTER_MS = 5 * 60 * 1000
+
+interface ExistingWebhookEventRow {
+  id: string
+  processing_status: WebhookLogStatus
+  processing_started_at: string | null
+}
 
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature')
@@ -101,12 +108,14 @@ async function claimWebhookEvent(
   event: Stripe.Event
 ): Promise<'claimed' | 'duplicate'> {
   const now = new Date().toISOString()
+  const staleBefore = new Date(Date.now() - WEBHOOK_PROCESSING_STALE_AFTER_MS).toISOString()
 
   const { error: insertError } = await admin.from('stripe_webhook_events').insert({
     stripe_event_id: event.id,
     event_type: event.type,
     payload: event as unknown as Record<string, unknown>,
     processing_status: 'processing',
+    processing_started_at: now,
     received_at: now,
     created_at: now,
     updated_at: now,
@@ -122,9 +131,9 @@ async function claimWebhookEvent(
 
   const { data: existing, error: readError } = await admin
     .from('stripe_webhook_events')
-    .select('processing_status')
+    .select('id, processing_status, processing_started_at')
     .eq('stripe_event_id', event.id)
-    .maybeSingle()
+    .maybeSingle<ExistingWebhookEventRow>()
 
   if (readError) {
     throw readError
@@ -134,26 +143,14 @@ async function claimWebhookEvent(
     return 'duplicate'
   }
 
-  if (existing.processing_status === 'processing') {
+  if (
+    existing.processing_status === 'processing' &&
+    !isWebhookProcessingStale(existing.processing_started_at, staleBefore)
+  ) {
     return 'duplicate'
   }
 
-  const { error: resetError } = await admin
-    .from('stripe_webhook_events')
-    .update({
-      processing_status: 'processing',
-      last_error: null,
-      processed_at: null,
-      updated_at: now,
-    })
-    .eq('stripe_event_id', event.id)
-    .eq('processing_status', 'failed')
-
-  if (resetError) {
-    throw resetError
-  }
-
-  return 'claimed'
+  return reclaimWebhookEvent(admin, existing, now, staleBefore)
 }
 
 async function markWebhookEventStatus(
@@ -197,6 +194,72 @@ function isUniqueViolation(error: unknown): boolean {
 
   const code = (error as { code?: string }).code
   return code === '23505'
+}
+
+async function reclaimWebhookEvent(
+  admin: SupabaseClient,
+  existing: ExistingWebhookEventRow,
+  now: string,
+  staleBefore: string
+): Promise<'claimed' | 'duplicate'> {
+  const reclaimUpdates = {
+    processing_status: 'processing' as const,
+    processing_started_at: now,
+    last_error: null,
+    processed_at: null,
+    updated_at: now,
+  }
+
+  if (existing.processing_status === 'failed') {
+    const { data, error } = await admin
+      .from('stripe_webhook_events')
+      .update(reclaimUpdates)
+      .eq('id', existing.id)
+      .eq('processing_status', 'failed')
+      .select('id')
+
+    if (error) {
+      throw error
+    }
+
+    return data.length > 0 ? 'claimed' : 'duplicate'
+  }
+
+  if (existing.processing_status === 'processing') {
+    const { data, error } = await admin
+      .from('stripe_webhook_events')
+      .update(reclaimUpdates)
+      .eq('id', existing.id)
+      .eq('processing_status', 'processing')
+      .lt('processing_started_at', staleBefore)
+      .select('id')
+
+    if (error) {
+      throw error
+    }
+
+    return data.length > 0 ? 'claimed' : 'duplicate'
+  }
+
+  return 'duplicate'
+}
+
+function isWebhookProcessingStale(
+  processingStartedAt: string | null,
+  staleBefore: string
+): boolean {
+  if (!processingStartedAt) {
+    return true
+  }
+
+  const processingStartedAtMs = Date.parse(processingStartedAt)
+  const staleBeforeMs = Date.parse(staleBefore)
+
+  if (Number.isNaN(processingStartedAtMs) || Number.isNaN(staleBeforeMs)) {
+    return true
+  }
+
+  return processingStartedAtMs < staleBeforeMs
 }
 
 async function handleCheckoutCompleted(
