@@ -23,6 +23,10 @@ const protectedRoutePrefixes = [
   '/mfa',
 ]
 
+function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies.getAll().some(({ name }) => /^sb-.*-auth-token(?:\.\d+)?$/.test(name))
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const cspHeader = buildContentSecurityPolicy()
@@ -155,8 +159,14 @@ export async function proxy(request: NextRequest) {
   }
 
   // Public marketing routes do not require per-request Supabase auth hydration.
-  // Skipping this avoids an external call on every anonymous landing-page request.
+  // Anonymous traffic skips auth hydration, but authenticated requests still need
+  // server-side session timeout enforcement and activity tracking.
   if (isPublicMarketingRoute) {
+    if (hasSupabaseAuthCookie(request)) {
+      const { supabaseResponse } = await updateSession(request, requestHeaders)
+      return withSecurityHeaders(supabaseResponse)
+    }
+
     return withSecurityHeaders(NextResponse.next())
   }
 

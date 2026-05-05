@@ -13,6 +13,9 @@ type AuthProfile = {
   company_id: string | null
   role: string | null
   is_superadmin: boolean | null
+  status?: string | null
+  is_active?: boolean | null
+  disabled_at?: string | null
 }
 
 export type AuthGuardSuccess = {
@@ -47,7 +50,7 @@ async function getAuthProfile(
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('company_id, role, is_superadmin')
+    .select('*')
     .eq('id', user.id)
     .single()
 
@@ -55,6 +58,22 @@ async function getAuthProfile(
     user: { id: user.id, email: user.email },
     profile: profile ?? null,
   }
+}
+
+function isInactiveProfile(profile: AuthProfile): boolean {
+  if (Object.prototype.hasOwnProperty.call(profile, 'status') && profile.status !== 'active') {
+    return true
+  }
+
+  if (Object.prototype.hasOwnProperty.call(profile, 'is_active') && profile.is_active !== true) {
+    return true
+  }
+
+  if (Object.prototype.hasOwnProperty.call(profile, 'disabled_at') && profile.disabled_at !== null) {
+    return true
+  }
+
+  return false
 }
 
 async function enforceMfaIfRequired(
@@ -119,6 +138,10 @@ export async function requirePermission(
     return { allowed: false, status: 401, error: 'Unauthorized' }
   }
 
+  if (isInactiveProfile(profile)) {
+    return { allowed: false, status: 403, error: 'User account is inactive' }
+  }
+
   if (!hasPermission(profile.role, permission)) {
     return { allowed: false, status: 403, error: 'Forbidden' }
   }
@@ -149,6 +172,10 @@ export async function requireAdminAccess(
     return { allowed: false, status: 401, error: 'Unauthorized' }
   }
 
+  if (isInactiveProfile(profile)) {
+    return { allowed: false, status: 403, error: 'User account is inactive' }
+  }
+
   if (!isOwnerOrAdmin(profile.role)) {
     return { allowed: false, status: 403, error: 'Forbidden' }
   }
@@ -169,6 +196,10 @@ export async function requireMutationPermission(
   const { user, profile } = await getAuthProfile(supabase)
   if (!user || !profile?.company_id) {
     return { allowed: false, status: 401, error: 'Unauthorized' }
+  }
+
+  if (isInactiveProfile(profile)) {
+    return { allowed: false, status: 403, error: 'User account is inactive' }
   }
 
   if (!hasPermission(profile.role, permission)) {
@@ -197,6 +228,10 @@ export async function requireOwnerOrAdminMutation(
     return { allowed: false, status: 401, error: 'Unauthorized' }
   }
 
+  if (isInactiveProfile(profile)) {
+    return { allowed: false, status: 403, error: 'User account is inactive' }
+  }
+
   if (!isOwnerOrAdmin(profile.role)) {
     return { allowed: false, status: 403, error: 'Forbidden' }
   }
@@ -221,6 +256,10 @@ export async function requireOwnerMutation(
   const { user, profile } = await getAuthProfile(supabase)
   if (!user || !profile?.company_id) {
     return { allowed: false, status: 401, error: 'Unauthorized' }
+  }
+
+  if (isInactiveProfile(profile)) {
+    return { allowed: false, status: 403, error: 'User account is inactive' }
   }
 
   if (profile.role !== ROLES.OWNER) {

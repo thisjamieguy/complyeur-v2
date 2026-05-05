@@ -1,12 +1,21 @@
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
-import { AuthError, DatabaseError } from '@/lib/errors'
+import { AppError, AuthError, DatabaseError } from '@/lib/errors'
 
 export type CompanyAccessContext = {
   userId: string
   companyId: string
   role: string | null
   isSuperadmin: boolean
+}
+
+type CompanyAccessProfile = {
+  company_id: string | null
+  role: string | null
+  is_superadmin: boolean | null
+  status?: string | null
+  is_active?: boolean | null
+  disabled_at?: string | null
 }
 
 interface CompanyAccessOptions {
@@ -26,12 +35,22 @@ export async function requireCompanyAccess(
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('company_id, role, is_superadmin')
+    .select('*')
     .eq('id', user.id)
     .single()
 
   if (profileError || !profile) {
     throw new DatabaseError('User profile not found')
+  }
+
+  const accessProfile = profile as CompanyAccessProfile
+
+  if (
+    (Object.prototype.hasOwnProperty.call(accessProfile, 'status') && accessProfile.status !== 'active') ||
+    (Object.prototype.hasOwnProperty.call(accessProfile, 'is_active') && accessProfile.is_active !== true) ||
+    (Object.prototype.hasOwnProperty.call(accessProfile, 'disabled_at') && accessProfile.disabled_at !== null)
+  ) {
+    throw new AppError('User account is inactive', 'AUTH_ERROR', 403)
   }
 
   const isSuperadmin = profile.is_superadmin === true

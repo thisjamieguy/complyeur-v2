@@ -2,7 +2,11 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { env } from '@/lib/env'
 import { SUPABASE_COOKIE_OPTIONS } from '@/lib/supabase/cookie-options'
+import { DEFAULT_SETTINGS } from '@/lib/types/settings'
 import type { User } from '@supabase/supabase-js'
+
+const DEFAULT_SESSION_TIMEOUT_MINUTES = DEFAULT_SETTINGS.session_timeout_minutes
+const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password', '/check-email']
 
 function getSiteOwnerEmails(): string[] {
   const configured = process.env.SITE_OWNER_EMAILS
@@ -31,6 +35,72 @@ function inferCompanyNameFromEmail(email: string): string {
 type ProfileContext = {
   companyId: string
   onboardingCompleted: boolean
+}
+
+type UpdateSessionResult = {
+  supabaseResponse: NextResponse
+  user: User | null
+  needsOnboarding?: boolean
+  sessionExpired: boolean
+}
+
+function isAuthRoute(pathname: string): boolean {
+  return AUTH_ROUTES.includes(pathname) || pathname.startsWith('/auth/')
+}
+
+function copyCookies(source: NextResponse, target: NextResponse) {
+  source.cookies.getAll().forEach((cookie) => {
+    target.cookies.set(cookie)
+  })
+}
+
+function getEffectiveSessionTimeoutMinutes(timeoutMinutes: number | null | undefined): number {
+  if (
+    typeof timeoutMinutes === 'number' &&
+    Number.isFinite(timeoutMinutes) &&
+    timeoutMinutes >= 5 &&
+    timeoutMinutes <= 120
+  ) {
+    return timeoutMinutes
+  }
+
+  return DEFAULT_SESSION_TIMEOUT_MINUTES
+}
+
+async function invalidateSession(
+  supabase: ReturnType<typeof createServerClient>,
+  request: NextRequest,
+  supabaseResponse: NextResponse,
+  user: User,
+  logMessage: string,
+  logContext: Record<string, unknown>
+): Promise<UpdateSessionResult> {
+  console.warn(logMessage, logContext)
+
+  await supabase.auth.signOut()
+
+  const { pathname } = request.nextUrl
+  const isApiRoute = pathname.startsWith('/api/')
+
+  if (isApiRoute) {
+    const response = NextResponse.json({ error: 'Session expired' }, { status: 401 })
+    copyCookies(supabaseResponse, response)
+    return { supabaseResponse: response, user, needsOnboarding: false, sessionExpired: true }
+  }
+
+  if (isAuthRoute(pathname)) {
+    return { supabaseResponse, user: null, needsOnboarding: false, sessionExpired: true }
+  }
+
+  const response = NextResponse.redirect(new URL('/login', request.url))
+  copyCookies(supabaseResponse, response)
+
+  return {
+    supabaseResponse: response,
+    user,
+    needsOnboarding: pathname.startsWith('/onboarding'),
+    sessionExpired: true,
+  }
 }
 
 async function recoverProfileContextForAuthenticatedUser(
@@ -126,7 +196,7 @@ async function recoverProfileContextForAuthenticatedUser(
 export async function updateSession(
   request: NextRequest,
   requestHeaders: Headers = request.headers
-) {
+): Promise<UpdateSessionResult> {
   const nextRequestConfig = {
     headers: requestHeaders,
   }
@@ -173,26 +243,9 @@ export async function updateSession(
     return { supabaseResponse, user, sessionExpired: false }
   }
 
-  // Try to read company_id and onboarding status from user_metadata (set during
-  // auth callback / onboarding completion). This avoids a profiles DB query on
-  // every authenticated request — the data is already available from getUser().
-  const meta = user.user_metadata ?? {}
-  const metaCompanyId = meta.company_id as string | undefined
-  const metaOnboardingCompleted = meta.onboarding_completed as boolean | undefined
-
-  if (metaCompanyId) {
-    // Metadata is present — skip profiles query entirely
-    const isSiteOwner = getSiteOwnerEmails().includes(user.email?.toLowerCase() ?? '')
-    const needsOnboarding = !isSiteOwner && metaOnboardingCompleted !== true
-
-    return { supabaseResponse, user, needsOnboarding, sessionExpired: false }
-  }
-
-  // Fallback: metadata not yet set (existing users before this change).
-  // Query profiles and sync metadata for future requests.
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, company_id, created_at, onboarding_completed_at')
+    .select('id, company_id, created_at, onboarding_completed_at, last_activity_at')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -207,48 +260,133 @@ export async function updateSession(
   }
 
   if (profileError) {
-    console.warn(
+    return invalidateSession(
+      supabase,
+      request,
+      supabaseResponse,
+      user,
       '[Middleware] Signing out authenticated user due profile lookup error',
       {
         userId: user.id,
         profileError: profileError.message,
       }
     )
-
-    await supabase.auth.signOut()
-    return { supabaseResponse, user: null, needsOnboarding: false, sessionExpired: true }
   }
 
-  if (!profile?.company_id) {
+  let profileContext = profile
+    ? {
+        companyId: profile.company_id,
+        onboardingCompleted: !!profile.onboarding_completed_at,
+        lastActivityAt: profile.last_activity_at,
+      }
+    : null
+
+  if (!profileContext?.companyId) {
     const recoveredContext = await recoverProfileContextForAuthenticatedUser(supabase, user)
     if (recoveredContext?.companyId) {
-      // Best-effort metadata sync so future requests bypass profile query.
-      await supabase.auth.updateUser({
-        data: {
-          company_id: recoveredContext.companyId,
-          onboarding_completed: recoveredContext.onboardingCompleted,
-        },
-      }).catch(() => undefined)
-
-      const isSiteOwner = getSiteOwnerEmails().includes(user.email?.toLowerCase() ?? '')
-      const needsOnboarding = !isSiteOwner && !recoveredContext.onboardingCompleted
-      return { supabaseResponse, user, needsOnboarding, sessionExpired: false }
+      profileContext = {
+        companyId: recoveredContext.companyId,
+        onboardingCompleted: recoveredContext.onboardingCompleted,
+        lastActivityAt: profile?.last_activity_at ?? null,
+      }
+    } else {
+      return invalidateSession(
+        supabase,
+        request,
+        supabaseResponse,
+        user,
+        '[Middleware] Signing out authenticated user due missing profile context',
+        { userId: user.id }
+      )
     }
-
-    console.warn(
-      '[Middleware] Signing out authenticated user due missing profile context',
-      { userId: user.id }
-    )
-    await supabase.auth.signOut()
-    return { supabaseResponse, user: null, needsOnboarding: false, sessionExpired: true }
   }
 
-  // Backfill user_metadata so subsequent requests skip the profiles query.
-  // Fire-and-forget — don't block the response for this.
+  const { data: companySettings, error: companySettingsError } = await supabase
+    .from('company_settings')
+    .select('session_timeout_minutes')
+    .eq('company_id', profileContext.companyId)
+    .maybeSingle()
+
+  if (companySettingsError) {
+    return invalidateSession(
+      supabase,
+      request,
+      supabaseResponse,
+      user,
+      '[Middleware] Signing out authenticated user due company settings lookup error',
+      {
+        userId: user.id,
+        companyId: profileContext.companyId,
+        companySettingsError: companySettingsError.message,
+      }
+    )
+  }
+
+  const sessionTimeoutMinutes = getEffectiveSessionTimeoutMinutes(
+    companySettings?.session_timeout_minutes
+  )
+
+  if (profileContext.lastActivityAt) {
+    const lastActivityTime = Date.parse(profileContext.lastActivityAt)
+
+    if (Number.isNaN(lastActivityTime)) {
+      return invalidateSession(
+        supabase,
+        request,
+        supabaseResponse,
+        user,
+        '[Middleware] Signing out authenticated user due invalid last activity timestamp',
+        {
+          userId: user.id,
+          companyId: profileContext.companyId,
+          lastActivityAt: profileContext.lastActivityAt,
+        }
+      )
+    }
+
+    const sessionAgeMs = Date.now() - lastActivityTime
+    if (sessionAgeMs > sessionTimeoutMinutes * 60_000) {
+      return invalidateSession(
+        supabase,
+        request,
+        supabaseResponse,
+        user,
+        '[Middleware] Signing out authenticated user due inactivity timeout',
+        {
+          userId: user.id,
+          companyId: profileContext.companyId,
+          sessionTimeoutMinutes,
+          lastActivityAt: profileContext.lastActivityAt,
+        }
+      )
+    }
+  }
+
+  const { error: lastActivityUpdateError } = await supabase
+    .from('profiles')
+    .update({ last_activity_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (lastActivityUpdateError) {
+    return invalidateSession(
+      supabase,
+      request,
+      supabaseResponse,
+      user,
+      '[Middleware] Signing out authenticated user due last activity update error',
+      {
+        userId: user.id,
+        companyId: profileContext.companyId,
+        lastActivityUpdateError: lastActivityUpdateError.message,
+      }
+    )
+  }
+
+  // Keep user_metadata in sync for other server paths that consume it.
   supabase.auth.updateUser({
     data: {
-      company_id: profile.company_id,
-      onboarding_completed: !!profile.onboarding_completed_at,
+      company_id: profileContext.companyId,
+      onboarding_completed: profileContext.onboardingCompleted,
     },
   }).catch((err) => {
     console.warn('[Middleware] Failed to backfill user_metadata:', err instanceof Error ? err.message : 'Unknown error')
@@ -256,7 +394,7 @@ export async function updateSession(
 
   // Site owner always bypasses onboarding
   const isSiteOwner = getSiteOwnerEmails().includes(user.email?.toLowerCase() ?? '')
-  const needsOnboarding = !isSiteOwner && !profile.onboarding_completed_at
+  const needsOnboarding = !isSiteOwner && !profileContext.onboardingCompleted
 
   return { supabaseResponse, user, needsOnboarding, sessionExpired: false }
 }

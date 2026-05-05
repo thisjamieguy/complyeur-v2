@@ -66,4 +66,19 @@ describe('middleware public blog route coverage', () => {
     expect(checkRateLimitMock).not.toHaveBeenCalled()
     expect(updateSessionMock).not.toHaveBeenCalled()
   })
+
+  it('enforces session hydration for authenticated public blog requests', async () => {
+    const request = new NextRequest('http://localhost:3000/blog', {
+      headers: {
+        cookie: 'sb-test-auth-token=token',
+      },
+    })
+
+    const response = await middleware(request)
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('location')).toBeNull()
+    expect(checkRateLimitMock).not.toHaveBeenCalled()
+    expect(updateSessionMock).toHaveBeenCalledTimes(1)
+  })
 })
