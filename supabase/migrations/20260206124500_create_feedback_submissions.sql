@@ -18,6 +18,7 @@ CREATE INDEX IF NOT EXISTS feedback_submissions_user_created_idx
 
 ALTER TABLE public.feedback_submissions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can insert feedback in their company" ON public.feedback_submissions;
 CREATE POLICY "Users can insert feedback in their company"
   ON public.feedback_submissions
   FOR INSERT
@@ -26,6 +27,7 @@ CREATE POLICY "Users can insert feedback in their company"
     AND user_id = public.get_current_user_id()
   );
 
+DROP POLICY IF EXISTS "Owners/admins and superadmins can view feedback" ON public.feedback_submissions;
 CREATE POLICY "Owners/admins and superadmins can view feedback"
   ON public.feedback_submissions
   FOR SELECT

@@ -18,31 +18,75 @@ ALTER TABLE public.company_notes
   ALTER COLUMN admin_user_id SET NOT NULL;
 
 -- Add the composite uniqueness required for child-table tenant integrity.
-ALTER TABLE public.employees
-  ADD CONSTRAINT employees_id_company_id_unique UNIQUE (id, company_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.employees'::regclass
+      AND conname = 'employees_id_company_id_unique'
+  ) THEN
+    ALTER TABLE public.employees
+      ADD CONSTRAINT employees_id_company_id_unique UNIQUE (id, company_id);
+  END IF;
+END
+$$;
 
 -- Add composite FKs so trusted/service-role code cannot associate an employee
 -- from one company with a row owned by another company.
-ALTER TABLE public.trips
-  ADD CONSTRAINT trips_employee_company_fkey
-  FOREIGN KEY (employee_id, company_id)
-  REFERENCES public.employees (id, company_id)
-  ON DELETE CASCADE
-  NOT VALID;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.trips'::regclass
+      AND conname = 'trips_employee_company_fkey'
+  ) THEN
+    ALTER TABLE public.trips
+      ADD CONSTRAINT trips_employee_company_fkey
+      FOREIGN KEY (employee_id, company_id)
+      REFERENCES public.employees (id, company_id)
+      ON DELETE CASCADE
+      NOT VALID;
+  END IF;
+END
+$$;
 
-ALTER TABLE public.alerts
-  ADD CONSTRAINT alerts_employee_company_fkey
-  FOREIGN KEY (employee_id, company_id)
-  REFERENCES public.employees (id, company_id)
-  ON DELETE CASCADE
-  NOT VALID;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.alerts'::regclass
+      AND conname = 'alerts_employee_company_fkey'
+  ) THEN
+    ALTER TABLE public.alerts
+      ADD CONSTRAINT alerts_employee_company_fkey
+      FOREIGN KEY (employee_id, company_id)
+      REFERENCES public.employees (id, company_id)
+      ON DELETE CASCADE
+      NOT VALID;
+  END IF;
+END
+$$;
 
-ALTER TABLE public.employee_compliance_snapshots
-  ADD CONSTRAINT employee_compliance_snapshots_employee_company_fkey
-  FOREIGN KEY (employee_id, company_id)
-  REFERENCES public.employees (id, company_id)
-  ON DELETE CASCADE
-  NOT VALID;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.employee_compliance_snapshots'::regclass
+      AND conname = 'employee_compliance_snapshots_employee_company_fkey'
+  ) THEN
+    ALTER TABLE public.employee_compliance_snapshots
+      ADD CONSTRAINT employee_compliance_snapshots_employee_company_fkey
+      FOREIGN KEY (employee_id, company_id)
+      REFERENCES public.employees (id, company_id)
+      ON DELETE CASCADE
+      NOT VALID;
+  END IF;
+END
+$$;
 
 ALTER TABLE public.trips
   VALIDATE CONSTRAINT trips_employee_company_fkey;

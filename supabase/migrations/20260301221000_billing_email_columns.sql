@@ -7,7 +7,7 @@ ALTER TABLE company_entitlements
 -- reference_key allows one send per event instance:
 --   trial_expiring  → 'once'         (send once per company, ever)
 --   upcoming_renewal → '2026-04-01'  (the renewal date, allows re-sending each period)
-CREATE TABLE billing_email_log (
+CREATE TABLE IF NOT EXISTS public.billing_email_log (
   id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id    uuid        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   email_type    text        NOT NULL,
@@ -16,7 +16,8 @@ CREATE TABLE billing_email_log (
   CONSTRAINT billing_email_log_unique UNIQUE (company_id, email_type, reference_key)
 );
 
-ALTER TABLE billing_email_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.billing_email_log ENABLE ROW LEVEL SECURITY;
 -- No user-facing policies — service role only (cron jobs).
 
-CREATE INDEX billing_email_log_company_id_idx ON billing_email_log (company_id);
+CREATE INDEX IF NOT EXISTS billing_email_log_company_id_idx
+  ON public.billing_email_log (company_id);

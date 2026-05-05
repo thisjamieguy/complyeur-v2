@@ -27,6 +27,38 @@ describe('team management security guards', () => {
     vi.clearAllMocks()
   })
 
+  it('rejects team snapshot reads for users without users.view permission', async () => {
+    const { createClient } = await import('@/lib/supabase/server')
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+
+    const single = vi.fn().mockResolvedValue({
+      data: { company_id: 'company-1', role: 'viewer' },
+      error: null,
+    })
+    const eq = vi.fn().mockReturnValue({ single })
+    const select = vi.fn().mockReturnValue({ eq })
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'viewer-id', email: 'viewer@example.com' } },
+          error: null,
+        }),
+      },
+      from: vi.fn().mockReturnValue({ select }),
+      rpc: vi.fn(),
+    } as never)
+
+    const { listTeamMembersAndInvites } = await import('@/app/(dashboard)/settings/team/actions')
+    const result = await listTeamMembersAndInvites()
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Forbidden',
+    })
+    expect(createAdminClient).not.toHaveBeenCalled()
+  })
+
   it('rejects direct invite calls from users without team invite permission', async () => {
     const { createClient } = await import('@/lib/supabase/server')
     const { createAdminClient } = await import('@/lib/supabase/admin')

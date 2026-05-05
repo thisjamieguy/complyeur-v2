@@ -74,6 +74,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_company_user_invites_pending_unique
 
 ALTER TABLE public.company_user_invites ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Owner/Admin can view company invites" ON public.company_user_invites;
 CREATE POLICY "Owner/Admin can view company invites"
   ON public.company_user_invites
   FOR SELECT
@@ -82,6 +83,7 @@ CREATE POLICY "Owner/Admin can view company invites"
     AND public.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text])
   );
 
+DROP POLICY IF EXISTS "Owner/Admin can create company invites" ON public.company_user_invites;
 CREATE POLICY "Owner/Admin can create company invites"
   ON public.company_user_invites
   FOR INSERT
@@ -91,6 +93,7 @@ CREATE POLICY "Owner/Admin can create company invites"
     AND public.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text])
   );
 
+DROP POLICY IF EXISTS "Owner/Admin can update company invites" ON public.company_user_invites;
 CREATE POLICY "Owner/Admin can update company invites"
   ON public.company_user_invites
   FOR UPDATE
@@ -103,6 +106,7 @@ CREATE POLICY "Owner/Admin can update company invites"
     AND public.get_current_user_role() = ANY (ARRAY['owner'::text, 'admin'::text])
   );
 
+DROP POLICY IF EXISTS "Owner/Admin can delete company invites" ON public.company_user_invites;
 CREATE POLICY "Owner/Admin can delete company invites"
   ON public.company_user_invites
   FOR DELETE

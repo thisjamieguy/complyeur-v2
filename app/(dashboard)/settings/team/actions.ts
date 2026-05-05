@@ -8,6 +8,7 @@ import {
   hasPermission,
   PERMISSIONS,
   ROLES,
+  type Permission,
   type UserRole,
 } from '@/lib/permissions'
 import { dispatchInviteEmail, normalizeInviteEmail } from '@/lib/services/team-invites'
@@ -71,6 +72,7 @@ interface ActorContext {
   userEmail: string
   companyId: string
   role: string | null
+  supabase: Awaited<ReturnType<typeof createClient>>
 }
 
 function deriveFullName(
@@ -110,7 +112,7 @@ function parseSeatUsage(raw: unknown): SeatUsage {
   }
 }
 
-async function getActorContext(): Promise<ActionResult<ActorContext>> {
+async function getActorContext(requiredPermission: Permission): Promise<ActionResult<ActorContext>> {
   const supabase = await createClient()
 
   const {
@@ -132,7 +134,7 @@ async function getActorContext(): Promise<ActionResult<ActorContext>> {
     return { success: false, error: 'Profile not found' }
   }
 
-  if (!hasPermission(profile.role, PERMISSIONS.SETTINGS_VIEW)) {
+  if (!hasPermission(profile.role, requiredPermission)) {
     return { success: false, error: 'Forbidden' }
   }
 
@@ -143,6 +145,7 @@ async function getActorContext(): Promise<ActionResult<ActorContext>> {
       userEmail: normalizeInviteEmail(user.email ?? ''),
       companyId: profile.company_id,
       role: profile.role,
+      supabase,
     },
   }
 }
@@ -183,6 +186,7 @@ async function getPrivilegedActorContext(
       userEmail: normalizeInviteEmail(accessResult.user.email ?? ''),
       companyId: accessResult.companyId,
       role: accessResult.role,
+      supabase,
     },
   }
 }
@@ -201,14 +205,11 @@ async function expireOldInvites(companyId: string): Promise<void> {
     .lte('expires_at', nowIso)
 }
 
-async function getSeatUsage(companyId: string): Promise<SeatUsage> {
-  const adminResult = getAdminClientResult()
-  if (!adminResult.ok) {
-    return { active_users: 0, pending_invites: 0, limit: 0, available: 0 }
-  }
-  const admin = adminResult.client
-
-  const { data } = await admin.rpc('get_company_seat_usage', {
+async function getSeatUsage(
+  companyId: string,
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<SeatUsage> {
+  const { data } = await supabase.rpc('get_company_seat_usage', {
     p_company_id: companyId,
   })
 
@@ -216,7 +217,7 @@ async function getSeatUsage(companyId: string): Promise<SeatUsage> {
 }
 
 export async function listTeamMembersAndInvites(): Promise<ActionResult<TeamSnapshot>> {
-  const actorResult = await getActorContext()
+  const actorResult = await getActorContext(PERMISSIONS.USERS_VIEW)
   if (!actorResult.success || !actorResult.data) {
     return { success: false, error: actorResult.error }
   }
@@ -228,27 +229,21 @@ export async function listTeamMembersAndInvites(): Promise<ActionResult<TeamSnap
     return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
   }
 
-  const adminResult = getAdminClientResult()
-  if (!adminResult.ok) {
-    return { success: false, error: adminResult.error }
-  }
-  const admin = adminResult.client
-
   await expireOldInvites(actor.companyId)
 
   const [membersResult, invitesResult, seatUsage] = await Promise.all([
-    admin
+    actor.supabase
       .from('profiles')
       .select('id, email, first_name, last_name, role, created_at')
       .eq('company_id', actor.companyId)
       .order('created_at', { ascending: true }),
-    admin
+    actor.supabase
       .from('company_user_invites')
       .select('id, email, role, status, invited_by, expires_at, accepted_at, created_at')
       .eq('company_id', actor.companyId)
       .order('created_at', { ascending: false })
       .limit(50),
-    getSeatUsage(actor.companyId),
+    getSeatUsage(actor.companyId, actor.supabase),
   ])
 
   if (membersResult.error) {
@@ -318,7 +313,7 @@ export async function inviteTeamMember(email: string, role: TeamRole): Promise<A
 
   await expireOldInvites(actor.companyId)
 
-  const seatUsage = await getSeatUsage(actor.companyId)
+  const seatUsage = await getSeatUsage(actor.companyId, actor.supabase)
   if ((seatUsage.active_users + seatUsage.pending_invites) >= seatUsage.limit) {
     return {
       success: false,
@@ -529,13 +524,7 @@ export async function transferOwnership(newOwnerUserId: string): Promise<ActionR
     return { success: false, error: 'You already own this company' }
   }
 
-  const adminResult = getAdminClientResult()
-  if (!adminResult.ok) {
-    return { success: false, error: adminResult.error }
-  }
-  const admin = adminResult.client
-
-  const { data: targetProfile, error: targetError } = await admin
+  const { data: targetProfile, error: targetError } = await actor.supabase
     .from('profiles')
     .select('id, company_id')
     .eq('id', newOwnerUserId)
@@ -545,7 +534,7 @@ export async function transferOwnership(newOwnerUserId: string): Promise<ActionR
     return { success: false, error: 'Target user not found in your company' }
   }
 
-  const { error: transferError } = await admin.rpc('transfer_company_ownership', {
+  const { error: transferError } = await actor.supabase.rpc('transfer_company_ownership', {
     p_company_id: actor.companyId,
     p_current_owner_id: actor.userId,
     p_new_owner_id: newOwnerUserId,

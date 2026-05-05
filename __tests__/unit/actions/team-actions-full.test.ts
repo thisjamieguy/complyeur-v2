@@ -86,12 +86,35 @@ function makeSupabaseClient(
   profileResult: { data: { company_id: string; role: string } | null; error: unknown } = {
     data: { company_id: 'company-1', role: 'owner' },
     error: null,
-  }
+  },
+  options: {
+    fromSeq?: Array<{ data?: unknown; error?: unknown }>
+    rpcResult?: { data?: unknown; error?: unknown }
+  } = {}
 ) {
-  const profileChain = makeChain(profileResult)
+  let i = 0
   return {
     auth: { getUser: vi.fn().mockResolvedValue(userResult) },
-    from: vi.fn().mockReturnValue(profileChain),
+    from: vi.fn().mockImplementation(() => {
+      if (i === 0) {
+        i += 1
+        return makeChain(profileResult)
+      }
+      return makeChain(options.fromSeq?.[i++ - 1] ?? { data: null, error: null })
+    }),
+    rpc: vi.fn().mockResolvedValue(options.rpcResult ?? { data: null, error: null }),
+  }
+}
+
+function makeActorClient(
+  fromSeq: Array<{ data?: unknown; error?: unknown }> = [],
+  rpcResult: { data?: unknown; error?: unknown } = { data: null, error: null }
+) {
+  let i = 0
+  return {
+    auth: { getUser: vi.fn() },
+    from: vi.fn().mockImplementation(() => makeChain(fromSeq[i++] ?? { data: null, error: null })),
+    rpc: vi.fn().mockResolvedValue(rpcResult),
   }
 }
 
@@ -112,7 +135,9 @@ const SEAT_FULL = { active_users: 5, pending_invites: 0, limit: 5, available: 0 
 beforeEach(() => {
   vi.clearAllMocks()
   // createClient must always return something so getPrivilegedActorContext doesn't throw.
-  vi.mocked(createClient).mockResolvedValue({} as never)
+  vi.mocked(createClient).mockResolvedValue(
+    makeActorClient([], { data: SEAT_OK, error: null }) as never
+  )
   vi.mocked(checkServerActionRateLimit).mockResolvedValue({ allowed: true })
 })
 
@@ -157,51 +182,46 @@ describe('listTeamMembersAndInvites', () => {
   it('returns error when rate limit is exceeded', async () => {
     vi.mocked(createClient).mockResolvedValue(makeSupabaseClient() as never)
     vi.mocked(checkServerActionRateLimit).mockResolvedValue({ allowed: false, error: 'Too many requests' })
-    vi.mocked(createAdminClient).mockReturnValue(makeAdmin() as never)
     const result = await listTeamMembersAndInvites()
     expect(result.success).toBe(false)
     expect(result.error).toBe('Too many requests')
   })
 
-  it('returns error when admin client cannot be created', async () => {
-    vi.mocked(createClient).mockResolvedValue(makeSupabaseClient() as never)
-    vi.mocked(createAdminClient).mockImplementation(() => {
-      throw new Error('Service key not configured')
-    })
-    const result = await listTeamMembersAndInvites()
-    expect(result.success).toBe(false)
-    expect(result.error).toBe('Service key not configured')
-  })
-
   it('returns error when members DB query fails', async () => {
-    vi.mocked(createClient).mockResolvedValue(makeSupabaseClient() as never)
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin(
-        [
-          { data: null, error: null },                        // expire invites
-          { data: null, error: { message: 'DB error' } },    // members
-          { data: [], error: null },                          // invites
-        ],
-        { data: SEAT_OK, error: null }
+    vi.mocked(createClient).mockResolvedValue(
+      makeSupabaseClient(
+        undefined,
+        undefined,
+        {
+          fromSeq: [
+            { data: null, error: { message: 'DB error' } },
+            { data: [], error: null },
+          ],
+          rpcResult: { data: SEAT_OK, error: null },
+        }
       ) as never
     )
+    vi.mocked(createAdminClient).mockReturnValue(makeAdmin([{ data: null, error: null }]) as never)
     const result = await listTeamMembersAndInvites()
     expect(result.success).toBe(false)
     expect(result.error).toBe('Failed to load team members')
   })
 
   it('returns error when invites DB query fails', async () => {
-    vi.mocked(createClient).mockResolvedValue(makeSupabaseClient() as never)
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin(
-        [
-          { data: null, error: null },
-          { data: [], error: null },
-          { data: null, error: { message: 'DB error' } },
-        ],
-        { data: SEAT_OK, error: null }
+    vi.mocked(createClient).mockResolvedValue(
+      makeSupabaseClient(
+        undefined,
+        undefined,
+        {
+          fromSeq: [
+            { data: [], error: null },
+            { data: null, error: { message: 'DB error' } },
+          ],
+          rpcResult: { data: SEAT_OK, error: null },
+        }
       ) as never
     )
+    vi.mocked(createAdminClient).mockReturnValue(makeAdmin([{ data: null, error: null }]) as never)
     const result = await listTeamMembersAndInvites()
     expect(result.success).toBe(false)
     expect(result.error).toBe('Failed to load team invites')
@@ -227,16 +247,20 @@ describe('listTeamMembersAndInvites', () => {
       accepted_at: null,
       created_at: '2025-12-01',
     }
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin(
-        [
-          { data: null, error: null },         // expire
-          { data: [member], error: null },     // members
-          { data: [invite], error: null },     // invites
-        ],
-        { data: SEAT_OK, error: null }
+    vi.mocked(createClient).mockResolvedValue(
+      makeSupabaseClient(
+        undefined,
+        undefined,
+        {
+          fromSeq: [
+            { data: [member], error: null },
+            { data: [invite], error: null },
+          ],
+          rpcResult: { data: SEAT_OK, error: null },
+        }
       ) as never
     )
+    vi.mocked(createAdminClient).mockReturnValue(makeAdmin([{ data: null, error: null }]) as never)
 
     const result = await listTeamMembersAndInvites()
 
@@ -252,19 +276,26 @@ describe('listTeamMembersAndInvites', () => {
   })
 
   it('derives full_name correctly for various name combinations', async () => {
-    vi.mocked(createClient).mockResolvedValue(makeSupabaseClient() as never)
     const members = [
       { id: 'u1', email: 'a@a.com', first_name: 'Alice', last_name: 'Bob', role: 'admin', created_at: '2025-01-01' },
       { id: 'u2', email: 'b@b.com', first_name: 'Charlie', last_name: null, role: 'manager', created_at: '2025-01-02' },
       { id: 'u3', email: 'c@c.com', first_name: null, last_name: null, role: 'viewer', created_at: '2025-01-03' },
       { id: 'u4', email: 'd@d.com', first_name: '  ', last_name: '  ', role: 'viewer', created_at: '2025-01-04' },
     ]
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin(
-        [{ data: null, error: null }, { data: members, error: null }, { data: [], error: null }],
-        { data: SEAT_OK, error: null }
+    vi.mocked(createClient).mockResolvedValue(
+      makeSupabaseClient(
+        undefined,
+        undefined,
+        {
+          fromSeq: [
+            { data: members, error: null },
+            { data: [], error: null },
+          ],
+          rpcResult: { data: SEAT_OK, error: null },
+        }
       ) as never
     )
+    vi.mocked(createAdminClient).mockReturnValue(makeAdmin([{ data: null, error: null }]) as never)
 
     const result = await listTeamMembersAndInvites()
 
@@ -275,34 +306,34 @@ describe('listTeamMembersAndInvites', () => {
     expect(result.data?.members[3].full_name).toBeNull()
   })
 
-  it('sets canManageUsers=false and isOwner=false for viewer role', async () => {
+  it('rejects viewers before any privileged team snapshot reads run', async () => {
     vi.mocked(createClient).mockResolvedValue(
       makeSupabaseClient(
         { data: { user: { id: 'viewer-id', email: 'viewer@company.com' } }, error: null },
         { data: { company_id: 'company-1', role: 'viewer' }, error: null }
       ) as never
     )
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin(
-        [{ data: null, error: null }, { data: [], error: null }, { data: [], error: null }],
-        { data: { active_users: 1, pending_invites: 0, limit: 5, available: 4 }, error: null }
-      ) as never
-    )
     const result = await listTeamMembersAndInvites()
-    expect(result.success).toBe(true)
-    expect(result.data?.canManageUsers).toBe(false)
-    expect(result.data?.isOwner).toBe(false)
+    expect(result).toEqual({ success: false, error: 'Forbidden' })
+    expect(createAdminClient).not.toHaveBeenCalled()
   })
 
   it('reflects accurate seat usage including pending invites', async () => {
-    vi.mocked(createClient).mockResolvedValue(makeSupabaseClient() as never)
-    const seatUsage = { active_users: 3, pending_invites: 1, limit: 5, available: 1 }
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin(
-        [{ data: null, error: null }, { data: [], error: null }, { data: [], error: null }],
-        { data: seatUsage, error: null }
+    vi.mocked(createClient).mockResolvedValue(
+      makeSupabaseClient(
+        undefined,
+        undefined,
+        {
+          fromSeq: [
+            { data: [], error: null },
+            { data: [], error: null },
+          ],
+          rpcResult: { data: { active_users: 3, pending_invites: 1, limit: 5, available: 1 }, error: null },
+        }
       ) as never
     )
+    const seatUsage = { active_users: 3, pending_invites: 1, limit: 5, available: 1 }
+    vi.mocked(createAdminClient).mockReturnValue(makeAdmin([{ data: null, error: null }]) as never)
     const result = await listTeamMembersAndInvites()
     expect(result.data?.seatUsage).toEqual(seatUsage)
   })
@@ -416,6 +447,9 @@ describe('inviteTeamMember', () => {
   // — Seat limit enforcement —
 
   it('rejects when all seats are filled by active users', async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      makeActorClient([], { data: SEAT_FULL, error: null }) as never
+    )
     vi.mocked(createAdminClient).mockReturnValue(
       makeAdmin(
         [{ data: null, error: null }], // expire invites
@@ -429,6 +463,12 @@ describe('inviteTeamMember', () => {
   })
 
   it('rejects when active + pending invites meet the seat limit', async () => {
+    vi.mocked(createClient).mockResolvedValue(
+      makeActorClient(
+        [],
+        { data: { active_users: 3, pending_invites: 2, limit: 5, available: 0 }, error: null }
+      ) as never
+    )
     vi.mocked(createAdminClient).mockReturnValue(
       makeAdmin(
         [{ data: null, error: null }],
@@ -568,7 +608,9 @@ describe('inviteTeamMember', () => {
   it('accepts all valid team roles (admin, manager, viewer)', async () => {
     for (const role of ['admin', 'manager', 'viewer'] as const) {
       vi.clearAllMocks()
-      vi.mocked(createClient).mockResolvedValue({} as never)
+      vi.mocked(createClient).mockResolvedValue(
+        makeActorClient([], { data: SEAT_OK, error: null }) as never
+      )
       vi.mocked(requireMutationPermission).mockResolvedValue(ACTOR_SUCCESS)
       vi.mocked(checkServerActionRateLimit).mockResolvedValue({ allowed: true })
       const admin = makeAdmin(
@@ -679,7 +721,9 @@ describe('updateTeamMemberRole', () => {
   it('accepts all valid non-owner roles', async () => {
     for (const role of ['admin', 'manager', 'viewer'] as const) {
       vi.clearAllMocks()
-      vi.mocked(createClient).mockResolvedValue({} as never)
+      vi.mocked(createClient).mockResolvedValue(
+        makeActorClient([], { data: SEAT_OK, error: null }) as never
+      )
       vi.mocked(requireMutationPermission).mockResolvedValue(ACTOR_SUCCESS)
       vi.mocked(checkServerActionRateLimit).mockResolvedValue({ allowed: true })
       vi.mocked(createAdminClient).mockReturnValue(
@@ -867,24 +911,24 @@ describe('transferOwnership', () => {
   })
 
   it('returns error when target user is not found', async () => {
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin([{ data: null, error: { message: 'Not found' } }]) as never
+    vi.mocked(createClient).mockResolvedValue(
+      makeActorClient([{ data: null, error: { message: 'Not found' } }]) as never
     )
     const result = await transferOwnership('ghost-id')
     expect(result).toEqual({ success: false, error: 'Target user not found in your company' })
   })
 
   it('returns error when target user belongs to a different company', async () => {
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin([{ data: { id: 'other', company_id: 'rival-company' }, error: null }]) as never
+    vi.mocked(createClient).mockResolvedValue(
+      makeActorClient([{ data: { id: 'other', company_id: 'rival-company' }, error: null }]) as never
     )
     const result = await transferOwnership('other')
     expect(result).toEqual({ success: false, error: 'Target user not found in your company' })
   })
 
   it('returns error when the RPC call fails', async () => {
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin(
+    vi.mocked(createClient).mockResolvedValue(
+      makeActorClient(
         [{ data: { id: 'new-owner', company_id: 'company-1' }, error: null }],
         { data: null, error: { message: 'Unique constraint violated' } }
       ) as never
@@ -896,8 +940,8 @@ describe('transferOwnership', () => {
   })
 
   it('returns success when RPC succeeds', async () => {
-    vi.mocked(createAdminClient).mockReturnValue(
-      makeAdmin(
+    vi.mocked(createClient).mockResolvedValue(
+      makeActorClient(
         [{ data: { id: 'new-owner', company_id: 'company-1' }, error: null }],
         { data: true, error: null }
       ) as never
@@ -907,15 +951,15 @@ describe('transferOwnership', () => {
   })
 
   it('calls the RPC with correct company, current owner, and new owner IDs', async () => {
-    const admin = makeAdmin(
+    const supabase = makeActorClient(
       [{ data: { id: 'new-owner', company_id: 'company-1' }, error: null }],
       { data: true, error: null }
     )
-    vi.mocked(createAdminClient).mockReturnValue(admin as never)
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
 
     await transferOwnership('new-owner')
 
-    expect(admin.rpc).toHaveBeenCalledWith('transfer_company_ownership', {
+    expect(supabase.rpc).toHaveBeenCalledWith('transfer_company_ownership', {
       p_company_id: 'company-1',
       p_current_owner_id: 'owner-id',
       p_new_owner_id: 'new-owner',

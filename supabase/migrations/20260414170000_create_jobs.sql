@@ -26,17 +26,50 @@ COMMENT ON COLUMN public.jobs.country IS 'Default 2-letter ISO country code for 
 COMMENT ON COLUMN public.jobs.entry_date IS 'Default job entry date for linked employee trips';
 COMMENT ON COLUMN public.jobs.exit_date IS 'Default job exit date for linked employee trips';
 
-ALTER TABLE ONLY public.jobs
-  ADD CONSTRAINT jobs_pkey PRIMARY KEY (id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.jobs'::regclass
+      AND conname = 'jobs_pkey'
+  ) THEN
+    ALTER TABLE ONLY public.jobs
+      ADD CONSTRAINT jobs_pkey PRIMARY KEY (id);
+  END IF;
+END
+$$;
 
-ALTER TABLE ONLY public.jobs
-  ADD CONSTRAINT jobs_company_id_fkey
-  FOREIGN KEY (company_id)
-  REFERENCES public.companies(id)
-  ON DELETE CASCADE;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.jobs'::regclass
+      AND conname = 'jobs_company_id_fkey'
+  ) THEN
+    ALTER TABLE ONLY public.jobs
+      ADD CONSTRAINT jobs_company_id_fkey
+      FOREIGN KEY (company_id)
+      REFERENCES public.companies(id)
+      ON DELETE CASCADE;
+  END IF;
+END
+$$;
 
-ALTER TABLE ONLY public.jobs
-  ADD CONSTRAINT jobs_id_company_id_key UNIQUE (id, company_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.jobs'::regclass
+      AND conname = 'jobs_id_company_id_key'
+  ) THEN
+    ALTER TABLE ONLY public.jobs
+      ADD CONSTRAINT jobs_id_company_id_key UNIQUE (id, company_id);
+  END IF;
+END
+$$;
 
 CREATE INDEX IF NOT EXISTS idx_jobs_company_dates
   ON public.jobs (company_id, entry_date DESC, exit_date DESC);
@@ -89,14 +122,22 @@ USING (
 ALTER TABLE public.trips
   ADD COLUMN IF NOT EXISTS job_id uuid;
 
-ALTER TABLE ONLY public.trips
-  DROP CONSTRAINT IF EXISTS trips_job_id_fkey;
-
-ALTER TABLE ONLY public.trips
-  ADD CONSTRAINT trips_job_id_fkey
-  FOREIGN KEY (job_id, company_id)
-  REFERENCES public.jobs(id, company_id)
-  ON DELETE SET NULL (job_id);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'public.trips'::regclass
+      AND conname = 'trips_job_id_fkey'
+  ) THEN
+    ALTER TABLE ONLY public.trips
+      ADD CONSTRAINT trips_job_id_fkey
+      FOREIGN KEY (job_id, company_id)
+      REFERENCES public.jobs(id, company_id)
+      ON DELETE SET NULL (job_id);
+  END IF;
+END
+$$;
 
 CREATE INDEX IF NOT EXISTS idx_trips_job_id
   ON public.trips (job_id)

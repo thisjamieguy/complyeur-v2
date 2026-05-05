@@ -6,7 +6,17 @@ ALTER TABLE public.stripe_webhook_events ENABLE ROW LEVEL SECURITY;
 
 -- Activate the rls_auto_enable function so future tables get RLS automatically.
 -- The function already exists but was never connected to an event trigger.
-CREATE EVENT TRIGGER rls_auto_enable_trigger
-  ON ddl_command_end
-  WHEN TAG IN ('CREATE TABLE')
-  EXECUTE FUNCTION public.rls_auto_enable();
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_event_trigger
+    WHERE evtname = 'rls_auto_enable_trigger'
+  ) THEN
+    CREATE EVENT TRIGGER rls_auto_enable_trigger
+      ON ddl_command_end
+      WHEN TAG IN ('CREATE TABLE')
+      EXECUTE FUNCTION public.rls_auto_enable();
+  END IF;
+END
+$$;

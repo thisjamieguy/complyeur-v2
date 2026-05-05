@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 
 const DEFAULT_ALLOWED_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing'])
@@ -126,8 +125,7 @@ export async function enforceBillingEntitlements(
   const requiredAdditionalSeats = Math.max(0, options.requiredAdditionalSeats ?? 0)
 
   if (requiredAdditionalSeats > 0) {
-    const admin = createAdminClient()
-    const { data: rawSeatUsage, error: seatError } = await admin.rpc(
+    const { data: rawSeatUsage, error: seatError } = await supabase.rpc(
       'get_company_seat_usage',
       {
         p_company_id: companyId,

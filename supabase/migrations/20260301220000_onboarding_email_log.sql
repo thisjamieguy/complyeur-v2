@@ -6,7 +6,7 @@
 --   'day1_add_employee' — sent 24h after signup if no employees added
 --   'day3_add_trip'     — sent 72h after signup if employees added but no trips
 
-CREATE TABLE onboarding_email_log (
+CREATE TABLE IF NOT EXISTS public.onboarding_email_log (
   id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   company_id uuid        NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
   step       text        NOT NULL,
@@ -14,8 +14,9 @@ CREATE TABLE onboarding_email_log (
   CONSTRAINT onboarding_email_log_company_step_unique UNIQUE (company_id, step)
 );
 
-ALTER TABLE onboarding_email_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.onboarding_email_log ENABLE ROW LEVEL SECURITY;
 -- Intentionally no user-facing RLS policies.
 -- Table is only accessed via service role key in cron jobs.
 
-CREATE INDEX onboarding_email_log_company_id_idx ON onboarding_email_log (company_id);
+CREATE INDEX IF NOT EXISTS onboarding_email_log_company_id_idx
+  ON public.onboarding_email_log (company_id);

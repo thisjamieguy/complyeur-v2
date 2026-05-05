@@ -438,6 +438,60 @@ export type Database = {
         }
         Relationships: []
       }
+      company_user_invites: {
+        Row: {
+          accepted_at: string | null
+          company_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          company_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          company_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_user_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_user_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_entitlements: {
         Row: {
           can_api_access: boolean | null
@@ -1077,6 +1131,7 @@ export type Database = {
           company_id: string | null
           created_at: string | null
           dashboard_tour_completed_at: string | null
+          email: string | null
           first_name: string | null
           full_name: string | null
           id: string
@@ -1093,6 +1148,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           dashboard_tour_completed_at?: string | null
+          email?: string | null
           first_name?: string | null
           full_name?: string | null
           id: string
@@ -1109,6 +1165,7 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           dashboard_tour_completed_at?: string | null
+          email?: string | null
           first_name?: string | null
           full_name?: string | null
           id?: string

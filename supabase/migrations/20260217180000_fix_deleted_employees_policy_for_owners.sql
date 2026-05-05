@@ -7,6 +7,7 @@
 -- the same visibility since they have higher privileges.
 
 DROP POLICY IF EXISTS "Admins can view deleted employees in their company" ON public.employees;
+DROP POLICY IF EXISTS "Owners and admins can view deleted employees in their company" ON public.employees;
 
 CREATE POLICY "Owners and admins can view deleted employees in their company"
   ON public.employees
