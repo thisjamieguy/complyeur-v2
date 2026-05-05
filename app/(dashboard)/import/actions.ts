@@ -1,9 +1,9 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import type { Json } from '@/types/database';
+import { checkEntitlement } from '@/lib/billing/entitlements'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 import { requireCompanyAccess, requireCompanyAccessCached } from '@/lib/security/tenant-access'
@@ -25,6 +25,9 @@ import {
   DuplicateOptions,
   DEFAULT_DUPLICATE_OPTIONS,
 } from '@/types/import';
+
+const BULK_IMPORT_NOT_ALLOWED_MESSAGE =
+  'Bulk import is not available on your current plan. Please upgrade to access this feature.'
 
 // ============================================================
 // TYPE HELPERS
@@ -111,25 +114,6 @@ function validateFile(file: File): { valid: boolean; error?: string } {
 }
 
 // ============================================================
-// CHECK ENTITLEMENTS
-// ============================================================
-
-async function checkBulkImportEntitlement(
-  companyId: string,
-  useAdminClient: boolean
-): Promise<boolean> {
-  const supabase = useAdminClient ? createAdminClient() : await createClient();
-
-  const { data: entitlements } = await supabase
-    .from('company_entitlements')
-    .select('can_bulk_import')
-    .eq('company_id', companyId)
-    .single();
-
-  return entitlements?.can_bulk_import ?? false;
-}
-
-// ============================================================
 // CREATE IMPORT SESSION
 // ============================================================
 
@@ -162,11 +146,11 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
 
     // Check entitlements - users must have bulk import enabled on their plan
     if (!isDev) {
-      const canBulkImport = await checkBulkImportEntitlement(ctx.companyId, false)
+      const canBulkImport = await checkEntitlement('can_bulk_import')
       if (!canBulkImport) {
         return {
           success: false,
-          error: 'Bulk import is not available on your current plan. Please upgrade to access this feature.',
+          error: BULK_IMPORT_NOT_ALLOWED_MESSAGE,
         }
       }
     }
@@ -585,6 +569,13 @@ export async function executeImport(
 
     await requireCompanyAccess(supabase, session.company_id)
 
+    if (process.env.NODE_ENV === 'production') {
+      const canBulkImport = await checkEntitlement('can_bulk_import')
+      if (!canBulkImport) {
+        throw new Error(BULK_IMPORT_NOT_ALLOWED_MESSAGE)
+      }
+    }
+
     if (!Array.isArray(session.parsed_data)) {
       return {
         success: false,
@@ -649,6 +640,11 @@ export async function executeImport(
 
     await updateSessionStatus(sessionId, 'failed');
 
+    const errorMessage =
+      error instanceof Error && error.message === BULK_IMPORT_NOT_ALLOWED_MESSAGE
+        ? error.message
+        : 'An unexpected error occurred during import'
+
     return {
       success: false,
       employees_created: 0,
@@ -660,7 +656,7 @@ export async function executeImport(
           row: 0,
           column: '',
           value: '',
-          message: 'An unexpected error occurred during import',
+          message: errorMessage,
           severity: 'error',
         },
       ],

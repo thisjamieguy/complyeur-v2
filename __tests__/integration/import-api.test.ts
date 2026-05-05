@@ -189,8 +189,20 @@ vi.mock('@/lib/security/mfa', () => ({
   enforceMfaForPrivilegedUser: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
+vi.mock('@/lib/billing/entitlements', () => ({
+  checkEntitlement: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock('@/lib/rate-limit', () => ({
   checkServerActionRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+}));
+
+vi.mock('@/lib/import/validator', () => ({
+  validateRows: vi.fn(),
+}));
+
+vi.mock('@/lib/import/inserter', () => ({
+  insertValidRows: vi.fn(),
 }));
 
 vi.mock('next/cache', () => ({
@@ -211,12 +223,29 @@ describe('Import API / Server Actions', () => {
     const { checkServerActionRateLimit } = await import('@/lib/rate-limit');
     vi.mocked(checkServerActionRateLimit).mockResolvedValue({ allowed: true });
 
+    const { checkEntitlement } = await import('@/lib/billing/entitlements');
+    vi.mocked(checkEntitlement).mockResolvedValue(true);
+
     // Reset tenant-access mock to succeed by default
     const { requireCompanyAccessCached } = await import('@/lib/security/tenant-access');
     vi.mocked(requireCompanyAccessCached).mockResolvedValue({
       userId: 'test-user-id',
       companyId: 'company-123',
       role: 'user',
+    });
+
+    const { validateRows } = await import('@/lib/import/validator');
+    vi.mocked(validateRows).mockResolvedValue([]);
+
+    const { insertValidRows } = await import('@/lib/import/inserter');
+    vi.mocked(insertValidRows).mockResolvedValue({
+      success: true,
+      employees_created: 0,
+      employees_updated: 0,
+      trips_created: 0,
+      trips_skipped: 0,
+      errors: [],
+      warnings: [],
     });
   });
 
@@ -700,6 +729,37 @@ describe('Import API / Server Actions', () => {
 
       expect(result.success).toBe(false);
       expect(result.errors.some(e => e.message.includes('missing') || e.message.includes('session'))).toBe(true);
+    });
+
+    it('re-checks bulk import entitlement at execution time and fails closed', async () => {
+      process.env.NODE_ENV = 'production';
+
+      const { createClient } = await import('@/lib/supabase/server');
+      const { checkEntitlement } = await import('@/lib/billing/entitlements');
+      const { validateRows } = await import('@/lib/import/validator');
+      const { insertValidRows } = await import('@/lib/import/inserter');
+
+      const mockClient = createServerActionMock({
+        session: {
+          company_id: 'company-123',
+          format: 'employees',
+          parsed_data: [{ email: 'person@example.com' }],
+        },
+      });
+
+      vi.mocked(createClient).mockResolvedValue(mockClient as never);
+      vi.mocked(checkEntitlement).mockResolvedValue(false);
+
+      const { executeImport } = await import('@/app/(dashboard)/import/actions');
+
+      const result = await executeImport('session-123');
+
+      expect(result.success).toBe(false);
+      expect(result.errors.some(
+        e => e.message === 'Bulk import is not available on your current plan. Please upgrade to access this feature.'
+      )).toBe(true);
+      expect(validateRows).not.toHaveBeenCalled();
+      expect(insertValidRows).not.toHaveBeenCalled();
     });
   });
 
