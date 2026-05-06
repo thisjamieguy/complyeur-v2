@@ -1,155 +1,158 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  CheckCircle2,
+  CircleAlert,
+  Clock3,
+  FileSpreadsheet,
+  ShieldCheck,
+} from 'lucide-react'
 import { BrowserFrame } from '@/components/marketing/browser-frame'
 import { DemoCalendar } from '@/components/marketing/demo-calendar'
-import { DemoEmployeeList } from '@/components/marketing/demo-employee-list'
+import { DemoEmployeeListStatic } from '@/components/marketing/demo-employee-list-static'
 import { SkipLink } from '@/components/ui/skip-link'
 import { marketingPrimaryCta } from '@/lib/marketing-primary-cta'
 import { LandingMobileMenu } from './landing-mobile-menu'
 
-// All data on this page is module-level constants — no dynamic dependencies.
 export const dynamic = 'force-static'
 
 export const metadata: Metadata = {
   title: 'ComplyEur — Schengen Compliance Software for UK Travel Teams',
   description:
-    'Manage international travel compliance without the spreadsheet drag. ComplyEur gives your team a clear view of Schengen allowance, trip history, and upcoming risk before travel is approved.',
+    'ComplyEur gives UK travel, HR, operations, and finance teams one current view of Schengen allowance before trips are approved.',
   robots: {
     index: true,
     follow: true,
   },
 }
 
-const proofPoints = [
+const roleSignals = [
+  'For HR and people teams checking employee travel',
+  'For operations teams coordinating repeat EU trips',
+  'For finance and mobility teams carrying approval risk',
+]
+
+const heroHighlights = [
   {
-    value: '90/180',
-    label: 'Rolling windows recalculate daily as travel records change.',
+    title: 'Live allowance',
+    body: 'See remaining Schengen days per employee before you approve the next trip.',
   },
   {
-    value: 'Live',
-    label: 'Each trip update refreshes remaining days instantly across the team.',
+    title: 'Shared record',
+    body: 'Keep trip history, warnings, and context in one place instead of scattered files.',
   },
   {
-    value: 'CSV + XLSX',
-    label: 'Import historical travel records in minutes for full context.',
-  },
-  {
-    value: 'GDPR',
-    label: 'Privacy-first handling designed for people and payroll data.',
+    title: 'Practical onboarding',
+    body: 'Import the spreadsheet history you already have and move forward from there.',
   },
 ]
 
-const problemReasons = [
-  'A single extra trip changes the rolling window for future approvals.',
-  'Entry and exit days both count, so short business travel stacks faster than expected.',
-  'Spreadsheet versions drift, which means teams approve travel from stale data.',
+const pressurePoints = [
+  {
+    icon: FileSpreadsheet,
+    title: 'The file is never fully current',
+    body: 'One itinerary change can make the answer you gave yesterday less reliable today.',
+  },
+  {
+    icon: Clock3,
+    title: 'Approvals arrive with time pressure',
+    body: 'You still need to give a confident answer when travel needs to be booked quickly.',
+  },
+  {
+    icon: CircleAlert,
+    title: 'The risk lands on the checker',
+    body: 'When someone asks if a trip is safe, it is your judgement and your record being relied on.',
+  },
 ]
 
-const ruleFacts = [
+const workflowCards = [
+  {
+    number: '01',
+    title: 'Add travellers',
+    body: 'Create the employee records you need so each person has one clear travel history and one current allowance view.',
+  },
+  {
+    number: '02',
+    title: 'Import or log trips',
+    body: 'Start with your existing data or enter trips manually. The rolling 90/180 picture updates as the record changes.',
+  },
+  {
+    number: '03',
+    title: 'Answer before approval',
+    body: 'Check remaining days, see the warning status, and make the call before travel gets locked in.',
+  },
+]
+
+const proofCards = [
+  {
+    title: 'You stop rebuilding the answer',
+    body: 'The next approval should not require a new round of manual checking across tabs and formulas.',
+  },
+  {
+    title: 'You see risk earlier',
+    body: 'Warnings show up before someone is already too close to the line for comfort.',
+  },
+  {
+    title: 'You can explain the decision',
+    body: 'The trip history that informed the answer is attached to the same employee record you reviewed.',
+  },
+  {
+    title: 'You can move off spreadsheets gradually',
+    body: 'Import historical travel first, then bring new trips into a cleaner process over time.',
+  },
+]
+
+const statCards = [
   {
     value: '90 / 180',
-    label: 'Rolling-day limit',
-    body: 'Most UK business travellers are limited to 90 days across any rolling 180-day period.',
+    label: 'Rolling rule',
+    body: 'Allowance changes daily as older travel drops out of the window.',
   },
   {
     value: '29',
-    label: 'Countries, one allowance',
-    body: 'Time in the Schengen Area accumulates across participating countries under one shared allowance.',
+    label: 'Countries',
+    body: 'Time across the Schengen Area still counts against one shared short-stay limit.',
   },
   {
-    value: 'Daily',
-    label: 'Allowance shifts',
-    body: 'Each day old trips drop out of the window, and each new booking redraws the safe margin.',
+    value: 'EES',
+    label: 'Digital records',
+    body: 'Border controls are becoming easier to measure against a live travel history.',
   },
 ]
 
-const evidenceStats = [
+const comparisonRows = [
   {
-    value: '16,000',
-    label: 'Travellers refused entry',
-    body: 'Recorded in the first four months of EES, showing that automated border controls are already changing outcomes.',
+    label: 'Before the answer',
+    oldWay: 'Open the latest file and hope the numbers are current',
+    newWay: 'Open one employee record with live remaining days already visible',
   },
   {
-    value: '4,000+',
-    label: 'Caught overstaying',
-    body: 'Detected against the 90/180-day Schengen limit once entry and exit records moved into a live digital system.',
+    label: 'When plans change',
+    oldWay: 'Recheck formulas and look for the most recent copy',
+    newWay: 'Review the same record after the trip update is saved',
   },
   {
-    value: '30M',
-    label: 'Border crossings tracked',
-    body: 'Biometric border records captured since October 2025, creating a persistent audit trail for each trip.',
-  },
-]
-
-const featureItems = [
-  {
-    eyebrow: 'Team-wide Schengen visibility',
-    title: 'One control layer for every traveller',
-    body: 'See who is compliant, who is nearing limits, and what to approve next from one record.',
+    label: 'When someone asks why',
+    oldWay: 'Explain which spreadsheet version you used',
+    newWay: 'Point back to the trip history and status on the employee record',
   },
   {
-    eyebrow: 'Formula-free day calculations',
-    title: 'Rolling 90/180 logic recalculated daily',
-    body: 'Add one trip and every allowance updates instantly across the full window.',
-  },
-  {
-    eyebrow: 'Compliance decisions earlier',
-    title: 'Warnings before plans become breaches',
-    body: 'Green, amber, and red status highlights risk early enough to replan with confidence.',
-  },
-  {
-    eyebrow: 'Single Schengen system of record',
-    title: 'Bring existing travel history in fast',
-    body: 'Import spreadsheets or log trips manually, then keep everything in one auditable timeline.',
+    label: 'When the team grows',
+    oldWay: 'More people touching more files',
+    newWay: 'One shared workflow for checking, tracking, and approving',
   },
 ]
 
-const howItWorksSteps = [
-  {
-    title: 'Add employees',
-    body: 'Create profiles for people who travel to Schengen countries so their day counts are always current.',
-  },
-  {
-    title: 'Import or log trips',
-    body: 'Upload existing files or enter trips manually. ComplyEur recalculates the full rolling window instantly across past and future plans.',
-  },
-  {
-    title: 'Act before risk',
-    body: 'Use live red, amber, and green status to approve plans early and reduce compliance fire drills.',
-  },
-]
-
-const resourceLinks = [
-  {
-    href: '/pricing',
-    eyebrow: 'Pricing',
-    title: 'See plans and tiers',
-    body: 'Compare plans and choose the best fit for your team.',
-  },
-  {
-    href: '/about',
-    eyebrow: 'About',
-    title: 'Why ComplyEur exists',
-    body: 'Learn the mission behind the product and the problem it is built to solve.',
-  },
-  {
-    href: '/faq',
-    eyebrow: 'FAQ',
-    title: 'Get quick answers',
-    body: 'Read the practical questions teams ask before adopting a new workflow.',
-  },
-]
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">
-      {children}
-    </p>
-  )
-}
-
-function ContentCard({ title, body }: { title: string; body: string }) {
+function ContentCard({
+  title,
+  body,
+}: {
+  title: string
+  body: string
+}) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
@@ -158,7 +161,7 @@ function ContentCard({ title, body }: { title: string; body: string }) {
   )
 }
 
-function MetricCard({
+function StatCard({
   value,
   label,
   body,
@@ -169,26 +172,8 @@ function MetricCard({
 }) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-3xl font-semibold text-slate-900">{value}</p>
+      <p className="landing-serif text-3xl text-slate-900">{value}</p>
       <p className="mt-3 text-sm font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
-    </article>
-  )
-}
-
-function FeatureCard({
-  eyebrow,
-  title,
-  body,
-}: {
-  eyebrow: string
-  title: string
-  body: string
-}) {
-  return (
-    <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <p className="text-sm font-semibold text-brand-700">{eyebrow}</p>
-      <h3 className="mt-3 text-xl font-semibold text-slate-900">{title}</h3>
       <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
     </article>
   )
@@ -196,20 +181,11 @@ function FeatureCard({
 
 export default function LandingPage() {
   return (
-    <div className="landing-shell landing-font relative min-h-screen overflow-x-hidden bg-[color:var(--landing-surface)] text-slate-900">
+    <div className="landing-font min-h-screen bg-slate-50 text-slate-900">
       <SkipLink />
 
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="landing-aurora-top absolute -top-32 left-[-7rem] h-[26rem] w-[26rem] rounded-full" />
-        <div className="landing-aurora-bottom absolute right-[-8rem] top-[18rem] h-[24rem] w-[24rem] rounded-full" />
-        <div className="landing-grid absolute inset-0" />
-        <div className="absolute left-0 top-28 h-56 w-56 rounded-full bg-brand-300/15 blur-3xl" />
-        <div className="absolute right-0 top-[34rem] h-64 w-64 rounded-full bg-brand-500/12 blur-3xl" />
-        <div className="absolute inset-x-0 top-0 h-px bg-slate-200/80" />
-      </div>
-
-      <header className="relative z-30 px-4 pt-5 sm:px-6 sm:pt-6">
-        <div className="mx-auto flex max-w-7xl items-center justify-between rounded-full border border-slate-200/90 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl sm:px-6">
+      <header className="sticky top-0 z-40 border-b border-slate-200 bg-slate-50/95 px-4 py-4 backdrop-blur sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-6">
           <Link href="/" className="shrink-0">
             <Image
               src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png"
@@ -222,17 +198,17 @@ export default function LandingPage() {
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
-            <Link href="#product" className="transition hover:text-brand-800">
+            <Link href="#workflow" className="transition hover:text-slate-900">
+              Workflow
+            </Link>
+            <Link href="#product" className="transition hover:text-slate-900">
               Product
             </Link>
-            <Link href="#why-switch" className="transition hover:text-brand-800">
-              Why switch
+            <Link href="#proof" className="transition hover:text-slate-900">
+              Why it works
             </Link>
-            <Link href="#how-it-works" className="transition hover:text-brand-800">
-              How it works
-            </Link>
-            <Link href="/landing/preview" className="transition hover:text-brand-800">
-              Interactive preview
+            <Link href="/pricing" className="transition hover:text-slate-900">
+              Pricing
             </Link>
           </nav>
 
@@ -242,7 +218,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href={marketingPrimaryCta.href}
-              className="hidden rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-800 sm:inline-flex"
+              className="hidden rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 sm:inline-flex"
             >
               {marketingPrimaryCta.label}
             </Link>
@@ -251,265 +227,271 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main id="main-content" className="relative z-10">
-        <section className="px-4 pb-16 pt-12 sm:px-6 sm:pt-16 lg:pb-24">
+      <main id="main-content">
+        <section className="px-4 pb-10 pt-10 sm:px-6 sm:pb-14 sm:pt-14">
           <div className="mx-auto max-w-7xl">
-            <div className="mx-auto max-w-3xl text-center">
-              <SectionLabel>Schengen compliance software for UK travel teams</SectionLabel>
-              <h1 className="mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                Manage international travel compliance without the spreadsheet drag.
-              </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-                ComplyEur gives your team a clear view of Schengen allowance, trip history, and upcoming risk before
-                travel is approved.
-              </p>
-              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
-                  href={marketingPrimaryCta.href}
-                  className="rounded-full bg-slate-900 px-8 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
-                >
-                  {marketingPrimaryCta.label}
-                </Link>
-                <Link
-                  href="/landing/preview"
-                  className="rounded-full border border-slate-300 bg-white/90 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-slate-900"
-                >
-                  Open interactive preview
-                </Link>
-              </div>
-              <p className="mt-4 text-sm text-slate-500">
-                Built for HR, operations, mobility, and finance teams handling regular EU travel.
-              </p>
-            </div>
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,33rem)_minmax(0,1fr)] lg:items-start">
+              <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
+                <h1 className="landing-serif text-5xl text-slate-900 sm:text-6xl">
+                  A calmer way to approve EU travel.
+                </h1>
+                <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+                  ComplyEur gives your team one current view of each employee&apos;s Schengen allowance, trip history,
+                  and travel risk before someone says yes to the next booking.
+                </p>
 
-            <div
-              id="product"
-              className="landing-panel relative mt-12 rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur sm:p-6"
-            >
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-                <div className="relative">
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href={marketingPrimaryCta.href}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    {marketingPrimaryCta.label}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href="/landing/preview"
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                  >
+                    Open interactive preview
+                  </Link>
+                </div>
+
+                <div className="mt-8 grid gap-3">
+                  {roleSignals.map((signal) => (
+                    <div key={signal} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" />
+                      <p className="text-sm leading-6 text-slate-600">{signal}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 rounded-xl border border-slate-200 bg-brand-50 p-5">
+                  <p className="text-sm font-semibold text-slate-900">What changes when you move off spreadsheets</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    You stop piecing together the answer from separate files and start reviewing one live record before
+                    travel gets approved.
+                  </p>
+                </div>
+              </div>
+
+              <div id="product" className="space-y-4">
+                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                  <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-4">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Current allowance overview</p>
+                      <p className="mt-1 text-sm text-slate-500">See trip history and remaining days before the next approval.</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                      Updated live
+                    </div>
+                  </div>
                   <BrowserFrame title="app.complyeur.com" showUrlBar>
-                    <DemoEmployeeList />
+                    <DemoEmployeeListStatic />
                   </BrowserFrame>
-
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:hidden">
-                    <div className="rounded-xl border border-slate-200 bg-brand-50/60 p-4">
-                      <p className="text-sm font-semibold text-slate-900">Rolling checks</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Each update redraws the latest allowance and risk state without manual formulas.
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 bg-brand-50/60 p-4">
-                      <p className="text-sm font-semibold text-slate-900">Faster imports</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Start with existing CSV or spreadsheet records instead of rebuilding history by hand.
-                      </p>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="hidden gap-4 lg:grid">
-                  <div className="rounded-xl border border-slate-200 bg-brand-50/60 p-5">
-                    <p className="text-sm font-semibold text-slate-900">Daily rolling logic</p>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">
-                      Trip edits update the allowance view instantly, so approvals are based on current data.
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-brand-200 bg-brand-50 p-5">
-                    <p className="text-sm font-semibold text-slate-900">Travel approval signal</p>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">
-                      Green, amber, and red status gives managers a quick operating view before someone travels.
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-slate-200 bg-brand-50/60 p-5">
-                    <p className="text-sm font-semibold text-slate-900">One record, not five files</p>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">
-                      Employee profiles, trip history, and timelines sit together instead of living in separate tabs.
-                    </p>
-                  </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  {heroHighlights.map((item) => (
+                    <ContentCard key={item.title} title={item.title} body={item.body} />
+                  ))}
                 </div>
               </div>
-            </div>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {proofPoints.map((point) => (
-                <div key={point.value} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <p className="text-2xl font-semibold text-slate-900">{point.value}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{point.label}</p>
-                </div>
-              ))}
             </div>
           </div>
         </section>
 
-        <section id="why-switch" className="border-y border-slate-200/80 bg-white/80 px-4 py-16 backdrop-blur-sm sm:px-6 lg:py-20">
-          <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(0,1.05fr)_24rem] lg:items-start">
+        <section className="border-y border-slate-200 bg-white px-4 py-14 sm:px-6 sm:py-16">
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] lg:items-start">
             <div>
-              <SectionLabel>Manual tolerance is lower</SectionLabel>
-              <h2 className="mt-4 max-w-3xl text-balance text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
-                A Schengen breach rarely starts at the border. It starts with stale data before a trip is approved.
+              <h2 className="landing-serif text-4xl text-slate-900 sm:text-5xl">
+                The rule is not the hard part. The operating rhythm is.
               </h2>
-              <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-                The rule is simple. The operating reality is not. One itinerary change can redraw remaining allowance,
-                shift approval decisions, and expose the team too late if records live in spreadsheets.
+              <p className="mt-6 text-lg leading-8 text-slate-600">
+                Short-stay compliance becomes difficult when travel plans move, several people touch the process, and
+                somebody still needs a dependable answer before a trip is booked.
               </p>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white/85 p-6 shadow-sm backdrop-blur-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">What usually breaks first</p>
-              <div className="mt-5 space-y-4">
-                {problemReasons.map((reason, index) => (
-                  <div key={reason} className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-800 text-sm font-semibold text-white">
-                      {index + 1}
+            <div className="grid gap-4 sm:grid-cols-3">
+              {pressurePoints.map((item) => {
+                const Icon = item.icon
+                return (
+                  <article key={item.title} className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-brand-700 shadow-sm">
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <p className="text-sm leading-6 text-slate-600">{reason}</p>
-                  </div>
+                    <h3 className="mt-5 text-lg font-semibold text-slate-900">{item.title}</h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{item.body}</p>
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section id="workflow" className="px-4 py-14 sm:px-6 sm:py-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
+              <div>
+                <h2 className="landing-serif text-4xl text-slate-900 sm:text-5xl">
+                  From scattered checks to one review flow.
+                </h2>
+                <p className="mt-6 text-base leading-7 text-slate-600">
+                  The goal is not to create more process. It is to make the approval decision easier to trust.
+                </p>
+              </div>
+
+              <div className="grid gap-4 lg:hidden">
+                {comparisonRows.map((row) => (
+                  <article key={row.label} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="text-sm font-semibold text-slate-900">{row.label}</p>
+                    <div className="mt-4 grid gap-3">
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Spreadsheet process</p>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">{row.oldWay}</p>
+                      </div>
+                      <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">ComplyEur process</p>
+                        <p className="mt-2 text-sm leading-6 text-slate-700">{row.newWay}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div className="hidden rounded-xl border border-slate-200 bg-slate-900 p-1 shadow-sm lg:block">
+                <div className="grid gap-px overflow-hidden rounded-xl bg-slate-700 lg:grid-cols-[14rem_minmax(0,1fr)_minmax(0,1fr)]">
+                  <div className="bg-slate-900 px-5 py-4 text-sm font-semibold text-white">Moment</div>
+                  <div className="bg-slate-900 px-5 py-4 text-sm font-semibold text-white">Spreadsheet process</div>
+                  <div className="bg-slate-900 px-5 py-4 text-sm font-semibold text-white">ComplyEur process</div>
+                  {comparisonRows.map((row) => (
+                    <ComparisonRow key={row.label} label={row.label} oldWay={row.oldWay} newWay={row.newWay} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                <BrowserFrame title="Timeline view">
+                  <DemoCalendar />
+                </BrowserFrame>
+              </div>
+
+              <div className="grid gap-4">
+                {workflowCards.map((card) => (
+                  <article key={card.number} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                    <p className="text-sm font-semibold text-brand-700">{card.number}</p>
+                    <h3 className="mt-3 text-lg font-semibold text-slate-900">{card.title}</h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-600">{card.body}</p>
+                  </article>
                 ))}
               </div>
             </div>
           </div>
-
-          <div className="mx-auto mt-10 grid max-w-7xl gap-4 lg:grid-cols-3">
-            {ruleFacts.map((fact) => (
-              <MetricCard key={fact.label} value={fact.value} label={fact.label} body={fact.body} />
-            ))}
-          </div>
-
-          <div className="mx-auto mt-10 max-w-7xl rounded-xl border border-slate-200 bg-white/85 p-6 shadow-sm backdrop-blur-sm sm:p-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-2xl">
-                <SectionLabel>Enforcement is real</SectionLabel>
-                <p className="mt-4 text-base leading-7 text-slate-600">
-                  EES has made short-stay compliance measurable at the border. Overstays and refused entries are no
-                  longer hidden inside passport stamps and manual reconciliations.
-                </p>
-              </div>
-              <p className="text-sm text-slate-500">
-                Source: European Commission and European Parliament testimony, February 2026
-              </p>
-            </div>
-
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              {evidenceStats.map((stat) => (
-                <MetricCard key={stat.label} value={stat.value} label={stat.label} body={stat.body} />
-              ))}
-            </div>
-
-            <p className="mt-8 border-t border-slate-200 pt-6 text-base leading-7 text-slate-600">
-              Since October 2025, the EU&apos;s Entry/Exit System has digitally recorded every entry and exit at
-              Schengen borders. Overstayers are flagged automatically, with far less room for manual interpretation.
-              If your employees travel to Europe for work, their compliance is no longer invisible. It is tracked.
-            </p>
-          </div>
         </section>
 
-        <section className="bg-[linear-gradient(180deg,rgba(240,244,248,0.65),rgba(255,255,255,0.75))] px-4 py-16 sm:px-6 lg:py-20">
+        <section id="proof" className="border-y border-slate-200 bg-white px-4 py-14 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-7xl">
             <div className="max-w-3xl">
-              <SectionLabel>Features</SectionLabel>
-              <h2 className="mt-4 text-balance text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
-                Compliance infrastructure for frequent EU travel.
+              <h2 className="landing-serif text-4xl text-slate-900 sm:text-5xl">
+                A more professional system for a messy operational job.
               </h2>
-              <p className="mt-4 text-lg leading-8 text-slate-600">
-                ComplyEur replaces spreadsheet tracking with a dedicated Schengen control layer for HR, operations, and
-                mobility teams.
+              <p className="mt-6 text-lg leading-8 text-slate-600">
+                This is not just another place to log trips. It is a clearer operating layer for the people responsible
+                for checking, tracking, and approving repeat EU travel.
               </p>
             </div>
 
             <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {featureItems.map((feature) => (
-                <FeatureCard
-                  key={feature.title}
-                  eyebrow={feature.eyebrow}
-                  title={feature.title}
-                  body={feature.body}
-                />
+              {proofCards.map((card) => (
+                <ContentCard key={card.title} title={card.title} body={card.body} />
               ))}
             </div>
           </div>
         </section>
 
-        <section id="how-it-works" className="bg-white/85 px-4 py-16 backdrop-blur-sm sm:px-6 lg:py-20">
-          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
-            <div>
-              <SectionLabel>How it works</SectionLabel>
-              <h2 className="mt-4 text-balance text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
-                Setup in one session. Start tracking the same day.
-              </h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">
-                No complex rollout. Add employees, import travel history, and run Schengen travel compliance from one
-                workspace.
-              </p>
+        <section className="px-4 py-14 sm:px-6 sm:py-16">
+          <div className="mx-auto max-w-7xl rounded-xl border border-slate-200 bg-white p-8 shadow-sm lg:p-10">
+            <div className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
+              <div>
+                <h2 className="landing-serif text-4xl text-slate-900 sm:text-5xl">
+                  Border compliance is becoming harder to bluff through.
+                </h2>
+                <p className="mt-6 text-base leading-7 text-slate-600">
+                  The more measurable border records become, the less comfortable it is to rely on rough checks,
+                  inconsistent files, and last-minute reassurance.
+                </p>
 
-              <div className="mt-8 grid gap-4">
-                {howItWorksSteps.map((step) => (
-                  <ContentCard key={step.title} title={step.title} body={step.body} />
+                <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-5">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">Built for a more accountable workflow</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        Give your team a clearer audit trail around the travel decisions they make.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                {statCards.map((card) => (
+                  <StatCard key={card.label} value={card.value} label={card.label} body={card.body} />
                 ))}
               </div>
             </div>
-
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <BrowserFrame title="Timeline view">
-                <DemoCalendar />
-              </BrowserFrame>
-            </div>
           </div>
         </section>
 
-        <section className="bg-[linear-gradient(180deg,rgba(255,255,255,0.75),rgba(240,244,248,0.7))] px-4 py-16 sm:px-6 lg:py-20">
-          <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl">
-              <SectionLabel>Explore more</SectionLabel>
-              <h2 className="mt-4 text-balance text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
-                Want to learn more before you sign up?
+        <section className="px-4 pb-16 sm:px-6 sm:pb-20">
+          <div className="mx-auto max-w-7xl rounded-xl border border-slate-200 bg-slate-900 p-8 text-white shadow-sm lg:p-12">
+            <div className="mx-auto max-w-3xl text-center">
+              <h2 className="landing-serif text-4xl text-white sm:text-5xl">
+                Give your travel approvals a better system behind them.
               </h2>
-              <p className="mt-4 text-lg leading-8 text-slate-600">
-                Compare plans, understand the company story, and read the practical questions teams usually ask first.
+              <p className="mt-6 text-lg leading-8 text-slate-300">
+                Create your account, import your travel history, and move future Schengen checks into a workflow your
+                team can trust.
               </p>
-            </div>
 
-            <div className="mt-10 grid gap-4 md:grid-cols-3">
-              {resourceLinks.map((resource) => (
-                <Link
-                  key={resource.href}
-                  href={resource.href}
-                  className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300"
-                >
-                  <p className="text-sm font-semibold text-brand-700">{resource.eyebrow}</p>
-                  <h3 className="mt-3 text-xl font-semibold text-slate-900">{resource.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">{resource.body}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="get-started" className="px-4 py-16 sm:px-6 lg:py-20">
-          <div className="mx-auto max-w-7xl rounded-xl border border-brand-200/80 bg-[linear-gradient(135deg,rgba(240,244,248,0.96),rgba(220,228,237,0.86))] p-8 shadow-sm lg:p-12">
-            <div className="mx-auto max-w-2xl text-center">
-              <SectionLabel>Get started</SectionLabel>
-              <h2 className="mt-4 text-balance text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
-                Start tracking Schengen compliance for your team today.
-              </h2>
-              <p className="mx-auto mt-4 max-w-xl text-lg leading-8 text-slate-600">
-                Create your account, choose a plan, and have your team set up in one session.
-              </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
                   href={marketingPrimaryCta.href}
-                  className="rounded-full bg-slate-900 px-8 py-3 text-sm font-semibold text-white transition hover:bg-brand-800"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
                 >
                   {marketingPrimaryCta.label}
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   href="/pricing"
-                  className="rounded-full border border-slate-300 bg-white/90 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-slate-900"
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-5 py-3 text-sm font-semibold text-white transition hover:border-slate-500 hover:bg-slate-800"
                 >
                   View pricing
                 </Link>
               </div>
-              <p className="mt-4 text-sm text-slate-500">No waitlist. Self-serve signup and billing are live.</p>
+
+              <div className="mt-8 grid gap-3 text-left sm:grid-cols-3">
+                <div className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <BriefcaseBusiness className="h-4 w-4 text-slate-300" />
+                    <p className="text-sm text-slate-300">Built for operational teams</p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className="h-4 w-4 text-slate-300" />
+                    <p className="text-sm text-slate-300">Privacy-aware travel records</p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <Clock3 className="h-4 w-4 text-slate-300" />
+                    <p className="text-sm text-slate-300">Designed for repeat approvals</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -544,5 +526,23 @@ export default function LandingPage() {
         </footer>
       </main>
     </div>
+  )
+}
+
+function ComparisonRow({
+  label,
+  oldWay,
+  newWay,
+}: {
+  label: string
+  oldWay: string
+  newWay: string
+}) {
+  return (
+    <>
+      <div className="bg-slate-50 px-5 py-4 text-sm font-semibold text-slate-900">{label}</div>
+      <div className="bg-white px-5 py-4 text-sm leading-6 text-slate-600">{oldWay}</div>
+      <div className="bg-brand-50 px-5 py-4 text-sm leading-6 text-slate-700">{newWay}</div>
+    </>
   )
 }
