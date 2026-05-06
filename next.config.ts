@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import { hasSentryBuildConfiguration } from "./lib/monitoring/sentry";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -128,6 +133,8 @@ const sentryWebpackPluginOptions = {
   },
 };
 
+const bundledConfig = withBundleAnalyzer(nextConfig);
+
 export default hasSentryBuildConfiguration
-  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
-  : nextConfig;
+  ? withSentryConfig(bundledConfig, sentryWebpackPluginOptions)
+  : bundledConfig;
