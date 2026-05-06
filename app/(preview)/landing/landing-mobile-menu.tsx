@@ -6,10 +6,10 @@ import { Menu, X } from 'lucide-react'
 import { marketingPrimaryCta } from '@/lib/marketing-primary-cta'
 
 const mobileNavLinks = [
+  { href: '#workflow', label: 'Workflow' },
   { href: '#product', label: 'Product' },
-  { href: '#why-switch', label: 'Why switch' },
-  { href: '#how-it-works', label: 'How it works' },
-  { href: '/landing/preview', label: 'Interactive preview' },
+  { href: '#proof', label: 'Why it works' },
+  { href: '/pricing', label: 'Pricing' },
 ]
 
 export function LandingMobileMenu() {
@@ -20,7 +20,7 @@ export function LandingMobileMenu() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+        className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:hidden"
         aria-label={isOpen ? 'Close menu' : 'Open menu'}
         aria-expanded={isOpen}
       >
@@ -34,7 +34,7 @@ export function LandingMobileMenu() {
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
-          <div className="fixed left-4 right-4 top-20 z-50 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 lg:hidden">
+          <div className="fixed left-4 right-4 top-20 z-50 rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:hidden">
             <nav className="flex flex-col gap-1" aria-label="Mobile navigation">
               {mobileNavLinks.map((link) => (
                 <Link
