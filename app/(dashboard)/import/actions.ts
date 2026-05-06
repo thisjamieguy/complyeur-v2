@@ -8,6 +8,7 @@ import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 import { requireCompanyAccess, requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { validateRows } from '@/lib/import/validator'
+import { parseFile, parseFileRaw } from '@/lib/import/parser'
 import {
   ImportFormat,
   ImportSession,
@@ -32,6 +33,15 @@ const BULK_IMPORT_NOT_ALLOWED_MESSAGE =
 // ============================================================
 // TYPE HELPERS
 // ============================================================
+
+export interface ParseImportFileResult {
+  success: boolean
+  rawData?: Record<string, unknown>[]
+  rawHeaders?: string[]
+  parsedData?: ParsedRow[]
+  error?: string
+  totalRows?: number
+}
 
 // Helper to convert database row to ImportSession type
 function dbRowToImportSession(row: {
@@ -196,6 +206,100 @@ export async function createImportSession(formData: FormData): Promise<UploadRes
   } catch (error) {
     console.error('Upload error:', error);
     return { success: false, error: 'An unexpected error occurred' };
+  }
+}
+
+// ============================================================
+// PARSE IMPORT FILE
+// ============================================================
+
+export async function parseImportFile(formData: FormData): Promise<ParseImportFileResult> {
+  try {
+    const isDev = process.env.NODE_ENV !== 'production'
+
+    let ctx
+    try {
+      ctx = await requireCompanyAccessCached()
+    } catch {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'parseImportFile')
+    if (!rateLimit.allowed) {
+      return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+    }
+
+    const supabase = await createClient()
+
+    const mfa = await enforceMfaForPrivilegedUser(supabase, ctx.userId, {
+      role: ctx.role,
+      isSuperadmin: ctx.isSuperadmin,
+    })
+    if (mfa?.ok === false) {
+      return { success: false, error: 'MFA required. Complete setup or verification to continue.' }
+    }
+
+    if (!isDev) {
+      const canBulkImport = await checkEntitlement('can_bulk_import')
+      if (!canBulkImport) {
+        return {
+          success: false,
+          error: BULK_IMPORT_NOT_ALLOWED_MESSAGE,
+        }
+      }
+    }
+
+    const file = formData.get('file') as File | null
+    const format = formData.get('format') as ImportFormat | null
+
+    if (!file) {
+      return { success: false, error: 'No file provided' }
+    }
+
+    if (!format || !['employees', 'trips', 'gantt'].includes(format)) {
+      return { success: false, error: 'Invalid import format' }
+    }
+
+    const validation = validateFile(file)
+    if (!validation.valid) {
+      return { success: false, error: validation.error }
+    }
+
+    if (format === 'gantt') {
+      const result = await parseFile(file, 'gantt')
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          error: result.error ?? 'Failed to parse schedule file',
+        }
+      }
+
+      return {
+        success: true,
+        parsedData: result.data,
+        totalRows: result.totalRows,
+      }
+    }
+
+    const result = await parseFileRaw(file)
+
+    if (!result.success || !result.rawData || !result.rawHeaders) {
+      return {
+        success: false,
+        error: result.error ?? 'Failed to parse file',
+      }
+    }
+
+    return {
+      success: true,
+      rawData: result.rawData,
+      rawHeaders: result.rawHeaders,
+      totalRows: result.totalRows,
+    }
+  } catch (error) {
+    console.error('Parse import file error:', error)
+    return { success: false, error: 'An unexpected error occurred' }
   }
 }
 

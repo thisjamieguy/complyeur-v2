@@ -25,6 +25,7 @@ import {
 } from '@/lib/import/date-preferences';
 import {
   createImportSession,
+  parseImportFile,
   saveParsedData,
   loadSavedMappings,
   saveColumnMapping,
@@ -65,9 +66,12 @@ function UploadPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const formatParam = searchParams.get('format');
+  const format =
+    formatParam && IMPORT_FORMATS.includes(formatParam as ImportFormat)
+      ? (formatParam as ImportFormat)
+      : null;
 
   // Basic state
-  const [format, setFormat] = useState<ImportFormat | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStage, setProcessingStage] = useState<ProcessingStage>('idle');
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -83,21 +87,17 @@ function UploadPageContent() {
   // Date format state
   const [dateReport, setDateReport] = useState<AmbiguityReport | null>(null);
   const [showDateConfirmation, setShowDateConfirmation] = useState(false);
-  const [selectedDateFormat, setSelectedDateFormat] = useState<'DD/MM' | 'MM/DD'>('DD/MM');
+  const [selectedDateFormat, setSelectedDateFormat] = useState<'DD/MM' | 'MM/DD'>(
+    () => getStoredImportDateFormat()
+  );
   const [dateConfirmed, setDateConfirmed] = useState(false);
 
   // Validate format param
   useEffect(() => {
-    if (formatParam && IMPORT_FORMATS.includes(formatParam as ImportFormat)) {
-      setFormat(formatParam as ImportFormat);
-    } else {
+    if (!format) {
       router.push('/import');
     }
-  }, [formatParam, router]);
-
-  useEffect(() => {
-    setSelectedDateFormat(getStoredImportDateFormat());
-  }, []);
+  }, [format, router]);
 
   // ============================================================
   // FILE UPLOAD HANDLER
@@ -127,28 +127,30 @@ function UploadPageContent() {
       setSessionId(sessionResult.session.id);
       setProcessingStage('parsing');
 
+      const parseFormData = new FormData();
+      parseFormData.append('file', file);
+      parseFormData.append('format', format);
+
+      const parseResult = await parseImportFile(parseFormData);
+
       // Special handling for Gantt/Schedule format
       if (format === 'gantt') {
-        const buffer = await file.arrayBuffer();
-        const { parseGanttFromData, isCSVFile } = await import('@/lib/import/parser');
-        const ganttResult = await parseGanttFromData(buffer, isCSVFile(file));
-
-        if (!ganttResult.success || !ganttResult.data) {
-          showError('Parse Error', ganttResult.error ?? 'Failed to parse schedule file');
+        if (!parseResult.success || !parseResult.parsedData) {
+          showError('Parse Error', parseResult.error ?? 'Failed to parse schedule file');
           setIsProcessing(false);
           setProcessingStage('idle');
           return;
         }
 
         setProcessingStage('validating');
-        const validatedRows = await validateRows(ganttResult.data, 'gantt');
+        const validatedRows = await validateRows(parseResult.parsedData, 'gantt');
         const summary = getValidationSummary(validatedRows);
         const allErrors = validatedRows.flatMap((r) => [...r.errors, ...r.warnings]);
 
         setProcessingStage('preparing');
         await saveParsedData(
           sessionResult.session.id,
-          ganttResult.data,
+          parseResult.parsedData,
           summary.valid,
           summary.errors,
           allErrors
@@ -159,9 +161,6 @@ function UploadPageContent() {
       }
 
       // Step 2: Parse file raw (without strict validation)
-      const { parseFileRaw } = await import('@/lib/import/parser');
-      const parseResult = await parseFileRaw(file);
-
       if (!parseResult.success || !parseResult.rawData || !parseResult.rawHeaders) {
         showError('Parse Error', parseResult.error ?? 'Failed to parse file');
         setIsProcessing(false);
