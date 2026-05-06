@@ -1,13 +1,6 @@
 import type { Row, Workbook, Worksheet } from 'exceljs';
 import {
-  addDays,
-  addMonths,
-  addWeeks,
-  differenceInCalendarDays,
   format,
-  subDays,
-  subMonths,
-  subWeeks,
 } from 'date-fns';
 import {
   COUNTRY_LIST,
@@ -15,9 +8,22 @@ import {
   isNonSchengenEU,
   isSchengenCountry,
 } from '@/lib/constants/schengen-countries';
+import {
+  buildGanttTemplateDates,
+  type GanttTemplateWorkbookOptions,
+} from './template-config';
+export {
+  buildGanttTemplateDates,
+  DEFAULT_GANTT_TEMPLATE_OPTIONS,
+  getGanttTemplateBounds,
+  MAX_GANTT_TEMPLATE_DAYS,
+  MAX_UNLIMITED_TEMPLATE_EMPLOYEE_ROWS,
+  type GanttTemplateBounds,
+  type GanttTemplateRange,
+  type GanttTemplateRangeUnit,
+  type GanttTemplateWorkbookOptions,
+} from './template-config';
 
-export const MAX_GANTT_TEMPLATE_DAYS = 500;
-export const MAX_UNLIMITED_TEMPLATE_EMPLOYEE_ROWS = 1000;
 const WORKBOOK_FONT_SIZE = 16;
 const TEMPLATE_DATE_COLUMN_WIDTH = 11;
 const TEMPLATE_HEADER_ROW_HEIGHT = 60;
@@ -44,74 +50,11 @@ const TEMPLATE_GRID_BORDER = {
   right: { style: 'thin', color: { argb: 'FFD0D5DD' } },
 } as const;
 
-export type GanttTemplateRangeUnit = 'days' | 'weeks' | 'months';
-
-export interface GanttTemplateRange {
-  unit: GanttTemplateRangeUnit;
-  value: number;
-}
-
-export interface GanttTemplateWorkbookOptions {
-  anchorDate: Date;
-  employeeRows: number;
-  pastRange: GanttTemplateRange;
-  futureRange: GanttTemplateRange;
-}
-
-export const DEFAULT_GANTT_TEMPLATE_OPTIONS: Omit<GanttTemplateWorkbookOptions, 'anchorDate'> = {
-  employeeRows: 10,
-  pastRange: { unit: 'months', value: 12 },
-  futureRange: { unit: 'weeks', value: 12 },
-};
-
-export interface GanttTemplateBounds {
-  startDate: Date;
-  endDate: Date;
-  totalDays: number;
-}
-
-export function getGanttTemplateBounds(
-  anchorDate: Date,
-  pastRange: GanttTemplateRange,
-  futureRange: GanttTemplateRange
-): GanttTemplateBounds {
-  const normalizedAnchor = normalizeAnchorDate(anchorDate);
-  const startDate = resolvePastDate(normalizedAnchor, pastRange);
-  const endDate = resolveFutureDate(normalizedAnchor, futureRange);
-  const totalDays = differenceInCalendarDays(endDate, startDate) + 1;
-
-  return {
-    startDate,
-    endDate,
-    totalDays,
-  };
-}
-
-export function buildGanttTemplateDates(
-  anchorDate: Date,
-  pastRange: GanttTemplateRange,
-  futureRange: GanttTemplateRange
-): Date[] {
-  const { startDate, totalDays } = getGanttTemplateBounds(anchorDate, pastRange, futureRange);
-
-  if (totalDays > MAX_GANTT_TEMPLATE_DAYS) {
-    throw new Error(
-      `This selection creates ${totalDays} date columns. Reduce the range to ${MAX_GANTT_TEMPLATE_DAYS} days or fewer so the workbook stays import-compatible.`
-    );
-  }
-
-  return Array.from({ length: totalDays }, (_, index) => addDays(startDate, index));
-}
-
-export async function generateGanttTemplateWorkbook(
+export async function generateGanttTemplateWorkbookData(
   options: GanttTemplateWorkbookOptions
-): Promise<{ filename: string; blob: Blob }> {
+): Promise<{ filename: string; bytes: Uint8Array }> {
   const anchorDate = normalizeAnchorDate(options.anchorDate);
-  const templateDates = buildGanttTemplateDates(
-    anchorDate,
-    options.pastRange,
-    options.futureRange
-  );
+  const templateDates = buildGanttTemplateDates(anchorDate, options.pastRange, options.futureRange);
   const ExcelJS = (await import('exceljs')).default;
   const workbook = new ExcelJS.Workbook();
 
@@ -127,12 +70,24 @@ export async function generateGanttTemplateWorkbook(
   addWorkbookBranding(workbook);
 
   const buffer = await workbook.xlsx.writeBuffer();
-  const bytes = toUint8Array(buffer);
-  const blobBytes = new Uint8Array(bytes);
+  const bytes = Uint8Array.from(toUint8Array(buffer));
 
   return {
     filename: `complyeur_gantt_template_${format(options.anchorDate, 'yyyy-MM-dd_HH-mm-ss')}.xlsx`,
-    blob: new Blob([blobBytes], {
+    bytes,
+  };
+}
+
+export async function generateGanttTemplateWorkbook(
+  options: GanttTemplateWorkbookOptions
+): Promise<{ filename: string; blob: Blob }> {
+  const { filename, bytes } = await generateGanttTemplateWorkbookData(options);
+  const blobBytes = new Uint8Array(bytes.length);
+  blobBytes.set(bytes);
+
+  return {
+    filename,
+    blob: new Blob([blobBytes.buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     }),
   };
@@ -155,32 +110,6 @@ export function downloadBlob(blob: Blob, filename: string): void {
 
 function normalizeAnchorDate(anchorDate: Date): Date {
   return new Date(anchorDate.getFullYear(), anchorDate.getMonth(), anchorDate.getDate());
-}
-
-function resolvePastDate(anchorDate: Date, range: GanttTemplateRange): Date {
-  switch (range.unit) {
-    case 'days':
-      return subDays(anchorDate, range.value);
-    case 'weeks':
-      return subWeeks(anchorDate, range.value);
-    case 'months':
-      return subMonths(anchorDate, range.value);
-    default:
-      return anchorDate;
-  }
-}
-
-function resolveFutureDate(anchorDate: Date, range: GanttTemplateRange): Date {
-  switch (range.unit) {
-    case 'days':
-      return addDays(anchorDate, range.value);
-    case 'weeks':
-      return addWeeks(anchorDate, range.value);
-    case 'months':
-      return addMonths(anchorDate, range.value);
-    default:
-      return anchorDate;
-  }
 }
 
 function addTemplateSheet(workbook: Workbook, dates: Date[], employeeRows: number) {

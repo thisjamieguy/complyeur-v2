@@ -25,11 +25,10 @@ import {
   DEFAULT_GANTT_TEMPLATE_OPTIONS,
   MAX_GANTT_TEMPLATE_DAYS,
   MAX_UNLIMITED_TEMPLATE_EMPLOYEE_ROWS,
-  downloadBlob,
-  generateGanttTemplateWorkbook,
   getGanttTemplateBounds,
   type GanttTemplateRange,
-} from '@/lib/import/gantt/template-workbook';
+} from '@/lib/import/gantt/template-config';
+import { downloadGanttTemplate } from '@/lib/import/gantt/template-download';
 
 type PastRangePreset = '180_days' | '12_months' | '18_months' | 'custom_weeks';
 type FutureRangePreset = '12_weeks' | '3_months' | '6_months' | 'custom_weeks';
@@ -112,14 +111,11 @@ export function GanttTemplateDialog({
     setIsDownloading(true);
 
     try {
-      const { blob, filename } = await generateGanttTemplateWorkbook({
-        anchorDate: new Date(),
+      await downloadGanttTemplate({
         employeeRows: parsedEmployeeRows,
         pastRange,
         futureRange,
-      });
-
-      downloadBlob(blob, filename);
+      })
       onOpenChange(false);
     } catch (error) {
       const message =

@@ -17,9 +17,8 @@ import { FORMAT_OPTIONS, ImportFormat } from '@/types/import';
 import { showError } from '@/lib/toast';
 import {
   DEFAULT_GANTT_TEMPLATE_OPTIONS,
-  downloadBlob,
-  generateGanttTemplateWorkbook,
-} from '@/lib/import/gantt/template-workbook';
+} from '@/lib/import/gantt/template-config';
+import { downloadGanttTemplate } from '@/lib/import/gantt/template-download';
 import { GanttTemplateDialog } from './GanttTemplateDialog';
 import { StepIndicator } from './StepIndicator';
 import { FirstTimeGuide } from './FirstTimeGuide';
@@ -60,11 +59,9 @@ export function FormatSelector({ maxEmployees = null }: FormatSelectorProps) {
       setIsGeneratingGanttTemplate(true);
 
       try {
-        const { blob, filename } = await generateGanttTemplateWorkbook({
-          anchorDate: new Date(),
+        await downloadGanttTemplate({
           ...DEFAULT_GANTT_TEMPLATE_OPTIONS,
-        });
-        downloadBlob(blob, filename);
+        })
       } catch (error) {
         const message =
           error instanceof Error
@@ -72,10 +69,10 @@ export function FormatSelector({ maxEmployees = null }: FormatSelectorProps) {
             : 'We could not generate the Gantt template workbook.';
         showError('Template Download Failed', message);
       } finally {
-        setIsGeneratingGanttTemplate(false);
+        setIsGeneratingGanttTemplate(false)
       }
 
-      return;
+      return
     }
 
     const templateUrl = format.templateUrl;
