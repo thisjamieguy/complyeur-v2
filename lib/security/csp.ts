@@ -1,3 +1,5 @@
+import { shouldEnforceHttps } from '@/lib/security/transport-security'
+
 /**
  * Build the Content Security Policy header value.
  *
@@ -14,8 +16,17 @@
  * - base-uri 'self' prevents base-tag hijacking
  * - upgrade-insecure-requests forces HTTPS in production
  */
-export function buildContentSecurityPolicy(): string {
+interface ContentSecurityPolicyOptions {
+  requestHostname?: string
+  requestProtocol?: string
+}
+
+export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions = {}): string {
   const isProduction = process.env.NODE_ENV === 'production'
+  const enforceHttps = shouldEnforceHttps({
+    hostname: options.requestHostname,
+    protocol: options.requestProtocol,
+  })
 
   const scriptSrc = isProduction
     ? [
@@ -62,7 +73,7 @@ export function buildContentSecurityPolicy(): string {
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    ...(isProduction ? ['upgrade-insecure-requests'] : []),
+    ...(enforceHttps ? ['upgrade-insecure-requests'] : []),
   ]
 
   return directives.join('; ')

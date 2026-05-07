@@ -11,7 +11,10 @@ describe('buildContentSecurityPolicy', () => {
   it('uses unsafe-inline (no nonce) in production to allow static rendering', () => {
     process.env.NODE_ENV = 'production'
 
-    const csp = buildContentSecurityPolicy()
+    const csp = buildContentSecurityPolicy({
+      requestHostname: 'complyeur.com',
+      requestProtocol: 'https:',
+    })
     const scriptSrcDirective =
       csp
         .split(';')
@@ -22,6 +25,7 @@ describe('buildContentSecurityPolicy', () => {
     expect(scriptSrcDirective).not.toContain("'unsafe-eval'")
     expect(scriptSrcDirective).not.toContain("'strict-dynamic'")
     expect(scriptSrcDirective).toContain('https://cdn-cookieyes.com')
+    expect(csp).toContain('upgrade-insecure-requests')
   })
 
   it('keeps development script relaxations in non-production', () => {
@@ -30,5 +34,16 @@ describe('buildContentSecurityPolicy', () => {
     const csp = buildContentSecurityPolicy()
 
     expect(csp).toContain("script-src 'self' 'unsafe-eval' 'unsafe-inline'")
+  })
+
+  it('does not force HTTPS upgrades for localhost production requests', () => {
+    process.env.NODE_ENV = 'production'
+
+    const csp = buildContentSecurityPolicy({
+      requestHostname: 'localhost',
+      requestProtocol: 'http:',
+    })
+
+    expect(csp).not.toContain('upgrade-insecure-requests')
   })
 })

@@ -29,7 +29,10 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const cspHeader = buildContentSecurityPolicy()
+  const cspHeader = buildContentSecurityPolicy({
+    requestHostname: request.nextUrl.hostname,
+    requestProtocol: request.nextUrl.protocol,
+  })
 
   // Allow static assets from /public to bypass auth/session checks.
   // Without this, image/logo requests can be redirected as protected routes.
