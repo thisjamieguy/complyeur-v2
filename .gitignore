@@ -74,3 +74,6 @@ audit/
 docs/security/
 *_prompt.md
 
+
+# Editor / IDE
+.cursor/
