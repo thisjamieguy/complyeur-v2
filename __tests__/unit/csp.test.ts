@@ -36,6 +36,38 @@ describe('buildContentSecurityPolicy', () => {
     expect(csp).toContain("script-src 'self' 'unsafe-eval' 'unsafe-inline'")
   })
 
+  it('allows localhost ws:// in connect-src in development for Next.js HMR', () => {
+    // Regression: ISSUE-001 — CSP blocked Next.js dev HMR WebSocket
+    // Found by /qa on 2026-05-08
+    process.env.NODE_ENV = 'development'
+
+    const csp = buildContentSecurityPolicy()
+    const connectSrc =
+      csp
+        .split(';')
+        .map((directive) => directive.trim())
+        .find((directive) => directive.startsWith('connect-src ')) ?? ''
+
+    expect(connectSrc).toContain('ws://localhost:*')
+    expect(connectSrc).toContain('ws://127.0.0.1:*')
+  })
+
+  it('does not allow ws:// in connect-src in production', () => {
+    process.env.NODE_ENV = 'production'
+
+    const csp = buildContentSecurityPolicy({
+      requestHostname: 'complyeur.com',
+      requestProtocol: 'https:',
+    })
+    const connectSrc =
+      csp
+        .split(';')
+        .map((directive) => directive.trim())
+        .find((directive) => directive.startsWith('connect-src ')) ?? ''
+
+    expect(connectSrc).not.toContain('ws://')
+  })
+
   it('does not force HTTPS upgrades for localhost production requests', () => {
     process.env.NODE_ENV = 'production'
 
