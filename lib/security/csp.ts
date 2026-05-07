@@ -69,7 +69,13 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     "font-src 'self'",
     "object-src 'none'",
     "worker-src 'self'",
-    "connect-src 'self' https://*.supabase.co https://*.sentry.io https://cdn-cookieyes.com https://log.cookieyes.com https://www.clarity.ms https://c.clarity.ms",
+    // In dev, Next.js opens an HMR WebSocket on a random localhost port for
+    // hot module replacement. Without ws://localhost:* and ws://127.0.0.1:*,
+    // CSP blocks the connection, HMR stops working, and the console fills
+    // with retry errors that mask real bugs.
+    isProduction
+      ? "connect-src 'self' https://*.supabase.co https://*.sentry.io https://cdn-cookieyes.com https://log.cookieyes.com https://www.clarity.ms https://c.clarity.ms"
+      : "connect-src 'self' ws://localhost:* ws://127.0.0.1:* https://*.supabase.co https://*.sentry.io https://cdn-cookieyes.com https://log.cookieyes.com https://www.clarity.ms https://c.clarity.ms",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
