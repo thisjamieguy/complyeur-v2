@@ -6,11 +6,12 @@
  * live requests.  A regression here means headers would be silently dropped
  * from all responses.
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 // Import the raw next config before Sentry wraps it.
 // We test the config object directly, not the Sentry-wrapped version.
 import nextConfig from '@/next.config'
+import { shouldEnforceHttps } from '@/lib/security/transport-security'
 
 type HeaderEntry = { key: string; value: string }
 
@@ -28,15 +29,31 @@ function headerValue(headers: HeaderEntry[], key: string): string | undefined {
 }
 
 describe('next.config.ts: security response headers', () => {
-  it('declares Strict-Transport-Security with a long max-age', async () => {
+  it('does not declare Strict-Transport-Security in the local test config', async () => {
     const headers = await resolveHeaders()
     const hsts = headerValue(headers, 'Strict-Transport-Security')
-    expect(hsts).toBeTruthy()
-    // max-age must be at least 1 year (31536000 s)
-    const match = hsts?.match(/max-age=(\d+)/)
-    const maxAge = match ? parseInt(match[1], 10) : 0
-    expect(maxAge).toBeGreaterThanOrEqual(31536000)
-    expect(hsts).toContain('includeSubDomains')
+
+    expect(hsts).toBeUndefined()
+  })
+
+  it('enforces HTTPS for known production HTTPS deployments', () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://app.complyeur.com')
+
+    expect(shouldEnforceHttps()).toBe(true)
+
+    vi.unstubAllEnvs()
+  })
+
+  it('does not enforce HTTPS for localhost even in production mode', () => {
+    vi.stubEnv('NODE_ENV', 'production')
+
+    expect(shouldEnforceHttps({
+      hostname: 'localhost',
+      protocol: 'http:',
+    })).toBe(false)
+
+    vi.unstubAllEnvs()
   })
 
   it('declares X-Content-Type-Options: nosniff', async () => {

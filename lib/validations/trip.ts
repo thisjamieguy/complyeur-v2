@@ -3,7 +3,6 @@ import { validateCountry, COUNTRY_NAMES } from '@/lib/constants/schengen-countri
 import { differenceInUtcDays, parseDateOnlyAsUTC } from '@/lib/compliance/date-utils'
 import {
   isValidISODate,
-  isDateTooFarInPast,
   getTripDurationDays,
 } from './dates'
 
@@ -52,17 +51,6 @@ export const tripSchema = z
     is_private: z.boolean().optional().default(false),
     ghosted: z.boolean().optional().default(false),
   })
-  // Validate entry date is not too far in the past (180 days max)
-  .refine(
-    (data) => {
-      const entry = parseDateOnlyAsUTC(data.entry_date)
-      return !isDateTooFarInPast(entry, 180)
-    },
-    {
-      message: 'Entry date cannot be more than 180 days in the past',
-      path: ['entry_date'],
-    }
-  )
   // Validate exit date is on or after entry date
   .refine(
     (data) => {

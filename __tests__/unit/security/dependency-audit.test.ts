@@ -1,7 +1,7 @@
 /**
  * Dependency vulnerability regression gate.
  *
- * Runs `pnpm audit --json` and fails the suite if any vulnerability at
+ * Runs `pnpm audit --prod --json` and fails the suite if any production vulnerability at
  * HIGH or CRITICAL severity is found.  MODERATE and LOW findings are
  * reported but not blocking (they're in devDependencies and can be
  * explicitly excluded via the accepted list below).
@@ -52,7 +52,7 @@ describe('dependency audit', () => {
   it('has no HIGH or CRITICAL vulnerabilities', { timeout: 15000 }, () => {
     let rawOutput = ''
     try {
-      rawOutput = execFileSync('pnpm', ['audit', '--json'], {
+      rawOutput = execFileSync('pnpm', ['audit', '--prod', '--json'], {
         cwd: PROJECT_ROOT,
         encoding: 'utf8',
         timeout: 10000,

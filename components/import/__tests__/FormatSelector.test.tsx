@@ -6,19 +6,20 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FormatSelector } from '../FormatSelector';
 
-const { downloadBlobMock, generateGanttTemplateWorkbookMock } = vi.hoisted(() => ({
-  downloadBlobMock: vi.fn(),
-  generateGanttTemplateWorkbookMock: vi.fn(),
+const { downloadGanttTemplateMock } = vi.hoisted(() => ({
+  downloadGanttTemplateMock: vi.fn(),
 }));
 
-vi.mock('@/lib/import/gantt/template-workbook', () => ({
+vi.mock('@/lib/import/gantt/template-download', () => ({
+  downloadGanttTemplate: downloadGanttTemplateMock,
+}));
+
+vi.mock('@/lib/import/gantt/template-config', () => ({
   DEFAULT_GANTT_TEMPLATE_OPTIONS: {
     employeeRows: 10,
     pastRange: { unit: 'months', value: 12 },
     futureRange: { unit: 'weeks', value: 12 },
   },
-  downloadBlob: downloadBlobMock,
-  generateGanttTemplateWorkbook: generateGanttTemplateWorkbookMock,
 }));
 
 vi.mock('../GanttTemplateDialog', () => ({
@@ -49,28 +50,25 @@ describe('FormatSelector', () => {
     expect(anchor.getAttribute('href')).toBe('/templates/employees-template.csv');
     expect(anchor.download).toBe('employees-template.csv');
     expect(appendChildSpy).toHaveBeenCalledWith(anchor);
-    expect(generateGanttTemplateWorkbookMock).not.toHaveBeenCalled();
-    expect(downloadBlobMock).not.toHaveBeenCalled();
+    expect(downloadGanttTemplateMock).not.toHaveBeenCalled();
   });
 
   it('generates and downloads the gantt workbook from the Template action', async () => {
-    generateGanttTemplateWorkbookMock.mockResolvedValue({
-      blob: new Blob(['xlsx']),
-      filename: 'complyeur_gantt_template_2026-03-04_10-00-00.xlsx',
-    });
+    downloadGanttTemplateMock.mockResolvedValue(undefined);
 
     render(<FormatSelector />);
 
     fireEvent.click(screen.getAllByRole('button', { name: /^template$/i })[2]);
 
     await waitFor(() => {
-      expect(generateGanttTemplateWorkbookMock).toHaveBeenCalledTimes(1);
+      expect(downloadGanttTemplateMock).toHaveBeenCalledTimes(1);
     });
 
-    expect(downloadBlobMock).toHaveBeenCalledWith(
-      expect.any(Blob),
-      'complyeur_gantt_template_2026-03-04_10-00-00.xlsx'
-    );
+    expect(downloadGanttTemplateMock).toHaveBeenCalledWith({
+      employeeRows: 10,
+      pastRange: { unit: 'months', value: 12 },
+      futureRange: { unit: 'weeks', value: 12 },
+    });
   });
 
   it('shows the customize action only for the gantt card and opens the dialog', () => {

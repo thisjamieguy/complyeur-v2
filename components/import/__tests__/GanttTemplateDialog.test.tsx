@@ -6,22 +6,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { GanttTemplateDialog } from '../GanttTemplateDialog';
 
-const { downloadBlobMock, generateGanttTemplateWorkbookMock } = vi.hoisted(() => ({
-  downloadBlobMock: vi.fn(),
-  generateGanttTemplateWorkbookMock: vi.fn(),
+const { downloadGanttTemplateMock } = vi.hoisted(() => ({
+  downloadGanttTemplateMock: vi.fn(),
 }));
 
-vi.mock('@/lib/import/gantt/template-workbook', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/import/gantt/template-workbook')>(
-    '@/lib/import/gantt/template-workbook'
-  );
-
-  return {
-    ...actual,
-    downloadBlob: downloadBlobMock,
-    generateGanttTemplateWorkbook: generateGanttTemplateWorkbookMock,
-  };
-});
+vi.mock('@/lib/import/gantt/template-download', () => ({
+  downloadGanttTemplate: downloadGanttTemplateMock,
+}));
 
 vi.mock('@/lib/toast', () => ({
   showError: vi.fn(),
@@ -63,10 +54,7 @@ describe('GanttTemplateDialog', () => {
   });
 
   it('downloads a workbook when the default configuration is valid', async () => {
-    generateGanttTemplateWorkbookMock.mockResolvedValue({
-      blob: new Blob(['xlsx']),
-      filename: 'complyeur_gantt_template_2026-03-04_10-00-00.xlsx',
-    });
+    downloadGanttTemplateMock.mockResolvedValue(undefined);
 
     const onOpenChange = vi.fn();
     render(<GanttTemplateDialog open onOpenChange={onOpenChange} maxEmployees={50} />);
@@ -74,13 +62,14 @@ describe('GanttTemplateDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /download custom template/i }));
 
     await waitFor(() => {
-      expect(generateGanttTemplateWorkbookMock).toHaveBeenCalledTimes(1);
+      expect(downloadGanttTemplateMock).toHaveBeenCalledTimes(1);
     });
 
-    expect(downloadBlobMock).toHaveBeenCalledWith(
-      expect.any(Blob),
-      'complyeur_gantt_template_2026-03-04_10-00-00.xlsx'
-    );
+    expect(downloadGanttTemplateMock).toHaveBeenCalledWith({
+      employeeRows: 10,
+      pastRange: { unit: 'months', value: 12 },
+      futureRange: { unit: 'weeks', value: 12 },
+    });
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
