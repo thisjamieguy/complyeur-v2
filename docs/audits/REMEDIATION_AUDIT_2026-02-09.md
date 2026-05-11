@@ -1,7 +1,7 @@
 # Remediation Audit — 2026-02-09
 
 ## Scope
-Re-audit of previously documented critical scalability/resilience findings from `docs/SCALABILITY_RESILIENCE_AUDIT.md`.
+Re-audit of previously documented critical scalability/resilience findings from `docs/audits/SCALABILITY_RESILIENCE_AUDIT.md`.
 
 ## Fixes Implemented
 

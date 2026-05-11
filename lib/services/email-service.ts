@@ -16,7 +16,7 @@ function getResendClient(): Resend | null {
 }
 
 // Email configuration
-const FROM_EMAIL = process.env.EMAIL_FROM || 'ComplyEur Alerts <alerts@complyeur.com>'
+const FROM_EMAIL = process.env.EMAIL_FROM || 'ComplyEur <alerts@complyeur.com>'
 const REPLY_TO_EMAIL = process.env.EMAIL_REPLY_TO || 'support@complyeur.com'
 
 function getEmailAppUrl(): string {
