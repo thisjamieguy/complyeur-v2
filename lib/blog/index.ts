@@ -302,7 +302,9 @@ async function readBlogFiles(): Promise<BlogPost[]> {
   }, Promise.resolve<string | null>(null))
 
   if (!existingDirectory) {
-    throw new Error(`Blog directory not found. Checked: ${BLOG_DIRECTORY_CANDIDATES.join(', ')}`)
+    // Keep marketing routes and sitemap generation build-safe when blog content
+    // has not been mounted into the current environment yet.
+    return []
   }
 
   const entries = await fs.readdir(existingDirectory, { withFileTypes: true })

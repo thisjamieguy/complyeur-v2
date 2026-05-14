@@ -43,8 +43,8 @@ export default function PublicLayout({
             </div>
           </div>
           <nav aria-label="Public pages" className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-            <Link href="/landing/preview" className="font-medium text-slate-600 transition hover:text-slate-900">
-              Preview
+            <Link href="/about" className="font-medium text-slate-600 transition hover:text-slate-900">
+              About
             </Link>
             <Link href="/pricing" className="font-medium text-slate-600 transition hover:text-slate-900">
               Pricing

@@ -6,10 +6,10 @@ import { Menu, X } from 'lucide-react'
 import { marketingPrimaryCta } from '@/lib/marketing-primary-cta'
 
 const mobileNavLinks = [
-  { href: '#workflow', label: 'Workflow' },
   { href: '#product', label: 'Product' },
-  { href: '#proof', label: 'Why it works' },
+  { href: '#workflow', label: 'Workflow' },
   { href: '/pricing', label: 'Pricing' },
+  { href: '/faq', label: 'FAQ' },
 ]
 
 export function LandingMobileMenu() {
