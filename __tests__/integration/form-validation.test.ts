@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { addDays, format } from 'date-fns';
 import {
   tripSchema,
   checkTripOverlap,
@@ -74,16 +75,20 @@ describe('Trip form validation', () => {
   const baseTrip = {
     employee_id: '550e8400-e29b-41d4-a716-446655440000',
     country: 'FR',
-    entry_date: '2025-11-01',
-    exit_date: '2025-11-10',
+    entry_date: futureIsoDate(30),
+    exit_date: futureIsoDate(39),
   };
+
+  function futureIsoDate(daysFromNow: number): string {
+    return format(addDays(new Date(), daysFromNow), 'yyyy-MM-dd')
+  }
 
   describe('date validation', () => {
     it('rejects end date before start date', () => {
       const result = tripSchema.safeParse({
         ...baseTrip,
-        entry_date: '2025-11-15',
-        exit_date: '2025-11-10',
+        entry_date: futureIsoDate(45),
+        exit_date: futureIsoDate(40),
       });
 
       expect(result.success).toBe(false);
@@ -99,8 +104,8 @@ describe('Trip form validation', () => {
     it('accepts same-day trip', () => {
       const result = tripSchema.safeParse({
         ...baseTrip,
-        entry_date: '2025-11-15',
-        exit_date: '2025-11-15',
+        entry_date: futureIsoDate(45),
+        exit_date: futureIsoDate(45),
       });
 
       expect(result.success).toBe(true);
@@ -109,8 +114,8 @@ describe('Trip form validation', () => {
     it('rejects trip exceeding 180 days', () => {
       const result = tripSchema.safeParse({
         ...baseTrip,
-        entry_date: '2025-01-01',
-        exit_date: '2025-07-15', // 195 days
+        entry_date: futureIsoDate(10),
+        exit_date: futureIsoDate(205), // 196 days inclusive
       });
 
       expect(result.success).toBe(false);

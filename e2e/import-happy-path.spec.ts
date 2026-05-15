@@ -69,7 +69,7 @@ async function login(page: Page): Promise<boolean> {
 async function selectEmployeeImport(page: Page): Promise<void> {
   await page.goto('/import');
   await page.waitForLoadState('networkidle');
-  await page.getByText(/employees/i).first().click();
+  await page.getByText('Employees Only', { exact: true }).click();
   await page.getByRole('button', { name: /continue/i }).click();
   await page.waitForURL(/\/import\/upload\?format=employees/, { timeout: 10000 });
 }

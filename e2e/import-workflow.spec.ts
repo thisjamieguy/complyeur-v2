@@ -121,13 +121,13 @@ async function selectImportFormat(page: Page, format: 'employees' | 'trips' | 'g
 
   // Click on the format card
   const formatLabels = {
-    employees: /employees/i,
-    trips: /trips/i,
-    gantt: /schedule|gantt/i,
+    employees: 'Employees Only',
+    trips: 'Simple Trip List',
+    gantt: 'Schedule/Gantt',
   };
 
-  // Click on the card by finding the title text
-  await page.getByText(formatLabels[format]).first().click();
+  // Click the card via its title heading to avoid matching incidental guide copy.
+  await page.getByText(formatLabels[format], { exact: true }).click();
 
   // Click Continue button
   await page.getByRole('button', { name: /continue/i }).click();
@@ -654,7 +654,9 @@ test@example.com,01/12/2025,05/12/2025,DE`;
       await page.waitForLoadState('networkidle');
 
       // Verify we're on the format selection page
-      await expect(page.getByText(/employees|trips/i).first()).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText('Employees Only', { exact: true })).toBeVisible({
+        timeout: 10000,
+      });
 
       // Select employees format
       await selectImportFormat(page, 'employees');
@@ -667,11 +669,15 @@ test@example.com,01/12/2025,05/12/2025,DE`;
       if (await backButton.isVisible({ timeout: 5000 }).catch(() => false)) {
         await backButton.click();
         // Should show format selection options
-        await expect(page.getByText(/employees|trips/i).first()).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText('Employees Only', { exact: true })).toBeVisible({
+          timeout: 10000,
+        });
       } else {
         // If no back button, use browser back
         await page.goBack();
-        await expect(page.getByText(/employees|trips/i).first()).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText('Employees Only', { exact: true })).toBeVisible({
+          timeout: 10000,
+        });
       }
     });
 

@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { addDays, format } from 'date-fns';
 import {
   tripSchema,
   tripUpdateSchema,
@@ -22,13 +23,17 @@ function createValidTripData() {
   return {
     employee_id: '550e8400-e29b-41d4-a716-446655440000',
     country: 'FR',
-    entry_date: '2025-11-01',
-    exit_date: '2025-11-10',
+    entry_date: futureIsoDate(30),
+    exit_date: futureIsoDate(39),
     purpose: 'Business meeting',
     job_ref: 'JOB-001',
     is_private: false,
     ghosted: false,
   };
+}
+
+function futureIsoDate(daysFromNow: number): string {
+  return format(addDays(new Date(), daysFromNow), 'yyyy-MM-dd')
 }
 
 describe('tripSchema', () => {
@@ -43,8 +48,8 @@ describe('tripSchema', () => {
       const result = tripSchema.safeParse({
         employee_id: '550e8400-e29b-41d4-a716-446655440000',
         country: 'DE',
-        entry_date: '2025-11-01',
-        exit_date: '2025-11-10',
+        entry_date: futureIsoDate(30),
+        exit_date: futureIsoDate(39),
       });
 
       expect(result.success).toBe(true);
@@ -65,8 +70,8 @@ describe('tripSchema', () => {
     it('accepts same-day trip', () => {
       const result = tripSchema.safeParse({
         ...createValidTripData(),
-        entry_date: '2025-11-15',
-        exit_date: '2025-11-15',
+        entry_date: futureIsoDate(45),
+        exit_date: futureIsoDate(45),
       });
 
       expect(result.success).toBe(true);
@@ -147,8 +152,8 @@ describe('tripSchema', () => {
     it('rejects exit date before entry date', () => {
       const result = tripSchema.safeParse({
         ...createValidTripData(),
-        entry_date: '2025-11-15',
-        exit_date: '2025-11-10',
+        entry_date: futureIsoDate(45),
+        exit_date: futureIsoDate(40),
       });
 
       expect(result.success).toBe(false);
@@ -162,8 +167,8 @@ describe('tripSchema', () => {
     it('rejects trip duration over 180 days', () => {
       const result = tripSchema.safeParse({
         ...createValidTripData(),
-        entry_date: '2025-01-01',
-        exit_date: '2025-07-15', // 195 days
+        entry_date: futureIsoDate(10),
+        exit_date: futureIsoDate(205), // 196 days inclusive
       });
 
       expect(result.success).toBe(false);
@@ -237,8 +242,8 @@ describe('tripUpdateSchema', () => {
 
   it('validates date range when both dates provided', () => {
     const result = tripUpdateSchema.safeParse({
-      entry_date: '2025-11-15',
-      exit_date: '2025-11-10', // Before entry
+      entry_date: futureIsoDate(45),
+      exit_date: futureIsoDate(40), // Before entry
     });
 
     expect(result.success).toBe(false);
@@ -252,7 +257,7 @@ describe('tripUpdateSchema', () => {
   it('allows single date update without validation', () => {
     // When only one date is provided, we can't validate the range
     const result = tripUpdateSchema.safeParse({
-      entry_date: '2025-11-15',
+      entry_date: futureIsoDate(45),
     });
 
     expect(result.success).toBe(true);

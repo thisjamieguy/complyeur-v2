@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { DatabaseError, NotFoundError } from '@/lib/errors'
+import { DatabaseError, NotFoundError, ValidationError } from '@/lib/errors'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { Employee, EmployeeCreateInput, EmployeeUpdate } from '@/types/database-helpers'
 
@@ -21,6 +21,33 @@ function omitNationalityType<T extends Record<string, unknown>>(input: T): Omit<
   const copy = { ...input }
   delete (copy as { nationality_type?: unknown }).nationality_type
   return copy as Omit<T, 'nationality_type'>
+}
+
+function normalizeEmployeeName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
+async function findActiveEmployeeWithSameName(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  companyId: string,
+  name: string
+): Promise<Pick<Employee, 'id' | 'name'> | null> {
+  const normalizedTarget = normalizeEmployeeName(name)
+
+  const { data, error } = await supabase
+    .from('employees')
+    .select('id, name')
+    .eq('company_id', companyId)
+    .is('deleted_at', null)
+
+  if (error) {
+    console.error('Error checking for duplicate employee names:', error)
+    throw new DatabaseError('Failed to validate employee name')
+  }
+
+  return (
+    data?.find((employee) => normalizeEmployeeName(employee.name) === normalizedTarget) ?? null
+  )
 }
 
 /**
@@ -101,6 +128,14 @@ export async function createEmployee(employee: EmployeeCreateInput): Promise<Emp
   const supabase = await createClient()
 
   const { companyId } = await requireCompanyAccess(supabase)
+  const existingEmployee = await findActiveEmployeeWithSameName(supabase, companyId, employee.name)
+
+  if (existingEmployee) {
+    throw new ValidationError(
+      `An active employee named "${existingEmployee.name}" already exists. Review that record before adding another employee with the same name.`,
+      'name'
+    )
+  }
 
   const payload = { ...employee, company_id: companyId }
 

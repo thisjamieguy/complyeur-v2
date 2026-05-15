@@ -14,7 +14,7 @@ test.describe('Public smoke coverage', () => {
 
     await expect(page).toHaveURL(/\/landing$/);
     await expect(
-      page.getByRole('heading', { name: /manage international travel compliance without the spreadsheet drag/i })
+      page.getByRole('heading', { name: /schengen compliance software for uk employers approving eu travel/i })
     ).toBeVisible();
     await expect(
       page.getByRole('link', { name: /create account/i }).first()

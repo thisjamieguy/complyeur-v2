@@ -7,6 +7,7 @@ import { companyNameSchema, addEmployeeSchema, inviteTeamSchema } from '@/lib/va
 import { ValidationError, DatabaseError } from '@/lib/errors'
 import { inviteTeamMember } from '@/app/(dashboard)/settings/team/actions'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { createEmployee } from '@/lib/db/employees'
 
 async function getAuthenticatedUser() {
   const supabase = await createClient()
@@ -61,22 +62,23 @@ export async function addFirstEmployee(formData: FormData) {
     throw new ValidationError(result.error.issues[0]?.message ?? 'Invalid employee data')
   }
 
-  const { supabase, user, companyId } = await getAuthenticatedUser()
+  const { supabase, user } = await getAuthenticatedUser()
 
   const rateLimit = await checkServerActionRateLimit(user.id, 'addFirstEmployee')
   if (!rateLimit.allowed) {
     throw new Error(rateLimit.error ?? 'Rate limit exceeded')
   }
 
-  const { error } = await supabase
-    .from('employees')
-    .insert({
-      company_id: companyId,
+  try {
+    await createEmployee({
       name: result.data.name,
       nationality_type: result.data.nationalityType,
     })
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      throw error
+    }
 
-  if (error) {
     console.error('Failed to create employee:', error)
     throw new DatabaseError('Failed to add employee')
   }
