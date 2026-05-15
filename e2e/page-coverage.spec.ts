@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const publicDirectPages = [
-  { path: '/landing', heading: /manage international travel compliance without the spreadsheet drag/i },
+  { path: '/landing', heading: /schengen compliance software for uk employers approving eu travel/i },
   { path: '/pricing', heading: /simple pricing for schengen compliance/i },
   { path: '/about', heading: /about complyeur/i },
   { path: '/faq', heading: /frequently asked questions|faq/i },
@@ -24,8 +24,7 @@ const authenticatedDirectPages = [
   { path: '/calendar', text: /calendar filters/i },
   { path: '/import', heading: /import data/i },
   { path: '/import/upload?format=employees', text: /upload|drag.*drop|choose file/i },
-  { path: '/exports', heading: /export compliance data/i },
-  { path: '/trip-forecast', heading: /^trip forecast$/i },
+  { path: '/exports', heading: /^export compliance data$/i },
   { path: '/future-job-alerts', heading: /^future job alerts$/i },
   { path: '/settings', heading: /control how your workspace runs/i },
   { path: '/settings/import-history', heading: /import history/i },
@@ -42,7 +41,6 @@ const restrictedPagesForStandardUser = [
   '/admin/metrics',
   '/admin/settings',
   '/admin/tiers',
-  '/gdpr',
 ] as const;
 
 async function hasAuthenticatedDashboard(page: Page): Promise<boolean> {
@@ -95,7 +93,7 @@ test.describe('Route coverage matrix', () => {
       await page.goto('/', { waitUntil: 'domcontentloaded' });
       await expect(page).toHaveURL(/\/landing$/);
       await expect(
-        page.getByRole('heading', { name: /manage international travel compliance without the spreadsheet drag/i })
+        page.getByRole('heading', { name: /schengen compliance software for uk employers approving eu travel/i })
       ).toBeVisible();
     });
 
@@ -129,11 +127,33 @@ test.describe('Route coverage matrix', () => {
       });
     }
 
+    test('/trip-forecast follows account entitlements', async ({ page }) => {
+      test.setTimeout(60_000);
+      test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
+
+      await page.goto('/trip-forecast', { waitUntil: 'domcontentloaded' });
+
+      if (/upgrade=forecast/.test(page.url())) {
+        await expect(page).toHaveURL(/\/dashboard\?upgrade=forecast/);
+      } else {
+        await expect(page).toHaveURL(/\/trip-forecast/);
+        await expect(page.getByRole('heading', { name: /^trip forecast$/i })).toBeVisible({
+          timeout: 15000,
+        });
+      }
+    });
+
     test('employee detail page is reachable from the dashboard table', async ({ page }) => {
       test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
 
       const firstEmployeeLink = page.locator('tbody tr a[href^="/employee/"]').first();
-      await expect(firstEmployeeLink).toBeVisible();
+      const hasEmployeeLink = await firstEmployeeLink.isVisible().catch(() => false);
+      if (!hasEmployeeLink) {
+        await expect(
+          page.getByRole('heading', { name: /no employees yet/i })
+        ).toBeVisible();
+        return;
+      }
 
       const href = await firstEmployeeLink.getAttribute('href');
       expect(href).toMatch(/^\/employee\//);

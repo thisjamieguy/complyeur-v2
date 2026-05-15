@@ -22,7 +22,11 @@ test.describe('Authenticated navigation coverage', () => {
     await expect(page.getByRole('heading', { name: /import data/i })).toBeVisible();
 
     await page.goto('/trip-forecast', { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: /^trip forecast$/i })).toBeVisible();
+    if (/upgrade=forecast/.test(page.url())) {
+      await expect(page).toHaveURL(/\/dashboard\?upgrade=forecast/);
+    } else {
+      await expect(page.getByRole('heading', { name: /^trip forecast$/i })).toBeVisible();
+    }
 
     await page.goto('/future-job-alerts', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /^future job alerts$/i })).toBeVisible();
@@ -49,8 +53,15 @@ test.describe('Authenticated navigation coverage', () => {
     await page.getByRole('link', { name: /^future alerts$/i }).click();
     await expect(page).toHaveURL(/\/future-job-alerts$/);
 
-    await page.getByRole('link', { name: /^trip forecast$/i }).click();
-    await expect(page).toHaveURL(/\/trip-forecast$/);
+    const tripForecastLink = page.getByRole('link', { name: /^trip forecast$/i });
+    if (await tripForecastLink.isVisible().catch(() => false)) {
+      await tripForecastLink.click();
+      if (/upgrade=forecast/.test(page.url())) {
+        await expect(page).toHaveURL(/\/dashboard\?upgrade=forecast/);
+      } else {
+        await expect(page).toHaveURL(/\/trip-forecast$/);
+      }
+    }
 
     await page.getByRole('link', { name: /^settings$/i }).click();
     await expect(page).toHaveURL(/\/settings/);

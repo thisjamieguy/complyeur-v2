@@ -14,20 +14,18 @@ import { BrowserFrame } from '@/components/marketing/browser-frame'
 import { DemoCalendar } from '@/components/marketing/demo-calendar'
 import { DemoEmployeeListStatic } from '@/components/marketing/demo-employee-list-static'
 import { SkipLink } from '@/components/ui/skip-link'
+import { createPageMetadata } from '@/lib/metadata'
 import { marketingPrimaryCta } from '@/lib/marketing-primary-cta'
 import { LandingMobileMenu } from './landing-mobile-menu'
 
 export const dynamic = 'force-static'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'ComplyEur — Schengen Compliance Software for UK Travel Teams',
   description:
-    'ComplyEur gives UK travel, HR, operations, and finance teams one current view of Schengen allowance before trips are approved.',
-  robots: {
-    index: true,
-    follow: true,
-  },
-}
+    'Schengen compliance software for UK employers tracking the 90/180-day rule, employee travel risk, and EU trip approvals before bookings are confirmed.',
+  path: '/landing',
+})
 
 const roleSignals = [
   'For HR and people teams checking employee travel',
@@ -47,6 +45,10 @@ const heroHighlights = [
   {
     title: 'Practical onboarding',
     body: 'Import the spreadsheet history you already have and move forward from there.',
+  },
+  {
+    title: 'Decision context',
+    body: 'Review days used, current risk, and recent travel in the same approval screen.',
   },
 ]
 
@@ -121,6 +123,11 @@ const statCards = [
     label: 'Digital records',
     body: 'Border controls are becoming easier to measure against a live travel history.',
   },
+  {
+    value: '1 view',
+    label: 'Approval screen',
+    body: 'The current answer, recent trips, and warning status sit together for the reviewer.',
+  },
 ]
 
 const comparisonRows = [
@@ -143,6 +150,24 @@ const comparisonRows = [
     label: 'When the team grows',
     oldWay: 'More people touching more files',
     newWay: 'One shared workflow for checking, tracking, and approving',
+  },
+]
+
+const employerQuestions = [
+  {
+    question: 'What is Schengen compliance software for employers?',
+    answer:
+      'It is software that helps UK employers track each employee’s 90/180-day Schengen allowance, travel history, and approval risk before an EU trip is booked.',
+  },
+  {
+    question: 'Who needs employee travel compliance tracking?',
+    answer:
+      'HR, operations, mobility, finance, and travel teams need it when employees make repeated business trips into the Schengen Area and somebody inside the company is responsible for approving those journeys.',
+  },
+  {
+    question: 'Why is the 90/180-day rule hard to manage manually?',
+    answer:
+      'Because the limit moves every day, entry and exit days both count, and one extra trip can redraw the allowance across the full rolling 180-day window.',
   },
 ]
 
@@ -198,17 +223,17 @@ export default function LandingPage() {
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 lg:flex">
-            <Link href="#workflow" className="transition hover:text-slate-900">
-              Workflow
-            </Link>
             <Link href="#product" className="transition hover:text-slate-900">
               Product
             </Link>
-            <Link href="#proof" className="transition hover:text-slate-900">
-              Why it works
+            <Link href="#workflow" className="transition hover:text-slate-900">
+              Workflow
             </Link>
             <Link href="/pricing" className="transition hover:text-slate-900">
               Pricing
+            </Link>
+            <Link href="/faq" className="transition hover:text-slate-900">
+              FAQ
             </Link>
           </nav>
 
@@ -233,11 +258,11 @@ export default function LandingPage() {
             <div className="grid gap-8 lg:grid-cols-[minmax(0,33rem)_minmax(0,1fr)] lg:items-start">
               <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
                 <h1 className="landing-serif text-5xl text-slate-900 sm:text-6xl">
-                  A calmer way to approve EU travel.
+                  Schengen compliance software for UK employers approving EU travel.
                 </h1>
                 <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-                  ComplyEur gives your team one current view of each employee&apos;s Schengen allowance, trip history,
-                  and travel risk before someone says yes to the next booking.
+                  ComplyEur gives HR, operations, finance, and mobility teams one current view of each employee&apos;s
+                  90/180-day allowance, trip history, and travel risk before someone says yes to the next booking.
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -249,28 +274,28 @@ export default function LandingPage() {
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
-                    href="/landing/preview"
+                    href="/pricing"
                     className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
                   >
-                    Open interactive preview
+                    View pricing
                   </Link>
                 </div>
 
-                <div className="mt-8 grid gap-3">
+                <p className="mt-4 text-sm text-slate-500">
+                  Need to click through the interface first?{' '}
+                  <Link href="/landing/preview" className="font-medium text-brand-700 hover:underline">
+                    Open the interactive preview
+                  </Link>
+                  .
+                </p>
+
+                <div className="mt-8 grid gap-3 md:grid-cols-2">
                   {roleSignals.map((signal) => (
                     <div key={signal} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
                       <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" />
                       <p className="text-sm leading-6 text-slate-600">{signal}</p>
                     </div>
                   ))}
-                </div>
-
-                <div className="mt-8 rounded-xl border border-slate-200 bg-brand-50 p-5">
-                  <p className="text-sm font-semibold text-slate-900">What changes when you move off spreadsheets</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    You stop piecing together the answer from separate files and start reviewing one live record before
-                    travel gets approved.
-                  </p>
                 </div>
               </div>
 
@@ -290,11 +315,21 @@ export default function LandingPage() {
                   </BrowserFrame>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2">
                   {heroHighlights.map((item) => (
                     <ContentCard key={item.title} title={item.title} body={item.body} />
                   ))}
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <div className="rounded-xl border border-slate-200 bg-brand-50 p-5 shadow-sm">
+                <p className="text-sm font-semibold text-slate-900">What changes when you move off spreadsheets</p>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                  You stop piecing together the answer from separate files and start reviewing one live record before
+                  travel gets approved.
+                </p>
               </div>
             </div>
           </div>
@@ -325,6 +360,29 @@ export default function LandingPage() {
                   </article>
                 )
               })}
+            </div>
+          </div>
+        </section>
+
+        <section className="px-4 py-14 sm:px-6 sm:py-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="max-w-3xl">
+              <h2 className="landing-serif text-4xl text-slate-900 sm:text-5xl">
+                Clear answers for teams managing the Schengen 90/180-day rule.
+              </h2>
+              <p className="mt-6 text-lg leading-8 text-slate-600">
+                Most companies are not searching for a generic travel app. They need a dependable way to check whether
+                employee travel into the Schengen Area is still compliant before approval.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-4 lg:grid-cols-3">
+              {employerQuestions.map((item) => (
+                <article key={item.question} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">{item.answer}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
@@ -371,11 +429,26 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
               <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <BrowserFrame title="Timeline view">
                   <DemoCalendar />
                 </BrowserFrame>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-900">Daily view of the rolling window</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      See overlapping trips across the team without jumping between separate records.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-900">Warnings visible before approval</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      The timeline makes close calls easier to spot before travel is confirmed.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid gap-4">
@@ -413,34 +486,34 @@ export default function LandingPage() {
 
         <section className="px-4 py-14 sm:px-6 sm:py-16">
           <div className="mx-auto max-w-7xl rounded-xl border border-slate-200 bg-white p-8 shadow-sm lg:p-10">
-            <div className="grid gap-8 lg:grid-cols-[18rem_minmax(0,1fr)] lg:items-start">
+            <div className="max-w-3xl">
               <div>
                 <h2 className="landing-serif text-4xl text-slate-900 sm:text-5xl">
-                  Border compliance is becoming harder to bluff through.
+                  Border compliance is becoming harder to manage informally.
                 </h2>
                 <p className="mt-6 text-base leading-7 text-slate-600">
-                  The more measurable border records become, the less comfortable it is to rely on rough checks,
-                  inconsistent files, and last-minute reassurance.
+                  As border records become more measurable, it becomes harder to rely on rough checks, inconsistent
+                  files, and last-minute reassurance.
                 </p>
+              </div>
+            </div>
 
-                <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-5">
-                  <div className="flex items-start gap-3">
-                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" />
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Built for a more accountable workflow</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">
-                        Give your team a clearer audit trail around the travel decisions they make.
-                      </p>
-                    </div>
+            <div className="mt-10 grid gap-4 lg:grid-cols-5">
+              {statCards.map((card) => (
+                <StatCard key={card.label} value={card.value} label={card.label} body={card.body} />
+              ))}
+
+              <article className="rounded-xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-brand-700" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Built for a more accountable workflow</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Give your team a clearer audit trail around the travel decisions they make.
+                    </p>
                   </div>
                 </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                {statCards.map((card) => (
-                  <StatCard key={card.label} value={card.value} label={card.label} body={card.body} />
-                ))}
-              </div>
+              </article>
             </div>
           </div>
         </section>
@@ -472,24 +545,18 @@ export default function LandingPage() {
                 </Link>
               </div>
 
-              <div className="mt-8 grid gap-3 text-left sm:grid-cols-3">
-                <div className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <BriefcaseBusiness className="h-4 w-4 text-slate-300" />
-                    <p className="text-sm text-slate-300">Built for operational teams</p>
-                  </div>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-slate-800 pt-6 text-sm text-slate-300">
+                <div className="flex items-center gap-2">
+                  <BriefcaseBusiness className="h-4 w-4 text-slate-400" />
+                  <span>Built for operational teams</span>
                 </div>
-                <div className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="h-4 w-4 text-slate-300" />
-                    <p className="text-sm text-slate-300">Privacy-aware travel records</p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-slate-400" />
+                  <span>Privacy-aware travel records</span>
                 </div>
-                <div className="rounded-xl border border-slate-700 bg-slate-800 px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <Clock3 className="h-4 w-4 text-slate-300" />
-                    <p className="text-sm text-slate-300">Designed for repeat approvals</p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <Clock3 className="h-4 w-4 text-slate-400" />
+                  <span>Designed for repeat approvals</span>
                 </div>
               </div>
             </div>
