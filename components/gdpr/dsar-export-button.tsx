@@ -119,8 +119,8 @@ export function DsarExportButton({ employees }: DsarExportButtonProps) {
           <div>
             <p className="font-medium text-slate-700">GDPR Article 15 - Right of Access</p>
             <p className="mt-1">
-              Generates a ZIP file containing all personal data held for the selected employee,
-              including employee records, travel history, and compliance data.
+              Generates a ZIP file containing employee-related data stored within ComplyEur for the
+              selected employee, including employee records, travel history, and compliance data.
             </p>
           </div>
         </div>

@@ -134,21 +134,24 @@ function formatDetails(
 ): string {
   if (!details) return '-'
 
+  const employeeDisplayLabel =
+    details.employee_label ?? details.employee_name ?? details.original_name ?? 'Employee'
+
   switch (action) {
     case 'DSAR_EXPORT':
-      return `Exported data for ${details.employee_name ?? 'Unknown'} (${details.affected_trips_count ?? 0} trips)`
+      return `Exported data for ${employeeDisplayLabel} (${details.affected_trips_count ?? 0} trips)`
 
     case 'ANONYMIZE':
-      return `${details.original_name ?? 'Employee'} → ${details.anonymized_name ?? 'ANON'}`
+      return `${employeeDisplayLabel} → ${details.anonymized_name ?? 'ANON'}`
 
     case 'SOFT_DELETE':
-      return `Deleted ${details.employee_name ?? 'Employee'} (${details.affected_trips_count ?? 0} trips)`
+      return `Deleted ${employeeDisplayLabel} (${details.affected_trips_count ?? 0} trips)`
 
     case 'RESTORE':
-      return `Restored ${details.employee_name ?? 'Employee'}`
+      return `Restored ${employeeDisplayLabel}`
 
     case 'HARD_DELETE':
-      return `Permanently removed ${details.employee_name ?? 'Employee'} (${details.trips_deleted ?? 0} trips)`
+      return `Permanently removed ${employeeDisplayLabel} (${details.trips_deleted ?? 0} trips)`
 
     case 'AUTO_PURGE':
       return `Purged ${details.employees_deleted ?? 0} employees, ${details.trips_deleted ?? 0} trips`

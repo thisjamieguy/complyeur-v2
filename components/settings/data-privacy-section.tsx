@@ -77,7 +77,8 @@ export function DataPrivacySection({ disabled }: DataPrivacySectionProps) {
                 </div>
               </FormControl>
               <FormDescription>
-                Trip data older than {retentionMonths} months will be automatically deleted for GDPR compliance.
+                Trip data older than {retentionMonths} months will be automatically deleted to support
+                privacy management workflows.
                 Trips before {purgeDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })} will be purged.
               </FormDescription>
               <FormMessage />

@@ -85,7 +85,7 @@ const structuredDataGraph = {
         "Employee travel management",
         "Automated alerts and warnings",
         "Trip planning tools",
-        "GDPR compliant data handling",
+        "GDPR-aware data handling",
       ],
       offers: {
         "@type": "AggregateOffer",
