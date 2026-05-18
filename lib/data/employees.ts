@@ -658,3 +658,12 @@ export const getEmployeeCount = cache(async (): Promise<number> => {
     return count ?? 0
   })
 })
+
+/**
+ * Return compliance status counts for the current company.
+ * Reuses the cached getEmployeeComplianceData() — no extra DB round-trip.
+ */
+export async function getComplianceSnapshot(): Promise<ComplianceStats> {
+  const employees = await getEmployeeComplianceData()
+  return calculateStats(employees)
+}
