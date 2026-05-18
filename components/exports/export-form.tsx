@@ -37,8 +37,8 @@ interface ExportFormProps {
   employeeCount: number
 }
 
-type ExportScope = 'all' | 'single' | 'filtered' | 'future-alerts'
-type ExportFormat = 'csv' | 'pdf'
+export type ExportScope = 'all' | 'single' | 'filtered' | 'future-alerts'
+export type ExportFormat = 'csv' | 'pdf'
 type StatusFilter = 'compliant' | 'at-risk' | 'non-compliant'
 type AlertsFilter = 'all' | 'at-risk' | 'critical'
 
