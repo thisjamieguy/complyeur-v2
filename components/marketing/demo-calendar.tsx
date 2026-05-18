@@ -32,12 +32,12 @@ interface DemoCalendarProps {
   referenceDate?: Date
 }
 
-const ROW_HEIGHT = 40
-const NAME_WIDTH = 120
+const ROW_HEIGHT = 46
+const NAME_WIDTH = 132
 const DAY_MS = 24 * 60 * 60 * 1000
 const BUFFER_DAYS = 2
 const MIN_WINDOW_DAYS = 14
-const MAX_TIMELINE_WIDTH = 620
+const MAX_TIMELINE_WIDTH = 700
 
 const defaultEmployees: CalendarEmployeeRow[] = [
   {
@@ -318,7 +318,7 @@ export function DemoCalendar({
 
   return (
     <div className="max-w-full overflow-hidden bg-white">
-      <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
         <span className="text-sm font-medium text-slate-700">{title}</span>
       </div>
 
@@ -326,7 +326,7 @@ export function DemoCalendar({
         <div className="shrink-0 border-r border-slate-200" style={{ width: NAME_WIDTH }}>
           <div
             className="flex items-center border-b border-slate-200 bg-slate-50 px-3"
-            style={{ height: showMonthRow ? 48 : 28 }}
+            style={{ height: showMonthRow ? 52 : 32 }}
           >
             <span className="text-xs font-medium text-slate-500">Employee</span>
           </div>
@@ -342,7 +342,7 @@ export function DemoCalendar({
           ))}
         </div>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-x-auto">
           <div className="relative" style={{ width: timelineWidth }}>
             {showMonthRow && (
               <div className="flex h-5 border-b border-slate-200 bg-slate-100">
