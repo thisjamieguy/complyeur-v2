@@ -13,6 +13,7 @@
  * - Comprehensive (details JSONB)
  */
 
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import type { Json } from '@/types/database'
 
@@ -46,14 +47,32 @@ export interface AuditEntry {
   ipAddress?: string
 }
 
+interface AuditQueryClient {
+  // Supabase query builders are heavily fluent and generic; a narrow local abstraction
+  // keeps this helper compatible with both typed request clients and service-role clients.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => any
+  rpc?: (
+    fn: string,
+    args?: Record<string, unknown>
+  ) => Promise<{ data: unknown; error: { message: string } | null }>
+}
+
+interface AuditRetentionCheckpointRow {
+  chain_start_hash: string
+  purged_through: string
+}
+
 /**
  * Details structure for DSAR exports
  */
 export type DsarExportDetails = {
-  employee_name: string
   employee_id: string
+  employee_label: string
   affected_trips_count: number
-  requester_email: string
+  affected_alerts_count: number
+  affected_notification_logs_count: number
+  affected_stored_compliance_snapshots_count: number
   export_format: 'zip'
   files_included: string[]
   export_size_bytes?: number
@@ -63,7 +82,8 @@ export type DsarExportDetails = {
  * Details structure for anonymization
  */
 export type AnonymizeDetails = {
-  original_name: string
+  employee_id: string
+  employee_label: string
   anonymized_name: string
   reason?: string
 } & Record<string, unknown>
@@ -72,7 +92,8 @@ export type AnonymizeDetails = {
  * Details structure for soft delete
  */
 export type SoftDeleteDetails = {
-  employee_name: string
+  employee_id: string
+  employee_label: string
   affected_trips_count: number
   scheduled_hard_delete: string // ISO date 30 days in future
   reason?: string
@@ -82,16 +103,17 @@ export type SoftDeleteDetails = {
  * Details structure for restore
  */
 export type RestoreDetails = {
-  employee_name: string
+  employee_id: string
+  employee_label: string
   days_until_hard_delete: number
-  restored_by: string
 } & Record<string, unknown>
 
 /**
  * Details structure for hard delete
  */
 export type HardDeleteDetails = {
-  employee_name: string
+  employee_id: string
+  employee_label: string
   trips_deleted: number
   deletion_type: 'manual' | 'auto_purge'
   retention_policy_months?: number
@@ -142,6 +164,40 @@ async function createEntryHash(
   return hashHex
 }
 
+export function createEmployeeAuditLabel(employeeId: string): string {
+  const compactId = employeeId.replace(/-/g, '').slice(0, 8).toUpperCase()
+  return `EMP_${compactId}`
+}
+
+async function getAuditClient(client?: AuditQueryClient): Promise<AuditQueryClient> {
+  if (client) {
+    return client
+  }
+
+  return await createClient() as unknown as AuditQueryClient
+}
+
+async function getRetentionCheckpoint(
+  companyId: string,
+  client: AuditQueryClient
+): Promise<AuditRetentionCheckpointRow | null> {
+  const checkpointQuery = client
+    .from('gdpr_audit_retention_checkpoints')
+    .select('chain_start_hash, purged_through')
+    .eq('company_id', companyId)
+
+  const { data, error } = await checkpointQuery.single()
+
+  if (error || !data) {
+    return null
+  }
+
+  return {
+    chain_start_hash: String(data.chain_start_hash),
+    purged_through: String(data.purged_through),
+  }
+}
+
 /**
  * Logs a GDPR action with hash chain integrity.
  *
@@ -157,17 +213,17 @@ async function createEntryHash(
  *   entityType: 'employee',
  *   entityId: employee.id,
  *   details: {
- *     employee_name: employee.name,
+ *     employee_id: employee.id,
+ *     employee_label: createEmployeeAuditLabel(employee.id),
  *     affected_trips_count: trips.length,
- *     requester_email: user.email,
  *     export_format: 'zip',
  *     files_included: ['employee_data.json', 'trips.csv']
  *   }
  * })
  * ```
  */
-export async function logGdprAction(entry: AuditEntry): Promise<void> {
-  const supabase = await createClient()
+export async function logGdprAction(entry: AuditEntry, client?: AuditQueryClient): Promise<void> {
+  const supabase = await getAuditClient(client)
 
   // Get the previous hash for chain integrity
   const { data: lastEntry } = await supabase
@@ -175,10 +231,14 @@ export async function logGdprAction(entry: AuditEntry): Promise<void> {
     .select('entry_hash')
     .eq('company_id', entry.companyId)
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(1)
     .single()
 
-  const previousHash = lastEntry?.entry_hash ?? 'GENESIS'
+  const previousHash =
+    typeof lastEntry?.entry_hash === 'string' && lastEntry.entry_hash.length > 0
+      ? lastEntry.entry_hash
+      : 'GENESIS'
   const createdAt = new Date().toISOString()
 
   // Create the hash for this entry
@@ -225,13 +285,15 @@ export async function verifyAuditChain(companyId: string): Promise<{
   entriesChecked: number
   issues: Array<{ entryId: string; issue: string }>
 }> {
-  const supabase = await createClient()
+  const supabase = await getAuditClient()
+  const checkpoint = await getRetentionCheckpoint(companyId, supabase)
 
   const { data: entries, error } = await supabase
     .from('audit_log')
     .select('*')
     .eq('company_id', companyId)
     .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
 
   if (error) {
     throw new Error(`Failed to fetch audit log: ${error.message}`)
@@ -242,7 +304,7 @@ export async function verifyAuditChain(companyId: string): Promise<{
   }
 
   const issues: Array<{ entryId: string; issue: string }> = []
-  let expectedPreviousHash = 'GENESIS'
+  let expectedPreviousHash = checkpoint?.chain_start_hash ?? 'GENESIS'
 
   for (const entry of entries) {
     // Check previous hash matches expected
@@ -369,4 +431,48 @@ export async function getGdprAuditLog(
     userId: entry.user_id,
     createdAt: entry.created_at,
   }))
+}
+
+export interface AuditRetentionPurgeResult {
+  companiesAffected: number
+  totalDeletedRows: number
+  checkpoints: Array<{
+    companyId: string
+    deletedRows: number
+    purgedThrough: string
+    chainStartHash: string
+  }>
+}
+
+export async function purgeExpiredGdprAuditLogs(
+  retentionDays: number = 90,
+  client?: AuditQueryClient
+): Promise<AuditRetentionPurgeResult> {
+  const supabase = client ?? (createAdminClient() as unknown as AuditQueryClient)
+
+  if (!supabase.rpc) {
+    throw new Error('Supabase RPC client is required for GDPR audit retention cleanup')
+  }
+
+  const { data, error } = await supabase.rpc('purge_expired_gdpr_audit_logs', {
+    retention_days: retentionDays,
+  })
+
+  if (error) {
+    throw new Error(`Failed to purge expired GDPR audit logs: ${error.message}`)
+  }
+
+  const rows = Array.isArray(data) ? data as Array<Record<string, unknown>> : []
+  const checkpoints = rows.map((row) => ({
+    companyId: String(row.company_id),
+    deletedRows: Number(row.deleted_rows ?? 0),
+    purgedThrough: String(row.purged_through),
+    chainStartHash: String(row.chain_start_hash),
+  }))
+
+  return {
+    companiesAffected: checkpoints.length,
+    totalDeletedRows: checkpoints.reduce((sum, row) => sum + row.deletedRows, 0),
+    checkpoints,
+  }
 }

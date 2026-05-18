@@ -17,7 +17,7 @@ Anyone actioning a deletion request must complete **all** steps in this document
 Deletion requests may arrive via:
 
 - **Email** to `privacy@complyeur.com`
-- **In-app** account deletion (Settings → Account → Delete Account)
+- **Manual request via support/admin** for company-account deletion
 - **Written request** to the postal address listed in the Privacy Policy
 
 ### Before acting
@@ -29,22 +29,15 @@ Deletion requests may arrive via:
 
 ---
 
-## 2. In-App Self-Service Deletion
+## 2. Current Product Scope
 
-ComplyEUR provides a built-in account deletion flow at **Settings → Account → Delete Account**.
+ComplyEUR currently provides **employee-level** GDPR tooling in-app:
 
-When a user initiates this:
+1. Company owners and administrators can generate employee DSAR exports.
+2. Company owners and administrators can soft-delete or anonymize employee records.
+3. Soft-deleted employee records enter a **30-day recovery window** before permanent deletion by the nightly GDPR retention cron job (`/api/gdpr/cron/retention`).
 
-1. The account enters a **30-day soft-deletion window**. The user can recover their account during this period by logging back in.
-2. After 30 days, the nightly GDPR retention cron job (`/api/gdpr/cron/retention`) permanently deletes:
-   - All trip records for employees under the company
-   - All employee records
-   - All company settings, import sessions, and column mappings
-   - The company record itself
-   - The Supabase Auth user record
-3. Encrypted database backups containing the data are purged after **90 days** (the backup retention window).
-
-For self-service deletions, steps 3–6 below (Stripe and Resend) are **not** handled automatically. A manual check should be performed within 7 days of the 30-day soft-deletion window closing.
+ComplyEUR does **not** currently provide a self-service company/account deletion flow in Settings. Company-level deletion requests are handled manually by the privacy/admin team using the process below.
 
 ---
 
@@ -55,28 +48,25 @@ Use these steps when processing a deletion request that did not come through the
 ### 3.1 Identify the company record
 
 ```sql
--- Find company by email (use Supabase SQL Editor on production project)
-SELECT id, name, email, created_at, deleted_at
-FROM companies
-WHERE email = '<requestor-email>';
+-- Find the requestor profile and linked company (use Supabase SQL Editor on production project)
+SELECT p.id, p.email, p.company_id, c.name, c.created_at
+FROM profiles p
+JOIN companies c ON c.id = p.company_id
+WHERE p.email = '<requestor-email>';
 ```
 
 Note the `company_id` (UUID). This is the scope for all deletion steps.
 
-### 3.2 Verify deletion status
+### 3.2 Company-level deletion handling
 
-If `deleted_at IS NOT NULL`, the account is already in the soft-deletion window. Skip to step 3.4.
+There is no `companies.deleted_at` workflow in the current schema. For company/account deletion requests:
 
-### 3.3 Initiate soft deletion (if not already done)
+1. Verify the requestor and collect the `company_id`.
+2. Suspend or otherwise block account access through admin controls before data removal.
+3. Remove operational company data from the application database.
+4. Retain GDPR audit evidence for the documented retention period before final company-row cleanup if needed.
 
-```sql
--- Mark company as deleted (triggers 30-day retention window)
-UPDATE companies
-SET deleted_at = NOW()
-WHERE id = '<company-id>';
-```
-
-### 3.4 Immediate hard deletion (if requested urgently or 30-day window has passed)
+### 3.3 Remove operational company data
 
 Run the following in the Supabase SQL Editor on the **production** project (`bewydxxynjtfpytunlcq`). Execute in order — foreign key constraints require child records to be deleted before parent records.
 
@@ -107,16 +97,18 @@ DELETE FROM company_entitlements WHERE company_id = '<company-id>';
 -- 8. Delete background jobs
 DELETE FROM background_jobs WHERE company_id = '<company-id>';
 
--- 9. Delete audit log entries
--- Note: audit_log is retained for 90 days per legal obligation.
--- Delete only if explicitly requested AND no legal hold applies.
--- DELETE FROM audit_log WHERE company_id = '<company-id>';
+-- 9. Audit log handling
+-- audit_log is retained for 90 days for security and accountability.
+-- A scheduled retention function purges eligible rows automatically and
+-- preserves a hash-chain checkpoint for later verification.
+-- Do not manually delete audit_log rows unless legal counsel approves it.
 
--- 10. Delete the company record
+-- 10. Delete the company record only after audit-log retention obligations
+-- and any financial/legal holds have been reviewed.
 DELETE FROM companies WHERE id = '<company-id>';
 ```
 
-### 3.5 Delete the Supabase Auth user
+### 3.4 Delete the Supabase Auth user
 
 The Auth user record in `auth.users` is separate from the application data. To delete it:
 
@@ -138,7 +130,7 @@ const { error } = await supabase.auth.admin.deleteUser('<auth-user-id>')
 if (error) throw error
 ```
 
-### 3.6 Verify deletion
+### 3.5 Verify deletion
 
 ```sql
 -- Confirm no data remains
@@ -211,8 +203,8 @@ Once all steps above are complete:
 A DSAR is a request to **receive** a copy of personal data, not to delete it. The process is:
 
 1. Verify identity (same as step 1 above).
-2. Use the in-app GDPR export feature: Settings → GDPR → Download My Data. This exports all trip and employee data in CSV format.
-3. For a complete export including audit log entries and account metadata, use the admin panel: Admin → Companies → [company] → Export Data.
+2. Use the in-app GDPR export feature: Dashboard → GDPR → Export employee data. This exports the employee record, linked trips, alerts, notification logs, stored compliance snapshots where present, and a current compliance calculation generated at export time.
+3. For account-level data outside the employee GDPR tool, use the admin tooling and database review as needed.
 4. Deliver the export to the requestor securely (encrypted email or a time-limited secure download link). Do not send unencrypted PII by email.
 5. Respond within 30 days.
 
@@ -225,7 +217,7 @@ A DSAR is a request to **receive** a copy of personal data, not to delete it. Th
 | Active account data (employees, trips) | Duration of active subscription | Contract (GDPR Art. 6(1)(b)) |
 | Soft-deleted accounts | 30 days from deletion request | User recovery window |
 | Encrypted backups | 90 days from creation | Disaster recovery |
-| Audit log entries | 90 days from event | Security / fraud prevention |
+| GDPR audit log entries | 90 days from event | Security, accountability, and fraud prevention |
 | Stripe transaction records | As required by financial law (typically 7 years) | Legal obligation (GDPR Art. 17(3)(b)) |
 | Email delivery metadata (Resend) | 30–90 days (Resend's retention) | Automatic purge |
 

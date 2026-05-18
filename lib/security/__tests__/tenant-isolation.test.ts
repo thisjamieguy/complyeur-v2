@@ -10,6 +10,10 @@ const completionMigrationPath = path.join(
   process.cwd(),
   'supabase/migrations/20260414220000_complete_tenant_isolation_hardening.sql'
 )
+const gdprRetentionMigrationPath = path.join(
+  process.cwd(),
+  'supabase/migrations/20260518110000_gdpr_audit_retention_and_export_storage.sql'
+)
 
 describe('Tenant Isolation Migration', () => {
   it('adds composite employee/company foreign keys for child tables', () => {
@@ -92,5 +96,24 @@ describe('Tenant Isolation Migration', () => {
     expect(sql).toContain('USING (false)')
     expect(sql).toContain('REVOKE SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
     expect(sql).toContain('GRANT INSERT ON TABLE public.waitlist TO anon, authenticated;')
+  })
+
+  it('adds a service-role-only GDPR audit retention purge with verification checkpoints', () => {
+    const sql = fs.readFileSync(gdprRetentionMigrationPath, 'utf8')
+
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS public.gdpr_audit_retention_checkpoints')
+    expect(sql).toContain('CREATE OR REPLACE FUNCTION public.purge_expired_gdpr_audit_logs')
+    expect(sql).toContain("current_setting('app.gdpr_audit_retention_purge', true) = 'on'")
+    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.purge_expired_gdpr_audit_logs(integer) TO service_role;')
+    expect(sql).toContain('GRANT SELECT ON TABLE public.gdpr_audit_retention_checkpoints TO authenticated;')
+  })
+
+  it('creates the gdpr-exports storage bucket as private', () => {
+    const sql = fs.readFileSync(gdprRetentionMigrationPath, 'utf8')
+
+    expect(sql).toContain('INSERT INTO storage.buckets')
+    expect(sql).toContain("'gdpr-exports'")
+    expect(sql).toContain('false')
+    expect(sql).toContain("ARRAY['application/zip']")
   })
 })

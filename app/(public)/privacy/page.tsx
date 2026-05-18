@@ -148,6 +148,10 @@ export default function PrivacyPage() {
               <strong>Google Analytics</strong> - Website analytics to understand how users interact
               with our service. This data is anonymized and used only for service improvement.
             </li>
+            <li>
+              <strong>Sentry</strong> - Error monitoring used to detect and fix application failures.
+              We use event monitoring only; browser session replay is disabled.
+            </li>
           </ul>
           <h3 className="text-xl font-semibold text-slate-900 mt-6 mb-3">Data Residency</h3>
           <p className="text-base text-slate-700 leading-relaxed">
@@ -171,9 +175,14 @@ export default function PrivacyPage() {
               remains active.
             </li>
             <li>
-              <strong>Account deletion:</strong> When you delete your account, your data enters a
-              30-day soft deletion period during which you can recover your account. After this
-              period, data is permanently deleted.
+              <strong>Employee deletion and anonymization:</strong> Company administrators can use
+              the in-app GDPR tools to soft-delete or anonymize employee records. Soft-deleted
+              employee records enter a 30-day recovery window before permanent deletion.
+            </li>
+            <li>
+              <strong>Company account deletion requests:</strong> Company-level deletion requests
+              are currently handled manually by our privacy team after identity verification. They
+              are not currently initiated through self-service settings.
             </li>
             <li>
               <strong>Backups:</strong> Encrypted backups are retained for 90 days for disaster
@@ -196,19 +205,22 @@ export default function PrivacyPage() {
           <ul className="text-base text-slate-700 ml-6 list-disc space-y-2 mt-4">
             <li>
               <strong>Right to Access:</strong> You can request a copy of all personal data we
-              hold about you. Use the &quot;Download My Data&quot; feature in your account settings.
+              hold about you. Company administrators can use the in-app GDPR export tools for
+              employee records, or you can contact us directly for account-level requests.
             </li>
             <li>
               <strong>Right to Rectification:</strong> You can correct any inaccurate personal
               data through your account settings.
             </li>
             <li>
-              <strong>Right to Erasure:</strong> You can delete your account and all associated
-              data through the account settings. This initiates our 30-day soft deletion process.
+              <strong>Right to Erasure:</strong> You can request deletion of your account or your
+              personal data by contacting our privacy team. Company administrators can also
+              soft-delete or anonymize employee records through the in-app GDPR tools.
             </li>
             <li>
               <strong>Right to Data Portability:</strong> You can export your data in CSV format
-              using the &quot;Export Data&quot; feature.
+              using the available export tools where applicable, or request a machine-readable copy
+              from our privacy team.
             </li>
             <li>
               <strong>Right to Object:</strong> You can opt out of non-essential communications

@@ -17,6 +17,10 @@ import { employeeIdSchema } from '@/lib/validations/gdpr'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { isOwnerOrAdmin } from '@/lib/permissions'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
+import {
+  cleanupExpiredGdprExportArchives,
+  storeGdprExportArchive,
+} from '@/lib/gdpr/export-storage'
 
 /**
  * Gets all employees for the GDPR tools page.
@@ -130,41 +134,22 @@ export async function requestDsarExport(employeeId: string): Promise<{
 
   const zipSize = result.zipBuffer.length
 
-  // For large exports, try to use Supabase storage
+  // For large exports, use a private Supabase storage bucket with short-lived signed URLs
   if (zipSize > MAX_BASE64_EXPORT_SIZE) {
-    const exportId = crypto.randomUUID()
-    const storagePath = `dsar-exports/${exportId}/${result.fileName}`
+    try {
+      await cleanupExpiredGdprExportArchives()
+      const { signedUrl } = await storeGdprExportArchive(result.zipBuffer, result.fileName)
 
-    // Try to upload to storage bucket
-    const { error: uploadError } = await supabase.storage
-      .from('gdpr-exports')
-      .upload(storagePath, result.zipBuffer, {
-        contentType: 'application/zip',
-        cacheControl: '300', // 5 minute cache
-      })
-
-    if (!uploadError) {
-      // Generate signed URL (expires in 1 hour)
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from('gdpr-exports')
-        .createSignedUrl(storagePath, 3600)
-
-      if (!signedUrlError && signedUrlData?.signedUrl) {
-        revalidatePath('/gdpr')
-        return {
-          success: true,
-          downloadUrl: signedUrlData.signedUrl,
-          fileName: result.fileName,
-        }
+      revalidatePath('/gdpr')
+      return {
+        success: true,
+        downloadUrl: signedUrl,
+        fileName: result.fileName,
       }
+    } catch (storageError) {
+      // If secure storage fails, warn but continue with base64 fallback where possible.
+      console.warn('[DSAR Export] Secure storage upload failed, falling back to inline download.', storageError)
     }
-
-    // If storage upload failed, warn but continue with base64 fallback
-    console.warn(
-      '[DSAR Export] Storage upload failed, falling back to base64. ' +
-      'Consider setting up gdpr-exports storage bucket for large exports.',
-      uploadError
-    )
   }
 
   // For small exports or if storage failed, use base64 encoding

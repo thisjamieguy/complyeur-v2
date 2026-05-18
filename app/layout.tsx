@@ -5,7 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { MaintenanceBanner } from "@/components/ui/maintenance-banner";
 import { ConsentAwareGoogleAnalytics } from "@/components/analytics/consent-aware-google-analytics";
-import { ConsentAwareMicrosoftClarity } from "@/components/analytics/consent-aware-microsoft-clarity";
+import { SELF_SERVE_PLANS } from "@/lib/billing/plans";
 import { defaultMetadata, SITE_URL, X_HANDLE } from "@/lib/metadata";
 import "./globals.css";
 
@@ -36,6 +36,9 @@ export const metadata: Metadata = defaultMetadata;
 
 // Hoisted to module scope so they're computed once at build time, not per-request.
 const xProfileUrl = `https://x.com/${X_HANDLE.replace(/^@/, '')}`
+const selfServeMonthlyPrices = SELF_SERVE_PLANS.map((plan) => plan.monthlyPriceGbp)
+const lowestMonthlyPriceGbp = Math.min(...selfServeMonthlyPrices)
+const highestMonthlyPriceGbp = Math.max(...selfServeMonthlyPrices)
 
 const structuredDataGraph = {
   "@context": "https://schema.org",
@@ -85,11 +88,13 @@ const structuredDataGraph = {
         "GDPR compliant data handling",
       ],
       offers: {
-        "@type": "Offer",
-        availability: "https://schema.org/PreOrder",
-        price: "0",
+        "@type": "AggregateOffer",
+        url: `${SITE_URL}/pricing`,
+        availability: "https://schema.org/InStock",
+        lowPrice: `${lowestMonthlyPriceGbp}`,
+        highPrice: `${highestMonthlyPriceGbp}`,
+        offerCount: `${SELF_SERVE_PLANS.length}`,
         priceCurrency: "GBP",
-        priceValidUntil: "2026-12-31",
       },
       publisher: {
         "@id": `${SITE_URL}/#organization`,
@@ -134,9 +139,6 @@ export default function RootLayout({
         {enableSpeedInsights && <SpeedInsights />}
         {process.env.NODE_ENV === 'production' && (
           <ConsentAwareGoogleAnalytics gaId="G-PKKZZFWD63" />
-        )}
-        {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_CLARITY_ID && (
-          <ConsentAwareMicrosoftClarity clarityId={process.env.NEXT_PUBLIC_CLARITY_ID} />
         )}
       </body>
     </html>

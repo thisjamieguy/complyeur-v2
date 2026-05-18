@@ -30,7 +30,7 @@ ComplyEur demonstrates a strong security posture for a multi-tenant B2B SaaS app
 | **API Route Security** | PASS | DSAR requires admin auth; CRON uses fail-closed auth with `CRON_SECRET` | None |
 | **Dashboard RPC Function** | PASS | Fixed to derive `company_id` from `auth.uid()` — no parameter injection possible | None |
 | **Soft-Delete Filtering** | PASS | RLS filters `deleted_at IS NULL` for regular users; admins see deleted records | None |
-| **Storage Buckets** | N/A | No storage buckets configured (no file uploads in current implementation) | N/A |
+| **Storage Buckets** | `gdpr-exports` | Private DSAR export bucket created by migration `20260518110000_gdpr_audit_retention_and_export_storage.sql`; short-lived signed URLs and cleanup required | Verify production bucket state after deploy |
 | **Realtime Exposure** | PASS | No realtime subscriptions configured; business tables protected by RLS regardless | None |
 | **Test Email Endpoint** | INFO | `/api/test-email` is public but only renders HTML preview; marked TEMPORARY | Low |
 

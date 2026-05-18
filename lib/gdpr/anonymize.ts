@@ -11,13 +11,17 @@
  * - Replace name with ANON_[first 8 chars of UUID]
  * - Keep all trip data intact (country, dates, compliance status)
  * - Set anonymized_at timestamp
- * - Log original name in audit (for regulatory proof)
+ * - Log the employee identifier and anonymized label in the audit trail
  *
  * This is an IRREVERSIBLE operation.
  */
 
 import { createClient } from '@/lib/supabase/server'
-import { logGdprAction, type AnonymizeDetails } from './audit'
+import {
+  createEmployeeAuditLabel,
+  logGdprAction,
+  type AnonymizeDetails,
+} from './audit'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import { requireOwnerOrAdminMutation } from '@/lib/security/authorization'
 
@@ -55,8 +59,7 @@ export function generateAnonymizedName(employeeId: string): string {
 /**
  * Anonymizes an employee's personal data while preserving trip history.
  *
- * This operation is IRREVERSIBLE. The original name is logged to the
- * audit trail for regulatory compliance.
+ * This operation is IRREVERSIBLE.
  *
  * @param employeeId - The employee to anonymize
  * @param reason - Optional reason for anonymization (logged for compliance)
@@ -167,9 +170,10 @@ export async function anonymizeEmployee(
       }
     }
 
-    // Log to audit trail with ORIGINAL name for regulatory compliance
+    // Log a minimized audit record without retaining the original name.
     const auditDetails: AnonymizeDetails = {
-      original_name: originalName,
+      employee_id: employeeId,
+      employee_label: createEmployeeAuditLabel(employeeId),
       anonymized_name: anonymizedName,
       reason,
     }

@@ -25,6 +25,7 @@ describe('buildContentSecurityPolicy', () => {
     expect(scriptSrcDirective).not.toContain("'unsafe-eval'")
     expect(scriptSrcDirective).not.toContain("'strict-dynamic'")
     expect(scriptSrcDirective).toContain('https://cdn-cookieyes.com')
+    expect(scriptSrcDirective).not.toContain('clarity.ms')
     expect(csp).toContain('upgrade-insecure-requests')
   })
 

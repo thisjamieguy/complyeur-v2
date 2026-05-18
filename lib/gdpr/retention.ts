@@ -15,9 +15,15 @@
  */
 
 import { subMonths, subDays, format } from 'date-fns'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
-import { logGdprAction, type AutoPurgeDetails } from './audit'
+import {
+  logGdprAction,
+  purgeExpiredGdprAuditLogs,
+  type AutoPurgeDetails,
+} from './audit'
+import { cleanupExpiredGdprExportArchives } from './export-storage'
 import { hardDeleteEmployee, RECOVERY_PERIOD_DAYS } from './soft-delete'
 
 /**
@@ -40,6 +46,8 @@ export interface PurgeResult {
   companiesProcessed: number
   totalTripsDeleted: number
   totalEmployeesDeleted: number
+  totalAuditLogRowsDeleted: number
+  totalExportArchivesDeleted: number
   results: CompanyPurgeResult[]
   errors: string[]
   executionTime: number
@@ -54,9 +62,11 @@ export interface PurgeResult {
  */
 export async function runRetentionPurge(): Promise<PurgeResult> {
   const startTime = Date.now()
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const results: CompanyPurgeResult[] = []
   const globalErrors: string[] = []
+  let totalAuditLogRowsDeleted = 0
+  let totalExportArchivesDeleted = 0
 
   try {
     // Get all companies with their retention settings
@@ -76,6 +86,8 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
         companiesProcessed: 0,
         totalTripsDeleted: 0,
         totalEmployeesDeleted: 0,
+        totalAuditLogRowsDeleted: 0,
+        totalExportArchivesDeleted: 0,
         results: [],
         errors: [`Failed to fetch companies: ${companiesError.message}`],
         executionTime: Date.now() - startTime,
@@ -88,6 +100,8 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
         companiesProcessed: 0,
         totalTripsDeleted: 0,
         totalEmployeesDeleted: 0,
+        totalAuditLogRowsDeleted: 0,
+        totalExportArchivesDeleted: 0,
         results: [],
         errors: [],
         executionTime: Date.now() - startTime,
@@ -112,11 +126,31 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
     const totalTrips = results.reduce((sum, r) => sum + r.tripsDeleted, 0)
     const totalEmployees = results.reduce((sum, r) => sum + r.employeesDeleted, 0)
 
+    try {
+      const auditRetentionResult = await purgeExpiredGdprAuditLogs(90, supabase as never)
+      totalAuditLogRowsDeleted = auditRetentionResult.totalDeletedRows
+    } catch (error) {
+      globalErrors.push(
+        error instanceof Error ? error.message : 'Failed to purge expired GDPR audit logs'
+      )
+    }
+
+    try {
+      const exportCleanupResult = await cleanupExpiredGdprExportArchives()
+      totalExportArchivesDeleted = exportCleanupResult.deletedCount
+    } catch (error) {
+      globalErrors.push(
+        error instanceof Error ? error.message : 'Failed to purge expired GDPR export archives'
+      )
+    }
+
     return {
-      success: results.every((r) => r.errors.length === 0),
+      success: results.every((r) => r.errors.length === 0) && globalErrors.length === 0,
       companiesProcessed: results.length,
       totalTripsDeleted: totalTrips,
       totalEmployeesDeleted: totalEmployees,
+      totalAuditLogRowsDeleted,
+      totalExportArchivesDeleted,
       results,
       errors: globalErrors,
       executionTime: Date.now() - startTime,
@@ -127,6 +161,8 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
       companiesProcessed: 0,
       totalTripsDeleted: 0,
       totalEmployeesDeleted: 0,
+      totalAuditLogRowsDeleted: 0,
+      totalExportArchivesDeleted: 0,
       results,
       errors: [error instanceof Error ? error.message : 'Unknown error'],
       executionTime: Date.now() - startTime,
@@ -138,7 +174,7 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
  * Purges expired data for a single company.
  */
 async function purgeCompanyData(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createAdminClient>,
   companyId: string,
   companyName: string,
   retentionMonths: number
@@ -196,7 +232,10 @@ async function purgeCompanyData(
       errors.push(`Failed to fetch expired employees: ${empFetchError.message}`)
     } else if (expiredEmployees && expiredEmployees.length > 0) {
       for (const emp of expiredEmployees) {
-        const result = await hardDeleteEmployee(emp.id, companyId, true)
+        const result = await hardDeleteEmployee(emp.id, companyId, true, {
+          client: supabase as never,
+          auditUserId: 'SYSTEM',
+        })
         if (result.success) {
           employeesDeleted++
           tripsDeleted += result.tripsDeleted
@@ -234,7 +273,10 @@ async function purgeCompanyData(
       // Only delete employees with zero trips
       for (const emp of orphanedEmployees) {
         if (!employeesWithTrips.has(emp.id)) {
-          const result = await hardDeleteEmployee(emp.id, companyId, true)
+          const result = await hardDeleteEmployee(emp.id, companyId, true, {
+            client: supabase as never,
+            auditUserId: 'SYSTEM',
+          })
           if (result.success) {
             employeesDeleted++
           } else if (result.error) {
@@ -260,7 +302,7 @@ async function purgeCompanyData(
         entityType: 'batch',
         entityId: `purge-${format(now, 'yyyyMMdd')}`,
         details: auditDetails,
-      })
+      }, supabase as never)
     }
   } catch (error) {
     errors.push(error instanceof Error ? error.message : 'Unknown error')

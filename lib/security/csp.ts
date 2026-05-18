@@ -35,7 +35,6 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
         'https://*.supabase.co',
         'https://*.vercel-scripts.com',
         'https://cdn-cookieyes.com',
-        'https://www.clarity.ms',
       ]
     : [
         "'self'",
@@ -44,7 +43,6 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
         'https://*.supabase.co',
         'https://*.vercel-scripts.com',
         'https://cdn-cookieyes.com',
-        'https://www.clarity.ms',
       ]
 
   const directives = [
@@ -65,7 +63,7 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     // that compute style values dynamically per render. Revisit if any of the
     // named libraries publish a nonce-friendly mode.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data: https://*.supabase.co https://c.clarity.ms",
+    "img-src 'self' blob: data: https://*.supabase.co",
     "font-src 'self'",
     "object-src 'none'",
     "worker-src 'self'",
@@ -74,8 +72,8 @@ export function buildContentSecurityPolicy(options: ContentSecurityPolicyOptions
     // CSP blocks the connection, HMR stops working, and the console fills
     // with retry errors that mask real bugs.
     isProduction
-      ? "connect-src 'self' https://*.supabase.co https://*.sentry.io https://cdn-cookieyes.com https://log.cookieyes.com https://www.clarity.ms https://c.clarity.ms"
-      : "connect-src 'self' ws://localhost:* ws://127.0.0.1:* https://*.supabase.co https://*.sentry.io https://cdn-cookieyes.com https://log.cookieyes.com https://www.clarity.ms https://c.clarity.ms",
+      ? "connect-src 'self' https://*.supabase.co https://*.sentry.io https://cdn-cookieyes.com https://log.cookieyes.com"
+      : "connect-src 'self' ws://localhost:* ws://127.0.0.1:* https://*.supabase.co https://*.sentry.io https://cdn-cookieyes.com https://log.cookieyes.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
