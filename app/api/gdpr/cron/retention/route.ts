@@ -37,6 +37,8 @@ async function handleRetentionPurge(): Promise<NextResponse> {
       companiesProcessed: result.companiesProcessed,
       totalTripsDeleted: result.totalTripsDeleted,
       totalEmployeesDeleted: result.totalEmployeesDeleted,
+      totalAuditLogRowsDeleted: result.totalAuditLogRowsDeleted,
+      totalExportArchivesDeleted: result.totalExportArchivesDeleted,
       executionTime: `${result.executionTime}ms`,
     })
 
@@ -50,6 +52,8 @@ async function handleRetentionPurge(): Promise<NextResponse> {
         companiesProcessed: result.companiesProcessed,
         tripsDeleted: result.totalTripsDeleted,
         employeesDeleted: result.totalEmployeesDeleted,
+        auditLogRowsDeleted: result.totalAuditLogRowsDeleted,
+        exportArchivesDeleted: result.totalExportArchivesDeleted,
         executionTimeMs: result.executionTime,
       },
       errors: result.errors.length > 0 ? result.errors : undefined,

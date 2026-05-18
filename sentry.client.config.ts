@@ -15,19 +15,6 @@ Sentry.init({
   // This reduces costs while still providing meaningful data
   tracesSampleRate: 0.1,
 
-  // Session replay sampling: 5% of sessions, 100% when errors occur
-  replaysSessionSampleRate: 0.05,
-  replaysOnErrorSampleRate: 1.0,
-
   // Disable in development to avoid noise
   enabled: isSentryRuntimeEnabled,
-
-  // Integrate with existing error boundary
-  integrations: [
-    Sentry.replayIntegration({
-      // Additional Replay configuration goes in here
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
-  ],
 })

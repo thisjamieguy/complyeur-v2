@@ -20,6 +20,7 @@
 import { addDays, format, differenceInDays } from 'date-fns'
 import { createClient } from '@/lib/supabase/server'
 import {
+  createEmployeeAuditLabel,
   logGdprAction,
   type SoftDeleteDetails,
   type RestoreDetails,
@@ -152,7 +153,8 @@ export async function softDeleteEmployee(
 
     // Log to audit trail
     const auditDetails: SoftDeleteDetails = {
-      employee_name: employee.name,
+      employee_id: employeeId,
+      employee_label: createEmployeeAuditLabel(employeeId),
       affected_trips_count: tripCount ?? 0,
       scheduled_hard_delete: scheduledHardDelete.toISOString(),
       reason,
@@ -308,9 +310,9 @@ export async function restoreEmployee(
 
     // Log to audit trail
     const auditDetails: RestoreDetails = {
-      employee_name: employee.name,
+      employee_id: employeeId,
+      employee_label: createEmployeeAuditLabel(employeeId),
       days_until_hard_delete: daysUntilHardDelete,
-      restored_by: access.user.email ?? 'unknown',
     }
 
     await logGdprAction({
@@ -405,9 +407,13 @@ export async function getDeletedEmployees(): Promise<DeletedEmployee[]> {
 export async function hardDeleteEmployee(
   employeeId: string,
   companyId: string,
-  isAutoPurge: boolean = true
+  isAutoPurge: boolean = true,
+  options?: {
+    client?: Awaited<ReturnType<typeof createClient>>
+    auditUserId?: string
+  }
 ): Promise<{ success: boolean; tripsDeleted: number; error?: string }> {
-  const supabase = await createClient()
+  const supabase = options?.client ?? await createClient()
 
   try {
     // Get employee info for audit log
@@ -445,19 +451,20 @@ export async function hardDeleteEmployee(
     // Log to audit trail
     // Note: For auto-purge, we use a system user ID
     const auditDetails: HardDeleteDetails = {
-      employee_name: employee.name,
+      employee_id: employeeId,
+      employee_label: createEmployeeAuditLabel(employeeId),
       trips_deleted: tripCount ?? 0,
       deletion_type: isAutoPurge ? 'auto_purge' : 'manual',
     }
 
     await logGdprAction({
       companyId,
-      userId: 'SYSTEM', // System-initiated action
+      userId: options?.auditUserId ?? 'SYSTEM', // System-initiated action
       action: 'HARD_DELETE',
       entityType: 'employee',
       entityId: employeeId,
       details: auditDetails,
-    })
+    }, options?.client as Parameters<typeof logGdprAction>[1])
 
     return { success: true, tripsDeleted: tripCount ?? 0 }
   } catch (error) {
