@@ -142,9 +142,9 @@ export function ExportForm({ employees, employeeCount }: ExportFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Export Compliance Data</CardTitle>
+        <CardTitle>Configure your report</CardTitle>
         <CardDescription>
-          Generate CSV or PDF reports for compliance tracking and audit submissions.
+          Choose scope, date range, and format. PDF reports include a unique document ID for audit submissions.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -157,28 +157,28 @@ export function ExportForm({ employees, employeeCount }: ExportFormProps) {
               selected={scope === 'all'}
               onClick={() => setScope('all')}
               title={`All employees (${employeeCount})`}
-              description="Export data for all employees"
+              description="Full company overview — use for periodic audits"
             />
             <ScopeOption
               value="single"
               selected={scope === 'single'}
               onClick={() => setScope('single')}
               title="Single employee"
-              description="Export data for one employee"
+              description="Individual report with full trip history"
             />
             <ScopeOption
               value="filtered"
               selected={scope === 'filtered'}
               onClick={() => setScope('filtered')}
-              title="Filtered by status"
-              description="Export by compliance status"
+              title="By compliance status"
+              description="Export only at-risk or non-compliant employees"
             />
             <ScopeOption
               value="future-alerts"
               selected={scope === 'future-alerts'}
               onClick={() => setScope('future-alerts')}
-              title="Future job alerts"
-              description="Export planned trip forecasts"
+              title="Planned trip forecast"
+              description="Upcoming trips and their predicted compliance"
             />
           </div>
         </div>
@@ -299,7 +299,7 @@ export function ExportForm({ employees, employeeCount }: ExportFormProps) {
               onClick={() => setExportFormat('csv')}
               icon={<FileSpreadsheet className="h-5 w-5" />}
               title="CSV"
-              description="For spreadsheet analysis"
+              description="Open in Excel or Google Sheets"
             />
             <FormatOption
               value="pdf"
@@ -307,31 +307,17 @@ export function ExportForm({ employees, employeeCount }: ExportFormProps) {
               onClick={() => setExportFormat('pdf')}
               icon={<FileText className="h-5 w-5" />}
               title="PDF"
-              description="For audit submission"
+              description="Formatted for audit — includes document ID"
             />
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end gap-3">
-        <Button
-          variant="outline"
-          disabled={isLoading}
-          onClick={() => {
-            setScope('all')
-            setEmployeeId(undefined)
-            setStatusFilter(undefined)
-            setAlertsFilter('all')
-            setDateRange(undefined)
-            setExportFormat('pdf')
-          }}
-        >
-          Reset
-        </Button>
+      <CardFooter className="flex justify-end">
         <Button onClick={handleExport} disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating...
+              Generating…
             </>
           ) : (
             <>
@@ -422,12 +408,7 @@ function FormatOption({
         {icon}
       </div>
       <div>
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm">{title}</span>
-          {selected && (
-            <span className="text-xs text-primary">(Selected)</span>
-          )}
-        </div>
+        <span className="font-medium text-sm">{title}</span>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
     </button>
