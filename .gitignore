@@ -69,3 +69,9 @@ audit/
 
 # Editor / IDE
 .cursor/
+
+# Superpowers brainstorming sessions
+.superpowers/
+
+# Screenshot artifacts
+.gstack-screenshots/

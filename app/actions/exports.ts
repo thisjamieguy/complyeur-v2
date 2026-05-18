@@ -381,6 +381,49 @@ async function logExport(
   }
 }
 
+export interface RecentExport {
+  id: string
+  documentId: string
+  reportType: 'individual_employee' | 'compliance_summary' | 'future_alerts'
+  exportType: 'csv' | 'pdf'
+  recordCount: number
+  dateRange: { start: string; end: string }
+  generatedAt: string
+}
+
+/**
+ * Fetch the most recent exports for the current company from the audit log.
+ */
+export async function getRecentExports(limit = 5): Promise<RecentExport[]> {
+  const supabase = await createClient()
+
+  const auth = await requireExportPermission(supabase, 'csv')
+  if (!auth.allowed || !auth.profile.company_id) return []
+
+  const { data } = await supabase
+    .from('audit_log')
+    .select('id, details, created_at')
+    .eq('company_id', auth.profile.company_id)
+    .eq('action', 'export_generated')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (!data) return []
+
+  return data.map((row) => {
+    const d = row.details as Record<string, unknown>
+    return {
+      id: row.id as string,
+      documentId: (d?.documentId as string) ?? '—',
+      reportType: (d?.reportType as RecentExport['reportType']) ?? 'compliance_summary',
+      exportType: (d?.export_type as 'csv' | 'pdf') ?? 'csv',
+      recordCount: (d?.recordCount as number) ?? 0,
+      dateRange: (d?.dateRange as { start: string; end: string }) ?? { start: '', end: '' },
+      generatedAt: row.created_at as string,
+    }
+  })
+}
+
 /**
  * Get list of employees for export form dropdown.
  * Wrapped with cache() for per-request deduplication.
