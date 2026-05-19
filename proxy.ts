@@ -161,6 +161,16 @@ export async function proxy(request: NextRequest) {
     if (rateLimitResponse) return withSecurityHeaders(rateLimitResponse)
   }
 
+  // Anonymous auth pages are prerendered static content. Avoid a Supabase
+  // session lookup unless there is an auth cookie that may need redirecting.
+  if (
+    isAuthRoute &&
+    (request.method === 'GET' || request.method === 'HEAD') &&
+    !hasSupabaseAuthCookie(request)
+  ) {
+    return withSecurityHeaders(NextResponse.next())
+  }
+
   // Public marketing routes do not require per-request Supabase auth hydration.
   // Anonymous traffic skips auth hydration, but authenticated requests still need
   // server-side session timeout enforcement and activity tracking.

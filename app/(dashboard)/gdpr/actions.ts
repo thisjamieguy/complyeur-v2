@@ -22,6 +22,22 @@ import {
   storeGdprExportArchive,
 } from '@/lib/gdpr/export-storage'
 
+interface GdprPageData {
+  hasAccess: boolean
+  employees: Array<{ id: string; name: string; isAnonymized: boolean }>
+  deletedEmployees: DeletedEmployee[]
+  auditLog: Array<{
+    id: string
+    action: string
+    entityType: string
+    entityId: string | null
+    details: Record<string, unknown> | null
+    userId: string | null
+    createdAt: string
+  }>
+  retentionStats: RetentionStats | null
+}
+
 /**
  * Gets all employees for the GDPR tools page.
  * Excludes soft-deleted and anonymized employees.
@@ -79,6 +95,83 @@ export async function getEmployeesForGdpr(): Promise<
     name: emp.name,
     isAnonymized: !!(emp as Record<string, unknown>).anonymized_at,
   }))
+}
+
+/**
+ * Loads initial GDPR page data with a single permission and rate-limit check.
+ * The individual server actions remain rate-limited for client-triggered
+ * mutations and refreshes.
+ */
+export async function getGdprPageData(): Promise<GdprPageData> {
+  try {
+    const ctx = await requireCompanyAccessCached()
+
+    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getGdprPageData')
+    if (!rateLimit.allowed || !isOwnerOrAdmin(ctx.role)) {
+      return {
+        hasAccess: false,
+        employees: [],
+        deletedEmployees: [],
+        auditLog: [],
+        retentionStats: null,
+      }
+    }
+
+    const supabase = await createClient()
+
+    const employeesPromise = supabase
+      .from('employees')
+      .select('id, name, anonymized_at, deleted_at')
+      .eq('company_id', ctx.companyId)
+      .is('deleted_at', null)
+      .order('name')
+
+    const [employeesResult, deletedEmployees, auditLog, retentionStats] = await Promise.all([
+      employeesPromise,
+      getDeletedEmployees(),
+      getGdprAuditLog(ctx.companyId, { limit: 10 }),
+      getRetentionStats(),
+    ])
+
+    let employees = employeesResult.data
+    let employeeError = employeesResult.error
+
+    if (employeeError) {
+      console.warn('[GDPR] GDPR columns may not exist, falling back to basic query:', employeeError.message)
+      const fallback = await supabase
+        .from('employees')
+        .select('id, name')
+        .eq('company_id', ctx.companyId)
+        .order('name')
+
+      employees = fallback.data as typeof employees
+      employeeError = fallback.error
+    }
+
+    if (employeeError) {
+      console.error('[GDPR] Failed to fetch employees:', employeeError)
+    }
+
+    return {
+      hasAccess: true,
+      employees: (employees ?? []).map((emp) => ({
+        id: emp.id,
+        name: emp.name,
+        isAnonymized: !!(emp as Record<string, unknown>).anonymized_at,
+      })),
+      deletedEmployees,
+      auditLog,
+      retentionStats,
+    }
+  } catch {
+    return {
+      hasAccess: false,
+      employees: [],
+      deletedEmployees: [],
+      auditLog: [],
+      retentionStats: null,
+    }
+  }
 }
 
 // Maximum size for base64 export (5MB) - larger exports should use storage

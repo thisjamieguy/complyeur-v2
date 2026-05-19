@@ -2,13 +2,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Shield, FileText } from 'lucide-react'
-import {
-  getEmployeesForGdpr,
-  getDeletedEmployeesAction,
-  getGdprAuditLogAction,
-  getRetentionStatsAction,
-  isAdmin,
-} from './actions'
+import { getGdprPageData } from './actions'
 import { GdprPageClient } from './gdpr-page-client'
 
 export const metadata = {
@@ -17,19 +11,12 @@ export const metadata = {
 }
 
 export default async function GdprPage() {
-  // Check admin access
-  const hasAccess = await isAdmin()
+  const { hasAccess, employees, deletedEmployees, auditLog, retentionStats } =
+    await getGdprPageData()
+
   if (!hasAccess) {
     redirect('/dashboard')
   }
-
-  // Fetch all required data in parallel
-  const [employees, deletedEmployees, auditLog, retentionStats] = await Promise.all([
-    getEmployeesForGdpr(),
-    getDeletedEmployeesAction(),
-    getGdprAuditLogAction({ limit: 10 }),
-    getRetentionStatsAction(),
-  ])
 
   return (
     <div className="space-y-8">
