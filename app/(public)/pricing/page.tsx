@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import type { BillingInterval, TierSlug } from '@/lib/billing/plans'
+import type { BillingInterval, PlanCatalogEntry, TierSlug } from '@/lib/billing/plans'
 import {
   SELF_SERVE_PLANS,
   formatGbpPrice,
@@ -14,6 +14,81 @@ import { trackEvent } from '@/lib/analytics/client'
 function formatCap(value: number | null): string {
   if (value === null) return 'Unlimited'
   return value.toLocaleString('en-GB')
+}
+
+interface ComparisonRow {
+  label: string
+  values: (plan: PlanCatalogEntry) => string | boolean
+}
+
+const COMPARISON_ROWS: readonly ComparisonRow[] = [
+  {
+    label: 'Tracked employees',
+    values: (plan) => formatCap(plan.employeeCap),
+  },
+  {
+    label: 'User accounts',
+    values: (plan) => formatCap(plan.userCap),
+  },
+  {
+    label: '90/180 rolling-day tracking',
+    values: () => true,
+  },
+  {
+    label: 'Manual trip records',
+    values: () => true,
+  },
+  {
+    label: 'CSV exports',
+    values: (plan) => plan.capabilities.canExportCsv,
+  },
+  {
+    label: 'PDF exports',
+    values: (plan) => plan.capabilities.canExportPdf,
+  },
+  {
+    label: 'Forecast checks before travel is booked',
+    values: (plan) => plan.capabilities.canForecast,
+  },
+  {
+    label: 'Calendar view',
+    values: (plan) => plan.capabilities.canCalendar,
+  },
+  {
+    label: 'CSV and Excel bulk import',
+    values: (plan) => plan.capabilities.canBulkImport,
+  },
+]
+
+function formatComparisonValue(value: string | boolean): string {
+  if (typeof value === 'string') return value
+  return value ? 'Included' : 'Not included'
+}
+
+function getPlanHighlights(plan: PlanCatalogEntry): string[] {
+  const highlights = [
+    `${formatCap(plan.employeeCap)} tracked employees`,
+    `${formatCap(plan.userCap)} user accounts`,
+    '90/180 rolling-day tracking',
+  ]
+
+  if (plan.capabilities.canForecast) {
+    highlights.push('Forecast checks before travel is booked')
+  } else {
+    highlights.push('CSV exports for compliance records')
+  }
+
+  if (plan.capabilities.canBulkImport) {
+    highlights.push('CSV and Excel bulk import')
+  } else if (plan.capabilities.canCalendar) {
+    highlights.push('Calendar view and PDF exports')
+  } else {
+    highlights.push('Manual trip records')
+  }
+
+  highlights.push('No long-term contracts')
+
+  return highlights
 }
 
 function PricingPageContent() {
@@ -156,7 +231,7 @@ function PricingPageContent() {
               Simple pricing for Schengen compliance
             </h1>
             <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-              Choose the plan that fits your team size. All plans include 90/180 tracking, trip imports, forecasting, and GBP billing. Prices are shown excluding VAT.
+              Choose the plan that fits your team size. All plans include 90/180 tracking, manual trip records, CSV exports, and GBP billing. Prices are shown excluding VAT.
             </p>
             <p className="mt-4 text-sm text-slate-500">
               Also looking for context? See <Link href="/about" className="font-medium text-brand-700 hover:underline">about</Link> and the <Link href="/faq" className="font-medium text-brand-700 hover:underline">FAQ</Link>.
@@ -265,11 +340,9 @@ function PricingPageContent() {
                   </div>
 
                   <ul className="mt-6 space-y-2 text-sm text-slate-700">
-                    <li>{formatCap(plan.employeeCap)} tracked employees</li>
-                    <li>{formatCap(plan.userCap)} user accounts</li>
-                    <li>CSV and Excel import support</li>
-                    <li>Forecast checks before travel is booked</li>
-                    <li>No long-term contracts</li>
+                    {getPlanHighlights(plan).map((highlight) => (
+                      <li key={highlight}>{highlight}</li>
+                    ))}
                   </ul>
 
                   <button
@@ -314,6 +387,63 @@ function PricingPageContent() {
               {checkoutError}
             </div>
           )}
+
+          <section className="mt-10">
+            <div className="max-w-3xl">
+              <h2 className="text-2xl font-semibold text-slate-900">Compare plans</h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                Use the table below to see exactly which limits and features are included in each self-serve tier.
+              </p>
+            </div>
+
+            <div className="mt-5 overflow-x-auto rounded-xl border border-slate-200">
+              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th scope="col" className="px-4 py-3 font-semibold text-slate-700">
+                      Feature
+                    </th>
+                    {plans.map((plan) => (
+                      <th
+                        key={plan.slug}
+                        scope="col"
+                        className="px-4 py-3 font-semibold text-slate-900"
+                      >
+                        {plan.publicName}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {COMPARISON_ROWS.map((row) => (
+                    <tr key={row.label}>
+                      <th scope="row" className="px-4 py-3 font-medium text-slate-700">
+                        {row.label}
+                      </th>
+                      {plans.map((plan) => {
+                        const value = row.values(plan)
+                        const isIncluded = value === true
+                        const isExcluded = value === false
+
+                        return (
+                          <td
+                            key={plan.slug}
+                            className={cn(
+                              'px-4 py-3 text-slate-600',
+                              isIncluded && 'font-medium text-brand-700',
+                              isExcluded && 'text-slate-400'
+                            )}
+                          >
+                            {formatComparisonValue(value)}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
           <div className="mt-10 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
             Billing is in GBP and charged either monthly or annually based on your selected cycle. Prices exclude VAT. You can change plan from Settings &gt; Billing when your team size changes.
