@@ -140,16 +140,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
 
-      <div className="landing-shell bg-[color:var(--landing-surface)] py-12 sm:py-16">
+      <div className="bg-slate-50 py-12 sm:py-16">
         <article className="mx-auto max-w-4xl px-4 sm:px-6">
-          <header className="border-b border-slate-200 pb-8">
+          <header className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <Link href="/blog" className="inline-flex text-sm font-semibold text-brand-700 hover:underline">
               Back to blog
             </Link>
 
-            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">Resources · Blog</p>
+            <p className="mt-5 inline-flex rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-700">Resources · Blog</p>
 
-            <h1 className="landing-serif mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+            <h1 className="mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
               {post.title}
             </h1>
 

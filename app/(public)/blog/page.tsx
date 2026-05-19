@@ -25,13 +25,6 @@ function truncate(value: string, maxLength: number): string {
   return `${value.slice(0, maxLength - 1).trimEnd()}…`
 }
 
-const CARD_GRADIENTS = [
-  'bg-[linear-gradient(145deg,#102a43_0%,#1f4f7c_55%,#3f8abf_100%)]',
-  'bg-[linear-gradient(145deg,#22303c_0%,#355070_55%,#6b8cae_100%)]',
-  'bg-[linear-gradient(145deg,#16324f_0%,#245781_55%,#3a7ca5_100%)]',
-  'bg-[linear-gradient(145deg,#1f2f46_0%,#3d5a80_55%,#8ca6c4_100%)]',
-] as const
-
 export default async function BlogIndexPage() {
   const posts = await getAllBlogPosts()
   const allKeywords = Array.from(
@@ -39,26 +32,26 @@ export default async function BlogIndexPage() {
   )
 
   return (
-    <div className="landing-shell bg-[color:var(--landing-surface)] py-12 sm:py-16">
+    <div className="bg-slate-50 py-12 sm:py-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <header className="max-w-4xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">Resources & insights</p>
-          <h1 className="landing-serif mt-3 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+          <p className="inline-flex rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-700">Resources & insights</p>
+          <h1 className="mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
             Schengen compliance articles for office teams
           </h1>
           <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-            Straightforward explainers on EU Entry-Exit changes, 90/180-day rules, and practical next steps.
+            Straightforward explainers on EES, Schengen 90/180-day rules, and practical compliance steps for UK business travel.
           </p>
         </header>
 
         <section className="mt-10">
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.1em] text-slate-600">Topics</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">Topics</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {allKeywords.slice(0, 8).map((keyword) => (
                 <span
                   key={keyword}
-                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700"
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-sm text-slate-700"
                 >
                   {keyword}
                 </span>
@@ -67,10 +60,10 @@ export default async function BlogIndexPage() {
           </div>
 
           <div className="mt-8 grid gap-6 sm:grid-cols-2">
-            {posts.map((post, index) => (
+            {posts.map((post) => (
               <article key={post.slug} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <Link href={`/blog/${post.slug}`} className="block">
-                  <div className={`relative aspect-[16/10] overflow-hidden ${post.coverImage ? '' : CARD_GRADIENTS[index % CARD_GRADIENTS.length]}`}>
+                  <div className={`relative aspect-[16/10] overflow-hidden ${post.coverImage ? '' : 'bg-slate-100'}`}>
                     {post.coverImage ? (
                       <Image
                         src={post.coverImage}
@@ -84,7 +77,7 @@ export default async function BlogIndexPage() {
                 </Link>
 
                 <div className="p-5">
-                  <p className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                  <p className="inline-flex rounded-xl bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                     {post.keywords[0] ?? 'Guide'}
                   </p>
 

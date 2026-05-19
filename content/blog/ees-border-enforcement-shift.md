@@ -1,9 +1,9 @@
 ---
 slug: ees-border-enforcement-shift
 title: "The EU Entry-Exit System: Why Border Enforcement Has Fundamentally Changed"
-description: "How EES changed Schengen border checks for UK business travellers after the October 12, 2025 launch, and what employers must do in 2026."
+description: "How EES changed Schengen border checks for UK business travellers after its 12 October 2025 launch and 10 April 2026 full deployment."
 publishedAt: 2025-09-15
-updatedAt: 2026-03-11
+updatedAt: 2026-05-19
 coverImage: "/blog/ees-border-shift.svg"
 keywords:
   - EU Entry-Exit System
@@ -18,7 +18,7 @@ cta:
 
 # The EU Entry-Exit System: Why Border Enforcement Has Fundamentally Changed
 
-*For UK businesses sending staff to Europe, the launch on **12 October 2025** ended discretionary passport-stamp checks and introduced automated stay tracking.*
+*For UK businesses sending staff to Europe, EES started on **12 October 2025** and became fully operational on **10 April 2026**, replacing routine passport-stamp checks with digital movement records.*
 
 ---
 
@@ -26,9 +26,9 @@ cta:
 
 Since Brexit, British travellers have been subject to the Schengen rule of 90 days in any rolling 180-day period. Before EES, enforcement depended on manual passport stamps and officer judgement.
 
-That model changed on **12 October 2025**, when the EU Entry-Exit System (EES) started operating.
+That model changed on **12 October 2025**, when the EU Entry/Exit System (EES) started operating. The EU completed the progressive deployment on **10 April 2026**.
 
-EES replaces manual stamp interpretation with biometric registration and digital entry/exit records. Days in Schengen are calculated consistently across crossings, and overstay signals are generated systematically.
+EES replaces routine manual stamp interpretation with biometric registration and digital entry/exit records. Days in Schengen are calculated consistently across crossings, and overstay signals are generated systematically.
 
 ---
 
@@ -83,8 +83,8 @@ For teams with frequent EU travel, compliance now requires a repeatable operatio
 
 ## Key Takeaways
 
-- EES has been live since **12 October 2025**.
-- Border checks now rely on digital movement records, not only passport stamps.
+- EES has been live since **12 October 2025** and fully operational since **10 April 2026**.
+- Border checks now rely on digital movement records rather than routine passport stamping.
 - The 90/180 rule is still the core limit, but enforcement is more systematic.
 - UK employers with EU travel programmes need reliable, central day tracking in 2026.
 

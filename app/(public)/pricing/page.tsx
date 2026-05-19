@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import type { BillingInterval, TierSlug } from '@/lib/billing/plans'
@@ -146,37 +145,18 @@ function PricingPageContent() {
   }, [autoStartEnabled, autoStartPlanFromUrl, promoCodeFromUrl, requestedBillingInterval, startCheckout])
 
   return (
-    <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="landing-aurora-top absolute -top-32 left-[-8rem] h-[24rem] w-[24rem] rounded-full" />
-        <div className="landing-aurora-bottom absolute right-[-8rem] top-[18rem] h-[22rem] w-[22rem] rounded-full" />
-        <div className="landing-grid absolute inset-0" />
-      </div>
-
-      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="landing-panel rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-10">
+    <div className="bg-slate-50 py-14 sm:py-16">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
           <div className="max-w-3xl">
-            <Link href="/landing" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm hover:opacity-85 transition-opacity">
-              <Image
-                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
-                alt="ComplyEur"
-                width={150}
-                height={40}
-                className="h-7 w-auto"
-                priority
-              />
-            </Link>
-            <Link href="/landing" className="mt-4 inline-flex text-sm font-semibold text-brand-700 hover:underline">
-              Back to landing
-            </Link>
-            <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+            <p className="inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-700">
               Pricing
             </p>
-            <h1 className="landing-serif mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+            <h1 className="mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
               Simple pricing for Schengen compliance
             </h1>
             <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-              Choose the plan that fits your team size. All plans include GBP billing, and prices are shown excluding VAT.
+              Choose the plan that fits your team size. All plans include 90/180 tracking, trip imports, forecasting, and GBP billing. Prices are shown excluding VAT.
             </p>
             <p className="mt-4 text-sm text-slate-500">
               Also looking for context? See <Link href="/about" className="font-medium text-brand-700 hover:underline">about</Link> and the <Link href="/faq" className="font-medium text-brand-700 hover:underline">FAQ</Link>.
@@ -209,7 +189,7 @@ function PricingPageContent() {
               aria-pressed={billingInterval === 'annual'}
             >
               Annual
-              <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
+              <span className="ml-2 rounded-xl bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800">
                 Save ~17%
               </span>
             </button>
@@ -221,7 +201,7 @@ function PricingPageContent() {
               onClick={() => setPromotionCodeEnabled((current) => !current)}
               className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-800 hover:underline"
             >
-              i have a code
+              I have a code
             </button>
             {isPromotionCodeEnabled && (
               <div className="mt-2 max-w-xs">
@@ -253,7 +233,7 @@ function PricingPageContent() {
                 <section
                   key={plan.slug}
                   className={cn(
-                    'rounded-2xl border bg-white p-6 shadow-sm',
+                    'rounded-xl border bg-white p-6 shadow-sm',
                     plan.recommended
                       ? 'border-brand-300 ring-1 ring-brand-300'
                       : 'border-slate-200'
@@ -262,7 +242,7 @@ function PricingPageContent() {
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="text-xl font-semibold text-slate-900">{plan.publicName}</h2>
                     {plan.recommended && (
-                      <span className="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
+                      <span className="rounded-xl bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
                         Most Popular
                       </span>
                     )}
@@ -287,8 +267,9 @@ function PricingPageContent() {
                   <ul className="mt-6 space-y-2 text-sm text-slate-700">
                     <li>{formatCap(plan.employeeCap)} tracked employees</li>
                     <li>{formatCap(plan.userCap)} user accounts</li>
+                    <li>CSV and Excel import support</li>
+                    <li>Forecast checks before travel is booked</li>
                     <li>No long-term contracts</li>
-                    <li>Upgrade or downgrade at renewal</li>
                   </ul>
 
                   <button
@@ -317,28 +298,28 @@ function PricingPageContent() {
           </div>
 
           {checkoutStatus === 'success' && (
-            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
               Checkout completed successfully.
             </div>
           )}
 
           {checkoutStatus === 'cancelled' && (
-            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               Checkout was cancelled. You can choose a plan and try again.
             </div>
           )}
 
           {checkoutError && (
-            <div className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
               {checkoutError}
             </div>
           )}
 
-          <div className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-            Billing is in GBP and charged either monthly or annually based on your selected cycle. Prices are shown excluding VAT.
+          <div className="mt-10 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            Billing is in GBP and charged either monthly or annually based on your selected cycle. Prices exclude VAT. You can change plan from Settings &gt; Billing when your team size changes.
           </div>
 
-          <section className="mt-8 rounded-2xl border border-brand-200/80 bg-brand-50/70 p-6">
+          <section className="mt-8 rounded-xl border border-brand-200 bg-brand-50 p-6">
             <h2 className="text-xl font-semibold text-slate-900">Need help choosing a plan?</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
               If your team has complex travel patterns, we can help you map expected traveller volume to the right tier.
