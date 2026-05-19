@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import Script from 'next/script'
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
@@ -39,7 +38,12 @@ const faqData: FAQSection[] = [
       {
         question: 'Which countries are in the Schengen Area?',
         answer:
-          'The Schengen Area includes 29 European countries: Austria, Belgium, Bulgaria, Croatia, Czech Republic, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Iceland, Italy, Latvia, Liechtenstein, Lithuania, Luxembourg, Malta, Netherlands, Norway, Poland, Portugal, Romania, Slovakia, Slovenia, Spain, Sweden, and Switzerland. Note: Ireland is NOT in Schengen.',
+          'The Schengen Area includes 29 European countries: Austria, Belgium, Bulgaria, Croatia, Czechia, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Iceland, Italy, Latvia, Liechtenstein, Lithuania, Luxembourg, Malta, Netherlands, Norway, Poland, Portugal, Romania, Slovakia, Slovenia, Spain, Sweden, and Switzerland. Ireland and Cyprus are not in Schengen.',
+      },
+      {
+        question: 'Is EES now live?',
+        answer:
+          'Yes. The EU Entry/Exit System started operating on 12 October 2025 and became fully operational on 10 April 2026. It digitally records entries and exits for non-EU nationals travelling for short stays, including UK travellers using the Schengen 90/180 allowance.',
       },
       {
         question: 'What happens if I overstay?',
@@ -98,7 +102,7 @@ const faqData: FAQSection[] = [
       {
         question: 'What is "Days Remaining"?',
         answer:
-          'Days Remaining shows how many more days an employee can spend in the Schengen Area today without exceeding the 90-day limit. This number changes daily as old trips drop out of the 180-day window and new trips are added.',
+          'Days Remaining shows how many more days an employee can spend in the Schengen Area today without exceeding the 90-day limit. This number changes daily as old trips move outside the rolling 180-day window and new trips are added.',
       },
       {
         question: 'What is the compliance briefing at the top of the Dashboard?',
@@ -283,7 +287,7 @@ const faqData: FAQSection[] = [
       {
         question: 'How does billing work?',
         answer:
-          'ComplyEur offers monthly and annual billing in GBP (excluding VAT). Each plan includes a set number of tracked employees, and you can change plans with updates taking effect on your next renewal date.',
+          'ComplyEur offers monthly and annual billing in GBP, with prices shown excluding VAT. Each plan includes a set number of tracked employees and user accounts, and you can change plans from Settings > Billing when your team size changes.',
       },
       {
         question: 'Can I cancel my subscription?',
@@ -374,7 +378,7 @@ function FAQItemComponent({ item }: { item: FAQItem }) {
 
 export default function FAQPage() {
   return (
-    <div className="landing-shell relative overflow-hidden bg-[color:var(--landing-surface)] py-14 sm:py-16">
+    <div className="bg-slate-50 py-14 sm:py-16">
       <Script
         id="faq-structured-data"
         type="application/ld+json"
@@ -383,41 +387,22 @@ export default function FAQPage() {
           __html: JSON.stringify(faqStructuredData),
         }}
       />
-      <div className="pointer-events-none absolute inset-0">
-        <div className="landing-aurora-top absolute -top-32 left-[-8rem] h-[24rem] w-[24rem] rounded-full" />
-        <div className="landing-aurora-bottom absolute right-[-8rem] top-[18rem] h-[22rem] w-[22rem] rounded-full" />
-        <div className="landing-grid absolute inset-0" />
-      </div>
-
-      <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="landing-panel rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-10">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
           <div className="max-w-3xl">
-            <Link href="/landing" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm hover:opacity-85 transition-opacity">
-              <Image
-                src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
-                alt="ComplyEur"
-                width={150}
-                height={40}
-                className="h-7 w-auto"
-                priority
-              />
-            </Link>
-            <Link href="/landing" className="mt-4 inline-flex text-sm font-semibold text-brand-700 hover:underline">
-              Back to landing
-            </Link>
-            <p className="mt-5 inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">
+            <p className="inline-flex items-center rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-700">
               FAQ
             </p>
-            <h1 className="landing-serif mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
+            <h1 className="mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
               Frequently Asked Questions
             </h1>
             <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
-              Find answers to common questions about the 90/180-day rule and using ComplyEur.
+              Find answers to common questions about the Schengen 90/180-day rule, EES, and using ComplyEur.
             </p>
             <p className="mt-4 text-sm text-slate-500">
               New here? Read <Link href="/about" className="font-medium text-brand-700 hover:underline">about ComplyEur</Link> or compare plans on <Link href="/pricing" className="font-medium text-brand-700 hover:underline">pricing</Link>.
             </p>
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+            <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
               <p className="text-sm font-semibold text-slate-900">Official Guidance</p>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
                 <li>
@@ -450,7 +435,7 @@ export default function FAQPage() {
                 <h2 className="text-xl font-semibold text-slate-900">
                   {section.title}
                 </h2>
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-white px-6 shadow-sm">
+                <div className="mt-4 rounded-xl border border-slate-200 bg-white px-6 shadow-sm">
                   {section.items.map((item, index) => (
                     <FAQItemComponent key={index} item={item} />
                   ))}
@@ -459,7 +444,7 @@ export default function FAQPage() {
             ))}
           </div>
 
-          <section className="mt-10 rounded-2xl border border-brand-200/80 bg-brand-50/70 p-6">
+          <section className="mt-10 rounded-xl border border-brand-200 bg-brand-50 p-6">
             <h3 className="text-xl font-semibold text-slate-900">
               Still have questions?
             </h3>

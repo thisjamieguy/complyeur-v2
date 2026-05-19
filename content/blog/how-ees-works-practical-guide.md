@@ -1,9 +1,9 @@
 ---
 slug: how-ees-works-practical-guide
 title: "How the EU Entry-Exit System Works: A Practical Guide for UK Businesses"
-description: "A practical breakdown of EES operations after launch, including biometric registration, rolling-day calculation, and business travel compliance implications."
+description: "A practical breakdown of EES after full deployment, including biometric registration, rolling-day calculation, and business travel compliance implications."
 publishedAt: 2025-10-20
-updatedAt: 2026-03-11
+updatedAt: 2026-05-19
 coverImage: "/blog/ees-practical-guide.svg"
 keywords:
   - EU Entry-Exit System
@@ -18,13 +18,13 @@ cta:
 
 # How the EU Entry-Exit System Works: A Practical Guide for UK Businesses
 
-*What happens at Schengen borders after the **12 October 2025** rollout, and why spreadsheet-based tracking is now a high-risk process for frequent business travel.*
+*What happens at Schengen borders now that EES is operational, and why spreadsheet-based tracking is a high-risk process for frequent business travel.*
 
 ---
 
 ## From Passport Stamps to Biometric Records
 
-EES changed border processing from stamp-led history checks to digital identity-linked travel records.
+EES changed border processing from stamp-led history checks to digital identity-linked travel records. It started operating on **12 October 2025** and became fully operational on **10 April 2026**.
 
 For UK travellers entering Schengen, first registration can involve biometric and document capture. Later crossings use that record to verify identity and update entry/exit movements.
 
@@ -97,7 +97,7 @@ Both matter, and one does not replace the other.
 
 ## Key Takeaways
 
-- EES has been operational since **12 October 2025**.
+- EES has been operational since **12 October 2025** and fully operational since **10 April 2026**.
 - Border assessment is now supported by centralised digital movement records.
 - 90/180 compliance failures are easier to detect in practice.
 - UK businesses need a reliable system of record, not manual reconciliations.
