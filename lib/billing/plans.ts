@@ -10,10 +10,22 @@ export interface PlanCatalogEntry {
   annualPriceGbp: number
   employeeCap: number | null
   userCap: number | null
+  capabilities: PlanCapabilities
   ctaLabel: string
   recommended: boolean
   showOnPricing: boolean
   badgeClassName: string
+}
+
+export interface PlanCapabilities {
+  canExportCsv: boolean
+  canExportPdf: boolean
+  canForecast: boolean
+  canCalendar: boolean
+  canBulkImport: boolean
+  canApiAccess: boolean
+  canSso: boolean
+  canAuditLogs: boolean
 }
 
 const FALLBACK_BADGE_CLASS = 'bg-slate-100 text-slate-700'
@@ -27,6 +39,16 @@ export const PLAN_CATALOG: readonly PlanCatalogEntry[] = [
     annualPriceGbp: 490,
     employeeCap: 10,
     userCap: 2,
+    capabilities: {
+      canExportCsv: true,
+      canExportPdf: false,
+      canForecast: false,
+      canCalendar: false,
+      canBulkImport: false,
+      canApiAccess: false,
+      canSso: false,
+      canAuditLogs: false,
+    },
     ctaLabel: 'Start Basic',
     recommended: false,
     showOnPricing: true,
@@ -40,6 +62,16 @@ export const PLAN_CATALOG: readonly PlanCatalogEntry[] = [
     annualPriceGbp: 1490,
     employeeCap: 50,
     userCap: 5,
+    capabilities: {
+      canExportCsv: true,
+      canExportPdf: true,
+      canForecast: true,
+      canCalendar: true,
+      canBulkImport: false,
+      canApiAccess: false,
+      canSso: false,
+      canAuditLogs: false,
+    },
     ctaLabel: 'Start Pro',
     recommended: true,
     showOnPricing: true,
@@ -53,6 +85,16 @@ export const PLAN_CATALOG: readonly PlanCatalogEntry[] = [
     annualPriceGbp: 3490,
     employeeCap: 200,
     userCap: 15,
+    capabilities: {
+      canExportCsv: true,
+      canExportPdf: true,
+      canForecast: true,
+      canCalendar: true,
+      canBulkImport: true,
+      canApiAccess: false,
+      canSso: false,
+      canAuditLogs: false,
+    },
     ctaLabel: 'Start Pro+',
     recommended: false,
     showOnPricing: true,
@@ -66,6 +108,16 @@ export const PLAN_CATALOG: readonly PlanCatalogEntry[] = [
     annualPriceGbp: 0,
     employeeCap: null,
     userCap: null,
+    capabilities: {
+      canExportCsv: true,
+      canExportPdf: true,
+      canForecast: true,
+      canCalendar: true,
+      canBulkImport: true,
+      canApiAccess: true,
+      canSso: true,
+      canAuditLogs: true,
+    },
     ctaLabel: 'Contact Support',
     recommended: false,
     showOnPricing: false,
