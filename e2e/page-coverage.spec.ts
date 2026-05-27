@@ -59,11 +59,6 @@ async function hasAuthenticatedDashboard(page: Page): Promise<boolean> {
     });
 }
 
-async function hasAuthenticatedStorageState(page: Page): Promise<boolean> {
-  const cookies = await page.context().cookies();
-  return cookies.some((cookie) => /^sb-.+-auth-token$/.test(cookie.name));
-}
-
 async function gotoRestrictedRoute(page: Page, path: string): Promise<void> {
   const response = await page.context().request.get(path, { maxRedirects: 0 });
 
@@ -195,7 +190,7 @@ test.describe('Route coverage matrix', () => {
     for (const path of restrictedPagesForStandardUser) {
       test(`${path} is not directly accessible`, async ({ page }) => {
         test.setTimeout(60_000);
-        test.skip(!(await hasAuthenticatedStorageState(page)), 'Skipping: authenticated E2E state is unavailable');
+        test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
         await gotoRestrictedRoute(page, path);
       });
     }

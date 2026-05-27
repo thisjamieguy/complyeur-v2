@@ -244,7 +244,7 @@ describe('generateTripsWithSummary', () => {
         ],
       },
     ]
-    const { trips, summary } = generateTripsWithSummary(makeResult(rows))
+    const { summary } = generateTripsWithSummary(makeResult(rows))
     expect(summary.tripsCreated).toBe(2)
     expect(summary.totalDays).toBe(3)
     expect(summary.schengenDays).toBe(3)

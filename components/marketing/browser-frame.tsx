@@ -16,7 +16,7 @@ export function BrowserFrame({
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-slate-200 shadow-2xl shadow-slate-900/10 overflow-hidden',
+        'min-w-0 bg-white rounded-xl border border-slate-200 shadow-2xl shadow-slate-900/10 overflow-hidden',
         className
       )}
     >
@@ -31,8 +31,8 @@ export function BrowserFrame({
 
         {/* URL bar */}
         {showUrlBar && title && (
-          <div className="flex-1 flex justify-center">
-            <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-md border border-slate-200 text-xs text-slate-600">
+          <div className="min-w-0 flex-1 flex justify-center">
+            <div className="flex min-w-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600">
               <svg
                 className="w-3 h-3"
                 fill="none"
@@ -46,7 +46,7 @@ export function BrowserFrame({
                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                 />
               </svg>
-              {title}
+              <span className="truncate">{title}</span>
             </div>
           </div>
         )}

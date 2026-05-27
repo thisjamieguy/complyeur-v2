@@ -393,8 +393,6 @@ describe('Property-Based: Risk Level Thresholds', () => {
 
 describe('Property-Based: Planning Mode', () => {
 
-  const FUTURE_REF = new Date('2025-06-01T00:00:00.000Z'); // past our data, "future" relative to trips
-
   it('planning mode result has same invariants as audit mode', () => {
     const planningConfig: ComplianceConfig = { mode: 'planning', referenceDate: REF_DATE };
 

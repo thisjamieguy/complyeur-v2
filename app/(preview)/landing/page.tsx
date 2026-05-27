@@ -255,8 +255,8 @@ export default function LandingPage() {
       <main id="main-content">
         <section className="px-4 pb-10 pt-10 sm:px-6 sm:pb-14 sm:pt-14">
           <div className="mx-auto max-w-7xl">
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,33rem)_minmax(0,1fr)] lg:items-start">
-              <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
+            <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,33rem)_minmax(0,1fr)] lg:items-start">
+              <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-10">
                 <h1 className="landing-serif text-5xl text-slate-900 sm:text-6xl">
                   Schengen compliance software for UK employers approving EU travel.
                 </h1>
@@ -299,8 +299,8 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div id="product" className="space-y-4">
-                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+              <div id="product" className="min-w-0 space-y-4">
+                <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-4">
                     <div>
                       <p className="text-sm font-semibold text-slate-900">Current allowance overview</p>
@@ -429,8 +429,8 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="mt-10 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+              <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <BrowserFrame title="Timeline view">
                   <DemoCalendar />
                 </BrowserFrame>

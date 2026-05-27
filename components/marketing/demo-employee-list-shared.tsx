@@ -182,7 +182,11 @@ export function DemoEmployeeListRows({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div
+        className="overflow-x-auto rounded-xl border border-slate-200 bg-white"
+        tabIndex={0}
+        aria-label="Demo employee compliance table"
+      >
         <table className="w-full min-w-[400px]">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
@@ -250,10 +254,10 @@ export function DemoEmployeeListRows({
                       className={cn(
                         'tabular-nums font-medium',
                         animated && 'transition-colors duration-500',
-                        employee.daysRemaining >= 30 && 'text-green-600',
+                        employee.daysRemaining >= 30 && 'text-green-700',
                         employee.daysRemaining >= 10 &&
                           employee.daysRemaining < 30 &&
-                          'text-amber-600',
+                          'text-amber-700',
                         employee.daysRemaining < 10 && 'font-bold text-red-700'
                       )}
                     >

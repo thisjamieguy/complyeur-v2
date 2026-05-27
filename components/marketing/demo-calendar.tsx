@@ -74,9 +74,9 @@ const defaultEmployees: CalendarEmployeeRow[] = [
 const DEFAULT_TOTAL_DAYS = 28
 
 const riskStyles = {
-  green: 'bg-green-400 text-green-900',
-  amber: 'bg-amber-400 text-amber-900',
-  red: 'bg-red-400 text-red-900',
+  green: 'bg-green-700 text-white',
+  amber: 'bg-amber-700 text-white',
+  red: 'bg-red-700 text-white',
 } satisfies Record<RiskLevel, string>
 
 function startOfDay(date: Date): Date {
@@ -342,7 +342,7 @@ export function DemoCalendar({
           ))}
         </div>
 
-        <div className="flex-1 overflow-x-auto">
+        <div className="min-w-0 flex-1 overflow-x-auto" tabIndex={0} aria-label="Demo travel timeline">
           <div className="relative" style={{ width: timelineWidth }}>
             {showMonthRow && (
               <div className="flex h-5 border-b border-slate-200 bg-slate-100">

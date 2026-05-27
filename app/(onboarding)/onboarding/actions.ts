@@ -62,7 +62,7 @@ export async function addFirstEmployee(formData: FormData) {
     throw new ValidationError(result.error.issues[0]?.message ?? 'Invalid employee data')
   }
 
-  const { supabase, user } = await getAuthenticatedUser()
+  const { user } = await getAuthenticatedUser()
 
   const rateLimit = await checkServerActionRateLimit(user.id, 'addFirstEmployee')
   if (!rateLimit.allowed) {
