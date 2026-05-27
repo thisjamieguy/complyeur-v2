@@ -20,12 +20,18 @@ import { LandingMobileMenu } from './landing-mobile-menu'
 
 export const dynamic = 'force-static'
 
-export const metadata: Metadata = createPageMetadata({
-  title: 'ComplyEur — Schengen Compliance Software for UK Travel Teams',
-  description:
-    'Schengen compliance software for UK employers tracking the 90/180-day rule, employee travel risk, and EU trip approvals before bookings are confirmed.',
-  path: '/landing',
-})
+export const metadata: Metadata = {
+  ...createPageMetadata({
+    title: 'ComplyEur — Schengen Compliance Software for UK Travel Teams',
+    description:
+      'Schengen compliance software for UK employers tracking the 90/180-day rule, employee travel risk, and EU trip approvals before bookings are confirmed.',
+    path: '/landing',
+  }),
+  robots: {
+    index: true,
+    follow: true,
+  },
+}
 
 const roleSignals = [
   'For HR and people teams checking employee travel',
