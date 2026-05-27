@@ -33,6 +33,15 @@ function makeRequest(pathname: string, method = 'GET'): NextRequest {
   return new NextRequest(`http://localhost:3000${pathname}`, { method })
 }
 
+function makeAuthenticatedRequest(pathname: string, method = 'GET'): NextRequest {
+  return new NextRequest(`http://localhost:3000${pathname}`, {
+    method,
+    headers: {
+      cookie: 'sb-test-auth-token=token',
+    },
+  })
+}
+
 beforeEach(() => {
   checkRateLimitMock.mockReset()
   updateSessionMock.mockReset()
@@ -135,13 +144,13 @@ describe('proxy: unauthenticated access', () => {
 
 describe('proxy: authenticated redirects away from auth pages', () => {
   it('redirects authenticated users from /login to /dashboard', async () => {
-    const res = await proxy(makeRequest('/login'))
+    const res = await proxy(makeAuthenticatedRequest('/login'))
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/dashboard')
   })
 
   it('redirects authenticated users from /signup to /dashboard', async () => {
-    const res = await proxy(makeRequest('/signup'))
+    const res = await proxy(makeAuthenticatedRequest('/signup'))
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/dashboard')
   })
