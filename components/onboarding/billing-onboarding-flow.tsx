@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
 import {
   Building2,
   CheckCircle2,
@@ -9,8 +9,17 @@ import {
   ShieldCheck,
   Sparkles,
   Timer,
+  Upload,
+  UserPlus,
+  Users,
 } from 'lucide-react'
-import { completeOnboarding, updateCompanyName } from '@/app/(onboarding)/onboarding/actions'
+import {
+  addFirstEmployee,
+  completeOnboarding,
+  completeOnboardingForImport,
+  inviteTeamMembers,
+  updateCompanyName,
+} from '@/app/(onboarding)/onboarding/actions'
 import {
   SELF_SERVE_PLANS,
   formatGbpPrice,
@@ -20,6 +29,7 @@ import {
 } from '@/lib/billing/plans'
 import { cn } from '@/lib/utils'
 import { trackEvent } from '@/lib/analytics/client'
+import { NATIONALITY_TYPE_LABELS, type NationalityType } from '@/lib/constants/nationality-types'
 
 type CheckoutState = 'success' | 'cancelled' | null
 type FlowState =
@@ -27,6 +37,8 @@ type FlowState =
   | 'plan_select'
   | 'payment_pending'
   | 'payment_finalizing'
+  | 'employee_setup'
+  | 'team_invites'
   | 'welcome'
 
 const POLL_INTERVAL_MS = 2500
@@ -57,11 +69,18 @@ export function BillingOnboardingFlow({
   const [companyName, setCompanyName] = useState(initialCompanyName)
   const [companyNameError, setCompanyNameError] = useState<string | null>(null)
   const [companyNameSaving, setCompanyNameSaving] = useState(false)
+  const [employeeName, setEmployeeName] = useState('')
+  const [nationalityType, setNationalityType] = useState<NationalityType>('uk_citizen')
+  const [employeeError, setEmployeeError] = useState<string | null>(null)
+  const [employeeSaving, setEmployeeSaving] = useState(false)
+  const [inviteEmails, setInviteEmails] = useState(['', '', ''])
+  const [inviteSaving, setInviteSaving] = useState(false)
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly')
   const [promotionCodeEnabled, setPromotionCodeEnabled] = useState(false)
   const [promotionCode, setPromotionCode] = useState('')
   const [submittingPlan, setSubmittingPlan] = useState<TierSlug | null>(null)
   const [completionPending, setCompletionPending] = useState(false)
+  const [importPending, setImportPending] = useState(false)
   const [statusPollNonce, setStatusPollNonce] = useState(0)
   const [statusError, setStatusError] = useState<string | null>(
     checkoutState === 'cancelled'
@@ -74,10 +93,11 @@ export function BillingOnboardingFlow({
   )
   const [tierSlug, setTierSlug] = useState<string | null>(initialTierSlug)
   const [flowState, setFlowState] = useState<FlowState>(() => {
-    if (isPaidSubscription(initialSubscriptionStatus)) return 'welcome'
+    if (isPaidSubscription(initialSubscriptionStatus)) return 'employee_setup'
     if (checkoutState === 'success') return 'payment_finalizing'
     return 'company_details'
   })
+  const employeeSetupStartedTracked = useRef(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -94,6 +114,18 @@ export function BillingOnboardingFlow({
     window.localStorage.removeItem(intentKey)
   }, [])
 
+  useEffect(() => {
+    if (flowState !== 'employee_setup' || employeeSetupStartedTracked.current) {
+      return
+    }
+
+    employeeSetupStartedTracked.current = true
+    trackEvent('onboarding_employee_setup_started', {
+      source: 'onboarding',
+      tier: tierSlug,
+    })
+  }, [flowState, tierSlug])
+
   const plans = useMemo(
     () =>
       [...SELF_SERVE_PLANS].sort(
@@ -103,7 +135,8 @@ export function BillingOnboardingFlow({
   )
 
   const activeStep = (() => {
-    if (flowState === 'welcome') return 4
+    if (flowState === 'welcome') return 5
+    if (flowState === 'employee_setup' || flowState === 'team_invites') return 4
     if (flowState === 'payment_pending' || flowState === 'payment_finalizing') return 3
     if (flowState === 'plan_select') return 2
     return 1
@@ -135,7 +168,7 @@ export function BillingOnboardingFlow({
     if (payload.isPaid) {
       setStatusError(null)
       setIsPollingTimedOut(false)
-      setFlowState('welcome')
+      setFlowState('employee_setup')
       return true
     }
 
@@ -294,6 +327,10 @@ export function BillingOnboardingFlow({
     setStatusError(null)
 
     try {
+      trackEvent('onboarding_completed', {
+        source: 'onboarding',
+        tier: tierSlug,
+      })
       await completeOnboarding()
     } catch (error) {
       setCompletionPending(false)
@@ -303,6 +340,93 @@ export function BillingOnboardingFlow({
           : 'Unable to complete setup right now. Please try again.'
       )
     }
+  }
+
+  async function handleAddEmployee() {
+    const trimmed = employeeName.trim()
+    if (trimmed.length < 2) {
+      setEmployeeError('Employee name must be at least 2 characters')
+      return
+    }
+
+    setEmployeeSaving(true)
+    setEmployeeError(null)
+
+    try {
+      const formData = new FormData()
+      formData.set('name', trimmed)
+      formData.set('nationalityType', nationalityType)
+      await addFirstEmployee(formData)
+      setFlowState('team_invites')
+    } catch (error) {
+      setEmployeeError(
+        error instanceof Error ? error.message : 'Failed to add employee'
+      )
+    } finally {
+      setEmployeeSaving(false)
+    }
+  }
+
+  function handleSkipEmployeeSetup() {
+    trackEvent('onboarding_employee_setup_skipped', {
+      source: 'onboarding',
+      tier: tierSlug,
+    })
+    setEmployeeError(null)
+    setFlowState('team_invites')
+  }
+
+  async function handleImportInstead(event: MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault()
+    setImportPending(true)
+    setStatusError(null)
+
+    try {
+      trackEvent('onboarding_employee_setup_skipped', {
+        source: 'onboarding',
+        destination: 'import',
+        tier: tierSlug,
+      })
+      await completeOnboardingForImport()
+    } catch (error) {
+      setImportPending(false)
+      setStatusError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to open import right now. Please try again.'
+      )
+    }
+  }
+
+  async function handleInviteSubmit() {
+    setInviteSaving(true)
+    setStatusError(null)
+
+    try {
+      const formData = new FormData()
+      inviteEmails.forEach((email, index) => {
+        formData.set(`email${index}`, email)
+      })
+      await inviteTeamMembers(formData)
+      setFlowState('welcome')
+    } catch (error) {
+      setStatusError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to invite team members right now.'
+      )
+    } finally {
+      setInviteSaving(false)
+    }
+  }
+
+  function handleSkipTeamInvites() {
+    trackEvent('onboarding_team_invites_skipped', {
+      source: 'onboarding',
+      tier: tierSlug,
+    })
+    setStatusError(null)
+    setFlowState('welcome')
   }
 
   return (
@@ -320,12 +444,13 @@ export function BillingOnboardingFlow({
           </p>
         </div>
 
-        <ol className="mb-8 grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-4">
+        <ol className="mb-8 grid gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:grid-cols-5">
           {[
             { index: 1, label: 'Company' },
             { index: 2, label: 'Select Tier' },
             { index: 3, label: 'Payment' },
-            { index: 4, label: 'Welcome' },
+            { index: 4, label: 'People' },
+            { index: 5, label: 'Welcome' },
           ].map((step) => (
             <li
               key={step.index}
@@ -579,6 +704,202 @@ export function BillingOnboardingFlow({
           </div>
         )}
 
+        {flowState === 'employee_setup' && (
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
+                  <Users className="h-5 w-5 text-brand-700" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Add your first employee</h2>
+                  <p className="text-sm text-slate-600">
+                    Start with one traveller, or import a spreadsheet if your team is already in a file.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-[1fr_220px]">
+                <div>
+                  <label htmlFor="onboarding-employee-name" className="block text-sm font-medium text-slate-700">
+                    Employee name
+                  </label>
+                  <input
+                    id="onboarding-employee-name"
+                    type="text"
+                    value={employeeName}
+                    onChange={(event) => {
+                      setEmployeeName(event.target.value)
+                      setEmployeeError(null)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        handleAddEmployee()
+                      }
+                    }}
+                    autoFocus
+                    autoComplete="name"
+                    maxLength={100}
+                    placeholder="e.g. Jane Smith"
+                    className={cn(
+                      'mt-1.5 w-full rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2',
+                      employeeError
+                        ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-200'
+                        : 'border-slate-300 focus:border-brand-400 focus:ring-brand-200'
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="onboarding-nationality-type" className="block text-sm font-medium text-slate-700">
+                    Nationality type
+                  </label>
+                  <select
+                    id="onboarding-nationality-type"
+                    value={nationalityType}
+                    onChange={(event) => setNationalityType(event.target.value as NationalityType)}
+                    className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                  >
+                    {Object.entries(NATIONALITY_TYPE_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <p className="mt-3 text-xs text-slate-500">
+                You can add trips now from the dashboard or import them in bulk after setup.
+              </p>
+
+              {employeeError && (
+                <p className="mt-3 text-sm text-rose-600">{employeeError}</p>
+              )}
+
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={handleAddEmployee}
+                  disabled={employeeSaving || importPending}
+                  className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {employeeSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    'Add employee'
+                  )}
+                </button>
+                <Link
+                  href="/import"
+                  onClick={handleImportInstead}
+                  className={cn(
+                    'inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100',
+                    importPending && 'pointer-events-none opacity-60'
+                  )}
+                >
+                  {importPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Opening import...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Import spreadsheet instead
+                    </>
+                  )}
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleSkipEmployeeSetup}
+                  disabled={employeeSaving || importPending}
+                  className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Do this later
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {flowState === 'team_invites' && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-100">
+                <UserPlus className="h-5 w-5 text-brand-700" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Invite your team</h2>
+                <p className="text-sm text-slate-600">
+                  Add up to three colleagues now, or manage users later from Settings.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3">
+              {inviteEmails.map((email, index) => (
+                <div key={index}>
+                  <label htmlFor={`onboarding-invite-email-${index}`} className="sr-only">
+                    Team member email {index + 1}
+                  </label>
+                  <input
+                    id={`onboarding-invite-email-${index}`}
+                    type="email"
+                    value={email}
+                    onChange={(event) => {
+                      const nextEmails = [...inviteEmails]
+                      nextEmails[index] = event.target.value
+                      setInviteEmails(nextEmails)
+                    }}
+                    placeholder={`colleague${index + 1}@company.com`}
+                    disabled={inviteSaving}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={() => setFlowState('employee_setup')}
+                disabled={inviteSaving}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleInviteSubmit}
+                disabled={inviteSaving}
+                className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {inviteSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send invites'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleSkipTeamInvites}
+                disabled={inviteSaving}
+                className="text-sm font-medium text-slate-500 transition-colors hover:text-slate-800 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Skip for now
+              </button>
+            </div>
+          </div>
+        )}
+
         {flowState === 'welcome' && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
             <p className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-emerald-800">
@@ -586,7 +907,7 @@ export function BillingOnboardingFlow({
               Payment confirmed
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-              Welcome to ComplyEur
+              Workspace ready
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-700">
               Your {getTierDisplayName(tierSlug)} workspace is active with
