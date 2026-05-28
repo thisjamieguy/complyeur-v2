@@ -9,6 +9,8 @@
 > This report reflects repository state on 2026-02-07. Some findings have since been remediated.
 > See `docs/audits/REMEDIATION_AUDIT_2026-02-09.md` for follow-up status.
 > For later authorization hardening after the February penetration-test wave, also see `docs/security/2026-02-28-authz-followup-audit.md`.
+> As of 2026-05-28, current dependency status must be verified from `package.json`
+> and lockfiles before treating the SheetJS or Next.js findings below as active.
 
 ---
 

@@ -7,7 +7,7 @@
 - **Developer:** Solo founder, AI-assisted development workflow
 
 ## Tech Stack
-- **Frontend:** Next.js 15 (App Router) + React 19 + TypeScript
+- **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
 - **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)
 - **Payments:** Stripe
 - **Styling:** Tailwind CSS + Shadcn/UI

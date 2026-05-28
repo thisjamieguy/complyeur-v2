@@ -1,5 +1,10 @@
 # Performance Audit Report — ComplyEur v2
 
+> **Historical snapshot note (2026-05-28):** This report reflects performance
+> findings at commit `1ed3485` on 2026-02-18. It is useful for recurring themes
+> and regression checks, but individual dependency and bundle findings must be
+> revalidated against current `package.json`, build output, and route behavior.
+
 **Date:** 2026-02-18
 **Auditor:** Automated (Claude Opus 4.6, 4 parallel analysis agents)
 **Codebase:** Next.js 16.1.1 / Supabase / Vercel / Stripe

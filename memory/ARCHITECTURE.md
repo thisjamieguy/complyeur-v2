@@ -1,5 +1,10 @@
 # ComplyEUR v2.0 — Architecture Context
 
+> **Historical memory note (2026-05-28):** This file is retained as AI onboarding
+> context, not as the source of truth. Verify current stack, environment, and
+> folder details against `package.json`, `AGENTS.md`, and `docs/architecture/`
+> before implementing changes.
+>
 > **Purpose:** Feed this file to AI coding assistants at the start of every session.
 > It contains everything an AI needs to write correct code for ComplyEUR on the first try.
 
@@ -17,7 +22,7 @@ Calculation errors carry **legal liability** (€5,000+ fines, entry bans). Accu
 
 | Layer        | Technology                          |
 |--------------|-------------------------------------|
-| Framework    | Next.js 14 (App Router)             |
+| Framework    | Next.js 16 (App Router)             |
 | Language     | TypeScript (strict mode)            |
 | Database     | Supabase (PostgreSQL + Auth + RLS)  |
 | Styling      | Tailwind CSS + Shadcn/UI            |
@@ -26,7 +31,7 @@ Calculation errors carry **legal liability** (€5,000+ fines, entry bans). Accu
 | Validation   | Zod                                 |
 | Toasts       | Sonner                              |
 | Hosting      | Vercel                              |
-| File parsing | SheetJS (xlsx package)              |
+| File parsing | ExcelJS                             |
 
 ---
 

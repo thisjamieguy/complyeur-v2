@@ -1,5 +1,10 @@
 ## ComplyEur Pre-Launch Security Audit
 
+> **Historical audit prompt note (2026-05-28):** This file is a reusable audit
+> prompt/checklist, not a current assessment. Use it to structure a new review,
+> then verify all findings against current code, tests, and maintained security
+> docs.
+
 ### Goal
 Audit the entire ComplyEur codebase for security vulnerabilities, data protection gaps, and GDPR compliance issues before production launch. This is a B2B SaaS handling sensitive employee travel data (names, passport numbers, travel dates) for corporate clients. A data breach or cross-tenant leak would be business-ending. Do not build or fix anything — report findings only, grouped by severity (CRITICAL / HIGH / MEDIUM / LOW).
 
