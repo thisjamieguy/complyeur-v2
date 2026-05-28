@@ -2,11 +2,11 @@
  * @fileoverview Schengen Area membership constants and compliance defaults.
  *
  * VERIFICATION REQUIRED: Before each release, verify membership against:
- * https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa/schengen-area_en
+ * https://home-affairs.ec.europa.eu/policies/schengen/schengen-area_en
  *
- * @version 2025-01-07
- * @verifiedBy Phase 7 Implementation
- * @nextReview 2025-04-01 (quarterly)
+ * @version 2026-05-28
+ * @verifiedBy Repository governance review against official European Commission source
+ * @nextReview 2026-08-28 (quarterly)
  */
 
 import type { SchengenMembershipData, RiskThresholds, StatusThresholds } from './types';
@@ -65,22 +65,21 @@ export const DEFAULT_STATUS_THRESHOLDS: Readonly<StatusThresholds> = {
  * Schengen Area membership status.
  *
  * VERIFICATION REQUIRED: Before each release, verify against:
- * https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa/schengen-area_en
+ * https://home-affairs.ec.europa.eu/policies/schengen/schengen-area_en
  *
- * @version 2025-01-07
- * @verifiedBy Phase 7 Implementation
- * @nextReview 2025-04-01 (quarterly)
+ * @version 2026-05-28
+ * @verifiedBy Repository governance review against official European Commission source
+ * @nextReview 2026-08-28 (quarterly)
  */
 export const SCHENGEN_MEMBERSHIP: SchengenMembershipData = {
-  version: '2025-01-07',
-  sourceUrl:
-    'https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa/schengen-area_en',
+  version: '2026-05-28',
+  sourceUrl: 'https://home-affairs.ec.europa.eu/policies/schengen/schengen-area_en',
 
-  // Full Schengen members (27 countries)
+  // Full Schengen members (29 countries: 25 EU + 4 non-EU)
   members: {
     AT: { name: 'Austria', since: '1997-12-01' },
     BE: { name: 'Belgium', since: '1995-03-26' },
-    BG: { name: 'Bulgaria', since: '2025-01-01' }, // Land borders removed Jan 2025
+    BG: { name: 'Bulgaria', since: '2025-01-01' }, // Full member from Jan 2025
     HR: { name: 'Croatia', since: '2023-01-01' },
     CZ: { name: 'Czech Republic', since: '2007-12-21' },
     DK: { name: 'Denmark', since: '2001-03-25' },
@@ -101,7 +100,7 @@ export const SCHENGEN_MEMBERSHIP: SchengenMembershipData = {
     NO: { name: 'Norway', since: '2001-03-25' },
     PL: { name: 'Poland', since: '2007-12-21' },
     PT: { name: 'Portugal', since: '1995-03-26' },
-    RO: { name: 'Romania', since: '2025-01-01' }, // Land borders removed Jan 2025
+    RO: { name: 'Romania', since: '2025-01-01' }, // Full member from Jan 2025
     SK: { name: 'Slovakia', since: '2007-12-21' },
     SI: { name: 'Slovenia', since: '2007-12-21' },
     ES: { name: 'Spain', since: '1995-03-26' },

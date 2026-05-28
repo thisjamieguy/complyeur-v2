@@ -7,12 +7,43 @@
 - **Developer:** Solo founder, AI-assisted development workflow
 
 ## Tech Stack
-- **Frontend:** Next.js 15 (App Router) + React 19 + TypeScript
+- **Frontend:** Next.js 16 (App Router) + React 19 + TypeScript
 - **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)
 - **Payments:** Stripe
 - **Styling:** Tailwind CSS + Shadcn/UI
 - **Hosting:** Vercel
 - **Testing:** Vitest (unit), Playwright (e2e)
+
+---
+
+## Source Of Truth Hierarchy
+
+When context conflicts, use this order:
+
+1. **Repository code, migrations, and config** (`app/`, `lib/`, `supabase/migrations/`, `package.json`, `next.config.ts`, `vercel.json`)
+2. **Automated tests and evidence** (`__tests__/`, `e2e/`, `docs/compliance/soc2/evidence/`)
+3. **Current engineering docs** (`docs/architecture/`, `docs/security/`, `docs/engineering/`, `docs/operations/`)
+4. **Historical memory and AI context** (`memory/`, older audits, `docs/internal/ai-context-notes.md`)
+
+Historical AI exports and memory files are not authoritative. Treat them as prompts for verification, not as proof. If they disagree with the current repo, follow the repo and update or flag the stale document.
+
+## First Files To Read
+
+For most engineering tasks, read only the relevant subset:
+
+- General orientation: this file, `docs/README.md`, `docs/engineering/README.md`
+- Architecture or environment work: `docs/architecture/README.md`, `docs/architecture/ENVIRONMENTS.md`, `docs/architecture/MIGRATION_WORKFLOW.md`
+- Security or auth work: `docs/security/MINIMUM_SECURITY_BAR_PROGRESS.md`, `docs/engineering/security-decisions.md`, `docs/engineering/adr/ADR-001-multi-tenant-rls-strategy.md`
+- Compliance algorithm work: `docs/CALCULATION_LOGIC.md`, `docs/engineering/algorithm-decisions.md`, `docs/engineering/adr/ADR-002-compliance-engine-boundaries.md`, `lib/compliance/`
+- Audit log work: `docs/engineering/adr/ADR-003-audit-log-immutability.md`, `lib/gdpr/audit.ts`, relevant migrations
+- Standards and governance: `docs/standards/coding-standards.md`, `docs/standards/security-standards.md`, `docs/standards/testing-standards.md`, `docs/standards/ai-agent-rules.md`
+
+## Historical Context Rules
+
+- Do not import raw Claude exports, chat transcripts, or AI-generated research into the repo.
+- Do not commit personal data, customer data, tokens, `.env*` files, debug logs, or export archives.
+- Do not assume old audit findings are still true. Verify against current source and tests.
+- Do not use product, launch, UX, tax, legal, or market-research notes as implementation facts without current review.
 
 ---
 

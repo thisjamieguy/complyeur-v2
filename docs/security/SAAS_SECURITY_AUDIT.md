@@ -1,6 +1,11 @@
 # Comprehensive Web Application & SaaS Security Audit Report
 ## Complete Security Checklist for MVP to 10K+ Customers
 
+> **Historical reference note (2026-05-28):** This is a broad SaaS security
+> checklist generated in January 2026, not a current ComplyEur audit result.
+> Prefer `docs/standards/security-standards.md` and current `docs/security/`
+> assessments for repository-specific guidance.
+
 **Report Generated:** January 2026  
 **Scope:** SaaS Application Security Assessment  
 **Compliance Focus:** GDPR, CCPA, PCI-DSS, HIPAA, ISO 27001, SOC 2  
@@ -2121,4 +2126,3 @@ Web application security is not a one-time implementation but an ongoing commitm
 - Bugcrowd: https://bugcrowd.com
 - Reddit /r/cybersecurity
 - StackExchange Security
-

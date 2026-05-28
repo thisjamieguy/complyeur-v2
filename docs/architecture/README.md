@@ -8,6 +8,10 @@ These documents are mandatory. Violations are bugs, not opinions.
 
 ## Documents
 
+### Related Engineering Memory
+
+Durable rationale and ADRs live in `docs/engineering/`. Read those after the canonical architecture rules here when you need historical context or decision rationale.
+
 ### ENVIRONMENTS.md
 
 Defines the two-environment architecture: Production and Test/Preview. Covers environment isolation, Vercel configuration, and the absolute rules that prevent cross-contamination.

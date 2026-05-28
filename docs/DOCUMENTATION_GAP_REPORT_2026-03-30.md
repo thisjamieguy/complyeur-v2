@@ -3,6 +3,11 @@
 **Audited by:** Pre-launch documentation audit
 **Scope:** All project documentation, legal pages, env config, and operational runbooks
 
+> **Historical snapshot note (2026-05-28):** This report reflects the document
+> set as reviewed on 2026-03-30. It contains status labels that may now be stale,
+> especially for memory files and environment guidance. Treat it as an audit
+> trail, not as the current documentation map.
+
 ---
 
 ## Phase 1 — Complete File Inventory

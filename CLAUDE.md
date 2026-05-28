@@ -65,12 +65,16 @@ npm run db:types      # Uses project ID from package.json script
 
 ## Database Deployment Workflow
 
-**Three-stage pipeline: Local → Staging → Production**
+Current canonical environment docs live in `docs/architecture/ENVIRONMENTS.md` and
+`docs/architecture/MIGRATION_WORKFLOW.md`. Follow those files if anything here
+appears to conflict.
+
+**Active pipeline: Local → Test/Preview → Production**
 
 | Stage | Purpose | Database |
 |-------|---------|----------|
 | **Local** | Build & iterate (`supabase start`) | Docker (localhost:54322) |
-| **Staging** | Test with real Supabase infra | `complyeur-staging` (Frankfurt) |
+| **Test/Preview** | Validate with real Supabase infra and Vercel preview deployments | `complyeur-dev` (Frankfurt) |
 | **Production** | Live users | `complyeur-prod` (London) |
 
 ### Supabase Project References
@@ -78,8 +82,10 @@ npm run db:types      # Uses project ID from package.json script
 | Environment | Project Ref | Region |
 |-------------|-------------|--------|
 | Production | `bewydxxynjtfpytunlcq` | West Europe (London) |
-| Staging | `erojhukkihzxksbnjoix` | Central EU (Frankfurt) |
-| Dev | `ympwgavzlvyklkucskcj` | Central EU (Frankfurt) |
+| Test/Preview | `ympwgavzlvyklkucskcj` | Central EU (Frankfurt) |
+
+The old `complyeur-staging` project is inactive and must not be used for current
+deployment or migration workflows.
 
 ### Pushing Migrations
 
@@ -94,18 +100,18 @@ supabase migration new my_change_name
 # 2. Test locally (replays all migrations from scratch)
 supabase db reset
 
-# 3. Dry run against staging (check what will be applied)
-SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --dry-run --db-url "postgresql://postgres.erojhukkihzxksbnjoix:<PASSWORD>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres"
+# 3. Dry run against Test/Preview (check what will be applied)
+SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --dry-run --db-url "postgresql://postgres.ympwgavzlvyklkucskcj:<PASSWORD>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres"
 
-# 4. Push to staging
-SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --db-url "postgresql://postgres.erojhukkihzxksbnjoix:<PASSWORD>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres"
+# 4. Push to Test/Preview
+SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --db-url "postgresql://postgres.ympwgavzlvyklkucskcj:<PASSWORD>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres"
 
-# 5. Test on staging — only when happy, push to production
+# 5. Test on preview — only when approved, push to production
 SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --db-url "postgresql://postgres.bewydxxynjtfpytunlcq:<PASSWORD>@aws-1-eu-west-2.pooler.supabase.com:5432/postgres"
 ```
 
 ### Rules
-- **Never skip staging** — always test migrations there before production
+- **Never skip Test/Preview validation** — always test migrations there before production
 - **Never manually edit remote schemas** via the SQL Editor for structural changes — use migrations
 - **Always dry-run first** (`--dry-run`) before pushing to any remote environment
 - **Seed data is local only** — `supabase/seed.sql` runs on `db reset` but NOT on `db push`

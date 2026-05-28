@@ -7,7 +7,7 @@ logger.info('PII redaction demo: structured log', {
   ip: '203.0.113.10',
   user_id: 'user_123456789',
   session_id: 'sess_abcdef123456',
-  token: 'sk_test_51ExampleSecretToken',
+  token: 'demo_token_value',
 })
 
 logger.warn('PII redaction demo: text patterns', {
@@ -16,5 +16,5 @@ logger.warn('PII redaction demo: text patterns', {
 })
 
 logger.error('PII redaction demo: error logging', {
-  error: new Error('Failed to process user user@example.com with token sk_live_51ExampleToken'),
+  error: new Error('Failed to process user user@example.com with token=demo_token_value'),
 })

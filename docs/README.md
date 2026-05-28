@@ -9,12 +9,14 @@ This repository keeps the engineering root focused on source, config, tests, and
 - `beta/`: Beta launch planning, metrics, known issues, and outcomes
 - `billing/`: Stripe pricing and billing operations
 - `compliance/`: Compliance programs and evidence material
-- `internal/prompts/`: One-off internal prompt documents and investigation notes
+- `engineering/`: Engineering memory, durable decisions, ADRs, and recurring lessons
+- `internal/`: Private/internal notes, one-off prompt documents, and investigation notes
 - `legal/`: Legal templates and policy support docs
 - `marketing/blog-drafts/`: Draft content and publication working files
 - `operations/`: Release, go-live, and operating checklists
 - `plans/`: Feature design and implementation planning docs
 - `security/`: Security audits, pentest material, and authorization reviews
+- `standards/`: Coding, security, testing, and AI-agent governance standards
 - `testing/`: Test strategy and quality references
 
 ## Root Hygiene

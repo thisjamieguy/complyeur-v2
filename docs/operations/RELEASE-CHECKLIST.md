@@ -1,5 +1,10 @@
 # RELEASE-CHECKLIST.md — ComplyEur v1 Launch
 
+> **Historical release snapshot note (2026-05-28):** This checklist preserves the
+> April 2026 v1 launch workflow and may mention the inactive staging project.
+> For current environment and migration rules, use
+> `docs/architecture/ENVIRONMENTS.md` and `docs/architecture/MIGRATION_WORKFLOW.md`.
+
 <!--
 ===================================================================
 AI AGENT INSTRUCTIONS — READ THIS SECTION FIRST

@@ -1,5 +1,11 @@
 # Security Audit — ComplyEur v2.0
 
+> **Historical snapshot note (2026-05-28):** This audit captures repository state
+> at commit `bb01a25` on 2026-02-18. It is retained for traceability and
+> recurring-risk context, not as current security status. Verify every finding
+> against current code, tests, `docs/security/`, and `docs/engineering/` before
+> acting on it.
+
 | Field | Detail |
 |-------|--------|
 | **Audit Date** | 2026-02-18 |
