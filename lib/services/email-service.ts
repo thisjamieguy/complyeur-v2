@@ -34,6 +34,18 @@ function getEmailAppUrl(): string {
 
 const APP_URL = getEmailAppUrl()
 
+function getEmailAssetBaseUrl(): string {
+  if (process.env.EMAIL_ASSET_BASE_URL) {
+    return process.env.EMAIL_ASSET_BASE_URL.replace(/\/+$/, '')
+  }
+
+  if (APP_URL.includes('localhost') || APP_URL.includes('127.0.0.1')) {
+    return 'https://complyeur.com'
+  }
+
+  return APP_URL
+}
+
 interface AlertEmailData {
   employeeName: string
   daysUsed: number
@@ -418,6 +430,225 @@ export function isEmailConfigured(): boolean {
 export interface OnboardingEmailData {
   recipientEmail: string
   companyName?: string
+}
+
+export interface WelcomeEmailData {
+  recipientEmail: string
+  recipientName?: string
+  companyName?: string
+}
+
+function getFirstName(name: string | undefined): string | null {
+  if (!name) return null
+  return name.trim().split(/\s+/)[0] || null
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function generateWelcomeEmailHtml(data: WelcomeEmailData): string {
+  const appUrl = APP_URL
+  const assetBaseUrl = getEmailAssetBaseUrl()
+  const firstName = getFirstName(data.recipientName)
+  const greeting = firstName ? `Hi ${escapeHtml(firstName)},` : 'Hi,'
+  const workspaceName = escapeHtml(data.companyName?.trim() || 'your workspace')
+  const logoUrl = `${assetBaseUrl}/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png`
+  const dashboardUrl = `${appUrl}/dashboard`
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to ComplyEur</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f6fb;">
+  <div style="display:none;max-height:0;overflow:hidden;">Your ComplyEur workspace is ready. Add employees, log trips, and review Schengen risk before travel is approved.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f6fb; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; max-width: 600px;">
+          <tr>
+            <td style="padding: 0 0 18px;">
+              <img src="${logoUrl}" width="164" alt="ComplyEur" style="display: block; width: 164px; max-width: 164px; height: auto; border: 0;">
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #ffffff; border: 1px solid #dbe4f0; border-radius: 14px; overflow: hidden; box-shadow: 0 16px 45px rgba(13,42,74,0.10);">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="background-color: #0d2a4a; padding: 30px 32px 28px;">
+                    <p style="margin: 0 0 10px; color: #9fc2e8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700;">Workspace ready</p>
+                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; line-height: 1.25; font-weight: 700;">Welcome to ComplyEur</h1>
+                    <p style="margin: 12px 0 0; color: #dbeafe; font-size: 15px; line-height: 1.6;">
+                      A clearer way to manage Schengen 90/180-day travel risk for your team.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 32px 32px 10px;">
+                    <p style="margin: 0 0 16px; color: #111827; font-size: 16px; line-height: 1.6;">${greeting}</p>
+                    <p style="margin: 0 0 16px; color: #374151; font-size: 16px; line-height: 1.6;">
+                      Your ComplyEur workspace for <strong style="color: #111827;">${workspaceName}</strong> is ready. You now have one place to track employee EU travel, monitor the rolling 90/180-day position, and catch risk before travel is approved.
+                    </p>
+                    <p style="margin: 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                      Start with these three setup steps to get your first useful compliance view in place.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 22px 32px 8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                      <tr>
+                        <td width="54" valign="top" style="padding: 20px 0 16px 20px;">
+                          <div style="width: 32px; height: 32px; border-radius: 16px; background-color: #dbeafe; color: #0d2a4a; font-size: 14px; font-weight: 700; line-height: 32px; text-align: center;">1</div>
+                        </td>
+                        <td style="padding: 18px 20px 16px 10px;">
+                          <p style="margin: 0 0 4px; color: #0f172a; font-size: 15px; font-weight: 700;">Add your employees</p>
+                          <p style="margin: 0; color: #475569; font-size: 14px; line-height: 1.6;">Create a record for each person whose Schengen travel you need to monitor.</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding: 0 20px;"><div style="height: 1px; background-color: #e2e8f0;"></div></td>
+                      </tr>
+                      <tr>
+                        <td width="54" valign="top" style="padding: 20px 0 16px 20px;">
+                          <div style="width: 32px; height: 32px; border-radius: 16px; background-color: #dbeafe; color: #0d2a4a; font-size: 14px; font-weight: 700; line-height: 32px; text-align: center;">2</div>
+                        </td>
+                        <td style="padding: 18px 20px 16px 10px;">
+                          <p style="margin: 0 0 4px; color: #0f172a; font-size: 15px; font-weight: 700;">Log past and planned trips</p>
+                          <p style="margin: 0; color: #475569; font-size: 14px; line-height: 1.6;">Add recent travel history first, then planned trips, so the allowance view is reliable.</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" style="padding: 0 20px;"><div style="height: 1px; background-color: #e2e8f0;"></div></td>
+                      </tr>
+                      <tr>
+                        <td width="54" valign="top" style="padding: 20px 0 20px 20px;">
+                          <div style="width: 32px; height: 32px; border-radius: 16px; background-color: #dbeafe; color: #0d2a4a; font-size: 14px; font-weight: 700; line-height: 32px; text-align: center;">3</div>
+                        </td>
+                        <td style="padding: 18px 20px 20px 10px;">
+                          <p style="margin: 0 0 4px; color: #0f172a; font-size: 15px; font-weight: 700;">Review warnings before approval</p>
+                          <p style="margin: 0; color: #475569; font-size: 14px; line-height: 1.6;">Use the dashboard to spot warning, urgent, and breach risks before travel is booked.</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 24px 32px 34px; text-align: center;">
+                    <a href="${dashboardUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 700; font-size: 16px; min-width: 210px;">
+                      Open your dashboard
+                    </a>
+                    <p style="margin: 14px 0 0; color: #64748b; font-size: 13px; line-height: 1.5;">
+                      If you still need to confirm your email address, use the confirmation link first, then return to the dashboard.
+                    </p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="background-color: #f8fafc; padding: 24px 32px; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0 0 8px; color: #475569; font-size: 13px; line-height: 1.5; text-align: center;">
+                      Need help getting set up? Reply to this email and we will help you get your first employee record live.
+                    </p>
+                    <p style="margin: 0; color: #94a3b8; font-size: 12px; text-align: center;">
+                      ComplyEur sends this transactional email because you created a workspace.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 18px 8px 0; text-align: center;">
+              <p style="margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.5;">
+                ComplyEur, Schengen compliance software for UK travel teams
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
+function generateWelcomeEmailText(data: WelcomeEmailData): string {
+  const appUrl = APP_URL
+  const firstName = getFirstName(data.recipientName)
+  const greeting = firstName ? `Hi ${firstName},` : 'Hi,'
+  const workspaceName = data.companyName?.trim() || 'your workspace'
+
+  return `${greeting}
+
+Welcome to ComplyEur.
+
+Your ComplyEur workspace for ${workspaceName} is ready. You now have one place to track employee EU travel, watch the rolling 90/180-day position, and act before a trip becomes a compliance risk.
+
+Start with these three setup steps:
+
+1. Add your employees
+Create a record for each person whose Schengen travel you need to monitor.
+
+2. Log past and planned trips
+Add recent travel history first, then planned trips, so the allowance view is reliable.
+
+3. Review warnings before approval
+Use the dashboard to spot warning, urgent, and breach risks before travel is booked.
+
+Open your dashboard: ${appUrl}/dashboard
+
+If you still need to confirm your email address, use the confirmation link first, then return to the dashboard.
+
+---
+Need help getting set up? Reply to this email or contact ${REPLY_TO_EMAIL}.
+ComplyEur sends this transactional email because you created a workspace.`
+}
+
+export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<EmailResult> {
+  if (!process.env.RESEND_API_KEY) {
+    logger.info('[Email] Skipping welcome email — no RESEND_API_KEY', {
+      recipientEmail: data.recipientEmail,
+    })
+    return { success: true, messageId: 'dev-mode-skip' }
+  }
+
+  try {
+    const resend = getResendClient()
+    if (!resend) return { success: true, messageId: 'client-unavailable' }
+
+    const { data: result, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: data.recipientEmail,
+      subject: 'Welcome to ComplyEur',
+      html: generateWelcomeEmailHtml(data),
+      text: generateWelcomeEmailText(data),
+      tags: [
+        { name: 'category', value: 'onboarding' },
+        { name: 'step', value: 'welcome' },
+      ],
+    })
+
+    if (error) {
+      logger.error('[Email] Welcome email error', { error })
+      return { success: false, error: error.message }
+    }
+
+    logger.info('[Email] Welcome email sent', { messageId: result?.id })
+    return { success: true, messageId: result?.id }
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+    logger.error('[Email] Failed to send welcome email', { error: err })
+    return { success: false, error: errorMessage }
+  }
 }
 
 export async function sendOnboardingDay1Email(data: OnboardingEmailData): Promise<EmailResult> {
