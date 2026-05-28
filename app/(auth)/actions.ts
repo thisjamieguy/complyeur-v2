@@ -21,6 +21,8 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
 } from '@/lib/validations/auth'
+import { sendWelcomeEmail } from '@/lib/services/email-service'
+import { logger } from '@/lib/logger.mjs'
 
 const SIGNUP_PARITY_REDIRECT = '/check-email'
 
@@ -226,6 +228,19 @@ export async function signup(formData: FormData) {
       'Failed to update last activity during signup:',
       activityError?.message ?? 'Unknown error'
     )
+  }
+
+  const welcomeEmailResult = await sendWelcomeEmail({
+    recipientEmail: normalizedEmail,
+    recipientName: name,
+    companyName,
+  })
+
+  if (!welcomeEmailResult.success) {
+    logger.warn('[Auth] Welcome email failed after signup', {
+      recipientEmail: normalizedEmail,
+      error: welcomeEmailResult.error,
+    })
   }
 
   // Keep signup response parity between existing and new accounts.

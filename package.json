@@ -45,6 +45,7 @@
     "stress-test": "tsx scripts/stress-test/index.ts",
     "stress-test:dry": "tsx scripts/stress-test/index.ts --dry-run",
     "email:test": "tsx scripts/send-test-email.ts",
+    "email:welcome:test": "tsx scripts/send-welcome-email.ts",
     "email:auth:sync": "tsx scripts/sync-supabase-auth-email-config.ts"
   },
   "dependencies": {
