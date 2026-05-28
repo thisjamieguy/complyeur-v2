@@ -29,8 +29,11 @@ import { proxy } from '@/proxy'
 
 const AUTH_USER = { id: 'user-1', email: 'user@example.com' }
 
-function makeRequest(pathname: string, method = 'GET'): NextRequest {
-  return new NextRequest(`http://localhost:3000${pathname}`, { method })
+function makeRequest(pathname: string, method = 'GET', cookie?: string): NextRequest {
+  return new NextRequest(`http://localhost:3000${pathname}`, {
+    method,
+    headers: cookie ? { cookie } : undefined,
+  })
 }
 
 beforeEach(() => {
@@ -135,13 +138,13 @@ describe('proxy: unauthenticated access', () => {
 
 describe('proxy: authenticated redirects away from auth pages', () => {
   it('redirects authenticated users from /login to /dashboard', async () => {
-    const res = await proxy(makeRequest('/login'))
+    const res = await proxy(makeRequest('/login', 'GET', 'sb-localhost-auth-token=fake-session'))
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/dashboard')
   })
 
   it('redirects authenticated users from /signup to /dashboard', async () => {
-    const res = await proxy(makeRequest('/signup'))
+    const res = await proxy(makeRequest('/signup', 'GET', 'sb-localhost-auth-token=fake-session'))
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/dashboard')
   })
