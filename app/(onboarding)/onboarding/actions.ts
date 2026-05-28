@@ -62,7 +62,7 @@ export async function addFirstEmployee(formData: FormData) {
     throw new ValidationError(result.error.issues[0]?.message ?? 'Invalid employee data')
   }
 
-  const { supabase, user } = await getAuthenticatedUser()
+  const { user } = await getAuthenticatedUser()
 
   const rateLimit = await checkServerActionRateLimit(user.id, 'addFirstEmployee')
   if (!rateLimit.allowed) {
@@ -128,6 +128,14 @@ export async function inviteTeamMembers(formData: FormData) {
 }
 
 export async function completeOnboarding() {
+  await completeOnboardingWithRedirect('/dashboard?tour=1')
+}
+
+export async function completeOnboardingForImport() {
+  await completeOnboardingWithRedirect('/import')
+}
+
+async function completeOnboardingWithRedirect(redirectPath: string) {
   const { supabase, user, companyId } = await getAuthenticatedUser()
 
   const rateLimit = await checkServerActionRateLimit(user.id, 'completeOnboarding')
@@ -167,5 +175,5 @@ export async function completeOnboarding() {
   await supabase.auth.updateUser({ data: { onboarding_completed: true } })
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard?tour=1')
+  redirect(redirectPath)
 }
