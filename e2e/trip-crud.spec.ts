@@ -15,29 +15,6 @@ import { test, expect, Page } from '@playwright/test';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-async function navigateToDashboard(page: Page) {
-  await page.goto('/dashboard');
-  await page.waitForLoadState('networkidle');
-}
-
-/** Finds the first employee link on the dashboard and navigates to their detail page. */
-async function navigateToFirstEmployee(page: Page): Promise<string | null> {
-  await navigateToDashboard(page);
-
-  // Try common employee link patterns used in data table / card layouts
-  const employeeLink =
-    page.getByRole('link').filter({ hasText: /employee|view|details/i }).first() ||
-    page.locator('table tbody tr a').first() ||
-    page.locator('[data-testid="employee-link"]').first();
-
-  const href = await employeeLink.getAttribute('href').catch(() => null);
-  if (!href) return null;
-
-  await employeeLink.click();
-  await page.waitForLoadState('networkidle');
-  return href;
-}
-
 /** Reads the compliance days shown in the UI. Returns null if not found. */
 async function readComplianceDays(page: Page): Promise<{ daysUsed: number; daysRemaining: number } | null> {
   try {
@@ -314,7 +291,7 @@ test.describe('Trip CRUD', () => {
       if (!compliance) {
         // If we can't read compliance data, check that at least a number is visible somewhere
         const anyDayCount = page.getByText(/\d+\s*day/i).first();
-        const visible = await anyDayCount.isVisible().catch(() => false);
+        await anyDayCount.isVisible().catch(() => false);
         // Not failing here — different UI layouts may render days differently
         return;
       }

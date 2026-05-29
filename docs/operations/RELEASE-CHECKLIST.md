@@ -38,10 +38,38 @@ PROGRESS SUMMARY — update this as items complete:
 SCOPE CHANGE (2026-04-16, REVERTED): Saved Jobs feature previously deferred
 past v1. Stashed work reinstated 2026-04-16 after successful Phase 3 verification.
 All Phase 3 items executed; 3.4 (manual smoke test) pending user execution.
+
+CURRENT PASS (2026-05-29): Local release gates refreshed from `complyeur/`.
+Typecheck, lint, unit tests, production build, dependency audit, and targeted
+Excel/Gantt import tests are green. Dependency audit blockers were fixed with
+patched transitive overrides in `package.json`/`pnpm-lock.yaml`.
 ===================================================================
 -->
 
 ---
+
+## Current Release Readiness Pass — 2026-05-29
+
+### Completed locally
+
+- [x] `pnpm typecheck` — passed.
+- [x] `pnpm lint` — passed with 0 errors and 0 warnings after removing dead test/e2e code.
+- [x] `pnpm test:unit` — 94 files passed, 1509 tests passed.
+- [x] `pnpm build` — passed on Next.js 16.2.6; 44 static pages generated.
+- [x] `pnpm security:check` — passed; `pnpm audit` reports `No known vulnerabilities found`.
+- [x] `pnpm vitest run lib/import/gantt/__tests__/trips.test.ts lib/import/gantt/__tests__/template-workbook.test.ts __tests__/integration/import-pipeline.test.ts` — 3 files passed, 76 tests passed.
+
+### Changes made in this pass
+
+- Added patched transitive dependency overrides for the release audit findings: `tmp`, `postcss`, `ip-address`, `brace-expansion` via `minimatch@10`, `ws`, `uuid`, and `qs`.
+- Removed unused variables/helpers flagged by lint in `e2e/trip-crud.spec.ts`, `lib/compliance/__tests__/property-based.test.ts`, and `lib/import/gantt/__tests__/trips.test.ts`.
+
+### Remaining before production release
+
+- CI must run green on GitHub's Node 20 environment for the branch/PR.
+- Preview/Test deployment must be smoke-tested against the active Test/Preview Supabase project. The older Phase 5 staging project below is documented as inactive in `docs/ENVIRONMENTS.md`; use the canonical two-environment flow unless staging is explicitly reactivated.
+- Production dashboard checks still require external access: Vercel production env vars, custom domain/SSL, Supabase backups/PITR, Sentry alerts, uptime monitoring, and production `/api/health`.
+- Critical live user flows still need a browser pass on the deployed URL: signup, email confirmation, login, password reset, dashboard, add employee, add trip, exports, settings, logout, and account deletion.
 
 ## Phase 1 — Quality Gates
 
