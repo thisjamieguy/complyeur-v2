@@ -58,11 +58,49 @@ const structuredDataGraph = {
       "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,
       name: "ComplyEur",
+      legalName: "ComplyEur",
       url: SITE_URL,
       logo: `${SITE_URL}/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.webp`,
       sameAs: [xProfileUrl],
       description:
         "Helping UK businesses track EU Schengen 90/180-day visa compliance for their employees.",
+      areaServed: [
+        {
+          "@type": "Country",
+          name: "United Kingdom",
+        },
+        {
+          "@type": "AdministrativeArea",
+          name: "European Union",
+        },
+        {
+          "@type": "Place",
+          name: "Schengen Area",
+        },
+      ],
+      knowsAbout: [
+        "Schengen 90/180-day rule",
+        "UK business travel compliance",
+        "EU Entry/Exit System",
+        "Employee travel risk management",
+        "GDPR-aware travel records",
+      ],
+      contactPoint: [
+        {
+          "@type": "ContactPoint",
+          contactType: "customer support",
+          email: "support@complyeur.com",
+          areaServed: "GB",
+          availableLanguage: ["en-GB"],
+        },
+        {
+          "@type": "ContactPoint",
+          contactType: "sales",
+          email: "hello@complyeur.com",
+          areaServed: "GB",
+          availableLanguage: ["en-GB"],
+        },
+      ],
     },
     {
       "@type": "SoftwareApplication",
@@ -70,12 +108,18 @@ const structuredDataGraph = {
       name: "ComplyEur",
       applicationCategory: "BusinessApplication",
       applicationSubCategory: "Compliance Management",
+      applicationSuite: "ComplyEur",
       operatingSystem: "Web browser",
       url: SITE_URL,
       inLanguage: "en-GB",
+      isAccessibleForFree: false,
       areaServed: {
         "@type": "Country",
         name: "United Kingdom",
+      },
+      audience: {
+        "@type": "BusinessAudience",
+        audienceType: "UK employers managing Schengen business travel",
       },
       description:
         "Track and manage EU Schengen 90/180-day visa compliance for your employees. Automated tracking, real-time alerts, and compliance reporting for UK businesses.",
@@ -99,6 +143,9 @@ const structuredDataGraph = {
       publisher: {
         "@id": `${SITE_URL}/#organization`,
       },
+      mainEntityOfPage: {
+        "@id": `${SITE_URL}/landing#webpage`,
+      },
     },
   ],
 }
@@ -112,7 +159,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en-GB">
       <body
         className={`${openSans.variable} ${montserrat.variable} antialiased`}
         suppressHydrationWarning
