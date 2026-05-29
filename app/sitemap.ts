@@ -110,6 +110,12 @@ const PUBLIC_SITEMAP_PAGES: PublicSitemapPage[] = [
     priority: 0.5,
   },
   {
+    path: '/cookies',
+    lastModified: LEGAL_PAGES_LAST_MODIFIED,
+    changeFrequency: 'yearly',
+    priority: 0.4,
+  },
+  {
     path: '/accessibility',
     lastModified: LEGAL_PAGES_LAST_MODIFIED,
     changeFrequency: 'yearly',

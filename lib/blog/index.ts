@@ -3,6 +3,7 @@ import { promises as fs } from 'fs'
 import path from 'path'
 
 const BLOG_DIRECTORY_CANDIDATES = [
+  path.resolve(process.cwd(), 'content', 'blog'),
   path.resolve(process.cwd(), 'Blogs'),
   path.resolve(process.cwd(), '..', 'Blogs'),
 ]

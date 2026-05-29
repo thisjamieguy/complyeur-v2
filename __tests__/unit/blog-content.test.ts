@@ -87,11 +87,12 @@ Body`
     )
   })
 
-  it('loads seeded blog posts from the Blogs directory', async () => {
+  it('loads seeded blog posts from the content directory', async () => {
     const posts = await getAllBlogPosts()
 
     expect(posts.length).toBeGreaterThanOrEqual(2)
     expect(posts.map((post) => post.slug)).toContain('ees-border-enforcement-shift')
     expect(posts.map((post) => post.slug)).toContain('how-ees-works-practical-guide')
+    expect(posts.every((post) => post.sourcePath.includes('/content/blog/'))).toBe(true)
   })
 })

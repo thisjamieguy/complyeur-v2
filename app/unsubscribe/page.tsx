@@ -1,13 +1,55 @@
-import { createClient } from '@/lib/supabase/server'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
+export const metadata: Metadata = {
+  title: 'Email Preferences',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
+
 interface UnsubscribePageProps {
   searchParams: Promise<{ token?: string }>
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+async function unsubscribeByToken(token: string): Promise<boolean> {
+  if (!UUID_PATTERN.test(token)) return false
+
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('notification_preferences')
+      .update({
+        receive_warning_emails: false,
+        receive_urgent_emails: false,
+        receive_breach_emails: false,
+        unsubscribed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('unsubscribe_token', token)
+      .is('unsubscribed_at', null)
+      .select('id')
+      .maybeSingle()
+
+    if (error) {
+      console.error('[unsubscribe] Failed to update notification preferences:', error.message)
+      return false
+    }
+
+    return !!data
+  } catch (error) {
+    console.error('[unsubscribe] Admin unsubscribe failed:', error)
+    return false
+  }
 }
 
 export default async function UnsubscribePage({ searchParams }: UnsubscribePageProps) {
@@ -41,13 +83,9 @@ export default async function UnsubscribePage({ searchParams }: UnsubscribePageP
     )
   }
 
-  // Call the unsubscribe function
-  const supabase = await createClient()
-  const { data, error } = await supabase.rpc('unsubscribe_by_token', {
-    token: token,
-  })
+  const unsubscribed = await unsubscribeByToken(token)
 
-  if (error || !data) {
+  if (!unsubscribed) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
@@ -64,7 +102,7 @@ export default async function UnsubscribePage({ searchParams }: UnsubscribePageP
             Unsubscribe Failed
           </h1>
           <p className="text-slate-600 mb-6">
-            {error?.message || 'This unsubscribe link may have already been used or is invalid.'}
+            This unsubscribe link may have already been used or is invalid.
           </p>
           <Link href="/">
             <Button>Return Home</Button>

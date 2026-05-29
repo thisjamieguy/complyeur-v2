@@ -8,6 +8,7 @@ import {
   SELF_SERVE_PLANS,
   formatGbpPrice,
 } from '@/lib/billing/plans'
+import { SITE_URL } from '@/lib/metadata'
 import { cn } from '@/lib/utils'
 import { trackEvent } from '@/lib/analytics/client'
 
@@ -59,6 +60,71 @@ const COMPARISON_ROWS: readonly ComparisonRow[] = [
     values: (plan) => plan.capabilities.canBulkImport,
   },
 ]
+
+const pricingStructuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebPage',
+      '@id': `${SITE_URL}/pricing#webpage`,
+      url: `${SITE_URL}/pricing`,
+      name: 'Schengen compliance pricing for UK travel teams',
+      description:
+        'Compare ComplyEur self-serve plans for UK employers managing employee Schengen 90/180-day compliance.',
+      inLanguage: 'en-GB',
+      isPartOf: {
+        '@id': `${SITE_URL}/#website`,
+      },
+      mainEntity: {
+        '@id': `${SITE_URL}/pricing#offer-catalog`,
+      },
+    },
+    {
+      '@type': 'OfferCatalog',
+      '@id': `${SITE_URL}/pricing#offer-catalog`,
+      name: 'ComplyEur self-serve plans',
+      itemListElement: SELF_SERVE_PLANS.map((plan, index) => ({
+        '@type': 'Offer',
+        position: index + 1,
+        name: plan.publicName,
+        description: plan.description,
+        url: `${SITE_URL}/pricing`,
+        priceCurrency: 'GBP',
+        price: `${plan.monthlyPriceGbp}`,
+        availability: 'https://schema.org/InStock',
+        category: 'Schengen compliance software',
+        eligibleQuantity: plan.employeeCap
+          ? {
+              '@type': 'QuantitativeValue',
+              value: plan.employeeCap,
+              unitText: 'tracked employees',
+            }
+          : undefined,
+        itemOffered: {
+          '@id': `${SITE_URL}/#software`,
+        },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${SITE_URL}/pricing#breadcrumbs`,
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: `${SITE_URL}/landing`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Pricing',
+          item: `${SITE_URL}/pricing`,
+        },
+      ],
+    },
+  ],
+}
 
 function formatComparisonValue(value: string | boolean): string {
   if (typeof value === 'string') return value
@@ -221,6 +287,12 @@ function PricingPageContent() {
 
   return (
     <div className="bg-slate-50 py-14 sm:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(pricingStructuredData),
+        }}
+      />
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
           <div className="max-w-3xl">

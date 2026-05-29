@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import Script from 'next/script'
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -14,7 +15,7 @@ import { BrowserFrame } from '@/components/marketing/browser-frame'
 import { DemoCalendar } from '@/components/marketing/demo-calendar'
 import { DemoEmployeeListStatic } from '@/components/marketing/demo-employee-list-static'
 import { SkipLink } from '@/components/ui/skip-link'
-import { createPageMetadata } from '@/lib/metadata'
+import { createPageMetadata, SITE_URL } from '@/lib/metadata'
 import { marketingPrimaryCta } from '@/lib/marketing-primary-cta'
 import { LandingMobileMenu } from './landing-mobile-menu'
 
@@ -177,6 +178,70 @@ const employerQuestions = [
   },
 ]
 
+const landingStructuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebPage',
+      '@id': `${SITE_URL}/landing#webpage`,
+      url: `${SITE_URL}/landing`,
+      name: 'Schengen compliance software for UK employers approving EU travel',
+      description:
+        'ComplyEur helps UK employers track employee Schengen 90/180-day allowance, trip history, and approval risk before EU travel is booked.',
+      inLanguage: 'en-GB',
+      isPartOf: {
+        '@id': `${SITE_URL}/#website`,
+      },
+      about: [
+        {
+          '@type': 'Thing',
+          name: 'Schengen 90/180-day rule',
+        },
+        {
+          '@type': 'Thing',
+          name: 'UK business travel compliance',
+        },
+        {
+          '@type': 'Thing',
+          name: 'Employee EU travel approvals',
+        },
+      ],
+      audience: {
+        '@type': 'BusinessAudience',
+        audienceType: 'HR, operations, finance, mobility, and travel teams',
+      },
+      mainEntity: {
+        '@id': `${SITE_URL}/#software`,
+      },
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': `${SITE_URL}/landing#employer-faq`,
+      url: `${SITE_URL}/landing`,
+      mainEntity: employerQuestions.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${SITE_URL}/landing#breadcrumbs`,
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'Home',
+          item: `${SITE_URL}/landing`,
+        },
+      ],
+    },
+  ],
+}
+
 function ContentCard({
   title,
   body,
@@ -213,6 +278,14 @@ function StatCard({
 export default function LandingPage() {
   return (
     <div className="landing-font min-h-screen bg-slate-50 text-slate-900">
+      <Script
+        id="landing-structured-data"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(landingStructuredData),
+        }}
+      />
       <SkipLink />
 
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-slate-50/95 px-4 py-4 backdrop-blur sm:px-6">

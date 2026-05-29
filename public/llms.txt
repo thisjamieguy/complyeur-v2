@@ -1,0 +1,31 @@
+# ComplyEur
+
+> ComplyEur is Schengen compliance software for UK employers that need to track employee EU travel, the 90/180-day rule, trip history, and approval risk before business travel is booked.
+
+## Core Pages
+
+- [Schengen compliance software for UK employers](https://complyeur.com/landing): Product overview for HR, operations, finance, mobility, and travel teams managing repeat Schengen travel.
+- [Pricing](https://complyeur.com/pricing): Self-serve GBP plans for teams tracking employee Schengen compliance.
+- [FAQ](https://complyeur.com/faq): Answers about the Schengen 90/180-day rule, EES, importing travel data, forecasts, alerts, GDPR, and billing.
+- [About ComplyEur](https://complyeur.com/about): Company context, target users, and how the platform works.
+- [Contact](https://complyeur.com/contact): General, support, privacy, and partnership contact details.
+
+## Practical Guides
+
+- [The EU Entry-Exit System: Why Border Enforcement Has Fundamentally Changed](https://complyeur.com/blog/ees-border-enforcement-shift)
+- [How the EU Entry-Exit System Works: A Practical Guide for UK Businesses](https://complyeur.com/blog/how-ees-works-practical-guide)
+
+## Primary Topics
+
+- Schengen 90/180-day rule tracking for UK nationals and other non-EU travellers.
+- Employee travel compliance for UK businesses after Brexit.
+- EU Entry/Exit System business travel implications.
+- Spreadsheet replacement for Schengen allowance tracking.
+- Pre-approval checks before employee EU travel is booked.
+- GDPR-aware storage and export of employee travel records.
+
+## Product Facts
+
+- ComplyEur is a web-based B2B SaaS product.
+- The product tracks employees, trips, remaining Schengen allowance, status warnings, forecasts, imports, calendars, and compliance exports.
+- ComplyEur is a compliance tracking tool, not a legal service.

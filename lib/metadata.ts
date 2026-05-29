@@ -1,10 +1,24 @@
 import { Metadata } from 'next'
 
+const DEFAULT_SITE_URL = 'https://complyeur.com'
+
+function getCanonicalSiteUrl(): string {
+  const configuredUrl =
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    DEFAULT_SITE_URL
+
+  try {
+    return new URL(configuredUrl).origin
+  } catch {
+    return DEFAULT_SITE_URL
+  }
+}
+
 /**
- * Base URL for the site - used for canonical URLs and Open Graph
- * Falls back to production URL if environment variable is not set
+ * Base URL for the site - used for canonical URLs and Open Graph.
  */
-export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://complyeur.com'
+export const SITE_URL = getCanonicalSiteUrl()
 export const BRAND_ICON_PATH = '/images/Icons/03_Icon_Only/ComplyEur_Icon.svg'
 
 const rawXHandle = process.env.NEXT_PUBLIC_X_HANDLE || process.env.NEXT_PUBLIC_TWITTER_HANDLE || '@complyeur'
@@ -36,6 +50,8 @@ export interface PageMetadataOptions {
   ogImage?: string
   /** Whether to append site name to title (default: false, root layout template handles it) */
   appendSiteName?: boolean
+  /** Optional page-specific robots directive */
+  robots?: Metadata['robots']
 }
 
 /**
@@ -51,6 +67,7 @@ export function createPageMetadata({
   path,
   ogImage = DEFAULT_OG_IMAGE,
   appendSiteName = false, // Root layout template already adds " | ComplyEur"
+  robots,
 }: PageMetadataOptions): Metadata {
   const canonicalUrl = `${SITE_URL}${path}`
   const fullTitle = appendSiteName ? `${title} | ComplyEur` : title
@@ -85,6 +102,7 @@ export function createPageMetadata({
       description,
       images: [ogImage],
     },
+    ...(robots ? { robots } : {}),
   }
 }
 

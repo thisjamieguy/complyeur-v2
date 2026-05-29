@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -5,6 +6,14 @@ import { createClient } from '@/lib/supabase/server'
 import { MfaEnrollmentPanel } from '@/components/mfa/mfa-enrollment'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Multi-Factor Authentication',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function MfaPage() {
   const supabase = await createClient()
