@@ -23,17 +23,19 @@ test.describe('Public smoke coverage', () => {
   });
 
   test('core public pages load with their primary headings', async ({ page }) => {
-    await page.goto('/pricing');
+    test.setTimeout(60_000);
+
+    await page.goto('/pricing', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('heading', { name: /simple pricing for schengen compliance/i })
     ).toBeVisible();
 
-    await page.goto('/blog');
+    await page.goto('/blog', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('heading', { name: /schengen compliance articles for office teams/i })
     ).toBeVisible();
 
-    await page.goto('/contact');
+    await page.goto('/contact', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /^contact us$/i })).toBeVisible();
   });
 

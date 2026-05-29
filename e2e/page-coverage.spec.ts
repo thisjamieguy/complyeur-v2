@@ -147,11 +147,13 @@ test.describe('Route coverage matrix', () => {
       test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
 
       const firstEmployeeLink = page.locator('tbody tr a[href^="/employee/"]').first();
-      const hasEmployeeLink = await firstEmployeeLink.isVisible().catch(() => false);
+      const emptyState = page.getByRole('heading', { name: /no employees yet/i });
+      const hasEmployeeLink = await Promise.race([
+        firstEmployeeLink.waitFor({ state: 'visible', timeout: 15000 }).then(() => true),
+        emptyState.waitFor({ state: 'visible', timeout: 15000 }).then(() => false),
+      ]);
       if (!hasEmployeeLink) {
-        await expect(
-          page.getByRole('heading', { name: /no employees yet/i })
-        ).toBeVisible();
+        await expect(emptyState).toBeVisible();
         return;
       }
 
