@@ -33,6 +33,8 @@ import { requireOwnerOrAdminMutation } from '@/lib/security/authorization'
 // Re-export for convenience
 export { RECOVERY_PERIOD_DAYS }
 
+const REDACTED_NOTIFICATION_SUBJECT = 'Schengen Compliance Alert for deleted employee'
+
 /**
  * Result type for soft delete operations
  */
@@ -437,7 +439,20 @@ export async function hardDeleteEmployee(
       .select('*', { count: 'exact', head: true })
       .eq('employee_id', employeeId)
 
-    // Delete employee (trips cascade due to FK)
+    // Notification logs retain delivery evidence after employee deletion, so
+    // scrub any subject text that may contain the employee's name first.
+    const { error: notificationScrubError } = await supabase
+      .from('notification_log')
+      .update({ subject: REDACTED_NOTIFICATION_SUBJECT } as Record<string, unknown>)
+      .eq('employee_id', employeeId)
+      .eq('company_id', companyId)
+
+    if (notificationScrubError) {
+      console.error('[HardDelete] Notification log scrub failed:', notificationScrubError)
+      return { success: false, tripsDeleted: 0, error: notificationScrubError.message }
+    }
+
+    // Delete employee (trips, alerts, and snapshots cascade due to FK)
     const { error: deleteError } = await supabase
       .from('employees')
       .delete()

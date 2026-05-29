@@ -42,8 +42,9 @@ export default function PrivacyPage() {
             when you use our Schengen compliance management service.
           </p>
           <p className="text-base text-slate-700 leading-relaxed mt-4">
-            By using ComplyEur, you agree to the collection and use of information in accordance with
-            this policy. If you do not agree with the terms of this policy, please do not access or use our service.
+            This policy is provided for transparency. We process personal data only where we have a
+            lawful basis to do so, as described below. Non-essential cookies and analytics are used
+            only with your consent.
           </p>
         </section>
 
@@ -178,6 +179,11 @@ export default function PrivacyPage() {
               <strong>Employee deletion and anonymization:</strong> Company administrators can use
               the in-app GDPR tools to soft-delete or anonymize employee records. Soft-deleted
               employee records enter a 30-day recovery window before permanent deletion.
+            </li>
+            <li>
+              <strong>Import staging data:</strong> Raw parsed import rows are used temporarily to
+              preview and complete imports. Completed, failed, or stale import payloads are cleared
+              or minimized so import history does not retain raw employee data unnecessarily.
             </li>
             <li>
               <strong>Company account deletion requests:</strong> Company-level deletion requests

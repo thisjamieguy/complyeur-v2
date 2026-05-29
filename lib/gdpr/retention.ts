@@ -25,6 +25,8 @@ import {
 } from './audit'
 import { cleanupExpiredGdprExportArchives } from './export-storage'
 import { hardDeleteEmployee, RECOVERY_PERIOD_DAYS } from './soft-delete'
+import { sanitizeImportResultForStorage } from '@/lib/import/privacy'
+import type { ImportResult } from '@/types/import'
 
 /**
  * Result of a purge operation for a single company
@@ -35,6 +37,7 @@ interface CompanyPurgeResult {
   retentionMonths: number
   tripsDeleted: number
   employeesDeleted: number
+  importSessionPayloadsRedacted: number
   errors: string[]
 }
 
@@ -48,6 +51,7 @@ export interface PurgeResult {
   totalEmployeesDeleted: number
   totalAuditLogRowsDeleted: number
   totalExportArchivesDeleted: number
+  totalImportSessionPayloadsRedacted: number
   results: CompanyPurgeResult[]
   errors: string[]
   executionTime: number
@@ -88,6 +92,7 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
         totalEmployeesDeleted: 0,
         totalAuditLogRowsDeleted: 0,
         totalExportArchivesDeleted: 0,
+        totalImportSessionPayloadsRedacted: 0,
         results: [],
         errors: [`Failed to fetch companies: ${companiesError.message}`],
         executionTime: Date.now() - startTime,
@@ -102,6 +107,7 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
         totalEmployeesDeleted: 0,
         totalAuditLogRowsDeleted: 0,
         totalExportArchivesDeleted: 0,
+        totalImportSessionPayloadsRedacted: 0,
         results: [],
         errors: [],
         executionTime: Date.now() - startTime,
@@ -125,6 +131,10 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
 
     const totalTrips = results.reduce((sum, r) => sum + r.tripsDeleted, 0)
     const totalEmployees = results.reduce((sum, r) => sum + r.employeesDeleted, 0)
+    const totalImportSessionPayloadsRedacted = results.reduce(
+      (sum, r) => sum + r.importSessionPayloadsRedacted,
+      0
+    )
 
     try {
       const auditRetentionResult = await purgeExpiredGdprAuditLogs(90, supabase as never)
@@ -151,6 +161,7 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
       totalEmployeesDeleted: totalEmployees,
       totalAuditLogRowsDeleted,
       totalExportArchivesDeleted,
+      totalImportSessionPayloadsRedacted,
       results,
       errors: globalErrors,
       executionTime: Date.now() - startTime,
@@ -163,6 +174,7 @@ export async function runRetentionPurge(): Promise<PurgeResult> {
       totalEmployeesDeleted: 0,
       totalAuditLogRowsDeleted: 0,
       totalExportArchivesDeleted: 0,
+      totalImportSessionPayloadsRedacted: 0,
       results,
       errors: [error instanceof Error ? error.message : 'Unknown error'],
       executionTime: Date.now() - startTime,
@@ -182,10 +194,12 @@ async function purgeCompanyData(
   const errors: string[] = []
   let tripsDeleted = 0
   let employeesDeleted = 0
+  let importSessionPayloadsRedacted = 0
 
   const now = new Date()
   const retentionCutoff = subMonths(now, retentionMonths)
   const softDeleteCutoff = subDays(now, RECOVERY_PERIOD_DAYS)
+  const importPayloadCutoff = subDays(now, 1)
 
   try {
     // 1. Delete expired trips (process in batches of 1000)
@@ -286,11 +300,49 @@ async function purgeCompanyData(
       }
     }
 
-    // 4. Log summary to audit trail
-    if (tripsDeleted > 0 || employeesDeleted > 0) {
+    // 4. Redact stale import staging payloads. Completed/failed imports keep
+    // counts and sanitized result summaries, not raw parsed rows or cell values.
+    const { data: staleImportSessions, error: importFetchError } = await supabase
+      .from('import_sessions')
+      .select('id, result')
+      .eq('company_id', companyId)
+      .in('status', ['ready', 'completed', 'failed'])
+      .lt('created_at', importPayloadCutoff.toISOString())
+      .limit(1000)
+
+    if (importFetchError) {
+      errors.push(`Failed to fetch stale import sessions: ${importFetchError.message}`)
+    } else {
+      for (const session of staleImportSessions ?? []) {
+        const sanitizedResult =
+          session.result && typeof session.result === 'object'
+            ? sanitizeImportResultForStorage(session.result as unknown as ImportResult)
+            : session.result
+
+        const { error: redactError } = await supabase
+          .from('import_sessions')
+          .update({
+            parsed_data: null,
+            validation_errors: [],
+            result: sanitizedResult,
+          } as Record<string, unknown>)
+          .eq('id', session.id)
+          .eq('company_id', companyId)
+
+        if (redactError) {
+          errors.push(`Failed to redact import session ${session.id}: ${redactError.message}`)
+        } else {
+          importSessionPayloadsRedacted++
+        }
+      }
+    }
+
+    // 5. Log summary to audit trail
+    if (tripsDeleted > 0 || employeesDeleted > 0 || importSessionPayloadsRedacted > 0) {
       const auditDetails: AutoPurgeDetails = {
         employees_deleted: employeesDeleted,
         trips_deleted: tripsDeleted,
+        import_session_payloads_redacted: importSessionPayloadsRedacted,
         retention_policy_months: retentionMonths,
         purge_date: format(now, 'yyyy-MM-dd'),
       }
@@ -314,6 +366,7 @@ async function purgeCompanyData(
     retentionMonths,
     tripsDeleted,
     employeesDeleted,
+    importSessionPayloadsRedacted,
     errors,
   }
 }

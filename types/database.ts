@@ -795,6 +795,7 @@ export type Database = {
       employees: {
         Row: {
           anonymized_at: string | null
+          anonymized_by: string | null
           company_id: string
           created_at: string
           deleted_at: string | null
@@ -806,6 +807,7 @@ export type Database = {
         }
         Insert: {
           anonymized_at?: string | null
+          anonymized_by?: string | null
           company_id: string
           created_at?: string
           deleted_at?: string | null
@@ -817,6 +819,7 @@ export type Database = {
         }
         Update: {
           anonymized_at?: string | null
+          anonymized_by?: string | null
           company_id?: string
           created_at?: string
           deleted_at?: string | null
@@ -827,6 +830,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "employees_anonymized_by_fkey"
+            columns: ["anonymized_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "employees_company_id_fkey"
             columns: ["company_id"]
