@@ -9,6 +9,7 @@ import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
 import { requireCompanyAccess, requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { validateRows } from '@/lib/import/validator'
 import { parseFile, parseFileRaw } from '@/lib/import/parser'
+import { sanitizeImportResultForStorage } from '@/lib/import/privacy'
 import {
   ImportFormat,
   ImportSession,
@@ -731,7 +732,9 @@ export async function executeImport(
     const result = await insertValidRows(sessionId, format, validatedRows, duplicateOptions);
 
     await updateSessionStatus(sessionId, result.success ? 'completed' : 'failed', {
-      result,
+      result: sanitizeImportResultForStorage(result),
+      parsed_data: null,
+      validation_errors: [],
     });
 
     revalidatePath('/dashboard');
@@ -742,7 +745,10 @@ export async function executeImport(
   } catch (error) {
     console.error('Import execution error:', error);
 
-    await updateSessionStatus(sessionId, 'failed');
+    await updateSessionStatus(sessionId, 'failed', {
+      parsed_data: null,
+      validation_errors: [],
+    });
 
     const errorMessage =
       error instanceof Error && error.message === BULK_IMPORT_NOT_ALLOWED_MESSAGE

@@ -13,7 +13,11 @@ import {
   type RetentionStats,
 } from '@/lib/gdpr'
 import { createClient } from '@/lib/supabase/server'
-import { employeeIdSchema } from '@/lib/validations/gdpr'
+import {
+  employeeIdSchema,
+  gdprAnonymizationSchema,
+  gdprDeletionSchema,
+} from '@/lib/validations/gdpr'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { isOwnerOrAdmin } from '@/lib/permissions'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
@@ -283,16 +287,15 @@ export async function deleteEmployeeGdpr(
     return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
   }
 
-  // Validate employee ID format
-  const idResult = employeeIdSchema.safeParse(employeeId)
-  if (!idResult.success) {
+  const validation = gdprDeletionSchema.safeParse({ employeeId, reason })
+  if (!validation.success) {
     return {
       success: false,
-      error: 'Invalid employee ID format',
+      error: validation.error.issues[0]?.message ?? 'Invalid deletion request',
     }
   }
 
-  const result = await softDeleteEmployee(idResult.data, reason)
+  const result = await softDeleteEmployee(validation.data.employeeId, validation.data.reason)
 
   if (!result.success) {
     return {
@@ -384,16 +387,15 @@ export async function anonymizeEmployeeGdpr(
     return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
   }
 
-  // Validate employee ID format
-  const idResult = employeeIdSchema.safeParse(employeeId)
-  if (!idResult.success) {
+  const validation = gdprAnonymizationSchema.safeParse({ employeeId, reason })
+  if (!validation.success) {
     return {
       success: false,
-      error: 'Invalid employee ID format',
+      error: validation.error.issues[0]?.message ?? 'Invalid anonymization request',
     }
   }
 
-  const result = await anonymizeEmployee(idResult.data, reason)
+  const result = await anonymizeEmployee(validation.data.employeeId, validation.data.reason)
 
   if (!result.success) {
     return {

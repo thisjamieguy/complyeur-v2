@@ -180,6 +180,69 @@ describe('generateDsarExport content coverage', () => {
       },
     ]
 
+    const importSessions = [
+      {
+        id: 'import-1',
+        format: 'employees',
+        status: 'ready',
+        file_name: 'employees.csv',
+        file_size: 2048,
+        total_rows: 2,
+        valid_rows: 1,
+        error_rows: 1,
+        parsed_data: [
+          {
+            row_number: 1,
+            first_name: 'Alice',
+            last_name: 'Example',
+            email: 'alice@example.com',
+          },
+          {
+            row_number: 2,
+            first_name: 'Bob',
+            last_name: 'Other',
+            email: 'bob@example.com',
+          },
+        ],
+        validation_errors: [
+          {
+            row: 1,
+            column: 'email',
+            value: 'alice@example.com',
+            message: 'Invalid email for alice@example.com',
+            severity: 'error',
+          },
+        ],
+        result: {
+          success: false,
+          employees_created: 0,
+          employees_updated: 0,
+          trips_created: 0,
+          trips_skipped: 0,
+          errors: [
+            {
+              row: 1,
+              column: 'email',
+              value: 'alice@example.com',
+              message: 'Duplicate import result for alice@example.com',
+              severity: 'error',
+            },
+          ],
+          warnings: [
+            {
+              row: 2,
+              column: 'email',
+              value: 'bob@example.com',
+              message: 'Duplicate import result for bob@example.com',
+              severity: 'warning',
+            },
+          ],
+        },
+        created_at: '2026-05-11T00:00:00.000Z',
+        completed_at: null,
+      },
+    ]
+
     createClientMock.mockResolvedValue({
       from: vi.fn((table: string) => {
         switch (table) {
@@ -197,6 +260,8 @@ describe('generateDsarExport content coverage', () => {
             return createOrderedListQuery(notificationLog)
           case 'employee_compliance_snapshots':
             return createOrderedListQuery(storedComplianceSnapshots)
+          case 'import_sessions':
+            return createOrderedListQuery(importSessions)
           default:
             throw new Error(`Unexpected table query: ${table}`)
         }
@@ -217,6 +282,7 @@ describe('generateDsarExport content coverage', () => {
     const employeeData = JSON.parse(await zip.file('employee_data.json')!.async('string'))
     const alertData = JSON.parse(await zip.file('alerts.json')!.async('string'))
     const notificationLogData = JSON.parse(await zip.file('notification_log.json')!.async('string'))
+    const importSessionData = JSON.parse(await zip.file('import_sessions.json')!.async('string'))
     const storedSnapshots = JSON.parse(
       await zip.file('stored_compliance_snapshots.json')!.async('string')
     )
@@ -244,6 +310,27 @@ describe('generateDsarExport content coverage', () => {
         recipient_email: 'alice@example.com',
       }),
     ])
+    expect(importSessionData).toEqual([
+      expect.objectContaining({
+        id: 'import-1',
+        matched_parsed_rows: [
+          expect.objectContaining({
+            email: 'alice@example.com',
+          }),
+        ],
+        matched_validation_errors: [
+          expect.objectContaining({
+            value: 'alice@example.com',
+          }),
+        ],
+        matched_result_errors: [
+          expect.objectContaining({
+            value: 'alice@example.com',
+          }),
+        ],
+        matched_result_warnings: [],
+      }),
+    ])
     expect(storedSnapshots).toEqual([
       expect.objectContaining({
         id: 'snapshot-1',
@@ -258,10 +345,12 @@ describe('generateDsarExport content coverage', () => {
     expect(metadata.data_scope).toMatchObject({
       includes_alerts: true,
       includes_notification_logs: true,
+      includes_import_sessions: true,
       includes_stored_compliance_snapshots: true,
       includes_generated_current_compliance_calculation: true,
       alert_count: 1,
       notification_log_count: 1,
+      import_session_count: 1,
       stored_compliance_snapshot_count: 1,
     })
     expect(readme).toContain('currently exported by Acme Travel Ltd')
@@ -274,6 +363,7 @@ describe('generateDsarExport content coverage', () => {
       employee_label: 'EMP_EMPLOYEE',
       affected_alerts_count: 1,
       affected_notification_logs_count: 1,
+      affected_import_sessions_count: 1,
       affected_stored_compliance_snapshots_count: 1,
     })
     expect(auditEntry.details).not.toHaveProperty('employee_name')

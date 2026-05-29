@@ -56,6 +56,9 @@ export function generateAnonymizedName(employeeId: string): string {
   return `ANON_${hash}`
 }
 
+const REDACTED_ALERT_MESSAGE = 'Compliance alert for anonymized employee'
+const REDACTED_NOTIFICATION_SUBJECT = 'Schengen Compliance Alert for anonymized employee'
+
 /**
  * Anonymizes an employee's personal data while preserving trip history.
  *
@@ -152,12 +155,15 @@ export async function anonymizeEmployee(
     const anonymizedName = generateAnonymizedName(employeeId)
     const anonymizedAt = new Date().toISOString()
 
-    // Update employee with anonymized data
+    // Update employee with anonymized data. Email is a direct identifier and
+    // must be removed for the anonymized record to be meaningful.
     const { error: updateError } = await supabase
       .from('employees')
       .update({
         name: anonymizedName,
+        email: null,
         anonymized_at: anonymizedAt,
+        anonymized_by: access.user.id,
       } as Record<string, unknown>)
       .eq('id', employeeId)
 
@@ -166,6 +172,36 @@ export async function anonymizeEmployee(
       return {
         success: false,
         error: 'Failed to anonymize employee',
+        code: 'DATABASE_ERROR',
+      }
+    }
+
+    const { error: alertScrubError } = await supabase
+      .from('alerts')
+      .update({ message: REDACTED_ALERT_MESSAGE } as Record<string, unknown>)
+      .eq('employee_id', employeeId)
+      .eq('company_id', access.companyId)
+
+    if (alertScrubError) {
+      console.error('[Anonymize] Alert scrub failed:', alertScrubError)
+      return {
+        success: false,
+        error: 'Failed to anonymize employee alert history',
+        code: 'DATABASE_ERROR',
+      }
+    }
+
+    const { error: notificationScrubError } = await supabase
+      .from('notification_log')
+      .update({ subject: REDACTED_NOTIFICATION_SUBJECT } as Record<string, unknown>)
+      .eq('employee_id', employeeId)
+      .eq('company_id', access.companyId)
+
+    if (notificationScrubError) {
+      console.error('[Anonymize] Notification log scrub failed:', notificationScrubError)
+      return {
+        success: false,
+        error: 'Failed to anonymize employee notification history',
         code: 'DATABASE_ERROR',
       }
     }

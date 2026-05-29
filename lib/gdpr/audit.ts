@@ -72,6 +72,7 @@ export type DsarExportDetails = {
   affected_trips_count: number
   affected_alerts_count: number
   affected_notification_logs_count: number
+  affected_import_sessions_count?: number
   affected_stored_compliance_snapshots_count: number
   export_format: 'zip'
   files_included: string[]
@@ -125,6 +126,7 @@ export type HardDeleteDetails = {
 export type AutoPurgeDetails = {
   employees_deleted: number
   trips_deleted: number
+  import_session_payloads_redacted?: number
   retention_policy_months: number
   purge_date: string
 } & Record<string, unknown>

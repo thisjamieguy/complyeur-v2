@@ -5,11 +5,17 @@ const {
   requireOwnerOrAdminMutationMock,
   requireCompanyAccessMock,
   logGdprActionMock,
+  employeeUpdateMock,
+  alertUpdateMock,
+  notificationUpdateMock,
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   requireOwnerOrAdminMutationMock: vi.fn(),
   requireCompanyAccessMock: vi.fn(),
   logGdprActionMock: vi.fn(),
+  employeeUpdateMock: vi.fn(),
+  alertUpdateMock: vi.fn(),
+  notificationUpdateMock: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -43,6 +49,25 @@ describe('anonymizeEmployee audit minimisation', () => {
     })
 
     requireCompanyAccessMock.mockResolvedValue(undefined)
+    employeeUpdateMock.mockReturnValue({
+      eq: vi.fn().mockResolvedValue({
+        error: null,
+      }),
+    })
+    alertUpdateMock.mockReturnValue({
+      eq: vi.fn(() => ({
+        eq: vi.fn().mockResolvedValue({
+          error: null,
+        }),
+      })),
+    })
+    notificationUpdateMock.mockReturnValue({
+      eq: vi.fn(() => ({
+        eq: vi.fn().mockResolvedValue({
+          error: null,
+        }),
+      })),
+    })
 
     createClientMock.mockResolvedValue({
       from: vi.fn((table: string) => {
@@ -63,11 +88,7 @@ describe('anonymizeEmployee audit minimisation', () => {
                   }),
                 })),
               })),
-              update: vi.fn(() => ({
-                eq: vi.fn().mockResolvedValue({
-                  error: null,
-                }),
-              })),
+              update: employeeUpdateMock,
             }
           case 'trips':
             return {
@@ -77,6 +98,14 @@ describe('anonymizeEmployee audit minimisation', () => {
                   error: null,
                 }),
               })),
+            }
+          case 'alerts':
+            return {
+              update: alertUpdateMock,
+            }
+          case 'notification_log':
+            return {
+              update: notificationUpdateMock,
             }
           default:
             throw new Error(`Unexpected table query: ${table}`)
@@ -90,6 +119,18 @@ describe('anonymizeEmployee audit minimisation', () => {
     const result = await anonymizeEmployee('employee-1', 'GDPR erasure request')
 
     expect(result.success).toBe(true)
+    expect(employeeUpdateMock).toHaveBeenCalledWith({
+      name: 'ANON_EMPLOYEE',
+      email: null,
+      anonymized_at: expect.any(String),
+      anonymized_by: 'user-1',
+    })
+    expect(alertUpdateMock).toHaveBeenCalledWith({
+      message: 'Compliance alert for anonymized employee',
+    })
+    expect(notificationUpdateMock).toHaveBeenCalledWith({
+      subject: 'Schengen Compliance Alert for anonymized employee',
+    })
     expect(logGdprActionMock).toHaveBeenCalledTimes(1)
 
     const [auditEntry] = logGdprActionMock.mock.calls[0]
