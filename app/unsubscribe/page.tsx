@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CheckCircle, XCircle } from 'lucide-react'
@@ -5,6 +6,14 @@ import { Button } from '@/components/ui/button'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Email Preferences',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 interface UnsubscribePageProps {
   searchParams: Promise<{ token?: string }>

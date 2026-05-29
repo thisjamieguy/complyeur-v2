@@ -1,12 +1,17 @@
+import type { Metadata } from 'next'
 import { requireSuperAdmin } from '@/lib/admin/auth'
 import { AdminSidebar } from '@/components/admin/admin-sidebar'
 import { AdminHeader } from '@/components/admin/admin-header'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Admin | ComplyEur',
   description: 'ComplyEur administration panel',
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default async function AdminLayout({
