@@ -97,6 +97,16 @@ function TripListSkeleton() {
   )
 }
 
+function EmployeeActionsSkeleton() {
+  return (
+    <div className="flex items-center gap-3" aria-hidden="true">
+      <div className="h-9 w-24 rounded-md bg-slate-100 animate-pulse" />
+      <div className="h-9 w-28 rounded-md bg-slate-100 animate-pulse" />
+      <div className="h-9 w-9 rounded-md bg-slate-100 animate-pulse" />
+    </div>
+  )
+}
+
 /**
  * Async server component for trip list — streams via Suspense
  * so the employee header renders immediately.
@@ -201,9 +211,11 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <AddTripModal employeeId={employee.id} employeeName={employee.name} />
-          <BulkAddTripsModal employeeId={employee.id} employeeName={employee.name} />
-          <EmployeeDetailActions employee={employee} />
+          <Suspense fallback={<EmployeeActionsSkeleton />}>
+            <AddTripModal employeeId={employee.id} employeeName={employee.name} />
+            <BulkAddTripsModal employeeId={employee.id} employeeName={employee.name} />
+            <EmployeeDetailActions employee={employee} />
+          </Suspense>
         </div>
       </div>
 
