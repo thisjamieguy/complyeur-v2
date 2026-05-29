@@ -29,10 +29,13 @@ import { proxy } from '@/proxy'
 
 const AUTH_USER = { id: 'user-1', email: 'user@example.com' }
 
-function makeRequest(pathname: string, method = 'GET', cookie?: string): NextRequest {
-  return new NextRequest(`http://localhost:3000${pathname}`, {
-    method,
-    headers: cookie ? { cookie } : undefined,
+function makeRequest(pathname: string, method = 'GET', headers?: HeadersInit): NextRequest {
+  return new NextRequest(`http://localhost:3000${pathname}`, { method, headers })
+}
+
+function makeAuthenticatedRequest(pathname: string, method = 'GET'): NextRequest {
+  return makeRequest(pathname, method, {
+    cookie: 'sb-test-auth-token=mock-session',
   })
 }
 
@@ -138,13 +141,13 @@ describe('proxy: unauthenticated access', () => {
 
 describe('proxy: authenticated redirects away from auth pages', () => {
   it('redirects authenticated users from /login to /dashboard', async () => {
-    const res = await proxy(makeRequest('/login', 'GET', 'sb-localhost-auth-token=fake-session'))
+    const res = await proxy(makeAuthenticatedRequest('/login'))
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/dashboard')
   })
 
   it('redirects authenticated users from /signup to /dashboard', async () => {
-    const res = await proxy(makeRequest('/signup', 'GET', 'sb-localhost-auth-token=fake-session'))
+    const res = await proxy(makeAuthenticatedRequest('/signup'))
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toContain('/dashboard')
   })
