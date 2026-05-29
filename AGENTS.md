@@ -1,198 +1,173 @@
-# ComplyEur — AI Coding Assistant Context
+# ComplyEur Agent Instructions
+
+Last reviewed: 2026-05-28
 
 ## Project Overview
-**ComplyEur** is a B2B SaaS application helping companies track employee travel compliance with the EU's 90/180-day Schengen visa rule. Target market: UK businesses with employees traveling to the EU post-Brexit.
 
-- **Current Version:** v2.0 (Supabase rebuild)
-- **Developer:** Solo founder, AI-assisted development workflow
+ComplyEur is a B2B SaaS application for tracking employee travel compliance
+with the Schengen 90/180-day rule. The target customer is UK and European
+businesses managing post-Brexit travel risk.
 
-## Tech Stack
-- **Frontend:** Next.js 15 (App Router) + React 19 + TypeScript
-- **Backend:** Supabase (PostgreSQL + Auth + Edge Functions)
-- **Payments:** Stripe
-- **Styling:** Tailwind CSS + Shadcn/UI
-- **Hosting:** Vercel
-- **Testing:** Vitest (unit), Playwright (e2e)
+- Product version: v2.0 Supabase rebuild
+- App root: `complyeur/`
+- Primary package manager: `pnpm`
+- Deployment: Vercel
+- Database/auth: Supabase with mandatory RLS
 
----
+## Current Stack
 
-## Critical Rules
+- Next.js 16 App Router
+- React 19
+- TypeScript strict mode
+- Tailwind CSS v4 and shadcn/ui style primitives
+- Supabase PostgreSQL, Auth, RLS, and Edge Functions
+- Stripe billing
+- Resend email
+- Upstash Redis rate limiting
+- Sentry monitoring
+- CookieYes and consent-gated Google Analytics 4
+- Vitest for unit/integration tests
+- Playwright for end-to-end tests
 
-### Date Handling (HIGH PRIORITY)
-**Do NOT use native JavaScript `Date` objects for 90/180 calculations.**
+## Critical Domain Rules
 
-Native JS dates have timezone issues — a trip on "Oct 12" can shift days based on browser timezone.
+### Date Handling
 
-```typescript
-// CORRECT - use date-fns, treats as local date
-import { parseISO, differenceInDays } from 'date-fns'
-const tripStart = parseISO('2025-10-12')
+Do not use native JavaScript `Date` parsing for 90/180 compliance calculations.
+Timezone shifts can move an ISO calendar day into the wrong local day.
 
-// WRONG - timezone issues
-const tripStart = new Date('2025-10-12') // NEVER DO THIS
+Use date-fns and ISO date strings for compliance logic:
+
+```ts
+import { differenceInDays, parseISO } from 'date-fns'
+
+const tripStart = parseISO('2026-05-28')
 ```
 
-### TypeScript is Non-Negotiable
-- All new files must be `.ts` or `.tsx`
-- Define interfaces for all props, API responses, database types
-- Strict mode enabled — no `any` unless absolutely necessary
-- Interface over type for object shapes
-- Use Supabase generated types from `types/database.ts`
+Avoid this in compliance calculations:
 
-### Row Level Security (MANDATORY)
-Every Supabase table must have RLS enabled. No exceptions.
-```sql
--- Uses get_current_user_company_id() for performance (cached per-statement)
-CREATE POLICY "Users see own employees"
-  ON employees FOR SELECT
-  USING (company_id = (SELECT get_current_user_company_id()));
+```ts
+const tripStart = new Date('2026-05-28')
 ```
 
-### Security
-- **anon key:** Safe in frontend
-- **service_role key:** NEVER in frontend — server/Edge Functions only
-- No `console.log` with sensitive data in production
-- Environment variables never committed to Git
+### Schengen Rules
 
----
+- Non-EU citizens can stay a maximum of 90 days in any rolling 180-day window.
+- Each travel day counts if it falls in the Schengen Area.
+- Ireland and Cyprus are EU members but not Schengen members. Do not count them.
+- Keep country logic centralized in `lib/constants/schengen-countries.ts` and
+  related compliance modules.
 
-## Code Standards
+### Multi-Tenancy and RLS
 
-### React/Next.js
-- Functional components only
-- Custom hooks for shared logic
-- Server components where possible (App Router)
-- Client components only when needed (`'use client'`)
+- Every Supabase table must have Row Level Security enabled.
+- Tenant isolation is a hard security boundary, not a UI filter.
+- Prefer policies that use cached helper functions such as
+  `(SELECT get_current_user_company_id())`.
+- Never expose `SUPABASE_SERVICE_ROLE_KEY` to client code.
+- Use generated database types from `types/database.ts`.
 
-### Error Handling
-- Try/catch on all async operations
-- User-friendly error messages (not raw errors)
-- Toast notifications for user feedback
+## Engineering Standards
 
-### UI/UX Standards (NON-NEGOTIABLE)
+- Keep changes small and directly tied to the request.
+- Do not add broad refactors around a narrow fix.
+- Use functional React components.
+- Prefer Server Components unless client-side state, effects, or browser APIs
+  are required.
+- Put shared client behavior in hooks.
+- Define interfaces for props, API responses, and database shapes.
+- Avoid `any`; if it is unavoidable, keep it local and explain why.
+- Use Zod schemas for request, form, and import validation.
+- Handle async errors with user-safe messages.
+- Do not log sensitive data in production paths.
 
-**Spacing & Layout:**
-- **8px spacing system** for all margins, padding, gaps
-- Mobile-first, responsive design
-- Clean grid alignment — no misaligned cards
+## UI Standards
 
-**Visual Consistency — DO NOT deviate from these:**
-- **12px border radius everywhere** (`rounded-xl` in Tailwind). Do NOT use `rounded-2xl`, `rounded-3xl`, `rounded-[28px]`, or any other value. No mixing.
-- **Small, intentional color palette** — no random gradients, diagonal splits, radial glows, or decorative colour effects
-- **Subtle hover effects only** — no aggressive drop shadows, lifting, or scaling. Standard card shadow is `shadow-sm`. Do NOT use `shadow-[0_24px_80px_...]` or similar custom large shadows.
-- **One heading font + one body font** — consistent weights and line-heights throughout
-- **No decorative hero banners** — page headers use plain `rounded-xl border border-slate-200 bg-white p-6 shadow-sm` like every other page
+- Use the established app visual language, not a new marketing style.
+- Use the 8px spacing system for margins, padding, and gaps.
+- Use `rounded-xl` as the default radius for app surfaces.
+- Use restrained colors, `shadow-sm`, and subtle hover states.
+- Avoid decorative gradients, radial glows, oversized hero banners, and
+  arbitrary Tailwind values unless there is a specific design requirement.
+- Every async interaction needs loading, error, and empty states as applicable.
+- Links and buttons must either work or be visibly disabled.
+- Use specific product copy. Do not add placeholder testimonials or filler text.
 
-**Functional Requirements:**
-- Loading states for ALL async actions
-- No placeholder "#" links — every button/link must work or be visibly disabled
-- Error states and empty states for all data displays
-- Specific copy — no generic "Build your dreams" filler
+## File Map
 
-**Red Flags — NEVER do these:**
-- Sparkle emojis as UI elements
-- Fake testimonials or placeholder content
-- Inconsistent spacing or border radiuses
-- Broken mobile responsiveness
-- Non-functional interactive elements
-- Over-styled components that look different from the rest of the app
-- Arbitrary Tailwind values like `rounded-[28px]`, `tracking-[0.28em]`, `shadow-[0_24px_...]`
-
----
-
-## Key Domain Concepts
-
-### 90/180-Day Rule
-- Non-EU citizens can stay max 90 days within any rolling 180-day period in Schengen Area
-- Each day's compliance = count trips in previous 180 days
-- "Days remaining" = 90 minus days used in rolling window
-- Use ISO date strings (`'2025-10-12'`) for all calculations
-
-### Core Entities
-- **Companies** — the paying customer (auth.uid() = company)
-- **Employees** — people being tracked (belong to a company)
-- **Trips** — date ranges of travel to Schengen
-- **Compliance Status** — calculated field (compliant/warning/violation)
-
-### Database Schema
-```
-companies (id, name, email, stripe_customer_id, created_at)
-employees (id, company_id, name, nationality_type, created_at)
-trips (id, employee_id, company_id, entry_date, exit_date, country, travel_days, created_at)
+```text
+app/                  Next.js App Router routes and Server Actions
+app/(auth)/           Login, signup, password reset
+app/(dashboard)/      Authenticated product pages
+app/(public)/         Public marketing and legal pages
+app/admin/            Admin surfaces
+app/api/              Route handlers
+components/           Feature components and UI primitives
+components/ui/        Shared primitives; change carefully
+hooks/                Reusable React hooks
+contexts/             React providers
+lib/compliance/       90/180-day calculation engine
+lib/constants/        Country lists, limits, and app constants
+lib/db/               Supabase query layer
+lib/security/         Tenant isolation, auth, CSP, MFA, cron auth
+lib/billing/          Stripe integration
+lib/gdpr/             DSAR, retention, export, anonymization
+lib/import/           CSV/Excel/Gantt import parsing and validation
+types/                Shared TypeScript and generated DB types
+__tests__/            Unit and integration tests
+e2e/                  Playwright tests
+supabase/migrations/  Database schema changes
+docs/                 App docs, runbooks, audits, and plans
+memory/               Architecture and long-lived project context
 ```
 
-- `employees.nationality_type`: `'uk_citizen'`, `'eu_schengen_citizen'`, or `'rest_of_world'`
-- `trips.travel_days`: computed column (`exit_date - entry_date + 1`, PostgreSQL GENERATED ALWAYS AS STORED)
-- `trips.country`: 2-character ISO code (CHECK constraint)
+## Commands
 
----
+Run these from `complyeur/`.
 
-## File Structure
-```
-/app                 -> Next.js App Router pages
-  /(auth)            -> Login, signup, password reset (public)
-  /(dashboard)       -> Protected app pages (requires auth)
-    /dashboard       -> Main compliance dashboard
-    /employee        -> Employee CRUD (singular, has [id]/ dynamic route)
-    /import          -> Excel/CSV bulk import
-    /settings        -> Company settings
-    /calendar        -> Calendar view of travel
-    /exports         -> Data export features
-    /gdpr            -> GDPR data management
-    /trip-forecast   -> Trip forecasting tools
-  /(public)          -> Public marketing pages
-  /admin             -> Admin panel
-  /api               -> API routes (health, billing, GDPR)
-/components          -> Organized by FEATURE FOLDER
-  /ui                -> Shadcn/UI primitives (DO NOT edit directly)
-  /dashboard         -> Dashboard widgets and cards
-  /employees         -> Employee CRUD components
-  /trips             -> Trip CRUD components
-  /import            -> Import feature components
-  /settings          -> Settings page components
-  /forms             -> Form components
-  /layout            -> Layout components (header, sidebar)
-  /navigation        -> Nav components
-/hooks               -> Custom React hooks
-/contexts            -> React Context providers
-/lib                 -> Utilities and business logic
-  /supabase          -> Supabase clients (client.ts, server.ts, admin.ts)
-  /db                -> Database query layer (one file per entity)
-  /compliance        -> 90/180-day calculation engine
-  /validations       -> Zod schemas (trip, employee, etc.)
-  /errors            -> Custom error classes
-  /services          -> Business logic services
-  /security          -> Security helpers
-  /billing           -> Stripe billing integration
-  /constants         -> App-wide constants (schengen-countries, etc.)
-/types               -> TypeScript interfaces and generated Supabase types
-/__tests__           -> Unit and integration tests
-/e2e                 -> Playwright end-to-end tests
-/supabase/migrations -> Database migrations
-```
-
----
-
-## Quick Commands
 ```bash
-npm run dev              # Start dev server (Turbopack)
-npm run build            # Production build
-npm run test             # Run unit tests
-npm run test:unit        # Unit tests only
-npm run test:e2e         # Playwright e2e tests
-npm run test:coverage    # Tests with coverage
-npm run typecheck        # Type checking
-npm run lint             # Linting
-npm run db:types         # Generate Supabase types
+pnpm dev
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm test:unit
+pnpm test:integration
+pnpm test:e2e
+pnpm test:e2e:baseline
+pnpm test:e2e:import
+pnpm test:e2e:dashboard
+pnpm test:e2e:multi-user
+pnpm test:e2e:a11y
+pnpm test:e2e:mobile
+pnpm test:coverage
+pnpm build
+pnpm security:check
+pnpm db:types
 ```
 
----
+## Database Workflow
 
-## Development Approach
-- Plain English, no fluff
-- Small, incremental changes — never big-bang rewrites
-- Make atomic, single-purpose changes
-- Test adjacent features after every change
-- Git commit after each working change
-- If something breaks unexpectedly, STOP and audit before fixing more
-- **Do not over-engineer.** Only make changes that are directly requested or clearly necessary. Don't add features, refactor code, or make "improvements" beyond what was asked. A bug fix doesn't need surrounding code cleaned up. A simple feature doesn't need extra configurability. Keep solutions simple and focused.
+- Create schema changes as Supabase migrations.
+- Test migrations locally with `supabase db reset` when relevant.
+- Dry-run remote migration pushes before applying them.
+- Apply migrations to staging before production.
+- Do not manually patch production schema through the Supabase SQL editor.
+- Regenerate `types/database.ts` after schema changes.
+
+## Verification Policy
+
+Use the smallest verification that proves the change:
+
+- Compliance logic: `pnpm test:compliance`, then broader tests if shared code changed.
+- React/UI changes: `pnpm lint`, targeted Vitest tests, and browser/Playwright checks.
+- Database changes: local reset or targeted SQL verification, plus type generation.
+- Security or tenant isolation changes: targeted security tests and regression tests.
+- Before shipping: `pnpm typecheck`, `pnpm lint`, relevant tests, and `pnpm build`.
+
+## Working Style
+
+- Prefer clear diagnosis before edits.
+- Preserve existing user changes in the working tree.
+- Avoid generated/cache directories.
+- Stop and reassess if a small fix starts causing unrelated failures.
+- Commit only when explicitly asked.
