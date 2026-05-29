@@ -80,12 +80,17 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      - name: Export local Supabase env
+        run: |
+          supabase status -o env \
+            --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
+            --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            | sed 's/="/=/; s/"$//' >> "$GITHUB_ENV"
+
       - name: Run baseline E2E coverage
         run: pnpm test:e2e:baseline
         env:
-          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_LOCAL_SERVICE_ROLE_KEY }}
           TEST_USER_EMAIL: e2e-test@complyeur.test
           TEST_USER_PASSWORD: E2ETestPassword123!
           TEST_USER_COMPANY: Playwright Test Company
@@ -138,12 +143,17 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      - name: Export local Supabase env
+        run: |
+          supabase status -o env \
+            --override-name api.url=NEXT_PUBLIC_SUPABASE_URL \
+            --override-name auth.anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY \
+            --override-name auth.service_role_key=SUPABASE_SERVICE_ROLE_KEY \
+            | sed 's/="/=/; s/"$//' >> "$GITHUB_ENV"
+
       - name: Run multi-tenant isolation E2E
         run: pnpm test:e2e:multi-user
         env:
-          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_LOCAL_SERVICE_ROLE_KEY }}
           TEST_USER_EMAIL: e2e-test@complyeur.test
           TEST_USER_PASSWORD: E2ETestPassword123!
           TEST_USER_COMPANY: Playwright Test Company
