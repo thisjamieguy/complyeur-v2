@@ -1,5 +1,10 @@
 # ComplyEur Beta Launch Results
 
+> Superseded note:
+> This file is preserved for audit history and full section-level detail. The
+> current beta launch source of truth is
+> `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`.
+
 **Started:** 2026-02-05
 **Status:** Complete (all 18 sections audited)
 
