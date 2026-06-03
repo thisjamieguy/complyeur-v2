@@ -129,6 +129,7 @@ describe('anonymizeEmployee audit minimisation', () => {
       message: 'Compliance alert for anonymized employee',
     })
     expect(notificationUpdateMock).toHaveBeenCalledWith({
+      recipient_email: 'redacted-notification-recipient@complyeur.local',
       subject: 'Schengen Compliance Alert for anonymized employee',
     })
     expect(logGdprActionMock).toHaveBeenCalledTimes(1)

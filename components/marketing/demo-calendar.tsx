@@ -74,9 +74,9 @@ const defaultEmployees: CalendarEmployeeRow[] = [
 const DEFAULT_TOTAL_DAYS = 28
 
 const riskStyles = {
-  green: 'bg-green-400 text-green-900',
-  amber: 'bg-amber-400 text-amber-900',
-  red: 'bg-red-400 text-red-900',
+  green: 'bg-green-700 text-white',
+  amber: 'bg-amber-700 text-white',
+  red: 'bg-red-700 text-white',
 } satisfies Record<RiskLevel, string>
 
 function startOfDay(date: Date): Date {
@@ -317,18 +317,18 @@ export function DemoCalendar({
   const timelineWidth = totalDays * dayWidth
 
   return (
-    <div className="max-w-full overflow-hidden bg-white">
+    <div className="min-w-0 max-w-full overflow-hidden bg-white">
       <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
         <span className="text-sm font-medium text-slate-700">{title}</span>
       </div>
 
-      <div className="flex">
+      <div className="flex min-w-0">
         <div className="shrink-0 border-r border-slate-200" style={{ width: NAME_WIDTH }}>
           <div
             className="flex items-center border-b border-slate-200 bg-slate-50 px-3"
             style={{ height: showMonthRow ? 52 : 32 }}
           >
-            <span className="text-xs font-medium text-slate-500">Employee</span>
+            <span className="text-xs font-medium text-slate-600">Employee</span>
           </div>
 
           {rows.map((employee) => (
@@ -342,14 +342,19 @@ export function DemoCalendar({
           ))}
         </div>
 
-        <div className="flex-1 overflow-x-auto">
+        <div
+          className="min-w-0 flex-1 overflow-x-auto focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-2"
+          role="region"
+          aria-label="Scrollable travel timeline"
+          tabIndex={0}
+        >
           <div className="relative" style={{ width: timelineWidth }}>
             {showMonthRow && (
               <div className="flex h-5 border-b border-slate-200 bg-slate-100">
                 {monthSpans.map((span) => (
                   <div
                     key={span.label}
-                    className="flex shrink-0 items-center justify-center text-[10px] font-semibold text-slate-500"
+                    className="flex shrink-0 items-center justify-center text-[10px] font-semibold text-slate-600"
                     style={{ width: span.count * dayWidth }}
                   >
                     {span.label}
@@ -363,7 +368,7 @@ export function DemoCalendar({
                 <div
                   key={`day-${idx}`}
                   className={cn(
-                    'flex shrink-0 items-center justify-center border-r border-slate-100 text-[10px] text-slate-500',
+                    'flex shrink-0 items-center justify-center border-r border-slate-100 text-[10px] text-slate-600',
                     showTodayMarker && idx === todayIndex && 'bg-blue-50 font-semibold text-blue-600'
                   )}
                   style={{ width: dayWidth }}

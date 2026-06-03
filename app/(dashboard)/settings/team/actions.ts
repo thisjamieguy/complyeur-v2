@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
   isOwnerOrAdmin,
-  hasPermission,
   PERMISSIONS,
   ROLES,
   type Permission,
@@ -13,6 +12,7 @@ import {
 } from '@/lib/permissions'
 import { dispatchInviteEmail, normalizeInviteEmail } from '@/lib/services/team-invites'
 import {
+  requirePermission,
   requireMutationPermission,
   requireOwnerMutation,
 } from '@/lib/security/authorization'
@@ -121,36 +121,25 @@ function parseSeatUsage(raw: unknown): SeatUsage {
 async function getActorContext(requiredPermission: Permission): Promise<ActionResult<ActorContext>> {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { success: false, error: 'Not authenticated' }
+  const access = await requirePermission(supabase, requiredPermission)
+  if (!access.allowed) {
+    return {
+      success: false,
+      error: access.status === 401 ? 'Not authenticated' : access.error,
+    }
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('company_id, role')
-    .eq('id', user.id)
-    .single()
-
-  if (profileError || !profile?.company_id) {
+  if (!access.profile.company_id) {
     return { success: false, error: 'Profile not found' }
-  }
-
-  if (!hasPermission(profile.role, requiredPermission)) {
-    return { success: false, error: 'Forbidden' }
   }
 
   return {
     success: true,
     data: {
-      userId: user.id,
-      userEmail: normalizeInviteEmail(user.email ?? ''),
-      companyId: profile.company_id,
-      role: profile.role,
+      userId: access.user.id,
+      userEmail: normalizeInviteEmail(access.user.email ?? ''),
+      companyId: access.profile.company_id,
+      role: access.profile.role,
       supabase,
     },
   }

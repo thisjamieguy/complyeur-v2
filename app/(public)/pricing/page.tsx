@@ -503,7 +503,7 @@ function PricingPageContent() {
                             className={cn(
                               'px-4 py-3 text-slate-600',
                               isIncluded && 'font-medium text-brand-700',
-                              isExcluded && 'text-slate-400'
+                              isExcluded && 'text-slate-600'
                             )}
                           >
                             {formatComparisonValue(value)}

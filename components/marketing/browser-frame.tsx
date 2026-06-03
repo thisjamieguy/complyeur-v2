@@ -16,7 +16,7 @@ export function BrowserFrame({
   return (
     <div
       className={cn(
-        'bg-white rounded-xl border border-slate-200 shadow-2xl shadow-slate-900/10 overflow-hidden',
+        'min-w-0 max-w-full bg-white rounded-xl border border-slate-200 shadow-2xl shadow-slate-900/10 overflow-hidden',
         className
       )}
     >
@@ -58,7 +58,7 @@ export function BrowserFrame({
       </div>
 
       {/* Content */}
-      <div className="relative overflow-hidden">{children}</div>
+      <div className="relative min-w-0 overflow-hidden">{children}</div>
     </div>
   )
 }

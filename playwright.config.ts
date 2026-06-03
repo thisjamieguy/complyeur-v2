@@ -3,12 +3,17 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 const authFile = path.join(__dirname, '.auth/user.json');
-const e2eBaseUrl = 'http://localhost:3000';
+const e2ePort = process.env.PLAYWRIGHT_PORT ?? '3100';
+const e2eBaseUrl = `http://127.0.0.1:${e2ePort}`;
 const e2eReadyUrl = `${e2eBaseUrl}/login`;
 const configuredWorkers = Number(process.env.PLAYWRIGHT_WORKERS ?? '1');
 
 // Check if auth file exists - only use it if it does
 const authFileExists = fs.existsSync(authFile);
+const hasConfiguredAuthCredentials = Boolean(
+  process.env.TEST_USER_EMAIL && process.env.TEST_USER_PASSWORD
+);
+const shouldUseAuthFile = authFileExists && hasConfiguredAuthCredentials;
 
 export default defineConfig({
   testDir: './e2e',
@@ -36,7 +41,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         // Use stored auth state if file exists
-        ...(authFileExists ? { storageState: authFile } : {}),
+        ...(shouldUseAuthFile ? { storageState: authFile } : {}),
       },
       testIgnore: /phase-regression\.spec\.ts/,
     },
@@ -51,7 +56,7 @@ export default defineConfig({
       name: 'mobile',
       use: {
         ...devices['Pixel 7'],
-        ...(authFileExists ? { storageState: authFile } : {}),
+        ...(shouldUseAuthFile ? { storageState: authFile } : {}),
       },
       testMatch: /mobile-breakpoints\.spec\.ts/,
     },
@@ -60,16 +65,16 @@ export default defineConfig({
       name: 'stress',
       use: {
         ...devices['Desktop Chrome'],
-        ...(authFileExists ? { storageState: authFile } : {}),
+        ...(shouldUseAuthFile ? { storageState: authFile } : {}),
       },
       testMatch: /stress-test\.spec\.ts/,
       timeout: 300000,
     },
   ],
   webServer: {
-    command: 'pnpm exec next dev --webpack --hostname 127.0.0.1 --port 3000',
+    command: `pnpm exec next dev --webpack --hostname 127.0.0.1 --port ${e2ePort}`,
     url: e2eReadyUrl,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: process.env.PLAYWRIGHT_REUSE_SERVER === 'true',
     env: {
       ...process.env,
       CRON_SECRET: process.env.CRON_SECRET ?? 'playwright-cron-secret',
