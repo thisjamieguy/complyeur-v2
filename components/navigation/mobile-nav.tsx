@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -8,6 +8,7 @@ import { Menu, MessageSquarePlus, Shield } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -24,7 +25,8 @@ interface MobileNavProps {
 
 export function MobileNav({ user }: MobileNavProps) {
   const pathname = usePathname()
-  const { isMobileOpen, toggleMobile, closeMobile } = useSidebar()
+  const previousPathnameRef = useRef(pathname)
+  const { isMobileOpen, setMobileOpen, closeMobile } = useSidebar()
   const canAccessItem = (href: string): boolean => {
     if (href === '/calendar') return user?.canAccessCalendar === true
     if (href === '/trip-forecast') return user?.canAccessForecast === true
@@ -47,17 +49,21 @@ export function MobileNav({ user }: MobileNavProps) {
       ]
     : baseItems
 
-  // Close on route change
+  // Close on route change, but do not close the sheet on initial mount.
   useEffect(() => {
-    closeMobile()
+    if (previousPathnameRef.current !== pathname) {
+      previousPathnameRef.current = pathname
+      closeMobile()
+    }
   }, [pathname, closeMobile])
 
   return (
-    <Sheet open={isMobileOpen} onOpenChange={toggleMobile}>
+    <Sheet open={isMobileOpen} onOpenChange={setMobileOpen}>
       <SheetTrigger asChild>
         <button
           className="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center rounded-md hover:bg-slate-100 transition-colors"
           aria-label="Open menu"
+          onClick={() => setMobileOpen(true)}
         >
           <Menu className="h-6 w-6 text-slate-700" />
         </button>
@@ -80,6 +86,9 @@ export function MobileNav({ user }: MobileNavProps) {
               className="h-5 w-auto"
             />
           </SheetTitle>
+          <SheetDescription className="sr-only">
+            Main navigation links for the authenticated dashboard.
+          </SheetDescription>
         </SheetHeader>
         <nav className="flex flex-col p-2">
           {items.map((item) => {

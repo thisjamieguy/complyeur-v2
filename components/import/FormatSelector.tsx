@@ -131,7 +131,7 @@ export function FormatSelector({ maxEmployees = null }: FormatSelectorProps) {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600">
                   Columns: {format.columns.join(', ')}
                 </p>
 
@@ -179,7 +179,7 @@ export function FormatSelector({ maxEmployees = null }: FormatSelectorProps) {
 
       <div className="flex items-center justify-end gap-3">
         {!selectedFormat && (
-          <p className="text-sm text-slate-400">Select a format to continue</p>
+          <p className="text-sm text-slate-600">Select a format to continue</p>
         )}
         <Button
           size="lg"

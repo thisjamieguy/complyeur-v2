@@ -102,6 +102,7 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
         </div>
         <Slider
           id="warning-threshold"
+          aria-label="Warning threshold in days"
           value={[warningThreshold]}
           onValueChange={handleWarningChange}
           min={50}
@@ -126,6 +127,7 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
         </div>
         <Slider
           id="critical-threshold"
+          aria-label="Urgent threshold in days"
           value={[criticalThreshold]}
           onValueChange={handleCriticalChange}
           min={60}
@@ -149,6 +151,7 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
           </span>
         </div>
         <Slider
+          aria-label="Breach threshold in days"
           value={[90]}
           min={90}
           max={90}

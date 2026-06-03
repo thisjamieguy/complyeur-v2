@@ -139,7 +139,7 @@ async function globalSetup(config: FullConfig) {
       return;
     }
 
-    console.log(`✅ Authenticated as: ${testEmail}`);
+    console.log('✅ Authenticated as configured test user');
     console.log('✅ Authentication verified - saving state');
 
     // Save the storage state

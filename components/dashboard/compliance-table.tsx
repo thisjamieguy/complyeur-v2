@@ -84,7 +84,7 @@ function getDaysRemainingClassName(
     case 'amber':
       return 'text-amber-700'
     case 'red':
-      return 'text-rose-600'
+      return 'text-rose-700'
     case 'breach':
       return 'text-slate-900'
     case 'exempt':

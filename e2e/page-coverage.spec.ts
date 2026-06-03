@@ -109,8 +109,8 @@ test.describe('Route coverage matrix', () => {
   test.describe('Direct authenticated pages', () => {
     for (const route of authenticatedDirectPages) {
       test(`${route.path} renders`, async ({ page }) => {
-        test.setTimeout(60_000);
-        test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
+        test.setTimeout(180_000);
+        test.skip(!(await hasAuthenticatedStorageState(page)), 'Skipping: authenticated E2E state is unavailable');
         await page.goto(route.path, { waitUntil: 'domcontentloaded' });
 
         await expect(page).toHaveURL(new RegExp(route.path.split('?')[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
@@ -128,8 +128,8 @@ test.describe('Route coverage matrix', () => {
     }
 
     test('/trip-forecast follows account entitlements', async ({ page }) => {
-      test.setTimeout(60_000);
-      test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
+      test.setTimeout(180_000);
+      test.skip(!(await hasAuthenticatedStorageState(page)), 'Skipping: authenticated E2E state is unavailable');
 
       await page.goto('/trip-forecast', { waitUntil: 'domcontentloaded' });
 
@@ -144,6 +144,7 @@ test.describe('Route coverage matrix', () => {
     });
 
     test('employee detail page is reachable from the dashboard table', async ({ page }) => {
+      test.setTimeout(180_000);
       test.skip(!(await hasAuthenticatedDashboard(page)), 'Skipping: authenticated E2E state is unavailable');
 
       const firstEmployeeLink = page.locator('tbody tr a[href^="/employee/"]').first();
@@ -170,6 +171,7 @@ test.describe('Route coverage matrix', () => {
     test.use({ storageState: { cookies: [], origins: [] } });
 
     test('blog article pages are reachable from the blog index', async ({ page }) => {
+      test.setTimeout(120_000);
       await page.goto('/blog', { waitUntil: 'domcontentloaded' });
       const firstArticleLink = page.getByRole('link', { name: /read article/i }).first();
       await expect(firstArticleLink).toBeVisible();

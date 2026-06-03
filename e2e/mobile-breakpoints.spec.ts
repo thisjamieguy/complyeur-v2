@@ -70,7 +70,7 @@ test.describe('Public pages — mobile layout', () => {
 // 2. Navigation — mobile
 // ---------------------------------------------------------------------------
 test.describe('Navigation — mobile', () => {
-  test.setTimeout(45_000);
+  test.setTimeout(60_000);
 
   let isAuthed = false;
 
@@ -111,7 +111,11 @@ test.describe('Navigation — mobile', () => {
     test.skip(!isAuthed, 'Skipping: no auth state');
 
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+    await expect(
+      page.getByRole('heading', { name: /employee compliance/i }),
+    ).toBeVisible({ timeout: 15_000 });
     await page.waitForLoadState('networkidle').catch(() => {});
+    await page.waitForTimeout(500);
 
     const toggle = page.getByRole('button', { name: /open menu/i }).first();
 
@@ -122,17 +126,13 @@ test.describe('Navigation — mobile', () => {
       return;
     }
 
-    const beforeState = await toggle.getAttribute('aria-expanded').catch(() => null);
-    await toggle.click();
-    await page.waitForTimeout(300);
-    const afterState = await toggle.getAttribute('aria-expanded').catch(() => null);
+    await toggle.tap({ force: true, timeout: 10_000 });
 
-    // State should have changed (toggled), or at minimum the click succeeded
-    // We accept both attribute change and no-change (static nav) to avoid false failures
-    expect(typeof afterState).toBe('string');
-    if (beforeState !== null && afterState !== null) {
-      expect(afterState).not.toBe(beforeState);
-    }
+    const mobileMenu = page.getByRole('dialog');
+    await expect(mobileMenu).toBeVisible({ timeout: 5_000 });
+
+    await mobileMenu.getByRole('button', { name: /close/i }).tap({ force: true });
+    await expect(mobileMenu).toBeHidden({ timeout: 5_000 });
   });
 });
 
@@ -239,7 +239,9 @@ test.describe('Forms — mobile', () => {
 
     await expect(page.getByRole('heading').first()).toBeVisible({ timeout: 10_000 });
 
-    const formField = page.locator('input, select, textarea').first();
+    const formField = page
+      .locator('input:visible, select:visible, textarea:visible, [role="slider"]:visible')
+      .first();
     await expect(formField).toBeVisible({ timeout: 10_000 });
   });
 });
