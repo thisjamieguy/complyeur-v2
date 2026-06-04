@@ -11,9 +11,7 @@ import { getTrustedClientIpFromHeaders } from '@/lib/security/client-ip'
 import {
   AuthError,
   ValidationError,
-  DatabaseError,
   getAuthErrorMessage,
-  getDatabaseErrorMessage,
 } from '@/lib/errors'
 import {
   loginSchema,
@@ -25,6 +23,10 @@ import { sendWelcomeEmail } from '@/lib/services/email-service'
 import { logger } from '@/lib/logger.mjs'
 
 const SIGNUP_PARITY_REDIRECT = '/check-email'
+
+type SignupActionResult =
+  | { success: true; redirectTo: string }
+  | { success: false; error: string }
 
 function getSignupRedirectPath(redirectTo: string | null | undefined): string {
   const validatedRedirect = validateRedirectUrl(redirectTo)
@@ -126,7 +128,12 @@ export async function signup(formData: FormData) {
   const requestHeaders = await headers()
   const ip = getRequestIp(requestHeaders)
   const rl = await rateLimit(ip, 'auth')
-  if (!rl.success) throw new AuthError('Too many signup attempts. Please wait a moment and try again.')
+  if (!rl.success) {
+    return {
+      success: false,
+      error: 'Too many signup attempts. Please wait a moment and try again.',
+    } satisfies SignupActionResult
+  }
 
   const supabase = await createClient()
   const signupRedirectPath = getSignupRedirectPath(
@@ -145,7 +152,7 @@ export async function signup(formData: FormData) {
   const result = emailSignupSchema.safeParse(rawData)
   if (!result.success) {
     const errorMessage = result.error?.issues[0]?.message ?? 'Invalid input'
-    throw new ValidationError(errorMessage)
+    return { success: false, error: errorMessage } satisfies SignupActionResult
   }
 
   const { name, email, companyName, password } = result.data!
@@ -158,65 +165,39 @@ export async function signup(formData: FormData) {
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: normalizedEmail,
     password,
+    options: {
+      data: {
+        company_name: companyName,
+        full_name: name,
+        given_name: firstName,
+        family_name: lastName,
+      },
+    },
   })
 
   if (authError) {
     const err = authError!
     const errorMessage = err.message ?? ''
     if (isExistingAccountErrorMessage(errorMessage)) {
-      redirect(signupRedirectPath)
+      return { success: true, redirectTo: signupRedirectPath } satisfies SignupActionResult
     }
     if (errorMessage.includes('Email address') && errorMessage.includes('is invalid') && normalizedEmail.includes('+')) {
-      throw new AuthError('Email addresses with special characters like "+" may not be supported. Please try using a different email address or contact support.')
+      return {
+        success: false,
+        error: 'Email addresses with special characters like "+" may not be supported. Please try using a different email address or contact support.',
+      } satisfies SignupActionResult
     }
 
-    throw new AuthError(getAuthErrorMessage(err))
+    return { success: false, error: getAuthErrorMessage(err) } satisfies SignupActionResult
   }
 
   // Supabase can return obfuscated user data when an account already exists and
   // anti-enumeration protections are enabled. Treat this as a parity-success path.
   if (!authData.user || authData.user.identities?.length === 0) {
-    redirect(signupRedirectPath)
+    return { success: true, redirectTo: signupRedirectPath } satisfies SignupActionResult
   }
 
   const user = authData.user!
-
-  // Create the company and profile using the database function.
-  // Terms are accepted passively on signup page.
-  const termsAcceptedAt = new Date().toISOString()
-  const fullSignature = await supabase.rpc('create_company_and_profile', {
-    user_id: user.id,
-    user_email: normalizedEmail,
-    company_name: companyName,
-    user_terms_accepted_at: termsAcceptedAt,
-    user_auth_provider: 'email',
-    user_first_name: firstName,
-    user_last_name: lastName,
-  })
-
-  let companyId = fullSignature.data
-  let signupError = fullSignature.error
-
-  // Backward compatibility for environments that only support the legacy signature
-  if (signupError?.code === 'PGRST202') {
-    const legacySignature = await supabase.rpc('create_company_and_profile', {
-      user_id: user.id,
-      user_email: normalizedEmail,
-      company_name: companyName,
-      user_terms_accepted_at: termsAcceptedAt,
-    })
-    companyId = legacySignature.data
-    signupError = legacySignature.error
-  }
-
-  if (signupError) {
-    console.error('Signup RPC error:', signupError)
-    throw new DatabaseError(getDatabaseErrorMessage(signupError!))
-  }
-
-  if (!companyId) {
-    throw new DatabaseError('Failed to create company. Please try again.')
-  }
 
   const { error: activityError } = await supabase
     .from('profiles')
@@ -245,10 +226,21 @@ export async function signup(formData: FormData) {
 
   // Keep signup response parity between existing and new accounts.
   // New users are redirected to login after account provisioning.
-  await supabase.auth.signOut({ scope: 'local' })
+  try {
+    const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' })
+    if (signOutError) {
+      logger.warn('[Auth] Local sign-out skipped after signup', {
+        error: signOutError.message,
+      })
+    }
+  } catch (signOutError) {
+    logger.warn('[Auth] Local sign-out failed after signup', {
+      error: signOutError instanceof Error ? signOutError.message : 'Unknown error',
+    })
+  }
 
   revalidatePath('/', 'layout')
-  redirect(signupRedirectPath)
+  return { success: true, redirectTo: signupRedirectPath } satisfies SignupActionResult
 }
 
 export async function forgotPassword(formData: FormData) {
