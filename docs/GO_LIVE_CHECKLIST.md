@@ -69,7 +69,7 @@ Complete all items before announcing launch.
 - [ ] **Export PDF**: Report generates correctly
 - [ ] **Settings**: User can update preferences
 - [ ] **Logout**: Session properly terminated
-- [ ] **Delete Account**: Soft delete works correctly
+- [ ] **Deletion Request Path**: Manual support/admin account deletion workflow is documented and can be executed correctly
 
 ## Performance
 - [ ] Lighthouse score >80 for Performance

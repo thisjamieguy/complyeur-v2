@@ -28,7 +28,7 @@ need named owners.
 | Accessibility baseline | Ready for private beta | A11y E2E recorded as 17 passed. |
 | Mobile baseline | Ready for private beta | Mobile E2E recorded as 15 passed. |
 | Billing | Blocked for paid/public beta | Placeholder Stripe price IDs still need live/test-live replacement and audit. |
-| Operations and recovery | Conditional for private beta | Restore/recovery documentation and restore test evidence remain incomplete. |
+| Operations and recovery | Conditional for private beta | Recovery procedure is now documented; restore-test evidence still remains incomplete. |
 | Legal and GDPR packaging | Conditional for private beta | DPA remains draft; GDPR public release workplan still has public-release blockers. |
 | Monitoring and support | Conditional for private beta | Uptime/Sentry evidence exists, but business metrics ownership and zero-signup alert are open. |
 
@@ -75,6 +75,7 @@ Supporting docs:
 - `docs/operations/RELEASE-CHECKLIST.md`
 - `docs/GO_LIVE_CHECKLIST.md`
 - `docs/RUNBOOK.md`
+- `docs/operations/BETA_MANUAL_VERIFICATION_CHECKLIST.md`
 - `docs/BRANCH_PROTECTION_BASELINE.md`
 - `docs/architecture/ENVIRONMENTS.md`
 - `docs/architecture/MIGRATION_WORKFLOW.md`
@@ -101,8 +102,7 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Data corruption recovery plan/runbook | Critical before private beta | Engineering owner | Add explicit corruption detection, restore, validation, and RLS re-check steps to the operational runbook. |
-| Recovery runbook needed | Critical before private beta | Engineering owner | Fold the restore plan into `docs/RUNBOOK.md` or a dedicated linked recovery runbook. |
+| Recovery tabletop and evidence | Critical before private beta | Engineering owner | Execute the `docs/RUNBOOK.md` recovery procedure against an isolated restore target and file evidence. |
 | Supabase production backups and PITR | Important before paid/public beta | Engineering owner | Verify Supabase plan, backups, PITR, and restore target from the dashboard. |
 | Fresh staging or production-like RLS attack-test evidence | Important before paid/public beta | Security owner | Run attack plan and file evidence under compliance or security docs. |
 
@@ -136,7 +136,7 @@ Open checks:
 | --- | --- | --- | --- |
 | Auth email delivery across Gmail, Outlook, and corporate providers | Critical before private beta | QA owner | Run manual delivery tests against the beta environment. |
 | Password reset link behavior | Critical before private beta | QA owner | Verify reset delivery, link use, expiry, and post-reset sessions. |
-| Non-founder full journey | Critical before private beta | Product owner | Run signup through logout with a tester who has not seen the app. |
+| Non-founder full journey | Critical before private beta | Product owner | Run signup through logout with a tester who has not seen the app; use the documented deletion-request path if deletion is part of the test. |
 
 ## 9. GDPR, Privacy, And Legal Checks
 
@@ -164,14 +164,15 @@ Supporting docs:
 - `docs/compliance/soc2/evidence/uptime_monitoring_evidence.md`
 - `docs/SOC2_READINESS_AUDIT.md`
 - `docs/RUNBOOK.md`
+- `docs/operations/BETA_SUPPORT_AND_ALERTING.md`
 
 Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
 | Zero-signup alert not implemented | Important before paid/public beta | Growth/analytics owner | Define signup inactivity window and add alerting or dashboard review. |
-| Sentry alert rules | Critical before private beta | Engineering owner | Confirm error spike alerts and notification recipients in Sentry. |
-| Support inbox ownership | Critical before private beta | Support owner | Assign owner and response cadence for beta feedback and support. |
+| Sentry alert rules | Critical before private beta | Engineering owner | Configure or verify the alert baseline in `docs/operations/BETA_SUPPORT_AND_ALERTING.md` and capture evidence. |
+| Support inbox ownership | Critical before private beta | Support owner | Assign a named owner and cadence using `docs/operations/BETA_SUPPORT_AND_ALERTING.md`. |
 | Webhook-failure monitoring | Important before paid/public beta | Billing owner | Confirm alerting for failed Stripe webhook events. |
 
 ## 11. Email And DNS Checks
@@ -192,6 +193,7 @@ Open checks:
 ## 12. Known Issues
 
 Current known issues are tracked in `docs/beta/BETA_KNOWN_ISSUES.md`.
+Tester onboarding package is prepared in `docs/beta/BETA_TESTER_BRIEF.md`.
 
 Release-critical known issues:
 
@@ -219,6 +221,9 @@ Required before beta starts:
 
 ## 14. Manual Checks Still Required
 
+Run `docs/operations/BETA_MANUAL_VERIFICATION_CHECKLIST.md` against the
+deployed beta URL. The remaining manual checks include:
+
 - Confirmation email delivery in Gmail, Outlook, and a corporate provider.
 - Password reset delivery, link use, expiry, and session invalidation.
 - Real-device iPhone Safari and Android Chrome checks.
@@ -234,9 +239,8 @@ Required before beta starts:
 | Blocker | Classification | Owner | Next action |
 | --- | --- | --- | --- |
 | Branch protection on `main` not verified | Critical before private beta | Engineering owner | Verify GitHub settings. |
-| Data corruption recovery plan/runbook | Critical before private beta | Engineering owner | Document restore and data-integrity validation flow. |
-| Recovery runbook needed | Critical before private beta | Engineering owner | Add or link the runbook from release docs. |
-| Known issues list must be shared with testers | Critical before private beta | Product owner | Send or publish `docs/beta/BETA_KNOWN_ISSUES.md` for beta testers. |
+| Recovery tabletop and evidence | Critical before private beta | Engineering owner | Execute the documented restore and validation flow and store evidence. |
+| Tester brief and known issues must be distributed | Critical before private beta | Product owner | Send `docs/beta/BETA_TESTER_BRIEF.md` and `docs/beta/BETA_KNOWN_ISSUES.md` to testers. |
 | Placeholder Stripe price IDs | Critical before paid/public beta | Billing owner | Replace and audit IDs. |
 | DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review. |
 | SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure and verify DNS/email headers. |
@@ -245,7 +249,6 @@ Required before beta starts:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Missing 404 page | Important before paid/public beta | Engineering owner | Add branded `not-found.tsx`. |
 | Beta metrics ownership/tracking pending | Important before paid/public beta | Product owner | Assign dashboard owner and review cadence. |
 | Zero-signup alert not implemented | Important before paid/public beta | Growth/analytics owner | Implement alert or documented manual review. |
 | Sentry alert rules not evidenced | Important before paid/public beta | Engineering owner | Capture alert configuration evidence. |
@@ -264,10 +267,10 @@ Required before beta starts:
 
 | Owner | Next action |
 | --- | --- |
-| Engineering owner | Verify branch protection, recovery runbook, Sentry alerts, Supabase backup/PITR, production dashboard settings. |
+| Engineering owner | Verify branch protection, run the recovery tabletop, confirm Sentry alerts, and verify Supabase backup/PITR plus production dashboard settings. |
 | Billing owner | Replace Stripe price IDs, validate webhook endpoint, confirm billing support path. |
 | Legal owner | Complete DPA review, processor/subprocessor register review, ICO evidence. |
-| Product owner | Share known issues, run non-founder journey, assign metrics dashboard owner. |
+| Product owner | Distribute tester brief/known issues, run non-founder journey, assign metrics dashboard owner. |
 | QA owner | Complete email, password reset, real-device, screen reader, and ad blocker checks. |
 | Support owner | Confirm support inbox, beta feedback owner, and response cadence. |
 | Growth/analytics owner | Define and implement signup inactivity alert or manual monitoring process. |
@@ -276,8 +279,12 @@ Required before beta starts:
 
 - `docs/BETA_LAUNCH_RESULTS.md` - full 18-section launch audit.
 - `docs/BETA_LAUNCH_CHECKLIST.md` - original pre-beta checklist template.
+- `docs/beta/BETA_TESTER_BRIEF.md` - tester-facing onboarding and feedback instructions.
 - `docs/beta/BETA_KNOWN_ISSUES.md` - tester-facing known issues.
 - `docs/beta/BETA_SUCCESS_METRICS.md` - beta metrics and targets.
+- `docs/operations/BETA_MANUAL_VERIFICATION_CHECKLIST.md` - deployed-beta manual verification gate.
+- `docs/operations/BETA_SUPPORT_AND_ALERTING.md` - support ownership, feedback, and alert baseline.
+- `docs/operations/BETA_EVIDENCE_LOG_TEMPLATE.md` - evidence capture template for manual beta sign-off.
 - `docs/operations/RELEASE-CHECKLIST.md` - historical v1 release workflow and latest local release gate notes.
 - `docs/GO_LIVE_CHECKLIST.md` - production go-live checklist.
 - `docs/RUNBOOK.md` - deployment, rollback, restore testing, logs, and maintenance mode.

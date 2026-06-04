@@ -19,7 +19,7 @@ Last updated: June 3, 2026
 
 ## Documentation and Operations
 - Branch protection must be enabled on `main` using `docs/BRANCH_PROTECTION_BASELINE.md`.
-- Runbooks exist, but full disaster-recovery testing is pending.
+- Recovery procedure is documented in `docs/RUNBOOK.md`, but full disaster-recovery testing is still pending.
 - The DPA template is still a draft pending legal review and should not be sent to enterprise testers as final.
 - The processor/subprocessor register needs a final legal review, including DPA/SCC status for analytics, consent, and anti-abuse providers.
 
@@ -30,4 +30,8 @@ Last updated: June 3, 2026
 - Confirm Sentry alerts, uptime monitoring, webhook-failure alerts, and support inbox ownership.
 - Run real email deliverability checks across Gmail, Outlook, and at least one corporate provider.
 - Complete real-device checks on iOS Safari and Android Chrome.
-- Complete a non-founder full journey: signup, email verification, add employee, add trip, view compliance, export, billing path, settings, logout, and deletion.
+- Complete a non-founder full journey: signup, email verification, add employee, add trip, view compliance, export, billing path, settings, logout, and, if requested, the documented deletion-request path.
+
+## Tester Communications
+- Pair this document with `docs/beta/BETA_TESTER_BRIEF.md` when inviting testers.
+- Route tester feedback to the in-app beta feedback flow or `support@complyeur.com`.

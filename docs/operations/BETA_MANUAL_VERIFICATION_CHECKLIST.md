@@ -1,0 +1,58 @@
+# Private Beta Manual Verification Checklist
+
+Last updated: 2026-06-04
+
+Use this checklist on the deployed beta environment. This is the manual
+verification gate that remains after automated tests are green.
+
+## 1. Auth And Email
+
+- [ ] Signup works for a new tester account.
+- [ ] Confirmation email reaches a Gmail inbox.
+- [ ] Confirmation email reaches an Outlook inbox.
+- [ ] Confirmation email reaches one corporate inbox.
+- [ ] Confirmation link lands on the expected post-auth screen.
+- [ ] Password reset email reaches inbox and is not obviously broken.
+- [ ] Password reset link can be used once and cannot be reused.
+- [ ] Existing session behavior after password reset is confirmed and recorded.
+- [ ] Transactional emails show the expected reply-to/support path.
+
+## 2. Core Product Journey
+
+- [ ] A non-founder tester can complete signup without coaching.
+- [ ] Tester can add at least one employee.
+- [ ] Tester can add at least one trip.
+- [ ] Compliance results render and appear plausible.
+- [ ] Alerts or warning states display when expected.
+- [ ] CSV export works.
+- [ ] PDF export works.
+- [ ] Settings page loads and saves expected preferences.
+- [ ] Logout completes and protected routes no longer load.
+- [ ] If deletion is requested, the manual support/admin deletion path is understood and matches `docs/DATA_DELETION_WORKFLOW.md`.
+
+## 3. Device, Accessibility, And Browser Checks
+
+- [ ] Real-device iPhone Safari pass completed.
+- [ ] Real-device Android Chrome pass completed.
+- [ ] Screen reader pass completed with VoiceOver or NVDA on one core workflow.
+- [ ] Ad blocker check completed for auth, dashboard, Stripe, CookieYes, and analytics.
+- [ ] Lighthouse audit recorded for the beta URL.
+- [ ] Dark-mode email rendering checked in at least one mail client.
+
+## 4. Release Dashboards And Alerts
+
+- [ ] GitHub branch protection on `main` matches `docs/BRANCH_PROTECTION_BASELINE.md`.
+- [ ] Vercel production env vars, custom domain, SSL, and `/api/health` are verified.
+- [ ] Supabase backups and PITR are verified in the dashboard.
+- [ ] Sentry error-spike alert exists and routes to the current owner.
+- [ ] Webhook-failure monitoring is configured for Stripe.
+- [ ] Support inbox owner and response cadence are confirmed.
+
+## Evidence To Capture
+
+- Date of run
+- Environment URL
+- Tester name
+- Inbox/provider tested
+- Screenshots or links for failures
+- Follow-up issue links for any failed item
