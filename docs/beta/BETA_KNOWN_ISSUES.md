@@ -35,3 +35,4 @@ Last updated: June 3, 2026
 ## Tester Communications
 - Pair this document with `docs/beta/BETA_TESTER_BRIEF.md` when inviting testers.
 - Route tester feedback to the in-app beta feedback flow or `support@complyeur.com`.
+- Use `docs/operations/BETA_VERIFICATION_AUTOMATION.md` for the repo-side checks that can be completed before tester outreach.

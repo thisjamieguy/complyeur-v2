@@ -4,6 +4,8 @@ Last updated: 2026-06-04
 
 Use one copy of this template per beta verification run.
 
+Recommended: generate a fresh copy with `pnpm beta:evidence`.
+
 ## Run Metadata
 
 - Date:

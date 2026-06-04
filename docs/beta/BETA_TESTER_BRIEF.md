@@ -35,6 +35,9 @@ Send that document alongside this brief when inviting testers.
 - Real-device iPhone Safari and Android Chrome coverage
 - Production dashboard and alert ownership checks
 
+Repo-side verification helpers are tracked in
+`docs/operations/BETA_VERIFICATION_AUTOMATION.md`.
+
 ## Support Expectations
 
 - We review beta feedback during business hours.

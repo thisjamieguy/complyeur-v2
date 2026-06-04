@@ -2,6 +2,9 @@
 
 Complete all items before announcing launch.
 
+Use `docs/operations/BETA_VERIFICATION_AUTOMATION.md` to run the repo-side
+checks before the manual go-live pass.
+
 ---
 
 ## Infrastructure

@@ -56,4 +56,4 @@ Each alert must have:
 - Share `docs/beta/BETA_TESTER_BRIEF.md` with each tester cohort.
 - Log every actionable tester report in the tracker used for beta triage.
 - Maintain one issue per distinct bug; avoid burying incidents in email threads.
-
+- Record support ownership confirmation in `docs/operations/evidence/`.

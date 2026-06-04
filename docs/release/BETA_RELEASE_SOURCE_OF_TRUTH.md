@@ -1,7 +1,6 @@
 # Beta Release Source Of Truth
 
 Last updated: 2026-06-04
-Current branch: `codex/consolidate-release-audits`
 Baseline commit reviewed: `08002bf chore: complete authenticated beta readiness checks`
 
 This is the single consolidated checklist for ComplyEur private beta launch
@@ -76,6 +75,7 @@ Supporting docs:
 - `docs/GO_LIVE_CHECKLIST.md`
 - `docs/RUNBOOK.md`
 - `docs/operations/BETA_MANUAL_VERIFICATION_CHECKLIST.md`
+- `docs/operations/BETA_VERIFICATION_AUTOMATION.md`
 - `docs/BRANCH_PROTECTION_BASELINE.md`
 - `docs/architecture/ENVIRONMENTS.md`
 - `docs/architecture/MIGRATION_WORKFLOW.md`
@@ -285,6 +285,7 @@ deployed beta URL. The remaining manual checks include:
 - `docs/operations/BETA_MANUAL_VERIFICATION_CHECKLIST.md` - deployed-beta manual verification gate.
 - `docs/operations/BETA_SUPPORT_AND_ALERTING.md` - support ownership, feedback, and alert baseline.
 - `docs/operations/BETA_EVIDENCE_LOG_TEMPLATE.md` - evidence capture template for manual beta sign-off.
+- `docs/operations/BETA_VERIFICATION_AUTOMATION.md` - repo-side beta automation coverage and commands.
 - `docs/operations/RELEASE-CHECKLIST.md` - historical v1 release workflow and latest local release gate notes.
 - `docs/GO_LIVE_CHECKLIST.md` - production go-live checklist.
 - `docs/RUNBOOK.md` - deployment, rollback, restore testing, logs, and maintenance mode.

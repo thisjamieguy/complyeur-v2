@@ -5,6 +5,9 @@ Last updated: 2026-06-04
 Use this checklist on the deployed beta environment. This is the manual
 verification gate that remains after automated tests are green.
 
+Run the repo-side prep helpers in `docs/operations/BETA_VERIFICATION_AUTOMATION.md`
+before starting this checklist.
+
 ## 1. Auth And Email
 
 - [ ] Signup works for a new tester account.
@@ -56,3 +59,5 @@ verification gate that remains after automated tests are green.
 - Inbox/provider tested
 - Screenshots or links for failures
 - Follow-up issue links for any failed item
+
+Store the completed evidence log under `docs/operations/evidence/`.

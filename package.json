@@ -46,7 +46,10 @@
     "stress-test:dry": "tsx scripts/stress-test/index.ts --dry-run",
     "email:test": "tsx scripts/send-test-email.ts",
     "email:welcome:test": "tsx scripts/send-welcome-email.ts",
-    "email:auth:sync": "tsx scripts/sync-supabase-auth-email-config.ts"
+    "email:auth:sync": "tsx scripts/sync-supabase-auth-email-config.ts",
+    "beta:manual-gates": "node scripts/beta/manual-gate-helper.mjs",
+    "beta:health": "node scripts/beta/check-production-health.mjs",
+    "beta:evidence": "node scripts/beta/create-evidence-log.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
