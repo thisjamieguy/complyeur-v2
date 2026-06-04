@@ -14,6 +14,7 @@ vi.mock('@/lib/services/team-invites', () => ({
 }))
 
 vi.mock('@/lib/security/authorization', () => ({
+  requirePermission: vi.fn(),
   requireMutationPermission: vi.fn(),
   requireOwnerMutation: vi.fn(),
 }))
@@ -30,24 +31,14 @@ describe('team management security guards', () => {
   it('rejects team snapshot reads for users without users.view permission', async () => {
     const { createClient } = await import('@/lib/supabase/server')
     const { createAdminClient } = await import('@/lib/supabase/admin')
+    const { requirePermission } = await import('@/lib/security/authorization')
 
-    const single = vi.fn().mockResolvedValue({
-      data: { company_id: 'company-1', role: 'viewer' },
-      error: null,
+    vi.mocked(createClient).mockResolvedValue({} as never)
+    vi.mocked(requirePermission).mockResolvedValue({
+      allowed: false,
+      status: 403,
+      error: 'Forbidden',
     })
-    const eq = vi.fn().mockReturnValue({ single })
-    const select = vi.fn().mockReturnValue({ eq })
-
-    vi.mocked(createClient).mockResolvedValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'viewer-id', email: 'viewer@example.com' } },
-          error: null,
-        }),
-      },
-      from: vi.fn().mockReturnValue({ select }),
-      rpc: vi.fn(),
-    } as never)
 
     const { listTeamMembersAndInvites } = await import('@/app/(dashboard)/settings/team/actions')
     const result = await listTeamMembersAndInvites()
@@ -55,6 +46,29 @@ describe('team management security guards', () => {
     expect(result).toEqual({
       success: false,
       error: 'Forbidden',
+    })
+    expect(createAdminClient).not.toHaveBeenCalled()
+  })
+
+  it('rejects team snapshot reads when MFA is required', async () => {
+    const { createClient } = await import('@/lib/supabase/server')
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const { requirePermission } = await import('@/lib/security/authorization')
+
+    vi.mocked(createClient).mockResolvedValue({} as never)
+    vi.mocked(requirePermission).mockResolvedValue({
+      allowed: false,
+      status: 403,
+      error: 'MFA required. Complete setup or verification to continue.',
+      mfaReason: 'verify',
+    })
+
+    const { listTeamMembersAndInvites } = await import('@/app/(dashboard)/settings/team/actions')
+    const result = await listTeamMembersAndInvites()
+
+    expect(result).toEqual({
+      success: false,
+      error: 'MFA required. Complete setup or verification to continue.',
     })
     expect(createAdminClient).not.toHaveBeenCalled()
   })

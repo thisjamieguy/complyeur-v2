@@ -22,6 +22,12 @@ import {
 
 const AUTH_FILE = path.join(__dirname, '../.auth/user.json');
 
+function removeStaleAuthState(): void {
+  if (fs.existsSync(AUTH_FILE)) {
+    fs.unlinkSync(AUTH_FILE);
+  }
+}
+
 async function markOnboardingComplete(userId: string): Promise<boolean> {
   const adminStatus = getAdminConfigStatus();
   if (adminStatus.ok === false) {
@@ -56,6 +62,7 @@ async function globalSetup(config: FullConfig) {
 
   // Skip setup if no credentials
   if (!testEmail || !testPassword) {
+    removeStaleAuthState();
     console.log('⚠️  TEST_USER_EMAIL and TEST_USER_PASSWORD not set - auth setup skipped');
     console.log('   Tests requiring authentication will be skipped');
     return;
@@ -77,6 +84,7 @@ async function globalSetup(config: FullConfig) {
     });
 
     if (!provisionedUser.ok || !provisionedUser.userId) {
+      removeStaleAuthState();
       console.log(`⚠️  Playwright auth user provisioning unavailable: ${provisionedUser.reason ?? 'unknown error'}`);
       console.log('   Tests requiring authentication will be skipped');
       return;
@@ -94,6 +102,7 @@ async function globalSetup(config: FullConfig) {
 
     const currentUrl = page.url();
     if (currentUrl.includes('/landing') || currentUrl.includes('waitlist')) {
+      removeStaleAuthState();
       console.log('⚠️  App is in waitlist mode - auth setup skipped');
       await browser.close();
       return;
@@ -102,6 +111,7 @@ async function globalSetup(config: FullConfig) {
     const emailInput = page.getByLabel(/email/i);
     const hasLoginForm = await emailInput.isVisible({ timeout: 5000 }).catch(() => false);
     if (!hasLoginForm) {
+      removeStaleAuthState();
       console.log('⚠️  Login form not found during auth setup - skipping');
       await browser.close();
       return;
@@ -114,6 +124,7 @@ async function globalSetup(config: FullConfig) {
     try {
       await page.waitForURL(/\/dashboard|\/employees|\/employee\/|\/import|\/calendar|\/onboarding/, { timeout: 15000 });
     } catch {
+      removeStaleAuthState();
       console.log('❌ Login redirect failed during auth setup');
       await browser.close();
       return;
@@ -122,12 +133,13 @@ async function globalSetup(config: FullConfig) {
     // Check if we're authenticated (should be on dashboard, not redirected)
     const finalUrl = page.url();
     if (finalUrl.includes('/landing') || finalUrl.includes('/login')) {
+      removeStaleAuthState();
       console.log('❌ Auth setup did not reach an authenticated route');
       await browser.close();
       return;
     }
 
-    console.log(`✅ Authenticated as: ${testEmail}`);
+    console.log('✅ Authenticated as configured test user');
     console.log('✅ Authentication verified - saving state');
 
     // Save the storage state
@@ -137,6 +149,7 @@ async function globalSetup(config: FullConfig) {
 
     console.log(`✅ Auth state saved to: ${AUTH_FILE}`);
   } catch (error) {
+    removeStaleAuthState();
     console.log(`❌ Auth setup error: ${error}`);
     console.log('   Tests requiring authentication will be skipped');
   }

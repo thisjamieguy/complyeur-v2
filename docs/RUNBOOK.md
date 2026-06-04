@@ -129,6 +129,90 @@ SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public';
 - Screenshots of Supabase restore confirmation
 - Sign-off from reviewer
 
+### Data Corruption Recovery Procedure
+
+Use this flow for suspected production data corruption, accidental destructive
+changes, or a release that causes integrity concerns.
+
+#### Trigger Conditions
+- Multiple user reports of missing or incorrect employee/trip data
+- Unexpected spikes in failed writes after a deploy
+- Discovery of bad writes, duplicate rows, or broken relationships
+- Any concern that tenant scoping or RLS behavior may be compromised
+
+#### Immediate Containment
+1. Assign an incident commander and start an incident timeline.
+2. Enable maintenance mode with `NEXT_PUBLIC_MAINTENANCE_MODE=true` if
+   continued writes may worsen the issue.
+3. Stop non-essential cron jobs and bulk admin operations until scope is known.
+4. Preserve evidence before making fixes:
+   - Vercel deploy ID and commit SHA
+   - Supabase project and current migration version
+   - relevant Sentry issue URLs
+   - Supabase auth, API, and database logs
+
+#### Recovery Decision
+Choose one path and record the rationale:
+
+- **Targeted repair** for a narrow issue with verified row scope and a safe fix.
+- **Restore into isolated project** when data integrity is broadly in doubt or
+  a point-in-time inspection is needed.
+- **Deploy rollback plus data repair** when the release caused bad writes but
+  the pre-incident dataset is still recoverable.
+
+Do not restore directly over production until the isolated restore has been
+validated and the incident owner approves the cutover plan.
+
+#### Restore Validation Checklist
+Run these checks against the restored copy before any cutover decision:
+1. Confirm critical tables are present and row counts are plausible:
+   - `companies`
+   - `profiles`
+   - `employees`
+   - `trips`
+   - `alerts`
+   - `notification_log`
+   - `audit_log`
+2. Verify a sample of affected customer records matches the expected
+   pre-incident state.
+3. Re-run a smoke pass of the highest-risk workflows:
+   - login
+   - dashboard load
+   - add employee
+   - add trip
+   - compliance recalculation
+   - export flow
+4. Re-validate tenant isolation:
+   - confirm RLS is enabled on tenant-scoped tables
+   - run the current cross-tenant attack-test checklist or equivalent probes
+   - confirm tenant-A requests for tenant-B records fail with the expected
+     non-disclosing responses
+5. Review migrations and feature flags to ensure the restore target is
+   compatible with the app version intended after recovery.
+
+#### Production Re-entry
+1. Decide whether to promote the restore target, repair production in place, or
+   replay corrected rows only.
+2. Pair one engineering reviewer with the executor for the final production
+   step.
+3. After recovery, re-run:
+   - `GET /api/health`
+   - auth smoke flow
+   - employee/trip create flow
+   - one export flow
+4. Keep maintenance mode enabled until the above checks pass.
+5. Capture the final outcome, residual risk, and any customer follow-up actions
+   in the incident record.
+
+#### Minimum Evidence To Store
+- Incident start and containment timestamps
+- Restore point timestamp or backup identifier
+- Name of executor and reviewer
+- Validation queries or screenshots
+- RLS re-check evidence
+- Final production cutover decision
+- Customer/regulatory communication decision if personal data was impacted
+
 ---
 
 ## How to Check Logs

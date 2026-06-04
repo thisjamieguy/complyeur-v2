@@ -250,7 +250,7 @@ function ContentCard({
   body: string
 }) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <article className="min-w-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
       <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
     </article>
@@ -334,8 +334,8 @@ export default function LandingPage() {
       <main id="main-content">
         <section className="px-4 pb-10 pt-10 sm:px-6 sm:pb-14 sm:pt-14">
           <div className="mx-auto max-w-7xl">
-            <div className="grid gap-8 lg:grid-cols-[minmax(0,33rem)_minmax(0,1fr)] lg:items-start">
-              <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
+            <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,33rem)_minmax(0,1fr)] lg:items-start">
+              <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
                 <h1 className="landing-serif text-5xl text-slate-900 sm:text-6xl">
                   Schengen compliance software for UK employers approving EU travel.
                 </h1>
@@ -378,8 +378,8 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div id="product" className="space-y-4">
-                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+              <div id="product" className="min-w-0 space-y-4">
+                <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                   <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-4">
                     <div>
                       <p className="text-sm font-semibold text-slate-900">Current allowance overview</p>
@@ -394,7 +394,7 @@ export default function LandingPage() {
                   </BrowserFrame>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid min-w-0 gap-4 md:grid-cols-2">
                   {heroHighlights.map((item) => (
                     <ContentCard key={item.title} title={item.title} body={item.body} />
                   ))}
@@ -508,13 +508,13 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="mt-10 grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+              <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <BrowserFrame title="Timeline view">
                   <DemoCalendar />
                 </BrowserFrame>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
                     <p className="text-sm font-semibold text-slate-900">Daily view of the rolling window</p>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -530,7 +530,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4">
+              <div className="grid min-w-0 gap-4">
                 {workflowCards.map((card) => (
                   <article key={card.number} className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                     <p className="text-sm font-semibold text-brand-700">{card.number}</p>

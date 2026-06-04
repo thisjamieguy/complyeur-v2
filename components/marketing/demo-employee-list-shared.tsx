@@ -160,25 +160,25 @@ export function DemoEmployeeListRows({
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-lg border border-slate-200 bg-white p-3">
           <div className="text-2xl font-bold text-slate-900">{rows.length}</div>
-          <div className="text-xs text-slate-500">Total</div>
+          <div className="text-xs text-slate-600">Total</div>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-3">
           <div className={cn('text-2xl font-bold text-green-600', animated && 'transition-all duration-500')}>
             {compliantCount}
           </div>
-          <div className="text-xs text-slate-500">Compliant</div>
+          <div className="text-xs text-slate-600">Compliant</div>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-3">
           <div className={cn('text-2xl font-bold text-amber-600', animated && 'transition-all duration-500')}>
             {atRiskCount}
           </div>
-          <div className="text-xs text-slate-500">At Risk</div>
+          <div className="text-xs text-slate-600">At Risk</div>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white p-3">
           <div className={cn('text-2xl font-bold text-red-700', animated && 'transition-all duration-500')}>
             {nonCompliantCount}
           </div>
-          <div className="text-xs text-slate-500">High Risk</div>
+          <div className="text-xs text-slate-600">High Risk</div>
         </div>
       </div>
 
@@ -250,10 +250,10 @@ export function DemoEmployeeListRows({
                       className={cn(
                         'tabular-nums font-medium',
                         animated && 'transition-colors duration-500',
-                        employee.daysRemaining >= 30 && 'text-green-600',
-                        employee.daysRemaining >= 10 &&
-                          employee.daysRemaining < 30 &&
-                          'text-amber-600',
+            employee.daysRemaining >= 30 && 'text-green-700',
+            employee.daysRemaining >= 10 &&
+              employee.daysRemaining < 30 &&
+              'text-amber-700',
                         employee.daysRemaining < 10 && 'font-bold text-red-700'
                       )}
                     >

@@ -10,7 +10,7 @@
 AI AGENT INSTRUCTIONS — READ THIS SECTION FIRST
 ===================================================================
 
-This file is the single source of truth for the ComplyEur v1 release.
+This file is the historical single source of truth for the ComplyEur v1 release.
 Work through phases in order. Do not skip phases.
 
 Project root: /Users/jameswalsh/Dev/Web Projects/ComplyEur-v2/complyeur
@@ -72,9 +72,9 @@ patched transitive overrides in `package.json`/`pnpm-lock.yaml`.
 ### Remaining before production release
 
 - CI must run green on GitHub's Node 20 environment for the branch/PR.
-- Preview/Test deployment must be smoke-tested against the active Test/Preview Supabase project. The older Phase 5 staging project below is documented as inactive in `docs/ENVIRONMENTS.md`; use the canonical two-environment flow unless staging is explicitly reactivated.
+- Preview/Test deployment must be smoke-tested against the active Test/Preview Supabase project. The older Phase 5 staging project below is documented as inactive in `docs/architecture/ENVIRONMENTS.md`; use the canonical two-environment flow unless staging is explicitly reactivated.
 - Production dashboard checks still require external access: Vercel production env vars, custom domain/SSL, Supabase backups/PITR, Sentry alerts, uptime monitoring, and production `/api/health`.
-- Critical live user flows still need a browser pass on the deployed URL: signup, email confirmation, login, password reset, dashboard, add employee, add trip, exports, settings, logout, and account deletion.
+- Critical live user flows still need a browser pass on the deployed URL: signup, email confirmation, login, password reset, dashboard, add employee, add trip, exports, settings, logout, and the documented account-deletion request path.
 
 ## Phase 1 — Quality Gates
 

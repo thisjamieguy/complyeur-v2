@@ -16,6 +16,7 @@ vi.mock('@/lib/services/team-invites', () => ({
   normalizeInviteEmail: vi.fn((email: string) => email.trim().toLowerCase()),
 }))
 vi.mock('@/lib/security/authorization', () => ({
+  requirePermission: vi.fn(),
   requireMutationPermission: vi.fn(),
   requireOwnerMutation: vi.fn(),
 }))
@@ -27,6 +28,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { dispatchInviteEmail } from '@/lib/services/team-invites'
 import {
+  requirePermission,
   requireMutationPermission,
   requireOwnerMutation,
 } from '@/lib/security/authorization'
@@ -79,35 +81,6 @@ function makeAdmin(
   }
 }
 
-/** Creates a mock authenticated supabase client for `getActorContext`. */
-function makeSupabaseClient(
-  userResult: { data: { user: { id: string; email: string } | null }; error: unknown } = {
-    data: { user: { id: 'actor-id', email: 'owner@company.com' } },
-    error: null,
-  },
-  profileResult: { data: { company_id: string; role: string } | null; error: unknown } = {
-    data: { company_id: 'company-1', role: 'owner' },
-    error: null,
-  },
-  options: {
-    fromSeq?: Array<{ data?: unknown; error?: unknown }>
-    rpcResult?: { data?: unknown; error?: unknown }
-  } = {}
-) {
-  let i = 0
-  return {
-    auth: { getUser: vi.fn().mockResolvedValue(userResult) },
-    from: vi.fn().mockImplementation(() => {
-      if (i === 0) {
-        i += 1
-        return makeChain(profileResult)
-      }
-      return makeChain(options.fromSeq?.[i++ - 1] ?? { data: null, error: null })
-    }),
-    rpc: vi.fn().mockResolvedValue(options.rpcResult ?? { data: null, error: null }),
-  }
-}
-
 function makeActorClient(
   fromSeq: Array<{ data?: unknown; error?: unknown }> = [],
   rpcResult: { data?: unknown; error?: unknown } = { data: null, error: null }
@@ -140,6 +113,7 @@ beforeEach(() => {
   vi.mocked(createClient).mockResolvedValue(
     makeActorClient([], { data: SEAT_OK, error: null }) as never
   )
+  vi.mocked(requirePermission).mockResolvedValue(ACTOR_SUCCESS)
   vi.mocked(checkServerActionRateLimit).mockResolvedValue({ allowed: true })
 })
 
@@ -149,40 +123,39 @@ beforeEach(() => {
 
 describe('listTeamMembersAndInvites', () => {
   it('returns error when user is not authenticated', async () => {
-    vi.mocked(createClient).mockResolvedValue(
-      makeSupabaseClient({ data: { user: null }, error: { message: 'Not logged in' } }) as never
-    )
+    vi.mocked(requirePermission).mockResolvedValue({
+      allowed: false,
+      status: 401,
+      error: 'Unauthorized',
+    })
     const result = await listTeamMembersAndInvites()
     expect(result.success).toBe(false)
     expect(result.error).toBe('Not authenticated')
   })
 
   it('returns error when profile query fails', async () => {
-    vi.mocked(createClient).mockResolvedValue(
-      makeSupabaseClient(
-        { data: { user: { id: 'u1', email: 'x@x.com' } }, error: null },
-        { data: null, error: { message: 'PGRST404' } }
-      ) as never
-    )
+    vi.mocked(requirePermission).mockResolvedValue({
+      allowed: true,
+      user: { id: 'u1', email: 'x@x.com' },
+      profile: { company_id: null, role: null, is_superadmin: false },
+    })
     const result = await listTeamMembersAndInvites()
     expect(result.success).toBe(false)
     expect(result.error).toBe('Profile not found')
   })
 
   it('returns error when profile has no company_id', async () => {
-    vi.mocked(createClient).mockResolvedValue(
-      makeSupabaseClient(
-        { data: { user: { id: 'u1', email: 'x@x.com' } }, error: null },
-        { data: { company_id: null as unknown as string, role: 'admin' }, error: null }
-      ) as never
-    )
+    vi.mocked(requirePermission).mockResolvedValue({
+      allowed: true,
+      user: { id: 'u1', email: 'x@x.com' },
+      profile: { company_id: null, role: 'admin', is_superadmin: false },
+    })
     const result = await listTeamMembersAndInvites()
     expect(result.success).toBe(false)
     expect(result.error).toBe('Profile not found')
   })
 
   it('returns error when rate limit is exceeded', async () => {
-    vi.mocked(createClient).mockResolvedValue(makeSupabaseClient() as never)
     vi.mocked(checkServerActionRateLimit).mockResolvedValue({ allowed: false, error: 'Too many requests' })
     const result = await listTeamMembersAndInvites()
     expect(result.success).toBe(false)
@@ -191,16 +164,12 @@ describe('listTeamMembersAndInvites', () => {
 
   it('returns error when members DB query fails', async () => {
     vi.mocked(createClient).mockResolvedValue(
-      makeSupabaseClient(
-        undefined,
-        undefined,
-        {
-          fromSeq: [
-            { data: null, error: { message: 'DB error' } },
-            { data: [], error: null },
-          ],
-          rpcResult: { data: SEAT_OK, error: null },
-        }
+      makeActorClient(
+        [
+          { data: null, error: { message: 'DB error' } },
+          { data: [], error: null },
+        ],
+        { data: SEAT_OK, error: null }
       ) as never
     )
     vi.mocked(createAdminClient).mockReturnValue(makeAdmin([{ data: null, error: null }]) as never)
@@ -211,16 +180,12 @@ describe('listTeamMembersAndInvites', () => {
 
   it('returns error when invites DB query fails', async () => {
     vi.mocked(createClient).mockResolvedValue(
-      makeSupabaseClient(
-        undefined,
-        undefined,
-        {
-          fromSeq: [
-            { data: [], error: null },
-            { data: null, error: { message: 'DB error' } },
-          ],
-          rpcResult: { data: SEAT_OK, error: null },
-        }
+      makeActorClient(
+        [
+          { data: [], error: null },
+          { data: null, error: { message: 'DB error' } },
+        ],
+        { data: SEAT_OK, error: null }
       ) as never
     )
     vi.mocked(createAdminClient).mockReturnValue(makeAdmin([{ data: null, error: null }]) as never)
@@ -230,7 +195,6 @@ describe('listTeamMembersAndInvites', () => {
   })
 
   it('returns full team snapshot on success', async () => {
-    vi.mocked(createClient).mockResolvedValue(makeSupabaseClient() as never)
     const member = {
       id: 'actor-id',
       email: 'owner@company.com',
@@ -250,16 +214,12 @@ describe('listTeamMembersAndInvites', () => {
       created_at: '2025-12-01',
     }
     vi.mocked(createClient).mockResolvedValue(
-      makeSupabaseClient(
-        undefined,
-        undefined,
-        {
-          fromSeq: [
-            { data: [member], error: null },
-            { data: [invite], error: null },
-          ],
-          rpcResult: { data: SEAT_OK, error: null },
-        }
+      makeActorClient(
+        [
+          { data: [member], error: null },
+          { data: [invite], error: null },
+        ],
+        { data: SEAT_OK, error: null }
       ) as never
     )
     vi.mocked(createAdminClient).mockReturnValue(makeAdmin([{ data: null, error: null }]) as never)
@@ -267,7 +227,7 @@ describe('listTeamMembersAndInvites', () => {
     const result = await listTeamMembersAndInvites()
 
     expect(result.success).toBe(true)
-    expect(result.data?.currentUserId).toBe('actor-id')
+    expect(result.data?.currentUserId).toBe('owner-id')
     expect(result.data?.currentRole).toBe('owner')
     expect(result.data?.isOwner).toBe(true)
     expect(result.data?.canManageUsers).toBe(true)
@@ -285,16 +245,12 @@ describe('listTeamMembersAndInvites', () => {
       { id: 'u4', email: 'd@d.com', first_name: '  ', last_name: '  ', role: 'viewer', created_at: '2025-01-04' },
     ]
     vi.mocked(createClient).mockResolvedValue(
-      makeSupabaseClient(
-        undefined,
-        undefined,
-        {
-          fromSeq: [
-            { data: members, error: null },
-            { data: [], error: null },
-          ],
-          rpcResult: { data: SEAT_OK, error: null },
-        }
+      makeActorClient(
+        [
+          { data: members, error: null },
+          { data: [], error: null },
+        ],
+        { data: SEAT_OK, error: null }
       ) as never
     )
     vi.mocked(createAdminClient).mockReturnValue(makeAdmin([{ data: null, error: null }]) as never)
@@ -309,12 +265,11 @@ describe('listTeamMembersAndInvites', () => {
   })
 
   it('rejects viewers before any privileged team snapshot reads run', async () => {
-    vi.mocked(createClient).mockResolvedValue(
-      makeSupabaseClient(
-        { data: { user: { id: 'viewer-id', email: 'viewer@company.com' } }, error: null },
-        { data: { company_id: 'company-1', role: 'viewer' }, error: null }
-      ) as never
-    )
+    vi.mocked(requirePermission).mockResolvedValue({
+      allowed: false,
+      status: 403,
+      error: 'Forbidden',
+    })
     const result = await listTeamMembersAndInvites()
     expect(result).toEqual({ success: false, error: 'Forbidden' })
     expect(createAdminClient).not.toHaveBeenCalled()
@@ -322,16 +277,12 @@ describe('listTeamMembersAndInvites', () => {
 
   it('reflects accurate seat usage including pending invites', async () => {
     vi.mocked(createClient).mockResolvedValue(
-      makeSupabaseClient(
-        undefined,
-        undefined,
-        {
-          fromSeq: [
-            { data: [], error: null },
-            { data: [], error: null },
-          ],
-          rpcResult: { data: { active_users: 3, pending_invites: 1, limit: 5, available: 1 }, error: null },
-        }
+      makeActorClient(
+        [
+          { data: [], error: null },
+          { data: [], error: null },
+        ],
+        { data: { active_users: 3, pending_invites: 1, limit: 5, available: 1 }, error: null }
       ) as never
     )
     const seatUsage = { active_users: 3, pending_invites: 1, limit: 5, available: 1 }

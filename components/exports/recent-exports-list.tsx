@@ -54,10 +54,10 @@ export function RecentExportsList({ exports }: RecentExportsListProps) {
                 )}
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xs font-mono text-slate-400">
+                <p className="text-xs font-mono text-slate-600">
                   {exp.documentId}
                 </p>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600">
                   {format(parseISO(exp.generatedAt), 'd MMM, HH:mm')}
                 </p>
               </div>

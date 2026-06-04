@@ -152,19 +152,19 @@ export function RiskThresholdsSection({ disabled }: RiskThresholdsSectionProps) 
           <p className="text-xs text-muted-foreground mb-3">Current threshold ranges:</p>
           <div className="flex h-6 rounded-md overflow-hidden text-xs font-medium">
             <div
-              className="bg-green-500 flex items-center justify-center text-white"
+              className="bg-emerald-700 flex items-center justify-center text-white"
               style={{ width: `${((greenMax + 1) / 100) * 100}%` }}
             >
               0-{greenMax}
             </div>
             <div
-              className="bg-amber-500 flex items-center justify-center text-white"
+              className="bg-amber-700 flex items-center justify-center text-white"
               style={{ width: `${((amberMax - greenMax) / 100) * 100}%` }}
             >
               {greenMax + 1}-{amberMax}
             </div>
             <div
-              className="bg-red-500 flex items-center justify-center text-white"
+              className="bg-red-700 flex items-center justify-center text-white"
               style={{ width: `${((redMax - amberMax) / 100) * 100}%` }}
             >
               {amberMax + 1}-{redMax}

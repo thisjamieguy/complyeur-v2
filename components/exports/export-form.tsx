@@ -170,7 +170,11 @@ export function ExportForm({
         <div className="space-y-2">
           <Label htmlFor="employee-select">Employee</Label>
           <Select value={employeeId} onValueChange={setEmployeeId}>
-            <SelectTrigger id="employee-select" className="w-full">
+            <SelectTrigger
+              id="employee-select"
+              aria-label="Employee"
+              className="w-full"
+            >
               <SelectValue placeholder="Select an employee" />
             </SelectTrigger>
             <SelectContent>
@@ -192,7 +196,11 @@ export function ExportForm({
             value={statusFilter}
             onValueChange={(v) => setStatusFilter(v as StatusFilter)}
           >
-            <SelectTrigger id="status-select" className="w-full">
+            <SelectTrigger
+              id="status-select"
+              aria-label="Status"
+              className="w-full"
+            >
               <SelectValue placeholder="Select a status" />
             </SelectTrigger>
             <SelectContent>
@@ -227,7 +235,11 @@ export function ExportForm({
             value={alertsFilter}
             onValueChange={(v) => setAlertsFilter(v as AlertsFilter)}
           >
-            <SelectTrigger id="alerts-filter-select" className="w-full">
+            <SelectTrigger
+              id="alerts-filter-select"
+              aria-label="Filter alerts"
+              className="w-full"
+            >
               <SelectValue placeholder="Select alert filter" />
             </SelectTrigger>
             <SelectContent>

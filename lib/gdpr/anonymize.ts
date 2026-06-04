@@ -58,6 +58,7 @@ export function generateAnonymizedName(employeeId: string): string {
 
 const REDACTED_ALERT_MESSAGE = 'Compliance alert for anonymized employee'
 const REDACTED_NOTIFICATION_SUBJECT = 'Schengen Compliance Alert for anonymized employee'
+const REDACTED_NOTIFICATION_RECIPIENT = 'redacted-notification-recipient@complyeur.local'
 
 /**
  * Anonymizes an employee's personal data while preserving trip history.
@@ -193,7 +194,10 @@ export async function anonymizeEmployee(
 
     const { error: notificationScrubError } = await supabase
       .from('notification_log')
-      .update({ subject: REDACTED_NOTIFICATION_SUBJECT } as Record<string, unknown>)
+      .update({
+        recipient_email: REDACTED_NOTIFICATION_RECIPIENT,
+        subject: REDACTED_NOTIFICATION_SUBJECT,
+      } as Record<string, unknown>)
       .eq('employee_id', employeeId)
       .eq('company_id', access.companyId)
 

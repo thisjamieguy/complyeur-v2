@@ -15,6 +15,7 @@ This repository keeps the engineering root focused on source, config, tests, and
 - `marketing/blog-drafts/`: Draft content and publication working files
 - `operations/`: Release, go-live, and operating checklists
 - `plans/`: Feature design and implementation planning docs
+- `release/`: Current release source of truth, audit inventories, and go/no-go summaries
 - `security/`: Security audits, pentest material, and authorization reviews
 - `standards/`: Coding, security, testing, and AI-agent governance standards
 - `testing/`: Test strategy and quality references

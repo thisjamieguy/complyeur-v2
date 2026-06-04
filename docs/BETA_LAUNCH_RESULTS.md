@@ -1,5 +1,10 @@
 # ComplyEur Beta Launch Results
 
+> Superseded note:
+> This file is preserved for audit history and full section-level detail. The
+> current beta launch source of truth is
+> `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`.
+
 **Started:** 2026-02-05
 **Status:** Complete (all 18 sections audited)
 
@@ -643,9 +648,9 @@ These items require manual testing with real email providers and cannot be fully
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Audit all cookies your app sets | ✅ | Auth cookies (Supabase SSR), `mfa_backup_session` (httpOnly, secure). No undocumented cookies |
+| Audit all cookies your app sets | ✅ | Cookie policy names Supabase auth, PKCE, CookieYes consent, MFA backup session, calendar preference, and analytics cookies |
 | Consent banner if using non-essential cookies | ✅ | CookieYes consent management platform integrated and loads `afterInteractive` in production |
-| Auth cookies documented as essential | ⚠️ | Privacy Policy Section 7 classifies "Necessary" vs "Analytics" but doesn't name specific cookies |
+| Auth cookies documented as essential | ✅ | Cookie policy explicitly names `sb-*-auth-token` and `sb-*-auth-token-code-verifier` as strictly necessary |
 | Analytics cookies only fire after consent | ✅ | `ConsentAwareGoogleAnalytics` checks `window.cookieyes.hasConsent('analytics')` before loading GA and `trackEvent()` also exits early without consent. Regression tests cover both script loading and event sending |
 | Consent preference persists | ✅ | CookieYes handles persistence automatically |
 | Declining cookies doesn't break the app | ✅ | Core app depends only on essential auth cookies |
@@ -654,7 +659,7 @@ These items require manual testing with real email providers and cannot be fully
 
 | Issue | Severity | Description |
 |-------|----------|-------------|
-| Auth cookies not named explicitly in policy | Low | Privacy Policy Section 7 classifies necessary cookies, but should explicitly name the Supabase auth cookies |
+| Live cookie scan still needed before public launch | Low | In-repo cookie inventory is current, but a production browser scan should be attached as release evidence |
 
 ### Fixes Applied
 
@@ -797,24 +802,24 @@ These items require manual testing with real email providers and cannot be fully
 | "Please don't rely on this for legal decisions yet" | ✅ | Terms Sections 2 and 4 have prominent disclaimers. Feedback dialog notes beta status |
 | SLA expectations clear | ⚠️ | "As is, as available" in terms. No explicit beta SLA document |
 | What happens to beta data when you go live? | ⚠️ | Retention policy exists but no explicit beta-to-GA migration plan |
-| Known-issues list shared with testers | ❌ | **NOT CREATED** — No public known-issues page or document |
+| Known-issues list shared with testers | ⚠️ | `docs/beta/BETA_KNOWN_ISSUES.md` exists; tester distribution or public access is still pending |
 | Changelog cadence defined | ✅ | `CHANGELOG.md` actively maintained with recent entries |
 
 ### Success Metrics
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Define what "successful beta" means | ⚠️ | Checklist item unchecked — needs definition before beta starts |
-| Activation metric defined | ⚠️ | No activation metric defined (e.g., "added first employee within 24h") |
-| Retention metric defined | ⚠️ | No retention metric defined (e.g., "active 14+ days after signup") |
+| Define what "successful beta" means | ⚠️ | `docs/beta/BETA_SUCCESS_METRICS.md` defines activation, usage, retention, conversion, and feedback targets; tracking owner/dashboard still pending |
+| Activation metric defined | ✅ | Activation target: company adds at least 1 employee and 1 trip within 24 hours of signup |
+| Retention metric defined | ✅ | Retention target: company active at least once between days 14 and 21 after signup |
 
 ### Issues Found
 
 | Issue | Severity | Description |
 |-------|----------|-------------|
 | No video walkthrough | Medium | New testers need visual guidance beyond text wizard |
-| No known-issues list | Medium | Testers should know about known limitations upfront |
-| Beta success metrics undefined | Medium | Cannot evaluate beta without measurable criteria |
+| Known-issues distribution pending | Medium | Known-issues doc exists, but testers still need a shared link or public page before beta starts |
+| Beta metrics tracking pending | Medium | Success metrics are defined, but dashboard/owner and review cadence still need to be assigned |
 
 ---
 

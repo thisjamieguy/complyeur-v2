@@ -2,6 +2,9 @@
 
 Complete all items before announcing launch.
 
+Use `docs/operations/BETA_VERIFICATION_AUTOMATION.md` to run the repo-side
+checks before the manual go-live pass.
+
 ---
 
 ## Infrastructure
@@ -69,7 +72,7 @@ Complete all items before announcing launch.
 - [ ] **Export PDF**: Report generates correctly
 - [ ] **Settings**: User can update preferences
 - [ ] **Logout**: Session properly terminated
-- [ ] **Delete Account**: Soft delete works correctly
+- [ ] **Deletion Request Path**: Manual support/admin account deletion workflow is documented and can be executed correctly
 
 ## Performance
 - [ ] Lighthouse score >80 for Performance

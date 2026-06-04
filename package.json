@@ -46,7 +46,10 @@
     "stress-test:dry": "tsx scripts/stress-test/index.ts --dry-run",
     "email:test": "tsx scripts/send-test-email.ts",
     "email:welcome:test": "tsx scripts/send-welcome-email.ts",
-    "email:auth:sync": "tsx scripts/sync-supabase-auth-email-config.ts"
+    "email:auth:sync": "tsx scripts/sync-supabase-auth-email-config.ts",
+    "beta:manual-gates": "node scripts/beta/manual-gate-helper.mjs",
+    "beta:health": "node scripts/beta/check-production-health.mjs",
+    "beta:evidence": "node scripts/beta/create-evidence-log.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -128,7 +131,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/coverage-v8": "^4.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.7",
     "fast-check": "^4.6.0",
@@ -139,6 +142,6 @@
     "tailwindcss": "^4",
     "tsx": "^4.19.0",
     "typescript": "^5",
-    "vitest": "^4.0.16"
+    "vitest": "^4.1.0"
   }
 }

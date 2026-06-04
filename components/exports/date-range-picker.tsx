@@ -100,7 +100,7 @@ export function DateRangePicker({
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <Select value={preset} onValueChange={handlePresetChange}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className="w-full" aria-label="Date range">
           <SelectValue placeholder="Select date range" />
         </SelectTrigger>
         <SelectContent>

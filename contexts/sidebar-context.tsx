@@ -11,6 +11,8 @@ interface SidebarContextValue {
   toggle: () => void
   /** Toggle mobile sidebar open/closed */
   toggleMobile: () => void
+  /** Set mobile sidebar open/closed */
+  setMobileOpen: (open: boolean) => void
   /** Close mobile sidebar (for route changes) */
   closeMobile: () => void
 }
@@ -46,6 +48,7 @@ export function SidebarProvider({ children, defaultOpen = true }: SidebarProvide
         isMobileOpen,
         toggle,
         toggleMobile,
+        setMobileOpen: setIsMobileOpen,
         closeMobile,
       }}
     >

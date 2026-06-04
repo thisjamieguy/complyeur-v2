@@ -34,6 +34,7 @@ import { requireOwnerOrAdminMutation } from '@/lib/security/authorization'
 export { RECOVERY_PERIOD_DAYS }
 
 const REDACTED_NOTIFICATION_SUBJECT = 'Schengen Compliance Alert for deleted employee'
+const REDACTED_NOTIFICATION_RECIPIENT = 'redacted-notification-recipient@complyeur.local'
 
 /**
  * Result type for soft delete operations
@@ -440,10 +441,13 @@ export async function hardDeleteEmployee(
       .eq('employee_id', employeeId)
 
     // Notification logs retain delivery evidence after employee deletion, so
-    // scrub any subject text that may contain the employee's name first.
+    // scrub any direct recipient and subject identifiers first.
     const { error: notificationScrubError } = await supabase
       .from('notification_log')
-      .update({ subject: REDACTED_NOTIFICATION_SUBJECT } as Record<string, unknown>)
+      .update({
+        recipient_email: REDACTED_NOTIFICATION_RECIPIENT,
+        subject: REDACTED_NOTIFICATION_SUBJECT,
+      } as Record<string, unknown>)
       .eq('employee_id', employeeId)
       .eq('company_id', companyId)
 

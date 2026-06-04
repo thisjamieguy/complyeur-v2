@@ -7,8 +7,8 @@ const SCRATCHPAD_DIR = process.env.TEST_TEMP_DIR || '/tmp/playwright-import-test
 const createdTestFiles = new Set<string>();
 
 const TEST_CREDENTIALS = {
-  email: process.env.TEST_USER_EMAIL || 'test@complyeur.com',
-  password: process.env.TEST_USER_PASSWORD || 'test-password-123',
+  email: process.env.TEST_USER_EMAIL,
+  password: process.env.TEST_USER_PASSWORD,
 };
 
 function ensureScratchpadDir(): void {
@@ -36,6 +36,10 @@ function cleanupTestFiles(): void {
 }
 
 async function login(page: Page): Promise<boolean> {
+  if (!TEST_CREDENTIALS.email || !TEST_CREDENTIALS.password) {
+    return false;
+  }
+
   await page.goto('/login');
 
   const currentUrl = page.url();

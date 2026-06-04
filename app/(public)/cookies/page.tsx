@@ -122,6 +122,18 @@ export default function CookiePolicyPage() {
                       <td className="px-4 py-3">Stores your cookie consent preferences so the banner does not reappear.</td>
                       <td className="px-4 py-3">1 year</td>
                     </tr>
+                    <tr>
+                      <td className="px-4 py-3 font-mono text-xs">mfa_backup_session</td>
+                      <td className="px-4 py-3">ComplyEUR</td>
+                      <td className="px-4 py-3">Maintains a short-lived verified MFA recovery session for account security.</td>
+                      <td className="px-4 py-3">12 hours</td>
+                    </tr>
+                    <tr>
+                      <td className="px-4 py-3 font-mono text-xs">complyeur.calendar.hide_no_schengen</td>
+                      <td className="px-4 py-3">ComplyEUR</td>
+                      <td className="px-4 py-3">Stores your calendar filter preference for non-Schengen travel rows.</td>
+                      <td className="px-4 py-3">1 year</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

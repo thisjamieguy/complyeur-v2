@@ -1,5 +1,10 @@
 # ComplyEur — Pre-Beta Launch Checklist
 
+> Superseded note:
+> This file is preserved as the original pre-beta checklist template. The
+> current beta launch source of truth is
+> `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`.
+
 **Version:** 1.2
 **Last updated:** 2026-04-02
 

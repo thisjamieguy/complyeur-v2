@@ -44,7 +44,7 @@ export function ReportPreview({
         <span className="text-sm font-semibold text-slate-900">
           Report preview
         </span>
-        <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+        <span className="text-xs font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
           Live
         </span>
       </div>

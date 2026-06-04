@@ -21,6 +21,7 @@ import {
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { isOwnerOrAdmin } from '@/lib/permissions'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
+import { requireAdminAccess } from '@/lib/security/authorization'
 import {
   cleanupExpiredGdprExportArchives,
   storeGdprExportArchive,
@@ -42,6 +43,29 @@ interface GdprPageData {
   retentionStats: RetentionStats | null
 }
 
+type GdprAdminContext = {
+  userId: string
+  companyId: string
+  role: string | null
+  supabase: Awaited<ReturnType<typeof createClient>>
+}
+
+async function getGdprAdminContext(): Promise<GdprAdminContext | null> {
+  const supabase = await createClient()
+  const access = await requireAdminAccess(supabase)
+
+  if (!access.allowed || !access.profile.company_id) {
+    return null
+  }
+
+  return {
+    userId: access.user.id,
+    companyId: access.profile.company_id,
+    role: access.profile.role,
+    supabase,
+  }
+}
+
 /**
  * Gets all employees for the GDPR tools page.
  * Excludes soft-deleted and anonymized employees.
@@ -49,24 +73,21 @@ interface GdprPageData {
 export async function getEmployeesForGdpr(): Promise<
   Array<{ id: string; name: string; isAnonymized: boolean }>
 > {
-  const ctx = await requireCompanyAccessCached()
+  const ctx = await getGdprAdminContext()
+  if (!ctx) {
+    return []
+  }
 
   const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getEmployeesForGdpr')
   if (!rateLimit.allowed) {
     return []
   }
 
-  if (!isOwnerOrAdmin(ctx.role)) {
-    return []
-  }
-
-  const supabase = await createClient()
-
   // First try with GDPR columns (deleted_at, anonymized_at)
   let employees: { id: string; name: string; anonymized_at?: string | null }[] | null = null
   let error: Error | null = null
 
-  const result = await supabase
+  const result = await ctx.supabase
     .from('employees')
     .select('id, name, anonymized_at, deleted_at')
     .eq('company_id', ctx.companyId)
@@ -76,7 +97,7 @@ export async function getEmployeesForGdpr(): Promise<
   if (result.error) {
     // If query fails (columns might not exist), fallback to basic query
     console.warn('[GDPR] GDPR columns may not exist, falling back to basic query:', result.error.message)
-    const fallback = await supabase
+    const fallback = await ctx.supabase
       .from('employees')
       .select('id, name')
       .eq('company_id', ctx.companyId)
@@ -108,10 +129,8 @@ export async function getEmployeesForGdpr(): Promise<
  */
 export async function getGdprPageData(): Promise<GdprPageData> {
   try {
-    const ctx = await requireCompanyAccessCached()
-
-    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getGdprPageData')
-    if (!rateLimit.allowed || !isOwnerOrAdmin(ctx.role)) {
+    const ctx = await getGdprAdminContext()
+    if (!ctx) {
       return {
         hasAccess: false,
         employees: [],
@@ -121,9 +140,18 @@ export async function getGdprPageData(): Promise<GdprPageData> {
       }
     }
 
-    const supabase = await createClient()
+    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getGdprPageData')
+    if (!rateLimit.allowed) {
+      return {
+        hasAccess: false,
+        employees: [],
+        deletedEmployees: [],
+        auditLog: [],
+        retentionStats: null,
+      }
+    }
 
-    const employeesPromise = supabase
+    const employeesPromise = ctx.supabase
       .from('employees')
       .select('id, name, anonymized_at, deleted_at')
       .eq('company_id', ctx.companyId)
@@ -142,7 +170,7 @@ export async function getGdprPageData(): Promise<GdprPageData> {
 
     if (employeeError) {
       console.warn('[GDPR] GDPR columns may not exist, falling back to basic query:', employeeError.message)
-      const fallback = await supabase
+      const fallback = await ctx.supabase
         .from('employees')
         .select('id, name')
         .eq('company_id', ctx.companyId)
@@ -359,7 +387,10 @@ export async function restoreEmployeeGdpr(employeeId: string): Promise<{
  * Gets all soft-deleted employees for the recovery UI.
  */
 export async function getDeletedEmployeesAction(): Promise<DeletedEmployee[]> {
-  const ctx = await requireCompanyAccessCached()
+  const ctx = await getGdprAdminContext()
+  if (!ctx) {
+    return []
+  }
 
   const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getDeletedEmployeesAction')
   if (!rateLimit.allowed) {
@@ -430,25 +461,27 @@ export async function getGdprAuditLogAction(options?: {
     createdAt: string
   }>
 > {
-  const { userId, companyId, role } = await requireCompanyAccessCached()
+  const ctx = await getGdprAdminContext()
+  if (!ctx) {
+    return []
+  }
 
-  const rateLimit = await checkServerActionRateLimit(userId, 'getGdprAuditLogAction')
+  const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getGdprAuditLogAction')
   if (!rateLimit.allowed) {
     return []
   }
 
-  if (!isOwnerOrAdmin(role)) {
-    return []
-  }
-
-  return getGdprAuditLog(companyId, options)
+  return getGdprAuditLog(ctx.companyId, options)
 }
 
 /**
  * Gets retention statistics for the dashboard.
  */
 export async function getRetentionStatsAction(): Promise<RetentionStats | null> {
-  const ctx = await requireCompanyAccessCached()
+  const ctx = await getGdprAdminContext()
+  if (!ctx) {
+    return null
+  }
 
   const rateLimit = await checkServerActionRateLimit(ctx.userId, 'getRetentionStatsAction')
   if (!rateLimit.allowed) {
@@ -463,14 +496,17 @@ export async function getRetentionStatsAction(): Promise<RetentionStats | null> 
  */
 export async function isAdmin(): Promise<boolean> {
   try {
-    const { userId, role } = await requireCompanyAccessCached()
+    const ctx = await getGdprAdminContext()
+    if (!ctx) {
+      return false
+    }
 
-    const rateLimit = await checkServerActionRateLimit(userId, 'isAdmin')
+    const rateLimit = await checkServerActionRateLimit(ctx.userId, 'isAdmin')
     if (!rateLimit.allowed) {
       return false
     }
 
-    return isOwnerOrAdmin(role)
+    return isOwnerOrAdmin(ctx.role)
   } catch {
     return false
   }

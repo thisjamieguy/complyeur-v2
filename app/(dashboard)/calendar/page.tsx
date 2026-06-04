@@ -292,7 +292,7 @@ export default async function CalendarPage() {
         <h1 className="text-2xl font-semibold text-slate-900">
           Travel Calendar
         </h1>
-        <p className="text-slate-500 mt-1">
+        <p className="text-slate-600 mt-1">
           Visual timeline of employee Schengen travel
         </p>
       </div>

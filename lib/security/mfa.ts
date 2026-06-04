@@ -1,6 +1,7 @@
 import { createHash } from 'crypto'
 import { cookies } from 'next/headers'
 import type { createClient } from '@/lib/supabase/server'
+import { isPrivilegedRole } from '@/lib/permissions'
 
 export const MFA_BACKUP_SESSION_COOKIE = 'mfa_backup_session'
 const MFA_BACKUP_SESSION_TTL_HOURS = 12
@@ -27,10 +28,10 @@ export interface MfaEnforcementContext {
 }
 
 export function shouldEnforceMfaForRole(
-  _role: string | null | undefined,
+  role: string | null | undefined,
   isSuperadmin: boolean | null | undefined
 ): boolean {
-  return isSuperadmin === true
+  return isSuperadmin === true || isPrivilegedRole(role)
 }
 
 export async function getMfaStatusForUser(

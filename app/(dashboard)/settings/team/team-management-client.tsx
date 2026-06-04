@@ -254,7 +254,7 @@ export function TeamManagementClient({
                 onValueChange={(value) => setInviteRole(value as TeamRole)}
                 disabled={isPending}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Invite role">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -323,7 +323,11 @@ export function TeamManagementClient({
                               }}
                               disabled={isPending}
                             >
-                              <SelectTrigger className="w-[150px]" size="sm">
+                              <SelectTrigger
+                                aria-label={`Role for ${memberDisplayName(member)}`}
+                                className="w-[150px]"
+                                size="sm"
+                              >
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
