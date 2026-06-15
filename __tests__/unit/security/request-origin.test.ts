@@ -22,6 +22,17 @@ describe('validateFirstPartyMutationRequest', () => {
     expect(result).toEqual({ ok: true })
   })
 
+  it('allows mutations when origin matches the request host', () => {
+    const result = validateFirstPartyMutationRequest(makeRequest({
+      host: '127.0.0.1:3100',
+      origin: 'http://127.0.0.1:3100',
+      'sec-fetch-site': 'same-origin',
+      'x-forwarded-proto': 'http',
+    }))
+
+    expect(result).toEqual({ ok: true })
+  })
+
   it('rejects cross-site browser mutations', () => {
     const result = validateFirstPartyMutationRequest(makeRequest({
       origin: 'https://attacker.example',

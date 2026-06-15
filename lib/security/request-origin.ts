@@ -13,8 +13,22 @@ function normalizeOrigin(value: string | null | undefined): string | null {
   }
 }
 
+function getHeaderOrigin(request: NextRequest): string | null {
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim()
+  const proto = forwardedProto || request.nextUrl.protocol.replace(/:$/, '')
+  const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim()
+  const host = forwardedHost || request.headers.get('host')
+
+  return host ? normalizeOrigin(`${proto}://${host}`) : null
+}
+
 function getAllowedOrigins(request: NextRequest): Set<string> {
   const origins = new Set<string>([request.nextUrl.origin])
+  const headerOrigin = getHeaderOrigin(request)
+
+  if (headerOrigin) {
+    origins.add(headerOrigin)
+  }
 
   for (const value of [
     process.env.NEXT_PUBLIC_APP_URL,
