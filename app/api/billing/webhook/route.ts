@@ -268,14 +268,20 @@ async function handleCheckoutCompleted(
 ) {
   const userId = session.client_reference_id
   const planSlug = session.metadata?.plan_slug
+  const metadataCompanyId = session.metadata?.company_id
+  const metadataUserId = session.metadata?.user_id
   const customerId = typeof session.customer === 'string' ? session.customer : null
   const subscriptionId =
     typeof session.subscription === 'string' ? session.subscription : null
 
-  if (!userId || !planSlug) {
+  if (!userId || !planSlug || !metadataCompanyId || !metadataUserId || !customerId || !subscriptionId) {
     throw new Error(
-      'checkout.session.completed missing client_reference_id or metadata.plan_slug'
+      'checkout.session.completed missing required user, company, customer, subscription, or plan metadata'
     )
+  }
+
+  if (metadataUserId !== userId) {
+    throw new Error('checkout.session.completed metadata.user_id does not match client_reference_id')
   }
 
   const { data: profile, error: profileError } = await admin
@@ -290,7 +296,25 @@ async function handleCheckoutCompleted(
 
   const companyId = profile.company_id
 
-  if (customerId) {
+  if (metadataCompanyId !== companyId) {
+    throw new Error('checkout.session.completed metadata.company_id does not match authenticated profile company')
+  }
+
+  const { data: company, error: companyFetchError } = await admin
+    .from('companies')
+    .select('stripe_customer_id')
+    .eq('id', companyId)
+    .single()
+
+  if (companyFetchError) {
+    throw companyFetchError
+  }
+
+  if (company?.stripe_customer_id && company.stripe_customer_id !== customerId) {
+    throw new Error('checkout.session.completed customer does not match existing company Stripe customer')
+  }
+
+  if (!company?.stripe_customer_id) {
     const { error: companyError } = await admin
       .from('companies')
       .update({ stripe_customer_id: customerId })

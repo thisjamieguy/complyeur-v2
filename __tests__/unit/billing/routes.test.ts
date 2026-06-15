@@ -10,11 +10,13 @@ const {
   createAdminClientMock,
   checkServerActionRateLimitMock,
   getStripeMock,
+  enforceMfaForPrivilegedUserMock,
 } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   createAdminClientMock: vi.fn(),
   checkServerActionRateLimitMock: vi.fn(),
   getStripeMock: vi.fn(),
+  enforceMfaForPrivilegedUserMock: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -31,6 +33,11 @@ vi.mock('@/lib/rate-limit', () => ({
 
 vi.mock('@/lib/billing/stripe', () => ({
   getStripe: getStripeMock,
+  STRIPE_API_VERSION: '2026-01-28.clover',
+}))
+
+vi.mock('@/lib/security/mfa', () => ({
+  enforceMfaForPrivilegedUser: enforceMfaForPrivilegedUserMock,
 }))
 
 interface QueryResult<T> {
@@ -51,7 +58,18 @@ interface MockSupabaseOptions {
 
 function createSupabaseMock(options: MockSupabaseOptions = {}) {
   const from = vi.fn((table: string) => {
-    const tableConfig = options.tables?.[table] ?? {}
+    const defaultProfilesResult = {
+      data: {
+        company_id: 'company_123',
+        role: 'owner',
+        is_superadmin: false,
+        status: 'active',
+      },
+      error: null,
+    }
+    const tableConfig = options.tables?.[table] ?? (
+      table === 'profiles' ? { single: defaultProfilesResult } : {}
+    )
     const eq = vi.fn(() => ({
       single: vi.fn(async () => tableConfig.single ?? { data: null, error: null }),
       maybeSingle: vi.fn(async () => tableConfig.maybeSingle ?? { data: null, error: null }),
@@ -85,6 +103,7 @@ describe('billing routes', () => {
     vi.clearAllMocks()
     vi.stubGlobal('fetch', fetchMock)
     checkServerActionRateLimitMock.mockResolvedValue({ allowed: true })
+    enforceMfaForPrivilegedUserMock.mockResolvedValue({ ok: true })
   })
 
   describe('/api/billing/checkout', () => {
@@ -132,7 +151,44 @@ describe('billing routes', () => {
 
       expect(response.status).toBe(429)
       expect(payload.error).toBe('Too many requests. Please try again later.')
-      expect(supabase.from).not.toHaveBeenCalled()
+      expect(supabase.from).toHaveBeenCalledWith('profiles')
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
+    it('rejects checkout for users without billing management permission', async () => {
+      const supabase = createSupabaseMock({
+        tables: {
+          profiles: {
+            single: {
+              data: {
+                company_id: 'company_123',
+                role: 'viewer',
+                is_superadmin: false,
+                status: 'active',
+              },
+              error: null,
+            },
+          },
+        },
+      })
+      createClientMock.mockResolvedValue(supabase)
+
+      const request = new NextRequest('https://app.test/api/billing/checkout', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          planSlug: 'starter',
+          billingInterval: 'monthly',
+        }),
+      })
+
+      const response = await checkoutPOST(request)
+      const payload = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(payload.error).toBe('Forbidden')
       expect(fetchMock).not.toHaveBeenCalled()
     })
 
@@ -141,7 +197,7 @@ describe('billing routes', () => {
         tables: {
           profiles: {
             single: {
-              data: { company_id: 'company_123' },
+              data: { company_id: 'company_123', role: 'owner', is_superadmin: false, status: 'active' },
               error: null,
             },
           },
@@ -163,6 +219,12 @@ describe('billing routes', () => {
                 can_sso: false,
                 can_audit_logs: false,
               },
+              error: null,
+            },
+          },
+          companies: {
+            maybeSingle: {
+              data: { stripe_customer_id: null },
               error: null,
             },
           },
@@ -202,6 +264,7 @@ describe('billing routes', () => {
           headers: expect.objectContaining({
             Authorization: 'Bearer sk_test_checkout_route',
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Stripe-Version': '2026-01-28.clover',
           }),
           cache: 'no-store',
         })
@@ -219,6 +282,8 @@ describe('billing routes', () => {
       expect(body.get('metadata[plan_slug]')).toBe('starter')
       expect(body.get('metadata[billing_interval]')).toBe('monthly')
       expect(body.get('metadata[source]')).toBe('pricing')
+      expect(body.get('metadata[company_id]')).toBe('company_123')
+      expect(body.get('metadata[user_id]')).toBe('user_123')
       expect(body.get('client_reference_id')).toBe('user_123')
       expect(body.get('customer_email')).toBe('billing@complyeur.test')
 
@@ -235,7 +300,7 @@ describe('billing routes', () => {
         tables: {
           profiles: {
             single: {
-              data: { company_id: 'company_123' },
+              data: { company_id: 'company_123', role: 'owner', is_superadmin: false, status: 'active' },
               error: null,
             },
           },
@@ -300,7 +365,7 @@ describe('billing routes', () => {
         tables: {
           profiles: {
             single: {
-              data: { company_id: 'company_123' },
+              data: { company_id: 'company_123', role: 'owner', is_superadmin: false, status: 'active' },
               error: null,
             },
           },
@@ -334,7 +399,7 @@ describe('billing routes', () => {
         tables: {
           profiles: {
             single: {
-              data: { company_id: 'company_123' },
+              data: { company_id: 'company_123', role: 'owner', is_superadmin: false, status: 'active' },
               error: null,
             },
           },

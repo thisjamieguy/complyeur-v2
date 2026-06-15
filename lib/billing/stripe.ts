@@ -2,6 +2,8 @@ import Stripe from 'stripe'
 
 let _stripe: Stripe | null = null
 
+export const STRIPE_API_VERSION = '2026-01-28.clover'
+
 /**
  * Get a singleton Stripe client instance.
  * Uses the STRIPE_SECRET_KEY environment variable.
@@ -13,6 +15,7 @@ export function getStripe(): Stripe {
       throw new Error('Missing STRIPE_SECRET_KEY environment variable')
     }
     _stripe = new Stripe(secretKey, {
+      apiVersion: STRIPE_API_VERSION,
       typescript: true,
     })
   }

@@ -2,6 +2,18 @@
 
 This runbook closes the remaining manual actions for Section 4.
 
+## Repository Controls Added 2026-06-15
+
+- Stripe client API version is pinned in `lib/billing/stripe.ts`.
+- Checkout and portal mutations require `PERMISSIONS.BILLING_MANAGE`.
+- Checkout reuses an existing `companies.stripe_customer_id` when present.
+- Checkout session creation sends `client_reference_id`, `company_id`,
+  `user_id`, `plan_slug`, `billing_interval`, and `source` metadata.
+- Checkout completion refuses entitlement changes when required metadata is
+  missing or when Stripe customer/company/user invariants do not match.
+
+These controls still require live Stripe evidence before paid/public beta.
+
 ## Prerequisites
 - `STRIPE_SECRET_KEY` is set (test or live key, matching the environment).
 - `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set.
@@ -89,3 +101,19 @@ stripe listen --forward-to http://127.0.0.1:3000/api/billing/webhook
 stripe trigger checkout.session.completed
 ```
 3. Confirm webhook logs and DB updates.
+
+## 5) Required Lifecycle Evidence Before Paid/Public Beta
+
+Store evidence in `docs/operations/evidence/stripe-verification/`.
+
+- webhook endpoint configured for the deployed environment
+- webhook signing secret present in the matching environment
+- successful checkout creates or reuses the expected Stripe customer
+- checkout metadata contains company, user, plan, interval, and source
+- webhook replay does not duplicate entitlement changes
+- stale or out-of-order subscription events do not downgrade fresh state
+- failed payment produces the expected subscription/entitlement state and alert
+- cancellation produces the expected subscription/entitlement state
+- failed webhook events are visible to the billing/support owner
+- reconciliation script or manual reconciliation process resolves any missed
+  lifecycle events
