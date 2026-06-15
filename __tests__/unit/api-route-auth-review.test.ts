@@ -76,7 +76,7 @@ describe('API route auth review coverage', () => {
     const body = await response.json()
 
     expect(response.status).toBe(401)
-    expect(body.error).toBe('Please sign in to your account before starting checkout.')
+    expect(body.error).toBe('Unauthorized')
     expect(supabase.from).not.toHaveBeenCalled()
   })
 
@@ -93,7 +93,7 @@ describe('API route auth review coverage', () => {
     const body = await response.json()
 
     expect(response.status).toBe(401)
-    expect(body.error).toBe('Not authenticated')
+    expect(body.error).toBe('Unauthorized')
     expect(supabase.from).not.toHaveBeenCalled()
   })
 
