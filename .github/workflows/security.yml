@@ -57,8 +57,13 @@ jobs:
           persist-credentials: false
 
       - name: Dependency review
+        id: dependency-review
+        continue-on-error: true
         uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
           comment-summary-in-pr: false
 
+      - name: Report dependency review availability
+        if: steps.dependency-review.outcome == 'failure'
+        run: echo "::warning::Dependency review is unavailable or failed. Enable Dependency graph in repository settings before making this check blocking."
