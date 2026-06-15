@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense, type ComponentType } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AlertTriangle, BarChart3, ShieldCheck } from 'lucide-react'
@@ -62,6 +62,7 @@ function SignupFeature({
 function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('next') || '/dashboard'
   const loginHref =
@@ -101,7 +102,15 @@ function SignupForm() {
       formData.append('password', data.password)
       formData.append('confirmPassword', data.confirmPassword)
       formData.append('redirectTo', redirectTo)
-      await signup(formData)
+      const result = await signup(formData)
+
+      if (!result.success) {
+        window.localStorage.removeItem(SIGNUP_INTENT_KEY)
+        toast.error(result.error)
+        return
+      }
+
+      router.push(result.redirectTo)
     } catch (error) {
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem(SIGNUP_INTENT_KEY)
