@@ -116,6 +116,12 @@ These documents are intentionally preserved but should not be treated as current
 - [`docs/audits/PRODUCTION_READINESS_ASSESSMENT.md`](audits/PRODUCTION_READINESS_ASSESSMENT.md)
 - [`docs/audits/REDDIT_PRODUCTION_READINESS_ASSESSMENT.md`](audits/REDDIT_PRODUCTION_READINESS_ASSESSMENT.md)
 
+## Current Audits
+
+- [`docs/audits/ENGINEERING_AUDIT_2026-06-15.md`](audits/ENGINEERING_AUDIT_2026-06-15.md)
+- [`docs/audits/DOCUMENTATION_AUDIT_2026-06-15.md`](audits/DOCUMENTATION_AUDIT_2026-06-15.md)
+- [`docs/overnight-hardening/OVERNIGHT_HARDENING_STATUS.md`](overnight-hardening/OVERNIGHT_HARDENING_STATUS.md)
+
 ## Section Map
 
 - `architecture/`: architecture decisions, environment model, migration workflow
