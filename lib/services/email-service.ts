@@ -217,7 +217,7 @@ function generateAlertEmailHtml(data: AlertEmailData): string {
           </tr>
 
           <!-- Next Available Date -->
-          ${daysUsed >= 90 && nextAvailableDate ? `
+          ${daysUsed > 90 && nextAvailableDate ? `
           <tr>
             <td style="padding: 0 32px 24px;">
               <div style="background-color: #F3F4F6; padding: 16px; border-radius: 8px; text-align: center;">
@@ -287,7 +287,7 @@ Days Used: ${daysUsed} of 90
 Days Remaining: ${Math.max(0, daysRemaining)}
 `
 
-  if (daysUsed >= 90 && nextAvailableDate) {
+  if (daysUsed > 90 && nextAvailableDate) {
     text += `\nEstimated next available travel date: ${nextAvailableDate}\n`
   }
 
@@ -330,7 +330,7 @@ function getAlertMessage(alertType: AlertType, employeeName: string, daysUsed: n
  * (Simple estimate - actual calculation should use the compliance engine)
  */
 function calculateNextAvailableDate(daysUsed: number): string | null {
-  if (daysUsed < 90) return null
+  if (daysUsed <= 90) return null
 
   // Rough estimate: need to wait until enough days "expire" from the 180-day window
   const daysToWait = daysUsed - 89 // Wait until we're at 89 days used
