@@ -38,22 +38,33 @@ type WaitlistInsertClient = {
 }
 
 /**
- * Verify Cloudflare Turnstile token server-side
- * Returns true if verification succeeds or if Turnstile is not configured (graceful degradation)
+ * Verify Cloudflare Turnstile token server-side.
+ * Production is fail-closed; local/dev keeps graceful degradation for setup.
  */
 async function verifyTurnstileToken(token: string | null): Promise<{ success: boolean; error?: string }> {
   const secretKey = process.env.TURNSTILE_SECRET_KEY
+  const isProduction = process.env.NODE_ENV === 'production'
 
-  // If Turnstile is not configured, allow through (graceful degradation)
   if (!secretKey) {
-    console.warn('[Turnstile] Secret key not configured - skipping verification')
+    if (isProduction) {
+      console.error('[Turnstile] Secret key not configured in production')
+      return {
+        success: false,
+        error: 'Security verification is unavailable. Please try again later.',
+      }
+    }
+    console.warn('[Turnstile] Secret key not configured outside production - skipping verification')
     return { success: true }
   }
 
-  // If no token provided but Turnstile is configured, it might be a load failure
-  // Allow through with warning for graceful degradation
   if (!token) {
-    console.warn('[Turnstile] No token provided - allowing graceful degradation')
+    if (isProduction) {
+      return {
+        success: false,
+        error: 'Security verification is required. Please refresh and try again.',
+      }
+    }
+    console.warn('[Turnstile] No token provided outside production - allowing graceful degradation')
     return { success: true }
   }
 
@@ -86,8 +97,13 @@ async function verifyTurnstileToken(token: string | null): Promise<{ success: bo
 
     return { success: true }
   } catch (err) {
-    // If Cloudflare is down, allow through (graceful degradation)
     console.error('[Turnstile] Verification request failed:', err)
+    if (isProduction) {
+      return {
+        success: false,
+        error: 'Security verification is unavailable. Please try again later.',
+      }
+    }
     return { success: true }
   }
 }
