@@ -196,7 +196,7 @@ describe('Trip management flow', () => {
       expect(result.riskLevel).toBe('amber');
     });
 
-    it('exactly 90 days is VIOLATION (max compliant is 89)', () => {
+    it('exactly 90 days is exhausted but compliant', () => {
       const config = createConfig({ referenceDate: '2026-01-10' });
 
       const trips = createTripsWithDaysUsed(90);
@@ -204,7 +204,7 @@ describe('Trip management flow', () => {
 
       expect(result.daysUsed).toBe(90);
       expect(result.daysRemaining).toBe(0);
-      expect(result.isCompliant).toBe(false);  // 90 days = violation
+      expect(result.isCompliant).toBe(true);   // 90 days = exhausted but within legal maximum
       expect(result.riskLevel).toBe('red');    // 0 remaining = red
     });
   });

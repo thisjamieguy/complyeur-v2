@@ -4,7 +4,7 @@
  * Maps days remaining to traffic-light risk levels:
  * - green: Safe zone (30+ days remaining)
  * - amber: Caution zone (10-29 days remaining)
- * - red: Danger zone (<10 days remaining or over limit)
+ * - red: Danger zone (<10 days remaining, exhausted, or over limit)
  *
  * @version 2025-01-07
  */
@@ -96,14 +96,14 @@ function validateStatusThresholds(thresholds: StatusThresholds): void {
   if (typeof thresholds.redMax !== 'number' || isNaN(thresholds.redMax)) {
     throw new InvalidConfigError('thresholds.redMax', 'Red threshold must be a number');
   }
-  if (thresholds.greenMax < 1 || thresholds.greenMax > 89) {
-    throw new InvalidConfigError('thresholds.greenMax', 'Green threshold must be between 1 and 89');
+  if (thresholds.greenMax < 1 || thresholds.greenMax > 90) {
+    throw new InvalidConfigError('thresholds.greenMax', 'Green threshold must be between 1 and 90');
   }
-  if (thresholds.amberMax < 1 || thresholds.amberMax > 89) {
-    throw new InvalidConfigError('thresholds.amberMax', 'Amber threshold must be between 1 and 89');
+  if (thresholds.amberMax < 1 || thresholds.amberMax > 90) {
+    throw new InvalidConfigError('thresholds.amberMax', 'Amber threshold must be between 1 and 90');
   }
-  if (thresholds.redMax < 1 || thresholds.redMax > 89) {
-    throw new InvalidConfigError('thresholds.redMax', 'Red threshold must be between 1 and 89');
+  if (thresholds.redMax < 1 || thresholds.redMax > 90) {
+    throw new InvalidConfigError('thresholds.redMax', 'Red threshold must be between 1 and 90');
   }
   if (thresholds.greenMax >= thresholds.amberMax) {
     throw new InvalidConfigError(
@@ -125,8 +125,8 @@ function validateStatusThresholds(thresholds: StatusThresholds): void {
  * Status levels:
  * - green: daysUsed <= greenMax (default 68)
  * - amber: daysUsed <= amberMax (default 82)
- * - red: daysUsed <= redMax (default 89)
- * - breach: daysUsed >= 90 (always, regardless of settings)
+ * - red: daysUsed <= redMax (default 90)
+ * - breach: daysUsed > 90 (always, regardless of settings)
  *
  * @param daysUsed - Number of days used in the 180-day window
  * @param thresholds - Optional custom thresholds
@@ -138,14 +138,15 @@ function validateStatusThresholds(thresholds: StatusThresholds): void {
  * getStatusFromDaysUsed(45)  // 'green'
  * getStatusFromDaysUsed(65)  // 'amber'
  * getStatusFromDaysUsed(85)  // 'red'
- * getStatusFromDaysUsed(92)  // 'breach'
+ * getStatusFromDaysUsed(91)  // 'breach'
  */
 export function getStatusFromDaysUsed(
   daysUsed: number,
   thresholds: StatusThresholds = DEFAULT_STATUS_THRESHOLDS
 ): RiskLevel {
-  // 90+ is ALWAYS breach regardless of settings
-  if (daysUsed >= 90) {
+  // 91+ is ALWAYS breach regardless of settings. Exactly 90 is exhausted
+  // but still within the legal maximum of "up to 90 days".
+  if (daysUsed > 90) {
     return 'breach';
   }
 
@@ -160,7 +161,7 @@ export function getStatusFromDaysUsed(
     return 'amber';
   }
 
-  // Between amberMax and 89 is red
+  // Between amberMax and the legal limit is red/exhausted
   return 'red';
 }
 

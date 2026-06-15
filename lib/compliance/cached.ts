@@ -149,7 +149,7 @@ export function calculateComplianceRange(
       daysUsed,
       daysRemaining,
       riskLevel,
-      isCompliant: daysUsed < 90,  // 90 days = violation
+      isCompliant: daysUsed <= 90,
     })
 
     // Move to next day
@@ -197,7 +197,7 @@ export function getComplianceAtDates(
       daysUsed,
       daysRemaining,
       riskLevel,
-      isCompliant: daysUsed < 90,  // 90 days = violation
+      isCompliant: daysUsed <= 90,
     })
   }
 

@@ -32,7 +32,7 @@ export interface EmployeeCompliance {
   last_trip_date: string | null
   /** Total number of trips for this employee */
   total_trips: number
-  /** Whether currently compliant (days_used < 90; 90 is a breach) */
+  /** Whether currently compliant (days_used <= 90; 91+ is a breach) */
   is_compliant: boolean
   /** How long they can stay if entering today (ISO 90/180 calculation) */
   max_stay_days?: number
@@ -54,7 +54,7 @@ export interface ComplianceStats {
   at_risk: number
   /** Number of employees with red status (within red threshold) */
   non_compliant: number
-  /** Number of employees with breach status (90+ days used) */
+  /** Number of employees with breach status (91+ days used) */
   breach: number
   /** Number of employees exempt from tracking (EU/Schengen citizens) */
   exempt: number

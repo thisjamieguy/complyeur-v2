@@ -28,8 +28,13 @@ The Schengen compliance engine is deterministic, auditable, and implemented in `
 
 - Decision: Keep Schengen membership data explicit and reviewable.
   - Why: Country membership and edge cases are compliance-sensitive and can change.
-  - Repository alignment: `lib/compliance/constants.ts` and `lib/compliance/schengen-validator.ts`.
+  - Repository alignment: `lib/constants/schengen-countries.ts`, `lib/compliance/constants.ts`, and `lib/compliance/schengen-validator.ts`.
   - Confidence: High, with periodic legal/source review required.
+
+- Decision: Treat exactly 90 days as exhausted but still compliant.
+  - Why: The rule permits up to 90 days in a rolling 180-day period; the breach starts on day 91.
+  - Repository alignment: `lib/compliance/window-calculator.ts`, `lib/compliance/risk-calculator.ts`, `lib/services/forecast-service.ts`, and boundary tests in `lib/compliance/__tests__/`.
+  - Confidence: High.
 
 - Decision: Keep forecasting and safe-entry calculations on the same presence-day model.
   - Why: Scenario planning must not fork core compliance logic.
@@ -42,7 +47,7 @@ Historical AI discussions captured useful edge cases: Bulgaria/Romania dates, mi
 
 ## Risks / Caveats
 
-- `lib/compliance/constants.ts` contains a past-due quarterly review marker. The Schengen membership source should be refreshed before relying on it for legal-facing claims.
+- Schengen membership source review must stay current. The June 2026 review confirmed Bulgaria and Romania as full Schengen members from 1 January 2025, while Ireland and Cyprus remain excluded.
 - Residence permits, national visas, posted-worker rules, and tax/SRT logic are not covered by the Schengen algorithm unless explicitly implemented and reviewed.
 - Native `Date` appears in tests and internal UTC-normalized code; do not treat that as permission to parse user date strings casually.
 
@@ -51,4 +56,3 @@ Historical AI discussions captured useful edge cases: Bulgaria/Romania dates, mi
 - Refresh the Schengen membership verification date in `lib/compliance/constants.ts` after checking primary sources.
 - Add or confirm fixture coverage for residence-permit and host-country exception decisions before claiming support.
 - Keep `docs/CALCULATION_LOGIC.md` synchronized with code changes.
-

@@ -1,7 +1,7 @@
 # Schengen 90/180-Day Compliance — Calculation Logic
 
 **Version:** 2.0
-**Last updated:** 30 March 2026
+**Last updated:** 15 June 2026
 **Source:** `lib/compliance/` — all calculations are deterministic. No AI or approximation is used at any point in the algorithm. Every result is reproducible and auditable from the underlying trip data.
 
 ---
@@ -12,7 +12,10 @@ The calculation implements **EU Regulation 610/2013** (Schengen Borders Code), A
 
 > "Short-stay visas allow third-country nationals to stay for a period of no more than 90 days in any 180-day period."
 
-The European Commission's FAQ (europa.eu) clarifies that this is evaluated as a **rolling** 180-day window, not a fixed calendar period. Every day is evaluated against the 180 days immediately preceding it. ComplyEUR implements this exactly as specified.
+The European Commission's Schengen guidance confirms short stays are limited
+to up to 90 days in any 180-day period. Every day is evaluated against the
+180 days immediately preceding it. ComplyEUR implements this as a rolling
+window.
 
 ---
 
@@ -80,11 +83,11 @@ A configurable `complianceStartDate` can be set per company. Days before this da
 
 ## 4. Schengen Area Membership
 
-### Full members (27 countries as of January 2025)
+### Full members (29 countries as of January 2025)
 
 Austria (AT), Belgium (BE), Bulgaria (BG)\*, Croatia (HR), Czech Republic (CZ), Denmark (DK), Estonia (EE), Finland (FI), France (FR), Germany (DE), Greece (GR), Hungary (HU), Iceland (IS), Italy (IT), Latvia (LV), Liechtenstein (LI), Lithuania (LT), Luxembourg (LU), Malta (MT), Netherlands (NL), Norway (NO), Poland (PL), Portugal (PT), Romania (RO)\*, Slovakia (SK), Slovenia (SI), Spain (ES), Sweden (SE), Switzerland (CH).
 
-> \* **Romania and Bulgaria** became full Schengen members with land border checks removed on **1 January 2025**. Both countries were already part of Schengen for air and sea borders from March 2024. Trips to Romania or Bulgaria on or after 1 January 2025 count toward the 90-day limit. This is reflected in `lib/compliance/constants.ts` with `since: '2025-01-01'` for both countries.
+> \* **Romania and Bulgaria** became full Schengen members with land border checks removed on **1 January 2025**. Both countries were already part of Schengen for air and sea borders from March 2024. Trips to Romania or Bulgaria on or after 1 January 2025 count toward the 90-day limit. The canonical implementation source is `lib/constants/schengen-countries.ts`.
 
 ### Microstates — count as Schengen
 
@@ -123,9 +126,13 @@ ComplyEUR assigns a compliance status to each employee based on days used in the
 | Compliant | 0–68 | 22+ | No near-term risk |
 | At Risk | 69–82 | 8–21 | Approaching limit — review travel plans |
 | High Risk | 83–89 | 1–7 | Immediate attention required |
-| Violation | 90+ | 0 or negative | Limit exceeded — legal jeopardy |
+| Exhausted | 90 | 0 | Legal maximum reached — no further Schengen days can be added |
+| Violation | 91+ | Negative | Limit exceeded — legal jeopardy |
 
-Thresholds are configurable per company via company settings. The defaults above are set in `lib/compliance/constants.ts`. A violation occurs at exactly 90 days — the maximum permitted is 89 days used to remain legally compliant.
+Thresholds are configurable per company via company settings, except the legal
+breach boundary. The defaults above are set in `lib/compliance/constants.ts`.
+Exactly 90 days is exhausted but still compliant; the legal breach starts when
+days used is greater than 90.
 
 ---
 
@@ -209,11 +216,17 @@ If the employee had spent those same 2 days in Ireland instead, only 10 days wou
 
 ### At exactly 90 days
 
-An employee with exactly 90 days used in the window is **in violation**. The maximum permitted is 89 days. `isCompliant()` returns `false` at 90.
+An employee with exactly 90 days used in the window has exhausted the allowance
+but is not yet over the limit. `isCompliant()` returns `true` at 90 and `false`
+at 91 or more. The UI should show this as red/high risk because adding another
+Schengen day would breach the rule.
 
 ### Entry on the 90th day
 
-If an employee has used 89 days and intends to enter Schengen today, `canSafelyEnter()` returns `false` — they would reach exactly 90 days on entry, leaving no room to stay. ComplyEUR treats 89 days used as the last safe threshold for entry.
+If an employee has used 89 days and intends to enter Schengen today,
+`canSafelyEnter()` returns `true` for that single day because entry consumes
+the 90th day. If they already have 90 days used, `canSafelyEnter()` returns
+`false` until the rolling window clears enough prior presence days.
 
 ### Zero days
 

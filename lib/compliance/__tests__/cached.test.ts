@@ -181,21 +181,21 @@ describe('batchCalculateCompliance', () => {
       expect(result?.riskLevel).toBe('green');
     });
 
-    it('correctly identifies non-compliant employees', () => {
+    it('treats exactly 90 days as exhausted but still compliant', () => {
       // Note: batchCalculateCompliance uses default compliance start (epoch)
       // Trip must be after that date. Use Mar 1, 2026 ref to fit 90 days in window.
       const employees = [
         {
-          id: 'non-compliant',
+          id: 'exhausted',
           trips: [createTrip('2025-11-01', '2026-01-29')], // 90 days
         },
       ];
 
       const results = batchCalculateCompliance(employees, new Date('2026-03-01'));
-      const result = results.get('non-compliant');
+      const result = results.get('exhausted');
 
       expect(result?.daysUsed).toBe(90);
-      expect(result?.isCompliant).toBe(false);
+      expect(result?.isCompliant).toBe(true);
     });
   });
 });

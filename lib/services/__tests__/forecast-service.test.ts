@@ -39,7 +39,7 @@ function dateKey(date: Date | null): string | null {
 
 
 describe('calculateCompliantFromDate', () => {
-  it('treats exactly 90 days after trip as non-compliant', () => {
+  it('treats exactly 90 days after trip as exhausted but compliant', () => {
     const base = {
       employeeId: 'emp-1',
       companyId: 'co-1',
@@ -74,8 +74,8 @@ describe('calculateCompliantFromDate', () => {
     expect(result.daysUsedBeforeTrip).toBe(89);
     expect(result.daysAfterTrip).toBe(90);
     expect(result.riskLevel).toBe('red');
-    expect(result.isCompliant).toBe(false);
-    expect(result.compliantFromDate).not.toBeNull();
+    expect(result.isCompliant).toBe(true);
+    expect(result.compliantFromDate).toBeNull();
   });
 
   it('returns null for non-Schengen future trips', () => {
@@ -184,7 +184,8 @@ describe('day-by-day rolling window — regression', () => {
   it('correctly identifies the first violation day when a trip breaches the limit', () => {
     // Planned trip: 2026-07-01 → 2026-07-08 (8 days)
     // 89 recent historical days, none drop off during the trip.
-    // Day 1: 89 + 1 = 90 → violation on day 1.
+    // Day 1: 89 + 1 = 90 → exhausted but still compliant.
+    // Day 2: 89 + 2 = 91 → violation on day 2.
     const futureTrip = createTrip({
       id: 'future-violation',
       country: 'FR',
@@ -209,6 +210,6 @@ describe('day-by-day rolling window — regression', () => {
 
     expect(result.daysUsedBeforeTrip).toBe(89);
     expect(result.isCompliant).toBe(false);
-    expect(result.firstViolationDay).toBe(1); // violates on day 1
+    expect(result.firstViolationDay).toBe(2); // violates on day 2
   });
 });

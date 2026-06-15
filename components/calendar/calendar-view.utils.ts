@@ -79,7 +79,7 @@ export function buildDayMap(
           daysUsed: dayCompliance?.daysUsed ?? 0,
           daysRemaining: dayCompliance?.daysRemaining ?? 90,
           riskLevel: dayCompliance?.riskLevel ?? 'green',
-          isBreachDay: (dayCompliance?.daysUsed ?? 0) >= 90,
+          isBreachDay: (dayCompliance?.daysUsed ?? 0) > 90,
         })
       }
     }

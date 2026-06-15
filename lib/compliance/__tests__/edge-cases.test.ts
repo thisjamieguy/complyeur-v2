@@ -67,8 +67,8 @@ describe('Required Test Scenarios', () => {
       expect(result.isCompliant).toBe(true);
     });
 
-    // Scenario 2: At limit (90 days = violation)
-    it('2. Exactly 90 days used shows 0 remaining and is VIOLATION', () => {
+    // Scenario 2: At limit (90 days = exhausted but not over limit)
+    it('2. Exactly 90 days used shows 0 remaining and remains compliant', () => {
       const trips = [createTrip('2025-10-12', '2026-01-09')]; // 90 days
       const config = createConfig({ referenceDate: new Date('2026-01-10T00:00:00.000Z') });
 
@@ -76,7 +76,7 @@ describe('Required Test Scenarios', () => {
 
       expect(result.daysUsed).toBe(90);
       expect(result.daysRemaining).toBe(0);
-      expect(result.isCompliant).toBe(false);  // 90 days = violation
+      expect(result.isCompliant).toBe(true);   // 90 days = exhausted but within legal maximum
       expect(result.riskLevel).toBe('red');    // 0 remaining = red
     });
 

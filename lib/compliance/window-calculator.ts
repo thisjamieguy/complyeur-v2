@@ -161,17 +161,18 @@ export function calculateDaysRemaining(
 /**
  * Determines if an employee is currently compliant (can legally be in Schengen).
  *
- * An employee is compliant if they have used FEWER than 90 days in the
- * preceding 180-day window. At exactly 90 days, they are IN VIOLATION -
- * the maximum allowed is 89 days to remain compliant.
+ * An employee is compliant if they have used no more than 90 days in the
+ * preceding 180-day window. At exactly 90 days, the allowance is exhausted:
+ * the traveller is still within the legal maximum, but cannot add another
+ * Schengen day until an older presence day drops out of the window.
  *
  * @param presence - Set of date keys representing days in Schengen
  * @param refDate - Reference date for the calculation
  * @param config - Optional configuration
- * @returns true if compliant (days used < limit, i.e., <= 89)
+ * @returns true if compliant (days used <= limit)
  *
  * @example
- * isCompliant(presence, new Date()) // true if 89 or fewer days used
+ * isCompliant(presence, new Date()) // true if 90 or fewer days used
  */
 export function isCompliant(
   presence: ReadonlySet<string>,
@@ -180,7 +181,7 @@ export function isCompliant(
 ): boolean {
   const limit = config.limit ?? SCHENGEN_DAY_LIMIT;
   const daysUsed = daysUsedInWindow(presence, refDate, config);
-  return daysUsed < limit;
+  return daysUsed <= limit;
 }
 
 /**

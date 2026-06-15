@@ -232,7 +232,7 @@ export function oracleDaysRemaining(
 export function oracleRiskLevel(daysRemaining: number): 'green' | 'amber' | 'red' {
   if (daysRemaining >= 16) return 'green';  // 0-74 days used
   if (daysRemaining >= 1) return 'amber';   // 75-89 days used
-  return 'red';                              // 90+ days used (violation)
+  return 'red';                              // 90+ days used (exhausted or breached)
 }
 
 /**
@@ -279,7 +279,7 @@ export function oracleCalculate(
   return {
     daysUsed,
     daysRemaining,
-    isCompliant: daysUsed < limit,  // 90 days = violation, 89 or fewer = compliant
+    isCompliant: daysUsed <= limit,
     riskLevel: oracleRiskLevel(daysRemaining),
   };
 }

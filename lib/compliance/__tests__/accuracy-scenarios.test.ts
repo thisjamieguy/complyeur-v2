@@ -262,10 +262,10 @@ describe('90/180 Accuracy Scenarios', () => {
         expected: { daysUsed: 89, daysRemaining: 1, riskLevel: 'amber', isCompliant: true },
       },
       {
-        name: '90 days used is a violation',
+        name: '90 days used is exhausted but compliant',
         trips: [createTrip('2025-10-12', '2026-01-09', 'FR')],
         config: createConfig({ referenceDate: toDate('2026-01-09') }),
-        expected: { daysUsed: 90, daysRemaining: 0, riskLevel: 'red', isCompliant: false },
+        expected: { daysUsed: 90, daysRemaining: 0, riskLevel: 'red', isCompliant: true },
       },
       {
         name: '91 days used is over limit',
@@ -519,7 +519,7 @@ describe('90/180 Accuracy Scenarios', () => {
         expect(dateOnlyKey(productionSafeEntry)).toBe(dateOnlyKey(strictSafeEntry));
 
         expect(productionResult.daysRemaining).toBe(90 - productionResult.daysUsed);
-        expect(productionResult.isCompliant).toBe(productionResult.daysUsed <= 89);
+        expect(productionResult.isCompliant).toBe(productionResult.daysUsed <= 90);
       }
     });
   });
