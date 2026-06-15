@@ -15,6 +15,10 @@ import {
   generateTripsFromGantt,
 } from './gantt-parser';
 
+const MAX_XLSX_WORKSHEETS = 5;
+const MAX_XLSX_COLUMNS = 200;
+const MAX_XLSX_CELLS = 100_000;
+
 // ============================================================
 // RAW PARSE RESULT (for Phase 3 column mapping)
 // ============================================================
@@ -91,6 +95,52 @@ function isCSVFile(file: File): boolean {
     type === 'text/plain' ||
     type === 'application/csv'
   );
+}
+
+function assertWorkbookWithinLimits(
+  workbook: ExcelJS.Workbook,
+  worksheet: ExcelJS.Worksheet,
+  maxRows: number
+): void {
+  if (workbook.worksheets.length > MAX_XLSX_WORKSHEETS) {
+    throw new Error(`Workbook has too many worksheets. Limit: ${MAX_XLSX_WORKSHEETS}.`);
+  }
+
+  const worksheetState = (worksheet as ExcelJS.Worksheet & { state?: string }).state;
+  if (worksheetState === 'hidden' || worksheetState === 'veryHidden') {
+    throw new Error('The first worksheet is hidden. Move import data to a visible first worksheet.');
+  }
+
+  const rowCount = worksheet.rowCount;
+  const columnCount = worksheet.columnCount;
+  if (rowCount > maxRows) {
+    throw new Error(`Worksheet has too many rows. Limit: ${maxRows - 1} data rows.`);
+  }
+
+  if (columnCount > MAX_XLSX_COLUMNS) {
+    throw new Error(`Worksheet has too many columns. Limit: ${MAX_XLSX_COLUMNS}.`);
+  }
+
+  if (rowCount * columnCount > MAX_XLSX_CELLS) {
+    throw new Error(`Worksheet is too large to import. Limit: ${MAX_XLSX_CELLS} populated cell positions.`);
+  }
+}
+
+function getImportLimitError(error: unknown): string | null {
+  if (!(error instanceof Error)) return null
+
+  const message = error.message
+  if (
+    message.startsWith('Workbook has too many worksheets') ||
+    message.startsWith('Worksheet has too many rows') ||
+    message.startsWith('Worksheet has too many columns') ||
+    message.startsWith('Worksheet is too large') ||
+    message.startsWith('The first worksheet is hidden')
+  ) {
+    return message
+  }
+
+  return null
 }
 
 // ============================================================
@@ -235,6 +285,7 @@ async function parseXlsxBuffer(buffer: ArrayBuffer): Promise<{
   if (!worksheet) {
     throw new Error('File contains no worksheets');
   }
+  assertWorkbookWithinLimits(workbook, worksheet, MAX_ROWS + 1);
 
   // Row 1 is the header row
   const headerRow = worksheet.getRow(1);
@@ -353,7 +404,7 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
     console.error('Parse error:', error);
     return {
       success: false,
-      error: 'Failed to parse file. Ensure it is a valid Excel or CSV file.',
+      error: getImportLimitError(error) ?? 'Failed to parse file. Ensure it is a valid Excel or CSV file.',
     };
   }
 }
@@ -425,7 +476,7 @@ export async function parseFileRaw(file: File): Promise<RawParseResult> {
     console.error('Raw parse error:', error);
     return {
       success: false,
-      error: 'Failed to parse file. Ensure it is a valid Excel or CSV file.',
+      error: getImportLimitError(error) ?? 'Failed to parse file. Ensure it is a valid Excel or CSV file.',
     };
   }
 }
@@ -601,6 +652,7 @@ async function parseGanttFromData(buffer: ArrayBuffer, isCsv = false): Promise<P
       if (!worksheet) {
         return { success: false, error: 'File contains no worksheets' };
       }
+      assertWorkbookWithinLimits(workbook, worksheet, MAX_GANTT_TRIPS + 1);
 
       data = [];
       worksheet.eachRow((row) => {
@@ -686,7 +738,7 @@ async function parseGanttFromData(buffer: ArrayBuffer, isCsv = false): Promise<P
     console.error('Gantt parse error:', error);
     return {
       success: false,
-      error: 'Failed to parse schedule file. Ensure headers are dates (e.g., "Mon 06 Jan").',
+      error: getImportLimitError(error) ?? 'Failed to parse schedule file. Ensure headers are dates (e.g., "Mon 06 Jan").',
     };
   }
 }

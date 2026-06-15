@@ -271,9 +271,16 @@ describe('parseCell', () => {
       expect(result.isSchengen).toBe(false);
     });
 
-    test('Bulgaria (BG) is NOT Schengen', () => {
+    test('Bulgaria (BG) is Schengen from 2025', () => {
       const result = parseCell('ABC-BG', 0, 0);
-      expect(result.isSchengen).toBe(false);
+      expect(result.isSchengen).toBe(true);
+      expect(result.countsAsDay).toBe(true);
+    });
+
+    test('Romania (RO) is Schengen from 2025', () => {
+      const result = parseCell('ABC-RO', 0, 0);
+      expect(result.isSchengen).toBe(true);
+      expect(result.countsAsDay).toBe(true);
     });
   });
 

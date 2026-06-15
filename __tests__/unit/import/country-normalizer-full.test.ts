@@ -44,9 +44,11 @@ describe('SCHENGEN_MICROSTATES set', () => {
 })
 
 describe('EU_NON_SCHENGEN set', () => {
-  test('contains Ireland and Cyprus', () => {
+  test('contains Ireland and Cyprus only among common EU exceptions', () => {
     expect(EU_NON_SCHENGEN.has('IE')).toBe(true)
     expect(EU_NON_SCHENGEN.has('CY')).toBe(true)
+    expect(EU_NON_SCHENGEN.has('BG')).toBe(false)
+    expect(EU_NON_SCHENGEN.has('RO')).toBe(false)
   })
 })
 
@@ -54,6 +56,8 @@ describe('isSchengenCountry', () => {
   test('returns true for Schengen member', () => {
     expect(isSchengenCountry('FR')).toBe(true)
     expect(isSchengenCountry('DE')).toBe(true)
+    expect(isSchengenCountry('BG')).toBe(true)
+    expect(isSchengenCountry('RO')).toBe(true)
   })
 
   test('returns true for Schengen microstates', () => {

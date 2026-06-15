@@ -1,5 +1,9 @@
 import { z } from 'zod';
 import { IMPORT_MAX_REQUEST_BODY_BYTES } from '@/lib/constants/request-limits';
+import {
+  ALL_SCHENGEN_COUNTRIES,
+  NON_SCHENGEN_EU as NON_SCHENGEN_EU_COUNTRY_CODES,
+} from '@/lib/constants/schengen-countries';
 
 // ============================================================
 // ENUMS & CONSTANTS
@@ -224,24 +228,9 @@ export const FORMAT_OPTIONS: FormatOption[] = [
 // SCHENGEN COUNTRIES
 // ============================================================
 
-export const SCHENGEN_COUNTRIES = new Set([
-  // Two-letter codes
-  'AT', 'BE', 'HR', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR',
-  'HU', 'IS', 'IT', 'LV', 'LI', 'LT', 'LU', 'MT', 'NL', 'NO',
-  'PL', 'PT', 'SK', 'SI', 'ES', 'SE', 'CH',
-  // Full names (uppercase)
-  'AUSTRIA', 'BELGIUM', 'CROATIA', 'CZECHIA', 'CZECH REPUBLIC',
-  'DENMARK', 'ESTONIA', 'FINLAND', 'FRANCE', 'GERMANY', 'GREECE',
-  'HUNGARY', 'ICELAND', 'ITALY', 'LATVIA', 'LIECHTENSTEIN',
-  'LITHUANIA', 'LUXEMBOURG', 'MALTA', 'NETHERLANDS', 'NORWAY',
-  'POLAND', 'PORTUGAL', 'SLOVAKIA', 'SLOVENIA', 'SPAIN', 'SWEDEN',
-  'SWITZERLAND',
-]);
+export const SCHENGEN_COUNTRIES = new Set<string>(ALL_SCHENGEN_COUNTRIES);
 
-export const NON_SCHENGEN_EU = new Set([
-  'IE', 'IRELAND', 'CY', 'CYPRUS', 'GB', 'UK', 'UNITED KINGDOM',
-  'BG', 'BULGARIA', 'RO', 'ROMANIA',
-]);
+export const NON_SCHENGEN_EU = new Set<string>(NON_SCHENGEN_EU_COUNTRY_CODES);
 
 // ============================================================
 // HELPER TYPES
