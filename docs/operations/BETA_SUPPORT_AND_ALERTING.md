@@ -1,6 +1,6 @@
 # Beta Support And Alerting Baseline
 
-Last updated: 2026-06-04
+Last updated: 2026-06-15
 
 This document defines the minimum support and alerting posture for ComplyEur's
 private beta.
@@ -14,7 +14,18 @@ private beta.
 
 ## Ownership Model
 
-Before inviting testers, assign one named human to each role:
+Current private-beta assignment:
+
+- Beta support owner: James Walsh.
+- Beta feedback owner: James Walsh.
+- Engineering escalation owner: James Walsh.
+
+This satisfies the support ownership blocker for founder-monitored private beta.
+Evidence is stored in
+`docs/operations/evidence/support-ownership/2026-06-04-support-ownership.md`.
+
+Before expanding beta coverage beyond founder-monitored support, assign one
+named human to each role:
 
 - Beta support owner: checks the support inbox at least twice per business day.
 - Beta feedback owner: reviews `/admin/feedback` and categorizes incoming items.
@@ -38,7 +49,9 @@ Configure and verify these rules in Sentry before beta:
 
 - Error spike on production environment
 - New issue for auth or billing routes
+- New issue for import, GDPR, and tenant-isolation-sensitive routes
 - Regressed issue after deploy
+- Repeated auth failure or abuse signal
 
 Each alert must have:
 - a named recipient or channel
@@ -50,6 +63,22 @@ Each alert must have:
 - Stripe webhook endpoint must be configured for the deployed beta URL.
 - Failed webhook events must trigger a dashboard review or alert.
 - Payment-related support email must route to the same monitored support path.
+- Webhook replay, stale-processing, out-of-order event, failed-payment,
+  cancellation, and reconciliation evidence must be stored before paid/public
+  beta.
+
+## Release Gate Evidence
+
+Every production release must record:
+
+- branch and commit SHA
+- CI result, including CodeQL and dependency/security audit jobs
+- Vercel deployment ID and URL
+- public `/api/health` result
+- internal health result where the operator has `CRON_SECRET`
+- approver
+- rollback note or last-known-good deployment ID
+- evidence folder or document link
 
 ## Feedback Handling
 

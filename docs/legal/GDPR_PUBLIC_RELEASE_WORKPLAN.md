@@ -1,6 +1,6 @@
 # GDPR Public Release Workplan
 
-Last reviewed: 2026-05-29
+Last reviewed: 2026-06-15
 
 Purpose: provide a practical, engineering-owned checklist for bringing
 ComplyEur's GDPR and UK GDPR posture to public-release standard.
@@ -44,6 +44,10 @@ below are complete, tested, and supported by current documentation.
     records, auth/profile data, and backups.
   - Evidence: implementation or documented manual process exists for each row in
     the retention schedule.
+  - 2026-06-15 repo update: stale import-session raw payload cleanup now covers
+    pending, parsing, validating, ready, importing, completed, and failed states.
+    This reduces abandoned/raw PII risk but does not close the full retention
+    schedule until every store below has evidence.
 
 - [ ] Public privacy and cookie documents match the implementation.
   - Privacy policy must not rely on broad "use means consent" wording.
@@ -120,9 +124,9 @@ below are complete, tested, and supported by current documentation.
 | `alerts` | Employee-linked compliance status and message text | Include in DSAR; scrub embedded identifiers on anonymisation | Must verify |
 | `notification_log` | Recipient email, subject, delivery status, provider id | Include in DSAR; scrub embedded identifiers where possible | Must verify |
 | `employee_compliance_snapshots` | Employee-linked compliance status | Include in DSAR; delete on hard delete | Must verify |
-| `import_sessions.parsed_data` | Raw imported names, emails, trip rows | Include in DSAR or purge after import | Release blocker |
-| `import_sessions.validation_errors` | Raw invalid values, names, emails | Include in DSAR or purge after import | Release blocker |
-| `import_sessions.result` | Import result/errors; may contain row-level values | Include in DSAR or sanitize before storage | Release blocker |
+| `import_sessions.parsed_data` | Raw imported names, emails, trip rows | Include in DSAR or purge after import | In progress; stale-session cleanup broadened 2026-06-15 |
+| `import_sessions.validation_errors` | Raw invalid values, names, emails | Include in DSAR or purge after import | In progress; stale-session cleanup broadened 2026-06-15 |
+| `import_sessions.result` | Import result/errors; may contain row-level values | Include in DSAR or sanitize before storage | In progress; stale-session cleanup broadened 2026-06-15 |
 | `profiles` | User email, name, company, role, auth metadata | Account-level DSAR/manual process | Needs documented process |
 | `notification_preferences` | User email preference state and unsubscribe token | Account-level DSAR/manual process | Needs documented process |
 | `feedback_submissions` | User feedback and page path | Account-level DSAR/manual process | Needs documented process |
@@ -139,7 +143,7 @@ below are complete, tested, and supported by current documentation.
 | Active account/profile data | Account lifetime | Account closure or verified DSR | Delete/anonymise unless legal basis remains | Separate controller/processor responsibilities |
 | Employee records | Company configured period or active employment need | DSR/admin action/inactivity | Soft delete, hard delete, or anonymise | 30-day recovery must be explicit |
 | Trip records | Company configured retention period | `exit_date` older than policy | Delete | Must account for legal/employment retention needs |
-| Import raw data | Short operational window | Import completed/failed | Purge or sanitize | Avoid indefinite duplicate PII |
+| Import raw data | Short operational window | Import completed/failed/abandoned | Purge or sanitize | Code now includes pending, parsing, validating, ready, importing, completed, and failed stale-session states |
 | Alerts | Defined operational period | Alert resolved or employee anonymised/deleted | Delete or scrub identifiers | Message text can contain names |
 | Notification logs | Defined operational/legal period | Sent/failed timestamp | Delete or scrub identifiers | Recipient email is personal data |
 | GDPR audit log | Defined audit period | Audit retention job | Controlled purge with hash checkpoint | Keep accountability without indefinite PII |
@@ -237,6 +241,8 @@ For release evidence, also perform a live local or staging probe for:
   employee-linked stores.
 - Retention cron rejects missing/invalid secret and succeeds with valid secret.
 - Cookie banner reject path prevents GA cookies/scripts/events.
+- Abandoned and completed import sessions no longer retain raw parsed data,
+  validation errors, or row-level result payloads beyond the approved window.
 
 ## Operating Rule
 

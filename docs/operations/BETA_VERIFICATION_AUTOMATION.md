@@ -1,6 +1,6 @@
 # Beta Verification Automation
 
-Last updated: 2026-06-04
+Last updated: 2026-06-15
 
 This guide explains which private-beta checks ComplyEur can now verify from the
 repo, which checks can be partially assisted, and which checks still require a
@@ -32,8 +32,7 @@ Manual only:
 - Password reset token reuse and post-reset session behavior
 - Real-device Safari and Android Chrome passes
 - Screen reader, ad blocker, and dark-mode email checks
-- GitHub branch protection confirmation
-- Sentry alert recipients, Supabase backup/PITR verification, and support owner confirmation
+- Sentry alert recipients, public/internal health evidence, and Supabase backup/PITR verification
 - SPF/DKIM/DMARC verification and legal review
 
 ## Commands
@@ -97,9 +96,10 @@ Beta is safe to proceed only when all of the following are true:
    - email deliverability
    - password reset behavior
    - non-founder core journey
-   - branch protection confirmation
    - recovery tabletop evidence
-   - support inbox ownership
+   - Sentry alert routing evidence
+   - public/internal health evidence
+   - tester brief and known-issues distribution
 3. No unresolved critical blocker remains in
    `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`
 

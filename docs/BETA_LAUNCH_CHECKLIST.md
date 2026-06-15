@@ -1,5 +1,15 @@
 # ComplyEur — Pre-Beta Launch Checklist
 
+## Status
+
+**Historical. Not authoritative.**
+
+- This document is retained as the original pre-beta checklist template.
+- Current beta release decisions are made in
+  `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`.
+- Use `docs/operations/BETA_MANUAL_VERIFICATION_CHECKLIST.md` for the current
+  manual beta verification pass.
+
 > Superseded note:
 > This file is preserved as the original pre-beta checklist template. The
 > current beta launch source of truth is

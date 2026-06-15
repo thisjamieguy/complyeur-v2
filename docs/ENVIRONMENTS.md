@@ -1,5 +1,15 @@
 # ComplyEur Environment Setup
 
+## Status
+
+**Supporting operational reference. Not authoritative.**
+
+- Canonical environment policy lives in `docs/architecture/ENVIRONMENTS.md`.
+- Use this file for concrete project references and environment-specific
+  operational details that may change over time.
+- If this file conflicts with `docs/architecture/ENVIRONMENTS.md`, the
+  architecture document wins.
+
 ## Overview
 
 ComplyEur operates with two active runtime environments:
@@ -10,6 +20,7 @@ ComplyEur operates with two active runtime environments:
 | Test/Preview | Preview | Development, QA, and branch previews |
 
 This matches the canonical architecture in `docs/architecture/ENVIRONMENTS.md`.
+This document intentionally does not define policy.
 
 ---
 

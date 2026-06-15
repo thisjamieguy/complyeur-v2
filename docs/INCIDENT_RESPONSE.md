@@ -110,6 +110,9 @@ For every incident, record:
 - Logs, alerts, and relevant audit entries
 - Containment steps and recovery actions
 - Communication timestamps and recipients
+- GDPR breach assessment decision and rationale
+- Named owner for every follow-up action
+- Due date and closure evidence for every follow-up action
 
 Store evidence in the incident folder (access controlled) with a link in the post-mortem.
 
@@ -133,6 +136,61 @@ Categories of data: [DATA TYPES]
 Estimated records impacted: [COUNT]
 Mitigation steps: [ACTIONS]
 Point of contact: [NAME/EMAIL]
+```
+
+### Incident Record
+
+```markdown
+# Incident: [TITLE]
+
+Severity: Sev[1/2/3]
+Incident commander: [NAME]
+Security lead: [NAME]
+Engineering lead: [NAME]
+Privacy/GDPR owner: [NAME]
+Comms owner: [NAME]
+
+## Timeline
+
+| Time (UTC) | Event | Owner | Evidence |
+| --- | --- | --- | --- |
+| [TIME] | Detected | [NAME] | [LINK] |
+| [TIME] | Contained | [NAME] | [LINK] |
+| [TIME] | Resolved | [NAME] | [LINK] |
+
+## Impact
+
+- Systems affected:
+- Tenants/users affected:
+- Data categories affected:
+- Availability/integrity/confidentiality impact:
+
+## GDPR Decision
+
+- Personal data breach suspected: yes/no
+- Awareness timestamp:
+- Regulator notification required: yes/no
+- Data-subject notification required: yes/no
+- Rationale:
+- Decision owner:
+
+## Root Cause
+
+[SUMMARY]
+
+## Recovery Validation
+
+- Health check:
+- Auth smoke:
+- Core app smoke:
+- RLS/tenant isolation check:
+- Billing/webhook reconciliation, if relevant:
+
+## Follow-Up Actions
+
+| Action | Owner | Due | Status | Evidence |
+| --- | --- | --- | --- | --- |
+| [ACTION] | [NAME] | [DATE] | Open | [LINK] |
 ```
 
 ---
