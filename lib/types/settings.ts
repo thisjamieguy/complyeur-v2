@@ -20,7 +20,7 @@ export interface CompanySettings {
   // Status Thresholds (days used) - used for dashboard badge display
   status_green_max: number   // Days used <= this = green (Compliant)
   status_amber_max: number   // Days used <= this = amber (At Risk)
-  status_red_max: number     // Days used <= this = red (High Risk). 90+ = breach
+  status_red_max: number     // Days used <= this = red (High Risk). 91+ = breach
 
   // Forecasting
   future_job_warning_threshold: number
@@ -73,7 +73,7 @@ export const DEFAULT_SETTINGS: Omit<CompanySettings, 'company_id' | 'created_at'
   risk_threshold_amber: 10,
   status_green_max: 68,
   status_amber_max: 82,
-  status_red_max: 89,
+  status_red_max: 90,
   future_job_warning_threshold: 80,
   calendar_load_mode: 'all_employees',
   notify_70_days: true,
