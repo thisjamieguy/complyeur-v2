@@ -6,7 +6,7 @@
  *
  * Properties tested:
  *  1. daysRemaining = 90 - daysUsed  (arithmetic invariant)
- *  2. isCompliant ↔ daysUsed < 90  (semantic equivalence)
+ *  2. isCompliant ↔ daysUsed <= 90  (semantic equivalence)
  *  3. daysUsed ≥ 0  (non-negativity)
  *  4. Non-Schengen trips never affect daysUsed  (country independence)
  *  5. Adding a Schengen trip never decreases daysUsed  (monotonicity)
@@ -118,11 +118,11 @@ describe('Property-Based: Compliance Engine Invariants', () => {
   });
 
   // ── Property 2: Semantic equivalence ───────────────────────────────────────
-  it('invariant: isCompliant is true if and only if daysUsed < 90', () => {
+  it('invariant: isCompliant is true if and only if daysUsed <= 90', () => {
     fc.assert(
       fc.property(tripsArb, (trips) => {
         const { daysUsed, isCompliant } = calculateCompliance(trips, BASE_CONFIG);
-        return isCompliant === (daysUsed < 90);
+        return isCompliant === (daysUsed <= 90);
       }),
       { numRuns: 200 }
     );
@@ -400,7 +400,7 @@ describe('Property-Based: Planning Mode', () => {
         const { daysUsed, daysRemaining, isCompliant } = calculateCompliance(trips, planningConfig);
         return (
           daysRemaining === 90 - daysUsed &&
-          isCompliant === (daysUsed < 90) &&
+          isCompliant === (daysUsed <= 90) &&
           daysUsed >= 0 &&
           Number.isInteger(daysUsed)
         );

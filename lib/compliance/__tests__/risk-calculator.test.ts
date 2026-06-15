@@ -91,7 +91,7 @@ describe('getRiskLevel', () => {
 
 describe('getStatusFromDaysUsed', () => {
   describe('default thresholds', () => {
-    // Default: greenMax: 68, amberMax: 82, redMax: 89
+    // Default: greenMax: 68, amberMax: 82, redMax: 90
     it('returns green for 0-68 days used', () => {
       expect(getStatusFromDaysUsed(0)).toBe('green');
       expect(getStatusFromDaysUsed(30)).toBe('green');
@@ -104,14 +104,15 @@ describe('getStatusFromDaysUsed', () => {
       expect(getStatusFromDaysUsed(82)).toBe('amber');
     });
 
-    it('returns red for 83-89 days used', () => {
+    it('returns red for 83-90 days used', () => {
       expect(getStatusFromDaysUsed(83)).toBe('red');
       expect(getStatusFromDaysUsed(85)).toBe('red');
       expect(getStatusFromDaysUsed(89)).toBe('red');
+      expect(getStatusFromDaysUsed(90)).toBe('red');
     });
 
-    it('returns breach for 90+ days used (always)', () => {
-      expect(getStatusFromDaysUsed(90)).toBe('breach');
+    it('returns breach for 91+ days used (always)', () => {
+      expect(getStatusFromDaysUsed(91)).toBe('breach');
       expect(getStatusFromDaysUsed(95)).toBe('breach');
       expect(getStatusFromDaysUsed(100)).toBe('breach');
       expect(getStatusFromDaysUsed(150)).toBe('breach');
@@ -129,9 +130,9 @@ describe('getStatusFromDaysUsed', () => {
       expect(getStatusFromDaysUsed(83)).toBe('red');
     });
 
-    it('red/breach boundary at 89/90 (non-configurable)', () => {
-      expect(getStatusFromDaysUsed(89)).toBe('red');
-      expect(getStatusFromDaysUsed(90)).toBe('breach');
+    it('red/breach boundary at 90/91 (non-configurable)', () => {
+      expect(getStatusFromDaysUsed(90)).toBe('red');
+      expect(getStatusFromDaysUsed(91)).toBe('breach');
     });
   });
 
@@ -150,11 +151,12 @@ describe('getStatusFromDaysUsed', () => {
       expect(getStatusFromDaysUsed(71, thresholds)).toBe('red');
     });
 
-    it('breach is always 90+ regardless of custom thresholds', () => {
+    it('breach is always 91+ regardless of custom thresholds', () => {
       const thresholds = { greenMax: 80, amberMax: 85, redMax: 88 };
 
       expect(getStatusFromDaysUsed(89, thresholds)).toBe('red');
-      expect(getStatusFromDaysUsed(90, thresholds)).toBe('breach');
+      expect(getStatusFromDaysUsed(90, thresholds)).toBe('red');
+      expect(getStatusFromDaysUsed(91, thresholds)).toBe('breach');
     });
 
     it('throws InvalidConfigError for non-numeric greenMax', () => {
@@ -189,7 +191,7 @@ describe('getStatusFromDaysUsed', () => {
         getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 0, redMax: 89 })
       ).toThrow(InvalidConfigError);
       expect(() =>
-        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 90, redMax: 91 })
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 91, redMax: 90 })
       ).toThrow(InvalidConfigError);
     });
 
@@ -198,7 +200,7 @@ describe('getStatusFromDaysUsed', () => {
         getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 75, redMax: 0 })
       ).toThrow(InvalidConfigError);
       expect(() =>
-        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 75, redMax: 90 })
+        getStatusFromDaysUsed(50, { greenMax: 60, amberMax: 75, redMax: 91 })
       ).toThrow(InvalidConfigError);
     });
 

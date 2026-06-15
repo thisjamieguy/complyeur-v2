@@ -300,13 +300,13 @@ async function purgeCompanyData(
       }
     }
 
-    // 4. Redact stale import staging payloads. Completed/failed imports keep
-    // counts and sanitized result summaries, not raw parsed rows or cell values.
+    // 4. Redact stale import staging payloads across every status. Completed/failed
+    // imports keep counts and sanitized result summaries, not raw parsed rows or cell values.
     const { data: staleImportSessions, error: importFetchError } = await supabase
       .from('import_sessions')
       .select('id, result')
       .eq('company_id', companyId)
-      .in('status', ['ready', 'completed', 'failed'])
+      .in('status', ['pending', 'parsing', 'validating', 'ready', 'importing', 'completed', 'failed'])
       .lt('created_at', importPayloadCutoff.toISOString())
       .limit(1000)
 

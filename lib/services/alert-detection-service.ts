@@ -92,7 +92,7 @@ function getThresholdsCrossed(
   const crossed: AlertType[] = []
 
   // Check from highest to lowest priority
-  if (daysUsed >= 90) {
+  if (daysUsed > 90) {
     crossed.push('breach')
   }
   if (daysUsed >= (settings.critical_threshold ?? 85)) {

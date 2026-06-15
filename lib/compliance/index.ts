@@ -17,8 +17,8 @@
  *
  * // Calculate compliance for an employee
  * const trips = [
- *   { entryDate: new Date('2025-01-01'), exitDate: new Date('2025-01-10'), country: 'FR' },
- *   { entryDate: new Date('2025-02-15'), exitDate: new Date('2025-02-20'), country: 'DE' },
+ *   { entryDate: parseDateOnlyAsUTC('2025-01-01'), exitDate: parseDateOnlyAsUTC('2025-01-10'), country: 'FR' },
+ *   { entryDate: parseDateOnlyAsUTC('2025-02-15'), exitDate: parseDateOnlyAsUTC('2025-02-20'), country: 'DE' },
  * ];
  *
  * const config = {
@@ -212,8 +212,9 @@ export function calculateCompliance(
   const limit = config.limit ?? SCHENGEN_DAY_LIMIT;
   const daysRemaining = limit - daysUsed;
   const riskLevel = getRiskLevel(daysRemaining, config.thresholds);
-  // Compliant if 89 or fewer days used (90+ is violation per EU Regulation 610/2013)
-  const isCompliantNow = daysUsed <= limit - 1;
+  // EU short-stay rules allow up to 90 days in any rolling 180-day window.
+  // Exactly 90 days is exhausted/high-risk, but the legal breach starts above 90.
+  const isCompliantNow = daysUsed <= limit;
 
   return {
     referenceDate: config.referenceDate,

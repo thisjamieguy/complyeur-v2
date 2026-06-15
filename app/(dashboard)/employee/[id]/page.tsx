@@ -185,7 +185,7 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
       ? getStatusFromDaysUsed(complianceResult.daysUsed, {
           greenMax: settings?.status_green_max ?? 68,
           amberMax: settings?.status_amber_max ?? 82,
-          redMax: settings?.status_red_max ?? 89,
+          redMax: settings?.status_red_max ?? 90,
         })
       : null
 

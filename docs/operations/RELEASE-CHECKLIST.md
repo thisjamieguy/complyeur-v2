@@ -1,5 +1,16 @@
 # RELEASE-CHECKLIST.md — ComplyEur v1 Launch
 
+## Status
+
+**Historical. Not authoritative.**
+
+- This file preserves the v1 release workflow and local gate history.
+- Current beta release decisions are made in
+  `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`.
+- Current environment and migration policy live in
+  `docs/architecture/ENVIRONMENTS.md` and
+  `docs/architecture/MIGRATION_WORKFLOW.md`.
+
 > **Historical release snapshot note (2026-05-28):** This checklist preserves the
 > April 2026 v1 launch workflow and may mention the inactive staging project.
 > For current environment and migration rules, use
@@ -75,6 +86,43 @@ patched transitive overrides in `package.json`/`pnpm-lock.yaml`.
 - Preview/Test deployment must be smoke-tested against the active Test/Preview Supabase project. The older Phase 5 staging project below is documented as inactive in `docs/architecture/ENVIRONMENTS.md`; use the canonical two-environment flow unless staging is explicitly reactivated.
 - Production dashboard checks still require external access: Vercel production env vars, custom domain/SSL, Supabase backups/PITR, Sentry alerts, uptime monitoring, and production `/api/health`.
 - Critical live user flows still need a browser pass on the deployed URL: signup, email confirmation, login, password reset, dashboard, add employee, add trip, exports, settings, logout, and the documented account-deletion request path.
+
+## Infrastructure Remediation Pass — 2026-06-15
+
+### Repository controls added
+
+- [x] Compliance boundary corrected: exactly 90 days is exhausted but not a breach; breach starts at 91 days.
+- [x] Schengen country handling centralized for import and compliance paths, including Bulgaria/Romania as Schengen and Ireland/Cyprus as non-Schengen.
+- [x] Billing checkout and portal mutations require `PERMISSIONS.BILLING_MANAGE`.
+- [x] Stripe API version is pinned and checkout metadata/customer invariants are enforced before entitlement changes.
+- [x] Mutating requests are screened with centralized first-party origin/Sec-Fetch validation.
+- [x] Public health uses anon `ping()` only; internal deep health is behind `CRON_SECRET`.
+- [x] Service-role call sites are covered by a static allowlist test.
+- [x] CI security workflows, CodeQL workflow, and Dependabot configuration are present in `.github/`.
+- [x] XLSX import parser enforces worksheet, row, column, and cell caps.
+- [x] Import-session retention cleanup covers abandoned and terminal raw-PII states.
+
+### Verification completed in this pass
+
+- [x] `pnpm test:compliance` — 13 files passed, 482 tests passed.
+- [x] `pnpm typecheck` — passed.
+- [x] `pnpm lint` — passed.
+- [x] `pnpm test:unit` — 100 files passed, 1530 tests passed.
+- [x] `pnpm test:integration` — 6 files passed, 187 tests passed.
+- [x] `pnpm build` — passed, 47 static pages generated.
+- [x] `pnpm security:check` — passed, no known vulnerabilities.
+- [ ] `pnpm test:e2e:multi-user` — command exited 0, but 2 tests skipped because local Supabase was not reachable at `127.0.0.1:54321`.
+- [ ] `pnpm test:e2e:import` — command exited 0, but 15 tests skipped because auth test credentials/setup were missing or invalid.
+
+### Required before production or paid/public beta
+
+- [ ] `pnpm test:e2e:multi-user`
+- [ ] `pnpm test:e2e:import`
+- [ ] GitHub branch protection evidence shows CI, CodeQL, dependency/security audit, dependency review where applicable, approvals, stale approval dismissal, code-owner review, and strict checks are required.
+- [ ] Vercel deployment ID, approver, rollback note, public health result, and internal health result are filed in release evidence.
+- [ ] Sentry alert routing and test-alert delivery evidence is filed.
+- [ ] Supabase backup/PITR restore drill evidence is filed.
+- [ ] Stripe lifecycle and webhook monitoring evidence is filed.
 
 ## Phase 1 — Quality Gates
 

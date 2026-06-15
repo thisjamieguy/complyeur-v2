@@ -300,9 +300,9 @@ describe('forecastingSchema', () => {
     ).toThrow()
   })
 
-  test('rejects above 89', () => {
+  test('rejects above 90', () => {
     expect(() =>
-      forecastingSchema.parse({ future_job_warning_threshold: 90 })
+      forecastingSchema.parse({ future_job_warning_threshold: 91 })
     ).toThrow()
   })
 })

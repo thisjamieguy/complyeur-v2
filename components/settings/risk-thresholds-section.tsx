@@ -55,7 +55,7 @@ export function RiskThresholdsSection({ disabled }: RiskThresholdsSectionProps) 
                   <Input
                     type="number"
                     min={1}
-                    max={89}
+                    max={90}
                     disabled={disabled}
                     className="w-20"
                     {...field}
@@ -87,7 +87,7 @@ export function RiskThresholdsSection({ disabled }: RiskThresholdsSectionProps) 
                   <Input
                     type="number"
                     min={1}
-                    max={89}
+                    max={90}
                     disabled={disabled}
                     className="w-20"
                     {...field}
@@ -119,7 +119,7 @@ export function RiskThresholdsSection({ disabled }: RiskThresholdsSectionProps) 
                   <Input
                     type="number"
                     min={1}
-                    max={89}
+                    max={90}
                     disabled={disabled}
                     className="w-20"
                     {...field}
@@ -139,10 +139,10 @@ export function RiskThresholdsSection({ disabled }: RiskThresholdsSectionProps) 
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <div className="h-4 w-4 rounded-full bg-slate-900" />
-            <span className="text-sm font-medium">Breach (90+ days)</span>
+            <span className="text-sm font-medium">Breach (91+ days)</span>
           </div>
           <p className="text-sm text-muted-foreground pl-7">
-            Employees with 90 or more days used always show as Breach (black).
+            Employees with more than 90 days used always show as Breach (black).
             This threshold cannot be changed.
           </p>
         </div>
@@ -172,11 +172,11 @@ export function RiskThresholdsSection({ disabled }: RiskThresholdsSectionProps) 
             <div
               className="bg-slate-900 flex items-center justify-center text-white flex-1"
             >
-              90+
+              91+
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Green: 0-{greenMax} days | Amber: {greenMax + 1}-{amberMax} days | Red: {amberMax + 1}-{redMax} days | Breach: 90+ days
+            Green: 0-{greenMax} days | Amber: {greenMax + 1}-{amberMax} days | Red: {amberMax + 1}-{redMax} days | Breach: 91+ days
           </p>
         </div>
       </CardContent>

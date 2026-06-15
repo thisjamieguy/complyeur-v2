@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { SELF_SERVE_PLANS, type BillingInterval } from '@/lib/billing/plans'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
-import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { PERMISSIONS } from '@/lib/permissions'
+import { requireMutationPermission } from '@/lib/security/authorization'
+import { STRIPE_API_VERSION } from '@/lib/billing/stripe'
 
 export const runtime = 'nodejs'
 
@@ -208,35 +210,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = await createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
+    const guard = await requireMutationPermission(
+      supabase,
+      PERMISSIONS.BILLING_MANAGE,
+      'billingCheckout'
+    )
+    if (!guard.allowed) {
       return NextResponse.json(
-        { error: 'Please sign in to your account before starting checkout.' },
-        { status: 401 }
-      )
-    }
-
-    const rateLimit = await checkServerActionRateLimit(user.id, 'billingCheckout')
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: rateLimit.error ?? 'Too many requests. Please try again later.' },
-        { status: 429 }
-      )
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('company_id')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError || !profile?.company_id) {
-      return NextResponse.json(
-        { error: 'We could not find a company for your account.' },
-        { status: 404 }
+        { error: guard.error },
+        { status: guard.status }
       )
     }
 
@@ -286,7 +268,7 @@ export async function POST(request: NextRequest) {
 
     if (isLocalhostCheckoutBypassAllowed(request)) {
       await provisionLocalCheckoutBypass({
-        companyId: profile.company_id,
+        companyId: guard.companyId,
         planSlug,
         billingInterval,
         tier,
@@ -317,6 +299,23 @@ export async function POST(request: NextRequest) {
       promotionCodeId = lookup.promotionCodeId
     }
 
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .select('stripe_customer_id')
+      .eq('id', guard.companyId)
+      .maybeSingle()
+
+    if (companyError) {
+      console.error('[billing/checkout] Failed to read company billing record:', {
+        companyId: guard.companyId,
+        error: companyError,
+      })
+      return NextResponse.json(
+        { error: 'Unable to load company billing details right now. Please try again.' },
+        { status: 500 }
+      )
+    }
+
     successUrl.searchParams.set('checkout', 'success')
     successUrl.searchParams.set('session_id', '{CHECKOUT_SESSION_ID}')
 
@@ -337,14 +336,18 @@ export async function POST(request: NextRequest) {
     stripeBody.set('metadata[plan_slug]', planSlug)
     stripeBody.set('metadata[billing_interval]', billingInterval)
     stripeBody.set('metadata[source]', source)
+    stripeBody.set('metadata[company_id]', guard.companyId)
+    stripeBody.set('metadata[user_id]', guard.user.id)
     if (promotionCode) {
       stripeBody.set('metadata[promotion_code]', promotionCode)
     }
 
-    stripeBody.set('client_reference_id', user.id)
+    stripeBody.set('client_reference_id', guard.user.id)
 
-    if (user.email) {
-      stripeBody.set('customer_email', user.email)
+    if (company?.stripe_customer_id) {
+      stripeBody.set('customer', company.stripe_customer_id)
+    } else if (guard.user.email) {
+      stripeBody.set('customer_email', guard.user.email)
     }
 
     const stripeResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
@@ -352,6 +355,7 @@ export async function POST(request: NextRequest) {
       headers: {
         Authorization: `Bearer ${stripeSecretKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Stripe-Version': STRIPE_API_VERSION,
       },
       body: stripeBody.toString(),
       cache: 'no-store',

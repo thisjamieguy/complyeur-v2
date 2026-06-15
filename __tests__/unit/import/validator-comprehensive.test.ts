@@ -235,6 +235,20 @@ describe('validateRows (trips format)', () => {
     expect(results[0].data.country).toBe('FR')
   })
 
+  test('Bulgaria and Romania are Schengen imports without non-Schengen warnings', async () => {
+    const results = await validateRows([
+      makeTrip({ country: 'Bulgaria' }),
+      makeTrip({ country: 'Romania', row_number: 2 }),
+    ], 'trips')
+
+    expect(results[0].is_valid).toBe(true)
+    expect(results[0].data.country).toBe('BG')
+    expect(results[0].warnings.filter((w) => w.column === 'country')).toHaveLength(0)
+    expect(results[1].is_valid).toBe(true)
+    expect(results[1].data.country).toBe('RO')
+    expect(results[1].warnings.filter((w) => w.column === 'country')).toHaveLength(0)
+  })
+
   test('non-Schengen non-EU country (US) produces a warning, not an error', async () => {
     const results = await validateRows([makeTrip({ country: 'US' })], 'trips')
     expect(results[0].is_valid).toBe(true)

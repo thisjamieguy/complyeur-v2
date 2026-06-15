@@ -50,7 +50,7 @@ const statusConfig = {
 
 /**
  * Status badge component displaying compliance risk level.
- * Uses color coding: green (compliant), amber (at-risk), red (high risk), breach (90+ days, black).
+ * Uses color coding: green (compliant), amber (at-risk), red (high risk), breach (91+ days, black).
  */
 export function StatusBadge({
   status,

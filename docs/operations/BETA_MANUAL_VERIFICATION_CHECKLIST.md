@@ -1,9 +1,23 @@
 # Private Beta Manual Verification Checklist
 
-Last updated: 2026-06-04
+## Status
+
+**Supporting release document.**
+
+- Current beta go/no-go decisions are made in
+  `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`.
+- Current completion status is tracked in
+  `docs/operations/evidence/EVIDENCE_STATUS.md`.
+- Use this checklist to execute the remaining manual beta verification gate on
+  the deployed environment.
+
+Last updated: 2026-06-15
 
 Use this checklist on the deployed beta environment. This is the manual
 verification gate that remains after automated tests are green.
+
+Checkboxes in this file are intentionally reset for each verification run. Do
+not use them as the persistent release status.
 
 Run the repo-side prep helpers in `docs/operations/BETA_VERIFICATION_AUTOMATION.md`
 before starting this checklist.

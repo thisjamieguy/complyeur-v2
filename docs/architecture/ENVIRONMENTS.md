@@ -1,5 +1,15 @@
 # ComplyEur Environment Architecture
 
+## Status
+
+**Authoritative.** This document is the source of truth for environment
+separation, environment purpose, and branch-to-environment mapping.
+
+- Use `docs/ENVIRONMENTS.md` only as an operational reference for concrete
+  project IDs, URLs, and inactive environment history.
+- If another document conflicts with this file on environment policy, this file
+  wins.
+
 This document defines how ComplyEur environments are structured, separated, and protected. Every deployment, database connection, and operational decision must conform to these rules.
 
 Deviating from this architecture is a bug.

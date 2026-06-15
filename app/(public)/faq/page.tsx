@@ -91,7 +91,7 @@ const faqData: FAQSection[] = [
             </p>
             <p>
               <span className="inline-block w-3 h-3 rounded-full bg-slate-900 mr-2" />
-              <strong>Black (Breach):</strong> 90+ days used. Employee has exceeded the legal limit.
+              <strong>Black (Breach):</strong> 91+ days used. Employee has exceeded the legal limit.
             </p>
             <p className="text-sm text-slate-500 mt-2">
               These thresholds can be customised in Settings.
@@ -112,7 +112,7 @@ const faqData: FAQSection[] = [
       {
         question: 'Can I customise the status thresholds?',
         answer:
-          'Yes. Go to Settings > Status Thresholds to adjust when employees move between Green, Amber, and Red status. The Breach threshold (90+ days) cannot be changed as it reflects the legal limit.',
+          'Yes. Go to Settings > Status Thresholds to adjust when employees move between Green, Amber, and Red status. The Breach threshold (91+ days) cannot be changed because the legal maximum is 90 days.',
       },
       {
         question: 'Are there keyboard shortcuts?',
@@ -300,7 +300,7 @@ const faqData: FAQSection[] = [
 
 const FAQ_SCHEMA_ANSWER_OVERRIDES: Record<string, string> = {
   'What do the status colours mean?':
-    'Status colours map risk by rolling 180-day usage: Green 0-68 days (compliant), Amber 69-82 days (at risk), Red 83-89 days (high risk), and Black 90+ days (breach). Thresholds for Green, Amber, and Red can be customised in settings.',
+    'Status colours map risk by rolling 180-day usage: Green 0-68 days (compliant), Amber 69-82 days (at risk), Red 83-90 days (high risk/exhausted), and Black 91+ days (breach). Thresholds for Green, Amber, and Red can be customised in settings.',
   'My import failed. What should I check?':
     'Check that headers are present in row 1, dates are consistent, employee names are spelled consistently, empty rows are removed, and the validation summary is reviewed for row-level errors.',
   'What do the forecast risk levels mean?':

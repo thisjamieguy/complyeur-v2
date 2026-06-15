@@ -1,5 +1,15 @@
 # ComplyEur Go-Live Checklist
 
+## Status
+
+**Supporting release document.**
+
+- Current private beta go/no-go decisions are made in
+  `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`.
+- Use this checklist for production or public-launch specific go-live tasks and
+  sign-off.
+- This file does not override the release source-of-truth document.
+
 Complete all items before announcing launch.
 
 Use `docs/operations/BETA_VERIFICATION_AUTOMATION.md` to run the repo-side

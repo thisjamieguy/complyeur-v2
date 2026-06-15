@@ -1,5 +1,22 @@
 # ComplyEur Deployment Runbook
 
+## Status
+
+**Supporting operational document.**
+
+- Current beta release decision owner:
+  `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`
+- Canonical environment policy:
+  `docs/architecture/ENVIRONMENTS.md`
+- Canonical migration workflow:
+  `docs/architecture/MIGRATION_WORKFLOW.md`
+- Production safety rules:
+  `docs/architecture/PRODUCTION_SAFETY_RAILS.md`
+
+Use this document for deploy, rollback, recovery, logs, and operational
+execution. If this document conflicts with the architecture or migration docs
+above, the architecture docs win.
+
 This document contains operational procedures for deploying, monitoring, and maintaining ComplyEur in production.
 
 ---
@@ -11,10 +28,12 @@ This document contains operational procedures for deploying, monitoring, and mai
 4. [Availability Targets (RTO/RPO)](#availability-targets-rtorpo)
 5. [Backup Restore Testing](#backup-restore-testing)
 6. [How to Check Logs](#how-to-check-logs)
-7. [Rate Limits and Cron Endpoints](#rate-limits-and-cron-endpoints)
-8. [How to Enable Maintenance Mode](#how-to-enable-maintenance-mode)
-9. [Emergency Contacts](#emergency-contacts)
-10. [First 24 Hours After Launch](#first-24-hours-after-launch)
+7. [Health Checks](#health-checks)
+8. [Rate Limits and Cron Endpoints](#rate-limits-and-cron-endpoints)
+9. [Vendor Outage Runbooks](#vendor-outage-runbooks)
+10. [How to Enable Maintenance Mode](#how-to-enable-maintenance-mode)
+11. [Emergency Contacts](#emergency-contacts)
+12. [First 24 Hours After Launch](#first-24-hours-after-launch)
 
 ---
 
@@ -63,19 +82,39 @@ The previous deployment will be instantly live. No rebuild required.
 
 ## How to Run Database Migrations
 
-### From Supabase Dashboard
-1. Go to [Supabase Dashboard](https://app.supabase.com)
-2. Select the `complyeur-prod` project
-3. Click **SQL Editor** in the sidebar
-4. Paste your migration SQL
-5. Click **Run** to execute
-6. Verify with a `SELECT` query
+### Canonical Workflow
+
+Follow `docs/architecture/MIGRATION_WORKFLOW.md` for the authoritative
+repository workflow.
+
+In particular:
+
+- Create schema changes as migration files in `supabase/migrations/`
+- Validate on the active Test/Preview environment first
+- Do not manually patch production schema through the Supabase SQL editor as a
+  normal deployment path
+- Use the two-environment model from `docs/architecture/ENVIRONMENTS.md`
+
+### Dashboard SQL Editor Use
+
+The Supabase SQL editor is an emergency or explicitly approved maintenance
+tool, not the standard migration workflow.
+
+If a production incident or approved maintenance task requires dashboard SQL:
+
+1. Confirm the reason cannot be handled through the normal migration workflow.
+2. Record the incident or maintenance context.
+3. Verify the target project is the intended environment.
+4. Save the SQL in a repository migration or incident record immediately after
+   execution so the repo remains the source of truth.
 
 ### Best Practices
-- Always test migrations on staging first
+- Always validate migrations in the active Test/Preview environment first
 - Run migrations during low-traffic periods
 - Keep a backup before major schema changes
 - Document all migrations in `/supabase/migrations/`
+- Follow `docs/architecture/PRODUCTION_SAFETY_RAILS.md` for any production-risk
+  operation
 
 ### Common Migration Commands
 ```sql
@@ -114,11 +153,17 @@ SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public';
 ### Procedure (Quarterly or After Major Data Changes)
 1. Identify restore point (timestamp or daily backup).
 2. Request restore via Supabase dashboard (PITR or backup restore).
-3. Restore into a staging or isolated project (avoid overwriting production).
+3. Restore into an isolated project or approved restore target (avoid
+   overwriting production).
 4. Validate critical data integrity:
    - `companies`, `profiles`, `employees`, `trips`
    - `audit_log`, `admin_audit_log`
-5. Record evidence (see below) and store in the compliance evidence folder.
+5. Validate auth and app behavior:
+   - one known test user can authenticate
+   - dashboard shell loads
+   - one employee/trip smoke flow works
+   - RLS prevents a tenant-A user reading tenant-B rows
+6. Record evidence (see below) and store in the compliance evidence folder.
 
 ### Evidence Expectations
 - Date/time of test
@@ -128,6 +173,10 @@ SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public';
 - Validation queries and results
 - Screenshots of Supabase restore confirmation
 - Sign-off from reviewer
+- Row-count comparison for critical tables
+- RLS validation result
+- Auth smoke-test result
+- App smoke-test result
 
 ### Data Corruption Recovery Procedure
 
@@ -250,9 +299,49 @@ High-signal routes:
 - `/api/billing/checkout`
 - `/api/billing/portal`
 - `/api/billing/status`
+- `/api/health`
+- `/api/internal/health`
 - `/api/cron/billing`
 - `/api/cron/onboarding`
 - server actions behind Team, GDPR, Import, Onboarding, and Admin company detail pages
+
+---
+
+## Health Checks
+
+### Public Health
+
+`GET /api/health` is the external uptime endpoint. It intentionally uses the
+anonymous Supabase client and only calls `ping()`. It must not use the service
+role key or expose vendor diagnostics.
+
+Expected healthy response:
+
+```json
+{ "status": "ok" }
+```
+
+Expected failed response:
+
+```json
+{ "status": "error" }
+```
+
+### Internal Deep Health
+
+`GET /api/internal/health` and `POST /api/internal/health` are protected by
+`CRON_SECRET`. Use them for scheduled or operator-only checks that may need
+service-role database probing.
+
+Required header:
+
+```text
+Authorization: Bearer ${CRON_SECRET}
+```
+
+Store uptime evidence under `docs/operations/evidence/` or
+`docs/compliance/soc2/evidence/` with the date, monitored URL, response code,
+response body, alert recipient, and test-alert result.
 
 ---
 
@@ -288,6 +377,74 @@ Cron routes intentionally return generic error messages now:
 - `/api/cron/onboarding`
 
 Use runtime logs to get the underlying query or provider failure. Do not rely on the HTTP response body for detailed diagnosis.
+
+---
+
+## Vendor Outage Runbooks
+
+### Supabase
+
+Impact: auth, database reads/writes, RLS-backed APIs, imports, billing
+entitlement updates, and DSAR workflows.
+
+1. Check Supabase status and project logs.
+2. Confirm whether the incident affects Auth, Postgres, Storage, Edge
+   Functions, or all APIs.
+3. Enable maintenance banner if writes may fail or data integrity is uncertain.
+4. Pause imports, billing lifecycle processing, and bulk data actions if partial
+   writes are suspected.
+5. After recovery, run public health, internal health, auth smoke, dashboard
+   smoke, and tenant-isolation checks.
+
+### Vercel
+
+Impact: app availability, route handlers, server actions, middleware, and
+production deployments.
+
+1. Check Vercel status, deployment logs, and recent deployment IDs.
+2. If caused by a release, promote the last known good deployment.
+3. If platform-wide, post status to support channels and pause non-essential
+   deploys.
+4. After recovery, record deployment ID, health result, and rollback decision.
+
+### Stripe
+
+Impact: checkout, customer portal, subscription lifecycle updates, and
+entitlements.
+
+1. Check Stripe status, webhook endpoint health, and failed events.
+2. Pause manual entitlement changes unless a billing owner approves them.
+3. Reconcile missed or failed webhook events after recovery.
+4. Store endpoint, failed-event, replay, and entitlement reconciliation evidence.
+
+### Resend
+
+Impact: transactional email, invitations, support notifications, and alerts
+sent through email.
+
+1. Check Resend status, delivery logs, and domain authentication.
+2. Identify affected templates and users.
+3. Queue resend/retry only when duplicate delivery risk is understood.
+4. Store delivery evidence for auth, invite, password reset, and alert emails.
+
+### Sentry
+
+Impact: error alerting, issue grouping, release visibility, and production
+diagnostics.
+
+1. Check Sentry status and organization/project access.
+2. Confirm whether ingestion, alert routing, or dashboard access is affected.
+3. Fall back to Vercel/Supabase/Stripe logs while Sentry is impaired.
+4. Fire a test alert after recovery and store routing evidence.
+
+### Upstash
+
+Impact: rate limiting and any Redis-backed abuse controls.
+
+1. Check Upstash status and REST token/env configuration.
+2. In production, rate limiter unavailability may fail closed with `503`.
+3. Review recent `429` and `503` spikes.
+4. Do not disable rate limiting without an incident commander decision.
 
 ---
 
@@ -373,12 +530,7 @@ Maintenance mode shows a banner to users without taking the site offline.
 curl -s https://complyeur.com/api/health | jq
 
 # Expected response:
-# {
-#   "status": "healthy",
-#   "timestamp": "2024-01-01T00:00:00.000Z",
-#   "database": "connected",
-#   "responseTime": "50ms"
-# }
+# { "status": "ok" }
 ```
 
 ---

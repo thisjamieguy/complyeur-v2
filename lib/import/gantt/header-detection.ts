@@ -31,7 +31,7 @@ export function findDateHeaderRow(
     const dateColumns: GanttDateColumn[] = [];
 
     // Limit columns to avoid garbage data at the end, but allow wide schedules
-    const maxCol = Math.min(row.length, MAX_GANTT_COLUMNS);
+    const maxCol = Math.min(row.length, MAX_GANTT_COLUMNS + 1);
 
     for (let colIdx = 1; colIdx < maxCol; colIdx++) {
       const cell = row[colIdx];
@@ -74,7 +74,7 @@ export function findDateHeaderRow(
     if (!row || !Array.isArray(row)) continue;
 
     const dateColumns: GanttDateColumn[] = [];
-    const maxCol = Math.min(row.length, MAX_GANTT_COLUMNS);
+    const maxCol = Math.min(row.length, MAX_GANTT_COLUMNS + 1);
 
     for (let colIdx = 1; colIdx < maxCol; colIdx++) {
       const cell = row[colIdx];

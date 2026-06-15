@@ -328,7 +328,7 @@ Replace with:
 
   // For Schengen trips: check each day of the trip individually.
   // The 180-day window slides forward each day, so old days drop off as new ones
-  // accumulate. A traveller is in violation only if any single day hits 90+.
+  // accumulate. A traveller is in violation only if any single day exceeds 90.
   // We track the peak (worst-case day) as the compliance figure.
   let daysAfterTrip = daysUsedBeforeTrip; // non-Schengen: unchanged
   let firstViolationDay: number | undefined;
@@ -380,7 +380,7 @@ alongside the other fields.
 npm run test -- --reporter=verbose lib/services/__tests__/forecast-service.test.ts
 ```
 
-Expected: the two new `calculateFutureJobCompliance` tests now **PASS**. Verify the existing `treats exactly 90 days after trip as non-compliant` test still passes (89 historical + 1-day trip: daily used = 90 on day 1, peak = 90, non-compliant ✓).
+Expected: the two new `calculateFutureJobCompliance` tests now **PASS**. Verify the boundary test treats 90 days after trip as exhausted but still compliant (89 historical + 1-day trip: daily used = 90 on day 1, peak = 90, compliant but no additional Schengen day is safe).
 
 If any other existing assertions on `daysAfterTrip` fail, recalculate the expected value as the day-by-day peak and update the assertion.
 

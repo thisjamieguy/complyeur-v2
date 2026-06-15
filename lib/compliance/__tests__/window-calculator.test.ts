@@ -261,8 +261,7 @@ describe('isCompliant', () => {
     expect(isCompliant(presence, refDate, { complianceStartDate: EARLY_COMPLIANCE_START })).toBe(true);
   });
 
-  it('returns false when exactly at limit (90 days = violation)', () => {
-    // 90 days = violation (max compliant is 89)
+  it('returns true when exactly at limit (90 days = exhausted but compliant)', () => {
     const dates: string[] = [];
     const start = new Date('2025-04-01');
     for (let i = 0; i < 90; i++) {
@@ -274,7 +273,7 @@ describe('isCompliant', () => {
     const presence = createPresence(dates);
     const refDate = new Date('2025-07-01');
 
-    expect(isCompliant(presence, refDate, { complianceStartDate: EARLY_COMPLIANCE_START })).toBe(false);
+    expect(isCompliant(presence, refDate, { complianceStartDate: EARLY_COMPLIANCE_START })).toBe(true);
   });
 
   it('returns false when over limit', () => {

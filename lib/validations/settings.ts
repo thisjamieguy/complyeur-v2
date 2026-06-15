@@ -32,23 +32,23 @@ export const settingsSchema = z.object({
   status_green_max: z
     .number()
     .min(1, 'Green threshold must be at least 1 day')
-    .max(89, 'Green threshold cannot exceed 89 days'),
+    .max(90, 'Green threshold cannot exceed 90 days'),
 
   status_amber_max: z
     .number()
     .min(1, 'Amber threshold must be at least 1 day')
-    .max(89, 'Amber threshold cannot exceed 89 days'),
+    .max(90, 'Amber threshold cannot exceed 90 days'),
 
   status_red_max: z
     .number()
     .min(1, 'Red threshold must be at least 1 day')
-    .max(89, 'Red threshold cannot exceed 89 days'),
+    .max(90, 'Red threshold cannot exceed 90 days'),
 
-  // Future job warning: 50-89 days
+  // Future job warning: 50-90 days
   future_job_warning_threshold: z
     .number()
     .min(50, 'Warning threshold must be at least 50 days')
-    .max(89, 'Warning threshold cannot exceed 89 days'),
+    .max(90, 'Warning threshold cannot exceed 90 days'),
 
   // Calendar loading behavior
   calendar_load_mode: z.enum(['all_employees', 'employees_with_trips']),

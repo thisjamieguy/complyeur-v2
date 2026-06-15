@@ -48,7 +48,6 @@ describe('signup action enumeration parity', () => {
   it('redirects existing-account attempts to the same post-signup route', async () => {
     const { createClient } = await import('@/lib/supabase/server')
     const { rateLimit } = await import('@/lib/rate-limit')
-    const { redirect } = await import('next/navigation')
 
     const supabase = {
       auth: {
@@ -69,15 +68,13 @@ describe('signup action enumeration parity', () => {
       remaining: 9,
       reset: Date.now() + 60_000,
     })
-    vi.mocked(redirect).mockImplementation(((path: string) => {
-      throw new Error(`REDIRECT:${path}`)
-    }) as never)
 
     const { signup } = await import('@/app/(auth)/actions')
 
-    await expect(signup(createSignupFormData())).rejects.toThrow(
-      'REDIRECT:/check-email'
-    )
+    await expect(signup(createSignupFormData())).resolves.toEqual({
+      success: true,
+      redirectTo: '/check-email',
+    })
     expect(supabase.rpc).not.toHaveBeenCalled()
     expect(supabase.auth.signOut).not.toHaveBeenCalled()
   })
@@ -85,7 +82,6 @@ describe('signup action enumeration parity', () => {
   it('uses the same post-signup route for newly created accounts', async () => {
     const { createClient } = await import('@/lib/supabase/server')
     const { rateLimit } = await import('@/lib/rate-limit')
-    const { redirect } = await import('next/navigation')
 
     const updateEq = vi.fn().mockResolvedValue({ error: null })
     const update = vi.fn(() => ({ eq: updateEq }))
@@ -116,30 +112,35 @@ describe('signup action enumeration parity', () => {
       remaining: 9,
       reset: Date.now() + 60_000,
     })
-    vi.mocked(redirect).mockImplementation(((path: string) => {
-      throw new Error(`REDIRECT:${path}`)
-    }) as never)
 
     const { signup } = await import('@/app/(auth)/actions')
 
     await expect(
       signup(createSignupFormData({ email: 'new@example.com' }))
-    ).rejects.toThrow('REDIRECT:/check-email')
+    ).resolves.toEqual({
+      success: true,
+      redirectTo: '/check-email',
+    })
 
-    expect(supabase.rpc).toHaveBeenCalledWith(
-      'create_company_and_profile',
-      expect.objectContaining({
-        user_id: 'user-123',
-        user_email: 'new@example.com',
-      })
-    )
+    expect(supabase.auth.signUp).toHaveBeenCalledWith({
+      email: 'new@example.com',
+      password: 'SecurePass123',
+      options: {
+        data: {
+          company_name: 'Test Company',
+          full_name: 'Test User',
+          given_name: 'Test',
+          family_name: 'User',
+        },
+      },
+    })
+    expect(supabase.rpc).not.toHaveBeenCalled()
     expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
   })
 
   it('preserves a validated redirect target through the post-signup flow', async () => {
     const { createClient } = await import('@/lib/supabase/server')
     const { rateLimit } = await import('@/lib/rate-limit')
-    const { redirect } = await import('next/navigation')
 
     const updateEq = vi.fn().mockResolvedValue({ error: null })
     const update = vi.fn(() => ({ eq: updateEq }))
@@ -170,9 +171,6 @@ describe('signup action enumeration parity', () => {
       remaining: 9,
       reset: Date.now() + 60_000,
     })
-    vi.mocked(redirect).mockImplementation(((path: string) => {
-      throw new Error(`REDIRECT:${path}`)
-    }) as never)
 
     const { signup } = await import('@/app/(auth)/actions')
 
@@ -183,8 +181,10 @@ describe('signup action enumeration parity', () => {
           redirectTo: '/pricing?autostart=1&plan=starter&billingInterval=monthly',
         })
       )
-    ).rejects.toThrow(
-      'REDIRECT:/check-email?next=%2Fpricing%3Fautostart%3D1%26plan%3Dstarter%26billingInterval%3Dmonthly'
-    )
+    ).resolves.toEqual({
+      success: true,
+      redirectTo:
+        '/check-email?next=%2Fpricing%3Fautostart%3D1%26plan%3Dstarter%26billingInterval%3Dmonthly',
+    })
   })
 })

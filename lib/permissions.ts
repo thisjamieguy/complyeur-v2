@@ -57,6 +57,9 @@ export const PERMISSIONS = {
   // Alerts
   ALERTS_VIEW: 'alerts.view',
   ALERTS_MANAGE: 'alerts.manage',
+
+  // Billing
+  BILLING_MANAGE: 'billing.manage',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];

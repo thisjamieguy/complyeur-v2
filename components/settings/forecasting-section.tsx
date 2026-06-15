@@ -47,7 +47,7 @@ export function ForecastingSection({ disabled }: ForecastingSectionProps) {
                   <Input
                     type="number"
                     min={50}
-                    max={89}
+                    max={90}
                     disabled={disabled}
                     className="w-20"
                     {...field}

@@ -99,7 +99,7 @@ describe('Snapshot: calculateCompliance', () => {
     expect(result).toMatchSnapshot();
   });
 
-  it('1f. 90 days used → red (violation, isCompliant=false)', () => {
+  it('1f. 90 days used → red (exhausted, isCompliant=true)', () => {
     // Trip 2025-07-06 to 2025-10-03 = 90 days (26+31+30+3=90)
     // calculateCompliance uses getRiskLevel: remaining=0 < amber threshold of 1 → 'red'
     // Note: 'breach' status comes from getStatusFromDaysUsed, not calculateCompliance
@@ -108,7 +108,7 @@ describe('Snapshot: calculateCompliance', () => {
       BASE_CONFIG
     );
     expect(result.daysUsed).toBe(90);
-    expect(result.isCompliant).toBe(false);
+    expect(result.isCompliant).toBe(true);
     expect(result.riskLevel).toBe('red'); // 0 remaining < amber threshold of 1
     expect(result).toMatchSnapshot();
   });
@@ -341,7 +341,7 @@ describe('Snapshot: batchCalculateCompliance', () => {
     expect(results.get('emp-green')?.riskLevel).toBe('green');
     expect(results.get('emp-amber')?.riskLevel).toBe('amber');
     // 90 days used → 0 remaining → 'red' (calculateCompliance uses getRiskLevel, not getStatusFromDaysUsed)
-    expect(results.get('emp-over-limit')?.isCompliant).toBe(false);
+    expect(results.get('emp-over-limit')?.isCompliant).toBe(true);
     expect(results.get('emp-over-limit')?.daysUsed).toBe(90);
 
     // Snapshot the complete batch output

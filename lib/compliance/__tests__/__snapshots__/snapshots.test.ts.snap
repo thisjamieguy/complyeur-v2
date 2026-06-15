@@ -19,7 +19,7 @@ exports[`Snapshot: batchCalculateCompliance > 6a. batch of three employees with 
   "emp-over-limit": {
     "daysRemaining": 0,
     "daysUsed": 90,
-    "isCompliant": false,
+    "isCompliant": true,
     "referenceDate": 2026-01-01T00:00:00.000Z,
     "riskLevel": "red",
   },
@@ -76,11 +76,11 @@ exports[`Snapshot: calculateCompliance > 1e. 89 days used → amber (1 day remai
 }
 `;
 
-exports[`Snapshot: calculateCompliance > 1f. 90 days used → red (violation, isCompliant=false) 1`] = `
+exports[`Snapshot: calculateCompliance > 1f. 90 days used → red (exhausted, isCompliant=true) 1`] = `
 {
   "daysRemaining": 0,
   "daysUsed": 90,
-  "isCompliant": false,
+  "isCompliant": true,
   "referenceDate": 2026-01-01T00:00:00.000Z,
   "riskLevel": "red",
 }

@@ -14,60 +14,21 @@
  * - Clear warnings prevent compliance calculation errors
  */
 
-/**
- * Full list of Schengen member countries (as of 2024).
- * 27 countries total including Iceland, Liechtenstein, Norway, Switzerland (non-EU).
- */
-export const SCHENGEN_COUNTRIES = new Set([
-  'AT', // Austria
-  'BE', // Belgium
-  'CH', // Switzerland
-  'CZ', // Czech Republic
-  'DE', // Germany
-  'DK', // Denmark
-  'EE', // Estonia
-  'ES', // Spain
-  'FI', // Finland
-  'FR', // France
-  'GR', // Greece
-  'HR', // Croatia (joined Jan 2023)
-  'HU', // Hungary
-  'IS', // Iceland
-  'IT', // Italy
-  'LI', // Liechtenstein
-  'LT', // Lithuania
-  'LU', // Luxembourg
-  'LV', // Latvia
-  'MT', // Malta
-  'NL', // Netherlands
-  'NO', // Norway
-  'PL', // Poland
-  'PT', // Portugal
-  'SE', // Sweden
-  'SI', // Slovenia
-  'SK', // Slovakia
-]);
+import {
+  SCHENGEN_FULL_MEMBERS,
+  NON_SCHENGEN_EU,
+  SCHENGEN_MICROSTATES as SCHENGEN_MICROSTATE_CODES,
+} from '@/lib/constants/schengen-countries';
 
 /**
- * Schengen-associated microstates (de facto part of Schengen area).
- * These countries apply Schengen rules by agreement.
+ * Schengen membership is delegated to the central app source of truth so
+ * imports cannot drift from the compliance engine.
  */
-export const SCHENGEN_MICROSTATES = new Set([
-  'AD', // Andorra
-  'MC', // Monaco
-  'SM', // San Marino
-  'VA', // Vatican City
-]);
+export const SCHENGEN_COUNTRIES = new Set<string>(SCHENGEN_FULL_MEMBERS);
 
-/**
- * EU countries NOT in Schengen (important distinction for 90/180 rule).
- */
-export const EU_NON_SCHENGEN = new Set([
-  'BG', // Bulgaria (joining soon)
-  'CY', // Cyprus
-  'IE', // Ireland (permanent opt-out)
-  'RO', // Romania (joining soon)
-]);
+export const SCHENGEN_MICROSTATES = new Set<string>(SCHENGEN_MICROSTATE_CODES);
+
+export const EU_NON_SCHENGEN = new Set<string>(NON_SCHENGEN_EU);
 
 /**
  * Comprehensive mapping of country names to ISO codes.

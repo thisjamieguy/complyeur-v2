@@ -197,7 +197,7 @@ export function calculateFutureJobCompliance(
 
   // For Schengen trips: check each day of the trip individually.
   // The 180-day window slides forward each day, so old days drop off as new ones
-  // accumulate. A traveller is in violation only if any single day hits 90+.
+  // accumulate. A traveller is in violation only if any single day exceeds 90.
   // We track the peak (worst-case day) as the compliance figure.
   let daysAfterTrip = daysUsedBeforeTrip; // non-Schengen: unchanged
   let firstViolationDay: number | undefined;
@@ -223,7 +223,7 @@ export function calculateFutureJobCompliance(
       const checkDate = addUtcDays(tripEntryDate, i);
       const dailyUsed = daysUsedInWindow(presenceWithTrip, checkDate, baseConfig);
       if (dailyUsed > peakDays) peakDays = dailyUsed;
-      if (dailyUsed >= limit && firstViolationDay === undefined) {
+      if (dailyUsed > limit && firstViolationDay === undefined) {
         firstViolationDay = i + 1; // 1-indexed day number within the trip
       }
     }
@@ -237,7 +237,7 @@ export function calculateFutureJobCompliance(
   const riskLevel = getRiskLevelForForecast(daysAfterTrip, warningThreshold);
 
   // Determine compliance
-  const isCompliant = daysAfterTrip < limit;
+  const isCompliant = daysAfterTrip <= limit;
 
   // Calculate compliant-from date if not compliant
   let compliantFromDate: Date | null = null;
@@ -363,12 +363,12 @@ export function calculateCompliantFromDate(
       { ...complianceConfig, referenceDate: shiftedTripEnd }
     );
 
-    // The shifted trip is compliant only if no single day during it hits the limit
+    // The shifted trip is compliant only if no single day during it exceeds the limit
     let shiftedTripCompliant = true;
     for (let d = 0; d < tripDuration; d++) {
       const dayToCheck = addUtcDays(checkDate, d);
       const dailyUsed = daysUsedInWindow(presenceWithShiftedTrip, dayToCheck, complianceConfig);
-      if (dailyUsed >= limit) {
+      if (dailyUsed > limit) {
         shiftedTripCompliant = false;
         break;
       }

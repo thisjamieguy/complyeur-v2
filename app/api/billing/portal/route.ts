@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/billing/stripe'
-import { checkServerActionRateLimit } from '@/lib/rate-limit'
+import { PERMISSIONS } from '@/lib/permissions'
+import { requireMutationPermission } from '@/lib/security/authorization'
 
 export const runtime = 'nodejs'
 
@@ -12,32 +13,19 @@ export const runtime = 'nodejs'
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-    }
-
-    const rateLimit = await checkServerActionRateLimit(user.id, 'billingPortal')
-    if (!rateLimit.allowed) {
-      return NextResponse.json({ error: rateLimit.error ?? 'Too many requests' }, { status: 429 })
-    }
-
-    // Get the user's company and stripe_customer_id
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('company_id')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.company_id) {
-      return NextResponse.json({ error: 'No company found' }, { status: 404 })
+    const guard = await requireMutationPermission(
+      supabase,
+      PERMISSIONS.BILLING_MANAGE,
+      'billingPortal'
+    )
+    if (!guard.allowed) {
+      return NextResponse.json({ error: guard.error }, { status: guard.status })
     }
 
     const { data: company } = await supabase
       .from('companies')
       .select('stripe_customer_id')
-      .eq('id', profile.company_id)
+      .eq('id', guard.companyId)
       .single()
 
     if (!company?.stripe_customer_id) {

@@ -1,5 +1,16 @@
 # ComplyEur Beta Launch Results
 
+## Status
+
+**Historical. Not authoritative.**
+
+- This document preserves the full section-level audit record.
+- Current beta release decisions are made in
+  `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`.
+- Use `docs/beta/BETA_KNOWN_ISSUES.md` and
+  `docs/operations/BETA_MANUAL_VERIFICATION_CHECKLIST.md` for active beta
+  follow-up work.
+
 > Superseded note:
 > This file is preserved for audit history and full section-level detail. The
 > current beta launch source of truth is
@@ -62,7 +73,7 @@
 | Past trips outside 180-day window excluded | ✅ | `window-calculator.ts` — `isDateInWindow()` function |
 | Trips spanning month/year boundaries calculate correctly | ✅ | `comprehensive-requirements.test.ts` — boundary tests included |
 | "Days remaining" matches manual calculation | ✅ | Oracle calculator validates production implementation |
-| Status thresholds correct (compliant → warning → violation) | ✅ | `constants.ts` — greenMax: 60, amberMax: 75, redMax: 89, 90+ = breach |
+| Status thresholds correct (compliant → warning → exhausted → violation) | ✅ | `constants.ts` — greenMax: 60, amberMax: 75, redMax: 90, 91+ = breach |
 | Employee with zero trips shows 90 days remaining | ✅ | `calculateDaysRemaining()` returns 90 for empty trip array |
 
 ### Trip Management

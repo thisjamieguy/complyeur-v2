@@ -8,11 +8,11 @@
  * Trips to these countries do NOT count toward the 90/180 day limit.
  */
 
-// Full Schengen member countries (29 total as of 2024)
+// Full Schengen member countries (29 total as of 2025)
 export const SCHENGEN_FULL_MEMBERS = [
   'AT', // Austria
   'BE', // Belgium
-  'BG', // Bulgaria (full member 2024)
+  'BG', // Bulgaria (full member from 2025-01-01)
   'HR', // Croatia (full member 2023)
   'CZ', // Czech Republic
   'DK', // Denmark
@@ -33,7 +33,7 @@ export const SCHENGEN_FULL_MEMBERS = [
   'NO', // Norway (non-EU Schengen)
   'PL', // Poland
   'PT', // Portugal
-  'RO', // Romania (full member 2024)
+  'RO', // Romania (full member from 2025-01-01)
   'SK', // Slovakia
   'SI', // Slovenia
   'ES', // Spain

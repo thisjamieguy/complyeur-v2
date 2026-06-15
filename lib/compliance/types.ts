@@ -21,7 +21,7 @@ export type CountryCode = string;
  * - green: Safe zone (days used within green threshold)
  * - amber: Caution zone (days used within amber threshold)
  * - red: Danger zone (days used within red threshold)
- * - breach: Violation (90+ days used, regardless of settings)
+ * - breach: Violation (91+ days used, regardless of settings)
  */
 export type RiskLevel = 'green' | 'amber' | 'red' | 'breach';
 
@@ -54,7 +54,7 @@ export interface StatusThresholds {
   readonly greenMax: number;
   /** Max days used for amber status (default: 75) */
   readonly amberMax: number;
-  /** Max days used for red status (default: 89). 90+ is always breach. */
+  /** Max days used for red status (default: 90). 91+ is always breach. */
   readonly redMax: number;
 }
 

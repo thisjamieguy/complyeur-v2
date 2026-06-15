@@ -182,7 +182,7 @@ describe('Requirement 2: 180-Day Rolling Window', () => {
 // REQUIREMENT 3: 90 Days = VIOLATION
 // ============================================================================
 
-describe('Requirement 3: 90 Days = Violation (Max is 89)', () => {
+describe('Requirement 3: 90 Days = Exhausted, 91+ = Violation', () => {
   it('89 days used = COMPLIANT', () => {
     const dates = generateConsecutiveDays('2025-10-12', 89);
     const presence = new Set(dates);
@@ -193,14 +193,14 @@ describe('Requirement 3: 90 Days = Violation (Max is 89)', () => {
     })).toBe(true);
   });
 
-  it('90 days used = VIOLATION', () => {
+  it('90 days used = EXHAUSTED BUT COMPLIANT', () => {
     const dates = generateConsecutiveDays('2025-10-12', 90);
     const presence = new Set(dates);
     const refDate = new Date('2026-01-11T00:00:00.000Z');
 
     expect(isCompliant(presence, refDate, {
       complianceStartDate: new Date('2025-10-12T00:00:00.000Z'),
-    })).toBe(false);
+    })).toBe(true);
   });
 
   it('91 days used = VIOLATION', () => {
@@ -213,7 +213,7 @@ describe('Requirement 3: 90 Days = Violation (Max is 89)', () => {
     })).toBe(false);
   });
 
-  it('calculateCompliance returns isCompliant=false at 90 days', () => {
+  it('calculateCompliance returns isCompliant=true at 90 days with no days remaining', () => {
     // Create a 90-day trip
     const trips = [createTrip('2025-10-12', '2026-01-09')]; // 90 days
     const config = createConfig({
@@ -224,7 +224,7 @@ describe('Requirement 3: 90 Days = Violation (Max is 89)', () => {
 
     expect(result.daysUsed).toBe(90);
     expect(result.daysRemaining).toBe(0);
-    expect(result.isCompliant).toBe(false);
+    expect(result.isCompliant).toBe(true);
     expect(result.riskLevel).toBe('red');
   });
 });
@@ -250,7 +250,7 @@ describe('Requirement 4: Warning Thresholds (75+ days used)', () => {
     expect(getRiskLevel(1)).toBe('amber');
   });
 
-  it('90 days used (0 remaining) = RED/VIOLATION', () => {
+  it('90 days used (0 remaining) = RED/EXHAUSTED', () => {
     expect(getRiskLevel(0)).toBe('red');
   });
 

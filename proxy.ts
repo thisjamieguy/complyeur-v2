@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { buildContentSecurityPolicy } from '@/lib/security/csp'
+import { validateFirstPartyMutationRequest } from '@/lib/security/request-origin'
 import {
   formatMaxRequestBodyError,
   getMaxRequestBodyBytesForPath,
@@ -82,6 +83,7 @@ export async function proxy(request: NextRequest) {
   const authRoutes = ['/login', '/signup', '/forgot-password', '/reset-password', '/check-email']
   const publicApiRoutes = [
     '/api/health',
+    '/api/internal/health',
     '/api/billing/webhook',
     '/api/gdpr/cron/retention',
     // Vercel Cron has no Supabase session; route handlers enforce withCronAuth(CRON_SECRET).
@@ -110,6 +112,7 @@ export async function proxy(request: NextRequest) {
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   )
   const isProtectedApiRoute = isApiRoute && !isPublicApiRoute
+  const isMutatingRequest = !['GET', 'HEAD', 'OPTIONS'].includes(request.method)
   const isLandingVariantRoute = pathname.startsWith('/landing')
   const isBlogRoute = pathname === '/blog' || pathname.startsWith('/blog/')
   const isPublicMarketingRoute =
@@ -129,6 +132,21 @@ export async function proxy(request: NextRequest) {
         { status: 503 }
       )
     )
+  }
+
+  // Reject cross-site state-changing browser requests before session hydration.
+  // Public webhook/cron endpoints are excluded because their route handlers use
+  // Stripe signatures or CRON_SECRET instead of browser-origin trust.
+  if (isMutatingRequest && !isPublicApiRoute) {
+    const originValidation = validateFirstPartyMutationRequest(request)
+    if (!originValidation.ok) {
+      return withSecurityHeaders(
+        NextResponse.json(
+          { error: 'Invalid request origin.' },
+          { status: 403 }
+        )
+      )
+    }
   }
 
   // 1b. Body size limit - endpoint-aware request caps

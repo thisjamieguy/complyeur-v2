@@ -56,7 +56,7 @@ firstViolationDay = null
 for D in [entry → exit] (1-indexed as day 1, 2, ...):
     daily = daysUsedInWindow(presenceWithTrip, D)
     peakDaysUsed = max(peakDaysUsed, daily)
-    if daily >= 90 and firstViolationDay is null:
+    if daily > 90 and firstViolationDay is null:
         firstViolationDay = D (1-indexed day number of the trip)
 
 daysAfterTrip = peakDaysUsed        ← field name kept, semantics updated

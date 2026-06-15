@@ -47,7 +47,7 @@ describe('/api/health route', () => {
     expect(response.headers.get('cache-control')).toBe('no-store')
   })
 
-  it('falls back to the admin probe when ping() is unavailable', async () => {
+  it('does not fall back to the admin probe when public ping() is unavailable', async () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key'
     const rpcMock = vi.fn().mockResolvedValue({
       error: {
@@ -56,23 +56,16 @@ describe('/api/health route', () => {
       },
     })
 
-    const limitMock = vi.fn().mockResolvedValue({ error: null })
-    const selectMock = vi.fn().mockReturnValue({ limit: limitMock })
-    const fromMock = vi.fn().mockReturnValue({ select: selectMock })
-
-    createAdminClientMock.mockReturnValue({
+    createClientMock.mockResolvedValue({
       rpc: rpcMock,
-      from: fromMock,
     })
 
     const response = await GET()
     const body = await response.json()
 
-    expect(response.status).toBe(200)
-    expect(body).toEqual({ status: 'ok' })
+    expect(response.status).toBe(503)
+    expect(body).toEqual({ status: 'error' })
     expect(rpcMock).toHaveBeenCalledWith('ping')
-    expect(fromMock).toHaveBeenCalledWith('profiles')
-    expect(selectMock).toHaveBeenCalledWith('id', { head: true })
-    expect(limitMock).toHaveBeenCalledWith(1)
+    expect(createAdminClientMock).not.toHaveBeenCalled()
   })
 })

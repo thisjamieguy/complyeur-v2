@@ -1,6 +1,6 @@
 # ComplyEur Private Beta Tester Brief
 
-Last updated: 2026-06-04
+Last updated: 2026-06-15
 
 Use this brief when inviting or onboarding private beta testers.
 
@@ -31,9 +31,11 @@ Send that document alongside this brief when inviting testers.
 
 ## What Is Still Being Verified
 
-- Email deliverability across Gmail, Outlook, and corporate providers
+- Multi-provider email deliverability across Gmail, Outlook, and corporate providers
+- Password reset delivery and reset-link behavior
 - Real-device iPhone Safari and Android Chrome coverage
-- Production dashboard and alert ownership checks
+- Sentry alert routing and public/internal health evidence
+- Non-founder onboarding evidence from a tester who has not seen the app
 
 Repo-side verification helpers are tracked in
 `docs/operations/BETA_VERIFICATION_AUTOMATION.md`.

@@ -1,3 +1,8 @@
+import {
+  ALL_SCHENGEN_COUNTRIES,
+  NON_SCHENGEN_EU,
+} from '@/lib/constants/schengen-countries'
+
 export const MAX_GANTT_COLUMNS = 500;
 
 /**
@@ -42,7 +47,7 @@ export const NON_COUNTING_VALUES = new Set([
  * Known country codes for validation.
  */
 export const KNOWN_COUNTRY_CODES = new Set([
-  'AT', 'BE', 'CH', 'CZ', 'DE', 'DK', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'HU',
-  'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MT', 'NL', 'NO', 'PL', 'PT', 'SE', 'SI', 'SK',
-  'IE', 'CY', 'BG', 'RO', 'GB', 'UK', 'US', 'CA', 'AU', 'MX', 'JP', 'CN', 'IN'
+  ...ALL_SCHENGEN_COUNTRIES,
+  ...NON_SCHENGEN_EU,
+  'GB', 'UK', 'US', 'CA', 'AU', 'MX', 'JP', 'CN', 'IN'
 ]);
