@@ -45,6 +45,7 @@ next-env.d.ts
 # Local Claude settings
 .claude/settings.local.json
 .claude/worktrees/
+.codex/
 
 # IDE/Editor
 .vscode/
@@ -85,6 +86,7 @@ ai-export*/
 
 # Editor / IDE
 .cursor/
+*.swp
 
 # Superpowers brainstorming sessions
 .superpowers/
