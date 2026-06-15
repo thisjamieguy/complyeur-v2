@@ -76,6 +76,22 @@ describe('parseGanttFormat', () => {
       expect(result.dateColumns.length).toBeGreaterThanOrEqual(3)
     })
 
+    test('allows 500 date columns plus the employee column', () => {
+      const dateHeaders = Array.from({ length: 500 }, (_, index) => {
+        const date = new Date(Date.UTC(2025, 0, index + 1))
+        return date.toISOString().slice(0, 10)
+      })
+      const data: unknown[][] = [
+        ['Employee', ...dateHeaders],
+        ['John Smith', ...dateHeaders.map(() => 'FR')],
+      ]
+
+      const result = parseGanttFormat(data, { referenceYear: 2025 })
+
+      expect(result.success).toBe(true)
+      expect(result.dateColumns).toHaveLength(500)
+    })
+
     test('sorts date columns chronologically', () => {
       // Put dates out of order in header
       const data: unknown[][] = [

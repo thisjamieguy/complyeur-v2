@@ -14,6 +14,7 @@ import {
   parseGanttFormat,
   generateTripsFromGantt,
 } from './gantt-parser';
+import { MAX_GANTT_COLUMNS } from './gantt/constants';
 
 const MAX_XLSX_WORKSHEETS = 5;
 const MAX_XLSX_COLUMNS = 200;
@@ -100,7 +101,8 @@ function isCSVFile(file: File): boolean {
 function assertWorkbookWithinLimits(
   workbook: ExcelJS.Workbook,
   worksheet: ExcelJS.Worksheet,
-  maxRows: number
+  maxRows: number,
+  maxColumns: number = MAX_XLSX_COLUMNS
 ): void {
   if (workbook.worksheets.length > MAX_XLSX_WORKSHEETS) {
     throw new Error(`Workbook has too many worksheets. Limit: ${MAX_XLSX_WORKSHEETS}.`);
@@ -117,8 +119,8 @@ function assertWorkbookWithinLimits(
     throw new Error(`Worksheet has too many rows. Limit: ${maxRows - 1} data rows.`);
   }
 
-  if (columnCount > MAX_XLSX_COLUMNS) {
-    throw new Error(`Worksheet has too many columns. Limit: ${MAX_XLSX_COLUMNS}.`);
+  if (columnCount > maxColumns) {
+    throw new Error(`Worksheet has too many columns. Limit: ${maxColumns}.`);
   }
 
   if (rowCount * columnCount > MAX_XLSX_CELLS) {
@@ -652,7 +654,7 @@ async function parseGanttFromData(buffer: ArrayBuffer, isCsv = false): Promise<P
       if (!worksheet) {
         return { success: false, error: 'File contains no worksheets' };
       }
-      assertWorkbookWithinLimits(workbook, worksheet, MAX_GANTT_TRIPS + 1);
+      assertWorkbookWithinLimits(workbook, worksheet, MAX_GANTT_TRIPS + 1, MAX_GANTT_COLUMNS + 1);
 
       data = [];
       worksheet.eachRow((row) => {

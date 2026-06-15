@@ -133,6 +133,29 @@ describe('calculateCompliantFromDate', () => {
     expect(dateKey(result)).toBe('2026-07-01');
   });
 
+  it('returns the earliest date when a shifted trip peaks at exactly 90 days', () => {
+    const futureTrip = createTrip({
+      id: 'future-cfd-90',
+      country: 'FR',
+      entryDate: '2026-07-01',
+      exitDate: '2026-07-08',
+    });
+
+    const historicalTrip = createTrip({
+      id: 'hist-82',
+      country: 'FR',
+      entryDate: '2026-04-10',
+      exitDate: '2026-06-30',
+    });
+
+    const result = calculateCompliantFromDate(
+      [futureTrip, historicalTrip],
+      futureTrip
+    );
+
+    expect(dateKey(result)).toBe('2026-07-01');
+  });
+
 });
 
 describe('day-by-day rolling window — regression', () => {

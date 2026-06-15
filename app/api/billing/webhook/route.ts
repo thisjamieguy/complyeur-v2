@@ -274,13 +274,13 @@ async function handleCheckoutCompleted(
   const subscriptionId =
     typeof session.subscription === 'string' ? session.subscription : null
 
-  if (!userId || !planSlug || !metadataCompanyId || !metadataUserId || !customerId || !subscriptionId) {
+  if (!userId || !planSlug || !customerId || !subscriptionId) {
     throw new Error(
-      'checkout.session.completed missing required user, company, customer, subscription, or plan metadata'
+      'checkout.session.completed missing required user, customer, subscription, or plan metadata'
     )
   }
 
-  if (metadataUserId !== userId) {
+  if (metadataUserId && metadataUserId !== userId) {
     throw new Error('checkout.session.completed metadata.user_id does not match client_reference_id')
   }
 
@@ -296,7 +296,7 @@ async function handleCheckoutCompleted(
 
   const companyId = profile.company_id
 
-  if (metadataCompanyId !== companyId) {
+  if (metadataCompanyId && metadataCompanyId !== companyId) {
     throw new Error('checkout.session.completed metadata.company_id does not match authenticated profile company')
   }
 

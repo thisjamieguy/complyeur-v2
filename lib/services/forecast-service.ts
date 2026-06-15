@@ -89,7 +89,7 @@ export function getRiskLevelForForecast(
   daysUsed: number,
   warningThreshold: number = 80
 ): ForecastRiskLevel {
-  if (daysUsed > SCHENGEN_DAY_LIMIT) {
+  if (daysUsed >= SCHENGEN_DAY_LIMIT) {
     return 'red';
   }
   if (daysUsed >= warningThreshold) {
@@ -363,12 +363,12 @@ export function calculateCompliantFromDate(
       { ...complianceConfig, referenceDate: shiftedTripEnd }
     );
 
-    // The shifted trip is compliant only if no single day during it hits the limit
+    // The shifted trip is compliant only if no single day during it exceeds the limit
     let shiftedTripCompliant = true;
     for (let d = 0; d < tripDuration; d++) {
       const dayToCheck = addUtcDays(checkDate, d);
       const dailyUsed = daysUsedInWindow(presenceWithShiftedTrip, dayToCheck, complianceConfig);
-      if (dailyUsed >= limit) {
+      if (dailyUsed > limit) {
         shiftedTripCompliant = false;
         break;
       }
