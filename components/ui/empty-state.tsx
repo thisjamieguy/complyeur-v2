@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, ComponentProps } from 'react'
+import { ReactNode, ComponentProps, useId } from 'react'
 import { LucideIcon, FileQuestion } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -60,6 +60,8 @@ export function EmptyState({
   className,
 }: EmptyStateProps) {
   const ActionIcon = action?.icon
+  const titleId = useId()
+  const descriptionId = useId()
 
   return (
     <div
@@ -67,30 +69,33 @@ export function EmptyState({
         'flex flex-col items-center justify-center py-12 px-4 text-center',
         className
       )}
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
     >
       <div className="p-4 bg-muted rounded-full">
-        <Icon className="h-8 w-8 text-muted-foreground" />
+        <Icon className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
       </div>
 
-      <h3 className="mt-4 text-lg font-semibold text-foreground">
+      <h3 id={titleId} className="mt-4 text-lg font-semibold text-foreground">
         {title}
       </h3>
 
       {description && (
-        <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+        <p id={descriptionId} className="mt-2 text-sm text-muted-foreground max-w-sm">
           {description}
         </p>
       )}
 
       {(action || secondaryAction || children) && (
-        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+        <div className="mt-6 flex w-full max-w-sm flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
           {action && (
             <Button
               onClick={action.onClick}
               variant={action.variant || 'default'}
               size="sm"
+              className="w-full sm:w-auto"
             >
-              {ActionIcon && <ActionIcon className="h-4 w-4 mr-2" />}
+              {ActionIcon && <ActionIcon className="h-4 w-4 mr-2" aria-hidden="true" />}
               {action.label}
             </Button>
           )}
@@ -100,6 +105,7 @@ export function EmptyState({
               onClick={secondaryAction.onClick}
               variant="outline"
               size="sm"
+              className="w-full sm:w-auto"
             >
               {secondaryAction.label}
             </Button>
@@ -133,7 +139,7 @@ export function CompactEmptyState({
         className
       )}
     >
-      <Icon className="h-6 w-6 text-muted-foreground mb-2" />
+      <Icon className="h-6 w-6 text-muted-foreground mb-2" aria-hidden="true" />
       <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   )

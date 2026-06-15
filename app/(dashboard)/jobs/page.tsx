@@ -55,7 +55,7 @@ export default async function JobsPage() {
 
       {jobs.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <BriefcaseBusiness className="mx-auto h-10 w-10 text-slate-400" />
+          <BriefcaseBusiness className="mx-auto h-10 w-10 text-slate-400" aria-hidden="true" />
           <h2 className="mt-4 text-lg font-semibold text-slate-900">
             No jobs yet
           </h2>
@@ -68,7 +68,7 @@ export default async function JobsPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <Table>
+          <Table className="min-w-[760px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Job Reference</TableHead>

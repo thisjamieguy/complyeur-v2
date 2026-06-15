@@ -1,5 +1,6 @@
 'use client'
 
+import { useId } from 'react'
 import { AlertCircle, RefreshCw, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -52,6 +53,8 @@ export function DataError({
   const desc =
     description ||
     'There was a problem loading this content. Please try again.'
+  const titleId = useId()
+  const descriptionId = useId()
 
   return (
     <div
@@ -60,35 +63,38 @@ export function DataError({
         className
       )}
       role="alert"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
     >
       <div className="p-4 bg-destructive/10 rounded-full">
-        <AlertCircle className="h-8 w-8 text-destructive" />
+        <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
       </div>
 
-      <h3 className="mt-4 text-lg font-semibold text-foreground">
+      <h3 id={titleId} className="mt-4 text-lg font-semibold text-foreground">
         {title}
       </h3>
 
-      <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+      <p id={descriptionId} className="mt-2 text-sm text-muted-foreground max-w-sm">
         {desc}
       </p>
 
-      <div className="mt-6 flex flex-col sm:flex-row gap-3">
+      <div className="mt-6 flex w-full max-w-sm flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:items-center">
         {onRetry && (
           <Button
             onClick={onRetry}
             disabled={isRetrying}
             variant="default"
             size="sm"
+            className="w-full sm:w-auto"
           >
             {isRetrying ? (
               <>
-                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
                 Retrying...
               </>
             ) : (
               <>
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
                 Try Again
               </>
             )}
@@ -100,9 +106,10 @@ export function DataError({
             variant="outline"
             size="sm"
             asChild
+            className="w-full sm:w-auto"
           >
             <a href={`mailto:${supportEmail}`}>
-              <Mail className="h-4 w-4 mr-2" />
+              <Mail className="h-4 w-4 mr-2" aria-hidden="true" />
               Contact Support
             </a>
           </Button>
@@ -134,7 +141,7 @@ export function InlineDataError({
       )}
       role="alert"
     >
-      <AlertCircle className="h-4 w-4 shrink-0" />
+      <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
       <span className="flex-1">{message}</span>
       {onRetry && (
         <Button
@@ -143,7 +150,7 @@ export function InlineDataError({
           size="sm"
           className="h-auto p-1 text-destructive hover:text-destructive"
         >
-          <RefreshCw className="h-3 w-3" />
+          <RefreshCw className="h-3 w-3" aria-hidden="true" />
           <span className="sr-only">Retry</span>
         </Button>
       )}

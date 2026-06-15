@@ -45,16 +45,17 @@ function LoadingSkeleton() {
 
 export default async function ImportHistoryPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const page = Math.max(1, parseInt(params.page ?? '1', 10));
+  const parsedPage = Number.parseInt(params.page ?? '1', 10);
+  const page = Number.isFinite(parsedPage) ? Math.max(1, parsedPage) : 1;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-slate-100 rounded-lg">
-              <History className="h-5 w-5 text-slate-600" />
+              <History className="h-5 w-5 text-slate-600" aria-hidden="true" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900">Import History</h1>
           </div>
@@ -62,9 +63,9 @@ export default async function ImportHistoryPage({ searchParams }: PageProps) {
             View your past import sessions and their results.
           </p>
         </div>
-        <Button variant="outline" asChild>
+        <Button variant="outline" className="w-full sm:w-auto" asChild>
           <Link href="/settings">
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true" />
             Back to Settings
           </Link>
         </Button>

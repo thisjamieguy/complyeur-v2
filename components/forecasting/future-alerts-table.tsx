@@ -27,7 +27,7 @@ interface FutureAlertsTableProps {
 export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <Table>
+      <Table className="min-w-[920px]">
         <TableHeader>
           <TableRow className="bg-slate-50/90">
             <TableHead className="font-semibold text-slate-700">
@@ -77,7 +77,7 @@ export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
               </TableCell>
               <TableCell>
                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1">
-                  <span className="text-lg">{forecast.countryFlag}</span>
+                  <span className="text-lg" aria-hidden="true">{forecast.countryFlag}</span>
                   <span className="text-slate-700">{forecast.countryName}</span>
                   {!forecast.isSchengen && (
                     <span className="text-xs text-slate-400">(non-Schengen)</span>

@@ -43,7 +43,7 @@ export function ImportHistoryList({
   if (sessions.length === 0) {
     return (
       <div className="text-center py-16 bg-slate-50 rounded-xl">
-        <FileSpreadsheet className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+        <FileSpreadsheet className="h-12 w-12 text-slate-300 mx-auto mb-4" aria-hidden="true" />
         <h3 className="text-lg font-medium text-slate-900 mb-2">No import history</h3>
         <p className="text-slate-600 mb-6">
           You haven&apos;t completed any imports yet.
@@ -71,11 +71,11 @@ export function ImportHistoryList({
           return (
             <div
               key={session.id}
-              className="flex items-center gap-4 p-4 bg-white border border-slate-200 rounded-xl hover:border-slate-300 transition-colors"
+              className="flex flex-col gap-4 p-4 bg-white border border-slate-200 rounded-xl transition-colors hover:border-slate-300 sm:flex-row sm:items-center"
             >
               {/* Format Icon */}
               <div className="p-2 bg-slate-100 rounded-lg flex-shrink-0">
-                <FormatIcon className="h-5 w-5 text-slate-600" />
+                <FormatIcon className="h-5 w-5 text-slate-600" aria-hidden="true" />
               </div>
 
               {/* File Info */}
@@ -94,7 +94,7 @@ export function ImportHistoryList({
               </div>
 
               {/* Import Stats */}
-              <div className="text-right flex-shrink-0">
+              <div className="w-full flex-shrink-0 sm:w-auto sm:text-right">
                 <p className="font-medium text-slate-900">
                   {importedCount} imported
                 </p>
@@ -107,12 +107,12 @@ export function ImportHistoryList({
               <div className="flex-shrink-0">
                 {isSuccess ? (
                   <div className="flex items-center gap-1 text-green-600">
-                    <CheckCircle2 className="h-5 w-5" />
+                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
                     <span className="text-sm font-medium">Success</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-1 text-red-600">
-                    <XCircle className="h-5 w-5" />
+                    <XCircle className="h-5 w-5" aria-hidden="true" />
                     <span className="text-sm font-medium">Failed</span>
                   </div>
                 )}
@@ -124,12 +124,12 @@ export function ImportHistoryList({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t">
+        <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-600">
             Showing {(currentPage - 1) * 20 + 1}–
             {Math.min(currentPage * 20, total)} of {total} imports
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -138,12 +138,12 @@ export function ImportHistoryList({
             >
               {currentPage > 1 ? (
                 <Link href={`/settings/import-history?page=${currentPage - 1}`}>
-                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  <ChevronLeft className="h-4 w-4 mr-1" aria-hidden="true" />
                   Previous
                 </Link>
               ) : (
                 <>
-                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  <ChevronLeft className="h-4 w-4 mr-1" aria-hidden="true" />
                   Previous
                 </>
               )}
@@ -160,12 +160,12 @@ export function ImportHistoryList({
               {currentPage < totalPages ? (
                 <Link href={`/settings/import-history?page=${currentPage + 1}`}>
                   Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
+                  <ChevronRight className="h-4 w-4 ml-1" aria-hidden="true" />
                 </Link>
               ) : (
                 <>
                   Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
+                  <ChevronRight className="h-4 w-4 ml-1" aria-hidden="true" />
                 </>
               )}
             </Button>

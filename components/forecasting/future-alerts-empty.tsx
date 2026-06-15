@@ -13,7 +13,7 @@ export function FutureAlertsEmpty() {
     <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
       <div className="mx-auto max-w-md">
         <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
-          <CalendarClock className="h-6 w-6 text-slate-400" />
+          <CalendarClock className="h-6 w-6 text-slate-400" aria-hidden="true" />
         </div>
         <h3 className="text-lg font-semibold text-slate-900">
           No future trips scheduled
@@ -23,9 +23,9 @@ export function FutureAlertsEmpty() {
           compliance forecasts to help you plan ahead.
         </p>
         <div className="mt-6">
-          <Link href="/dashboard">
-            <Button variant="outline">Go to Dashboard</Button>
-          </Link>
+          <Button variant="outline" asChild>
+            <Link href="/dashboard">Go to Dashboard</Link>
+          </Button>
         </div>
       </div>
     </div>
