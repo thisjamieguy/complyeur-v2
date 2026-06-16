@@ -78,6 +78,12 @@ Add these to your `.env.local` file (local development) and Vercel environment v
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
+# Production OAuth branding:
+# Use the activated Supabase custom domain in production, for example:
+# NEXT_PUBLIC_SUPABASE_URL=https://auth.complyeur.com
+# If this remains https://<project-ref>.supabase.co, Google's sign-in
+# screen will show the Supabase project host instead of a ComplyEur domain.
+
 # App URL (CRITICAL for OAuth redirects)
 NEXT_PUBLIC_APP_URL=http://localhost:3000  # Local
 # NEXT_PUBLIC_APP_URL=https://complyeur.com  # Production
@@ -103,14 +109,41 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=your-google-client-secret
 - `https://complyeur-*.vercel.app/auth/callback` (preview deployments)
 - `https://complyeur.com/auth/callback` (production)
 
-#### 2. Authentication > Providers > Google
+#### 2. Supabase Custom Domain for OAuth Branding
+
+Google's sign-in screen shows the OAuth callback host. With the default
+Supabase project URL, returning users see:
+
+```text
+You're signing back in to <project-ref>.supabase.co
+```
+
+Before production launch, configure a Supabase custom domain such as
+`auth.complyeur.com` or `api.complyeur.com` and activate it for the Supabase
+project. After activation:
+
+1. Set production `NEXT_PUBLIC_SUPABASE_URL` to the custom Supabase domain,
+   for example `https://auth.complyeur.com`.
+2. Keep `NEXT_PUBLIC_APP_URL=https://complyeur.com`.
+3. Add the branded Supabase Auth callback URL to the Google OAuth client:
+   `https://auth.complyeur.com/auth/v1/callback`.
+4. Keep the existing default callback URL during migration:
+   `https://your-project.supabase.co/auth/v1/callback`.
+5. Re-test "Continue with Google" in production. The Google screen should no
+   longer show the random Supabase project host.
+
+Supabase custom domains currently require a subdomain, so use
+`auth.complyeur.com`/`api.complyeur.com` for Supabase Auth while the app itself
+continues to run at `https://complyeur.com`.
+
+#### 3. Authentication > Providers > Google
 
 1. Enable Google provider
 2. Add Client ID from Google Cloud Console
 3. Add Client Secret from Google Cloud Console
 4. Leave "Authorized Client IDs" empty (web only)
 
-#### 3. Authentication > Hooks (Optional but Recommended)
+#### 4. Authentication > Hooks (Optional but Recommended)
 
 1. Deploy the auth hook Edge Function:
    ```bash
@@ -132,8 +165,8 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=your-google-client-secret
 | Field | Value |
 |-------|-------|
 | Name | ComplyEur Production |
-| Authorized JavaScript origins | `https://your-project.supabase.co` |
-| Authorized redirect URIs | `https://your-project.supabase.co/auth/v1/callback` |
+| Authorized JavaScript origins | `https://complyeur.com` |
+| Authorized redirect URIs | `https://your-project.supabase.co/auth/v1/callback`, plus `https://auth.complyeur.com/auth/v1/callback` after the Supabase custom domain is prepared |
 
 7. Copy Client ID and Client Secret to Supabase dashboard
 
@@ -142,8 +175,11 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=your-google-client-secret
 Before deploying to production:
 
 - [ ] `NEXT_PUBLIC_APP_URL` set to production URL in Vercel
+- [ ] `NEXT_PUBLIC_SUPABASE_URL` set to the branded Supabase custom domain in production, for example `https://auth.complyeur.com`
 - [ ] Production URL added to Supabase Redirect URLs
+- [ ] Supabase custom domain activated before switching production env vars
 - [ ] Google Cloud Console redirect URI includes Supabase callback URL
+- [ ] Google Cloud Console redirect URI includes branded Supabase callback URL
 - [ ] Auth hook deployed and configured (optional)
 - [ ] Test OAuth flow in preview deployment first
 - [ ] Verify RLS policies are enabled on all tables

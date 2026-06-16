@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useTransition } from 'react'
-import { Shield, Smartphone, Key, ArrowRight, AlertTriangle } from 'lucide-react'
+import { Shield, Smartphone, Key, ArrowRight, AlertTriangle, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -52,6 +52,7 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
   const [backupCodes, setBackupCodes] = useState<string[] | null>(null)
   const [backupCodesDownloaded, setBackupCodesDownloaded] = useState(false)
   const [backupCodesAcknowledged, setBackupCodesAcknowledged] = useState(false)
+  const [showSetupKey, setShowSetupKey] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const loadStatus = () => {
@@ -72,6 +73,7 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
         toast.error(result.error)
         return
       }
+      setShowSetupKey(false)
       setEnrollData(result)
       toast.info('Scan the QR code and enter your 6-digit code to verify.')
     })
@@ -103,6 +105,7 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
       setBackupCodes(null)
       setBackupCodesDownloaded(false)
       setBackupCodesAcknowledged(false)
+      setShowSetupKey(false)
       loadStatus()
     })
   }
@@ -161,6 +164,7 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
       setBackupCodes(null)
       setBackupCodesDownloaded(false)
       setBackupCodesAcknowledged(false)
+      setShowSetupKey(false)
       setTotpCode('')
       setBackupCode('')
       setResetTotpCode('')
@@ -200,6 +204,16 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
     isVerified &&
     !requiresBackupCodesBeforeContinue &&
     !requiresBackupCodeConfirmationBeforeContinue
+  const continueBlockedMessage =
+    required && !canContinueToDashboard
+      ? !isVerified
+        ? needsEnrollment
+          ? 'Scan the QR code and enter your 6-digit authenticator code to continue.'
+          : 'Enter a current authenticator code or backup code to continue.'
+        : requiresBackupCodesBeforeContinue
+          ? 'Generate backup codes to complete MFA setup.'
+          : 'Download your new backup codes and confirm they are saved before continuing.'
+      : null
 
   return (
     <div className="space-y-4">
@@ -242,7 +256,7 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
             </Badge>
           )}
         </div>
-        {!status.hasVerifiedFactor && (
+        {!status.hasVerifiedFactor && !enrollData && (
           <Button onClick={handleEnroll} disabled={isPending}>
             Enroll MFA
           </Button>
@@ -269,7 +283,44 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
                   className="h-32 w-32"
                 />
               </div>
-              <div className="text-xs text-slate-500">Secret: {enrollData.secret}</div>
+              <div className="space-y-2 rounded-md border border-slate-200 bg-white p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-medium text-slate-700">Manual setup key</div>
+                    <div className="text-xs text-slate-500">
+                      Use only if you cannot scan the QR code.
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSetupKey((current) => !current)}
+                    aria-expanded={showSetupKey}
+                  >
+                    {showSetupKey ? (
+                      <>
+                        <EyeOff className="mr-2 h-4 w-4" />
+                        Hide key
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="mr-2 h-4 w-4" />
+                        Show key
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {showSetupKey ? (
+                  <div className="break-all rounded border bg-slate-50 px-2 py-1 font-mono text-xs text-slate-700">
+                    {enrollData.secret}
+                  </div>
+                ) : (
+                  <div className="rounded border bg-slate-50 px-2 py-1 font-mono text-xs text-slate-400">
+                    Hidden until needed
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -453,12 +504,8 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
             Continue to Dashboard
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
-          {!canContinueToDashboard && (
-            <p className="mt-2 text-xs text-amber-700">
-              {requiresBackupCodesBeforeContinue
-                ? 'Generate backup codes to complete MFA setup.'
-                : 'Download your new backup codes and confirm they are saved before continuing.'}
-            </p>
+          {continueBlockedMessage && (
+            <p className="mt-2 text-xs text-amber-700">{continueBlockedMessage}</p>
           )}
         </div>
       )}
