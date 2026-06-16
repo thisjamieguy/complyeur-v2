@@ -1,6 +1,6 @@
 # Beta Known Issues
 
-Last updated: 2026-06-15
+Last updated: 2026-06-16
 
 ## Status
 
@@ -9,7 +9,8 @@ in `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`; evidence status remains in
 `docs/operations/evidence/EVIDENCE_STATUS.md`.
 
 ## Product and Billing
-- Stripe price IDs must be synced and audited against the Stripe dashboard before live billing.
+- Stripe price IDs and the production webhook endpoint are verified.
+- Stripe lifecycle/replay evidence is still pending before paid/public beta.
 - Checkout and subscription flows rely on Stripe webhooks; delays may briefly show a pending state.
 
 ## Email
@@ -22,8 +23,14 @@ in `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`; evidence status remains in
 
 ## Analytics and Monitoring
 - Product analytics coverage is in progress. Early metrics may be incomplete for the first beta cohort.
-- Sentry ownership is assigned, but live alert rules, notification routing,
-  recipients, and test delivery evidence are still pending.
+- Zero-signup and Stripe webhook-failure monitoring are implemented for public
+  beta, but first deployed-run evidence still needs to be captured.
+- Sentry ownership is assigned and the 2026-06-16 production issues API check
+  succeeded with no unresolved production issues returned for the last 24 hours,
+  but live alert rules, notification routing, recipients, and test delivery
+  evidence are still pending.
+- Vercel production deployment, custom-domain TLS, public health, and protected
+  internal health are verified.
 
 ## Devices and Browsers
 - Real-device testing on iOS Safari and Android Chrome is pending.
@@ -37,10 +44,18 @@ in `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`; evidence status remains in
 - The processor/subprocessor register needs a final legal review, including DPA/SCC status for analytics, consent, and anti-abuse providers.
 
 ## Manual / External Checks Still Open
-- Verify Vercel production environment variables, custom domain, SSL, and production `/api/health`.
-- Verify Supabase production backups, PITR, current plan, and a documented restore test.
+- Supabase backup/PITR coverage is not ready: CLI evidence reports
+  `pitr_enabled: false` and no listed physical backups. This is risk-accepted
+  only for the initial private tester group; backup/PITR coverage and restore
+  evidence are still required before broader rollout, paid beta, or public beta.
+- Supabase leaked password protection remains disabled in hosted Auth settings.
+  The dashboard rejected the toggle because HaveIBeenPwned leaked-password
+  protection requires a Pro-or-higher Supabase plan. Repo-side password
+  requirements now require at least 12 characters and a symbol as a mitigation,
+  but the hosted advisor warning remains open.
 - Attach fresh staging or production-like RLS attack-test evidence for cross-tenant isolation.
-- Confirm Sentry alerts, uptime monitoring, webhook-failure alerts, and public/internal health evidence.
+- Confirm Sentry alerts, uptime monitoring, and webhook-failure alert first-run
+  evidence.
 - Run real email deliverability checks across Gmail, Outlook, and at least one corporate provider.
 - Complete password reset evidence: request, delivery, successful reset,
   expired/reused token behavior, and post-reset session behavior.

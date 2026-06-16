@@ -87,6 +87,7 @@ export async function proxy(request: NextRequest) {
     '/api/billing/webhook',
     '/api/gdpr/cron/retention',
     // Vercel Cron has no Supabase session; route handlers enforce withCronAuth(CRON_SECRET).
+    '/api/cron/beta-monitoring',
     '/api/cron/billing',
     '/api/cron/onboarding',
   ]

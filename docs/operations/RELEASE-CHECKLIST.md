@@ -84,7 +84,11 @@ patched transitive overrides in `package.json`/`pnpm-lock.yaml`.
 
 - CI must run green on GitHub's Node 20 environment for the branch/PR.
 - Preview/Test deployment must be smoke-tested against the active Test/Preview Supabase project. The older Phase 5 staging project below is documented as inactive in `docs/architecture/ENVIRONMENTS.md`; use the canonical two-environment flow unless staging is explicitly reactivated.
-- Production dashboard checks still require external access: Vercel production env vars, custom domain/SSL, Supabase backups/PITR, Sentry alerts, uptime monitoring, and production `/api/health`.
+- Production dashboard checks still require external access for Supabase
+  backups/PITR, Sentry alerts, uptime monitoring, and remaining provider
+  dashboards. Vercel production env vars, custom domain/SSL, public health, and
+  protected internal health are evidenced in
+  `docs/operations/evidence/platform-dashboard/2026-06-16-vercel-supabase-sentry-dashboard-evidence.md`.
 - Critical live user flows still need a browser pass on the deployed URL: signup, email confirmation, login, password reset, dashboard, add employee, add trip, exports, settings, logout, and the documented account-deletion request path.
 
 ## Infrastructure Remediation Pass — 2026-06-15
@@ -119,9 +123,13 @@ patched transitive overrides in `package.json`/`pnpm-lock.yaml`.
 - [ ] `pnpm test:e2e:multi-user`
 - [ ] `pnpm test:e2e:import`
 - [ ] GitHub branch protection evidence shows CI, CodeQL, dependency/security audit, dependency review where applicable, approvals, stale approval dismissal, code-owner review, and strict checks are required.
-- [ ] Vercel deployment ID, approver, rollback note, public health result, and internal health result are filed in release evidence.
+- [x] Vercel deployment ID, custom-domain/TLS result, public health result, and internal health result are filed in release evidence.
+- [ ] Vercel rollback approver/decision note is filed with release sign-off.
 - [ ] Sentry alert routing and test-alert delivery evidence is filed.
-- [ ] Supabase backup/PITR restore drill evidence is filed.
+- [x] Supabase backup/PITR absence is explicitly risk-accepted only for the
+  initial private tester group; current CLI evidence reports
+  `pitr_enabled: false` and no listed physical backups.
+- [ ] Supabase backup/PITR restore drill evidence is filed after coverage exists.
 - [ ] Stripe lifecycle and webhook monitoring evidence is filed.
 
 ## Phase 1 — Quality Gates

@@ -53,5 +53,5 @@ Use clear, specific descriptions that identify the control, workflow, or outcome
 - `sentry-alerts/`: alert routing and monitoring ownership evidence
 - `support-ownership/`: support ownership records and response targets
 - `stripe-verification/`: billing, checkout, webhook, and subscription evidence
+- `platform-dashboard/`: Vercel, Supabase, and cross-platform production readiness evidence
 - `release-approvals/`: release decision and go-live approval records
-

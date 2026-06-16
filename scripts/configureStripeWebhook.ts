@@ -1,5 +1,8 @@
 import process from 'node:process'
 import Stripe from 'stripe'
+import { loadEnvConfig } from '@next/env'
+
+loadEnvConfig(process.cwd())
 
 const REQUIRED_EVENTS: Stripe.WebhookEndpointCreateParams.EnabledEvent[] = [
   'checkout.session.completed',

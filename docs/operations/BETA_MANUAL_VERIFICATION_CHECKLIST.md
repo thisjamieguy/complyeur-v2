@@ -59,8 +59,12 @@ before starting this checklist.
 ## 4. Release Dashboards And Alerts
 
 - [ ] GitHub branch protection on `main` matches `docs/BRANCH_PROTECTION_BASELINE.md`.
-- [ ] Vercel production env vars, custom domain, SSL, and `/api/health` are verified.
-- [ ] Supabase backups and PITR are verified in the dashboard.
+- [x] Vercel production env vars, custom domain, SSL, public `/api/health`, and
+  protected `/api/internal/health` are verified in
+  `docs/operations/evidence/platform-dashboard/2026-06-16-vercel-supabase-sentry-dashboard-evidence.md`.
+- [x] Supabase backup/PITR absence is explicitly risk-accepted only for the
+  initial private tester group; current CLI evidence reports
+  `pitr_enabled: false` and no listed physical backups.
 - [ ] Sentry error-spike alert exists and routes to the current owner.
 - [ ] Webhook-failure monitoring is configured for Stripe.
 - [ ] Support inbox owner and response cadence are confirmed.

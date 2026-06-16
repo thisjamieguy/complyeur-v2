@@ -26,6 +26,7 @@ const APPROVED_CREATE_ADMIN_CLIENT_CALLEES = new Set([
   'app/admin/page.tsx',
   'app/admin/tiers/actions.ts',
   'app/admin/tiers/page.tsx',
+  'app/api/cron/beta-monitoring/route.ts',
   'app/api/billing/checkout/route.ts',
   'app/api/billing/webhook/route.ts',
   'app/api/cron/billing/route.ts',

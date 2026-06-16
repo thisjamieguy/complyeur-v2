@@ -7,8 +7,8 @@ describe('Supabase auth password policy', () => {
     const configPath = join(process.cwd(), 'supabase/config.toml')
     const config = readFileSync(configPath, 'utf8')
 
-    expect(config).toMatch(/minimum_password_length\s*=\s*8/)
-    expect(config).toMatch(/password_requirements\s*=\s*"lower_upper_letters_digits"/)
+    expect(config).toMatch(/minimum_password_length\s*=\s*12/)
+    expect(config).toMatch(/password_requirements\s*=\s*"lower_upper_letters_digits_symbols"/)
   })
 
   it('keeps Google OAuth nonce validation enabled', () => {

@@ -48,8 +48,8 @@ describe('Authentication flows', () => {
       const input = signupSchema.safeParse({
         email: 'newuser@example.com',
         companyName: 'New Company Ltd',
-        password: 'SecurePass123',
-        confirmPassword: 'SecurePass123',
+        password: 'SecurePass123!',
+        confirmPassword: 'SecurePass123!',
         termsAccepted: true,
       });
 
@@ -58,7 +58,7 @@ describe('Authentication flows', () => {
       // Execute signup
       const signupResult = await mockClient.auth.signUp({
         email: 'newuser@example.com',
-        password: 'SecurePass123',
+        password: 'SecurePass123!',
       });
 
       expect(signupResult.error).toBeNull();
@@ -68,7 +68,7 @@ describe('Authentication flows', () => {
       // Company/profile creation would be called
       expect(mockClient.auth.signUp).toHaveBeenCalledWith({
         email: 'newuser@example.com',
-        password: 'SecurePass123',
+        password: 'SecurePass123!',
       });
     });
 
@@ -77,8 +77,8 @@ describe('Authentication flows', () => {
       const input = signupSchema.safeParse({
         email: 'not-valid-email',
         companyName: 'Test Company',
-        password: 'SecurePass123',
-        confirmPassword: 'SecurePass123',
+        password: 'SecurePass123!',
+        confirmPassword: 'SecurePass123!',
         termsAccepted: true,
       });
 
@@ -114,7 +114,7 @@ describe('Authentication flows', () => {
 
       const result = await mockClient.auth.signUp({
         email: 'existing@example.com',
-        password: 'SecurePass123',
+        password: 'SecurePass123!',
       });
 
       expect(result.error).not.toBeNull();
@@ -125,8 +125,8 @@ describe('Authentication flows', () => {
       const input = signupSchema.safeParse({
         email: 'user@example.com',
         companyName: 'Test Company',
-        password: 'SecurePass123',
-        confirmPassword: 'DifferentPass123',
+        password: 'SecurePass123!',
+        confirmPassword: 'DifferentPass123!',
         termsAccepted: true,
       });
 
@@ -309,15 +309,15 @@ describe('Authentication flows', () => {
 
       // Validate new password
       const input = resetPasswordSchema.safeParse({
-        password: 'NewSecure123',
-        confirmPassword: 'NewSecure123',
+        password: 'NewSecure123!',
+        confirmPassword: 'NewSecure123!',
       });
 
       expect(input.success).toBe(true);
 
       // Update password
       const result = await mockClient.auth.updateUser({
-        password: 'NewSecure123',
+        password: 'NewSecure123!',
       });
 
       expect(result.error).toBeNull();
@@ -332,7 +332,7 @@ describe('Authentication flows', () => {
       });
 
       const result = await mockClient.auth.updateUser({
-        password: 'NewSecure123',
+        password: 'NewSecure123!',
       });
 
       expect(result.error).not.toBeNull();

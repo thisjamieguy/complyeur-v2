@@ -57,6 +57,7 @@ checks before the manual go-live pass.
 - [ ] SPF record configured
 - [ ] DKIM record configured
 - [ ] DMARC record configured
+- [ ] `pnpm email:dns:check -- --domain complyeur.com --dkim-selector <selector>` passes
 - [ ] Test email arrives in inbox (not spam)
 - [ ] Email headers show PASS for SPF/DKIM
 

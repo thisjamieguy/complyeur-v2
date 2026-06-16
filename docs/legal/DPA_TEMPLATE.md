@@ -52,8 +52,13 @@ ComplyEur uses the following sub-processors:
 - Stripe (billing and payment processing)
 - Resend (transactional email delivery)
 - Sentry (error monitoring)
+- CookieYes (cookie consent management)
+- Google Analytics (consent-gated website analytics)
+- Upstash Redis (rate limiting and abuse prevention, where enabled)
+- Cloudflare Turnstile (bot protection, where enabled)
+- Email/support tooling used for customer support and privacy request handling
 
-Processor will maintain and update this list and notify Controller of material changes where contractually required.
+Processor will maintain and update this list and notify Controller of material changes where contractually required. The operational processor register is maintained in `docs/legal/PRIVACY_OPERATING_RECORD.md`.
 
 ## 9. International Transfers
 - Data may be processed in the UK, EEA, and other locations operated by approved sub-processors.

@@ -92,7 +92,7 @@ export function getAuthErrorMessage(supabaseError: { message: string; status?: n
     return 'An account with this email already exists'
   }
   if (message.includes('Password should be at least')) {
-    return 'Password must be at least 8 characters'
+    return 'Password must be at least 12 characters'
   }
   if (message.includes('rate limit')) {
     return 'Too many attempts. Please try again later.'

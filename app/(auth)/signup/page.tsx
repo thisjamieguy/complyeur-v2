@@ -223,7 +223,7 @@ function SignupForm() {
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder="Create a password (min 8 characters)"
+                      placeholder="Create a strong password"
                       autoComplete="new-password"
                       required
                       disabled={isAnyLoading}
