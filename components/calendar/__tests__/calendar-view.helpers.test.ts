@@ -114,7 +114,8 @@ describe('calendar-view helpers', () => {
     expect(dayMap.get('2026-02-02')?.displayMode).toBe('planning')
     expect(dayMap.get('2026-02-01')?.riskLevel).toBe('amber')
     expect(dayMap.get('2026-02-02')?.riskLevel).toBe('amber')
-    expect(dayMap.get('2026-02-03')?.isBreachDay).toBe(true)
+    expect(dayMap.get('2026-02-03')?.riskLevel).toBe('red')
+    expect(dayMap.get('2026-02-03')?.isBreachDay).toBe(false)
   })
 
   it('keeps first trip when overlap occurs on the same day', () => {

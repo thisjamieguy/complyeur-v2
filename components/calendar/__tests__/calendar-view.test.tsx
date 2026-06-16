@@ -104,25 +104,25 @@ describe('CalendarView', () => {
 
     const historyDay = dayMap.get('2026-02-10')
     const startDay = dayMap.get('2026-03-10')
-    const preBreachDay = dayMap.get('2026-03-20')
-    const breachDay = dayMap.get('2026-03-21')
+    const preLimitDay = dayMap.get('2026-03-20')
+    const limitDay = dayMap.get('2026-03-21')
 
     expect(historyDay?.trip.id).toBe('history-1')
     expect(historyDay?.displayMode).toBe('historical')
 
     expect(startDay?.trip.id).toBe('current-1')
-    expect(preBreachDay?.trip.id).toBe('current-1')
-    expect(breachDay?.trip.id).toBe('current-1')
+    expect(preLimitDay?.trip.id).toBe('current-1')
+    expect(limitDay?.trip.id).toBe('current-1')
 
     expect(startDay?.displayMode).toBe('planning')
-    expect(preBreachDay?.displayMode).toBe('planning')
-    expect(breachDay?.displayMode).toBe('planning')
+    expect(preLimitDay?.displayMode).toBe('planning')
+    expect(limitDay?.displayMode).toBe('planning')
     expect(startDay?.riskLevel).toBe('amber')
     expect(startDay?.isBreachDay).toBe(false)
-    expect(preBreachDay?.riskLevel).toBe('amber')
-    expect(preBreachDay?.isBreachDay).toBe(false)
-    expect(breachDay?.riskLevel).toBe('red')
-    expect(breachDay?.isBreachDay).toBe(true)
+    expect(preLimitDay?.riskLevel).toBe('amber')
+    expect(preLimitDay?.isBreachDay).toBe(false)
+    expect(limitDay?.riskLevel).toBe('red')
+    expect(limitDay?.isBreachDay).toBe(false)
 
     const expectedCurrent = calculateCompliance(
       [

@@ -108,8 +108,8 @@ describe('DayCell', () => {
     renderCell(
       makeTripDay({
         referenceDate: new Date('2026-03-21T00:00:00.000Z'),
-        daysUsed: 90,
-        daysRemaining: 0,
+        daysUsed: 91,
+        daysRemaining: -1,
         riskLevel: 'red',
         isBreachDay: true,
       })
@@ -118,7 +118,7 @@ describe('DayCell', () => {
     fireEvent.click(screen.getByRole('button', { name: /FR trip on Mar 21/i }))
 
     expect(screen.getByText('Breach')).toBeInTheDocument()
-    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.getByText('-1')).toBeInTheDocument()
   })
 
   it('applies row hover styling when the frozen employee column is hovered', () => {
