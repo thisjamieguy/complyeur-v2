@@ -105,7 +105,11 @@ below are complete, tested, and supported by current documentation.
   - Include processing purpose, data categories, region/transfer basis, DPA/SCC
     status, and retention notes.
   - Evidence: `docs/legal/PRIVACY_OPERATING_RECORD.md`.
-  - Still required: provider dashboard and DPA/SCC evidence before public beta.
+  - 2026-06-16 repo update: `docs/legal/DPA_READINESS.md` now records the
+    provider DPA/source links that were identified and the account-level evidence
+    still required before public/paid launch.
+  - Still required: account/provider dashboard evidence and legal/DPO signoff
+    before public beta.
 
 - [x] International transfer position is documented.
   - UK/EEA hosting claims must match deployed Supabase/Vercel configuration.
@@ -238,6 +242,8 @@ Keep these current as implementation changes:
 - Security decisions: `docs/engineering/security-decisions.md`
 - Incident response: `docs/INCIDENT_RESPONSE.md`
 - DPA template: `docs/legal/DPA_TEMPLATE.md`
+- DPA readiness and subprocessor evidence tracker:
+  `docs/legal/DPA_READINESS.md`
 
 ## Minimum Verification Before Marking Complete
 

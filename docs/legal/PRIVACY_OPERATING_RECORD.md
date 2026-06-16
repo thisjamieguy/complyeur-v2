@@ -97,17 +97,20 @@ marketing, and operational records.
 
 ## Processor/Subprocessor Register
 
-| Processor | Purpose | Data categories | Region/transfer position | DPA/SCC status to verify | Retention notes |
+DPA/SCC source links, account-evidence requirements, and signoff status are
+tracked in `docs/legal/DPA_READINESS.md`.
+
+| Processor | Purpose | Data categories | Region/transfer position | DPA/SCC status | Retention notes |
 | --- | --- | --- | --- | --- | --- |
-| Supabase | Database, Auth, storage | Account, employee, trip, auth, DSAR export archive data | Production database intended for London/UK; dashboard evidence required | Verify Supabase DPA and hosting region evidence | Database retention and backup/PITR policy must be evidenced. |
-| Vercel | Hosting, deployment, edge/runtime logs | Request metadata, operational logs, app traffic | Region depends on Vercel runtime/log processing | Verify Vercel DPA and transfer terms | Logs per Vercel settings. |
-| Stripe | Checkout, subscription, invoices | Billing contacts, customer/subscription ids, invoices, payment metadata | Stripe processing regions and safeguards | Verify Stripe DPA/SCC and live account settings | Legal/tax retention may apply. |
-| Resend | Transactional email | Recipient emails, subjects, notification content | Provider safeguards required | Verify Resend DPA/SCC | Retention per Resend logs/settings. |
-| Sentry | Error monitoring | Error context, route metadata, limited user ids | Provider safeguards required | Verify Sentry DPA/SCC; session replay disabled | Retain only needed debugging window. |
-| Google Analytics | Consent-gated analytics | Cookie/device identifiers, page events | Google transfer safeguards | Verify GA data processing terms and consent mode settings | Per GA retention settings and cookie policy. |
-| CookieYes | Consent management | Consent preferences and cookie banner state | Provider safeguards required | Verify CookieYes DPA/SCC | Consent cookie retained per cookie policy. |
-| Upstash Redis | Rate limiting / abuse prevention | Request/rate-limit keys, IP-derived or user-derived keys where configured | Provider safeguards required | Verify Upstash DPA/SCC if used in production | Retain short-lived rate-limit keys only. |
-| Cloudflare Turnstile | Bot protection where enabled | Challenge/token and request metadata | Cloudflare safeguards | Verify Cloudflare DPA/SCC if enabled in production | Per Cloudflare settings. |
+| Supabase | Database, Auth, storage | Account, employee, trip, auth, DSAR export archive data | Production database intended for London/UK; dashboard evidence required | Public DPA page identified; account legal-doc and hosting-region evidence still required | Database retention and backup/PITR policy must be evidenced. |
+| Vercel | Hosting, deployment, edge/runtime logs | Request metadata, operational logs, app traffic | Region depends on Vercel runtime/log processing | Public DPA/SCC terms identified; account/project evidence still required | Logs per Vercel settings. |
+| Stripe | Checkout, subscription, invoices | Billing contacts, customer/subscription ids, invoices, payment metadata | Stripe processing regions and safeguards | Public DPA identified; live account acceptance/settings evidence still required | Legal/tax retention may apply. |
+| Resend | Transactional email | Recipient emails, subjects, notification content | Provider safeguards required | Public DPA/subprocessor terms identified; account evidence still required | Retention per Resend logs/settings. |
+| Sentry | Error monitoring | Error context, route metadata, limited user ids | Provider safeguards required | Public DPA identified; organization settings and session-replay-disabled evidence required | Retain only needed debugging window. |
+| Google Analytics | Consent-gated analytics | Cookie/device identifiers, page events | Google transfer safeguards | Public data-processing terms path identified; GA account acceptance, consent mode, and retention evidence required | Per GA retention settings and cookie policy. |
+| CookieYes | Consent management | Consent preferences and cookie banner state | Provider safeguards required | Public processor-policy reference identified; DPA/subprocessor evidence still required from account/support | Consent cookie retained per cookie policy. |
+| Upstash Redis | Rate limiting / abuse prevention | Request/rate-limit keys, IP-derived or user-derived keys where configured | Provider safeguards required | Public trust center found; DPA/SCC evidence not yet confirmed from public text | Retain short-lived rate-limit keys only. |
+| Cloudflare Turnstile | Bot protection where enabled | Challenge/token and request metadata | Cloudflare safeguards | Public DPA identified; production enablement/settings evidence required if used | Per Cloudflare settings. |
 | Email/support tooling | Support routing and privacy requests | Contact details, support messages | Tool-specific safeguards | Confirm exact tooling before public beta | Retain per support policy. |
 
 ## International Transfer Position
@@ -148,7 +151,8 @@ for product improvement.
 
 ## Public Beta Review Requirements
 
-- Legal/DPO review of this record and `docs/legal/DPA_TEMPLATE.md`.
+- Legal/DPO review of this record, `docs/legal/DPA_TEMPLATE.md`, and
+  `docs/legal/DPA_READINESS.md`.
 - Dashboard evidence for processor configuration, data residency, DNS/email
   authentication, backups/PITR, and monitoring.
 - Evidence note for one completed DSAR export, one anonymisation, one retention

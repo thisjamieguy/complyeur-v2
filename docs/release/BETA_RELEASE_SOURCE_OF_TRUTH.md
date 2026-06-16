@@ -44,7 +44,7 @@ dashboard evidence is still required before claiming a 9/10 operational score.
 | Mobile baseline | Ready for private beta | Mobile E2E recorded as 15 passed. |
 | Billing | Blocked for paid/public beta | Live Stripe prices and production webhook endpoint are verified; subscription lifecycle/replay evidence remains open. |
 | Operations and recovery | Conditional for private beta | Recovery procedure is documented; public/internal production health is evidenced; no-PITR risk is accepted only for the initial private tester group. Restore-test evidence remains required before broader rollout. |
-| Legal and GDPR packaging | Conditional for private beta | DPA remains draft; GDPR operating records now exist, but legal/DPO review and provider evidence remain public-beta blockers. |
+| Legal and GDPR packaging | Conditional for private beta | DPA package is now repo-ready for legal/DPO review; approval and account-level provider evidence remain public-beta blockers. |
 | Monitoring and support | Conditional for private beta | Support ownership and public/internal health are evidenced; Sentry issue read access is now verified, but alert routing/test delivery evidence is still pending. Metrics ownership remains paid/public beta work; zero-signup and Stripe webhook monitoring are implemented and need first-run evidence. |
 
 ## 3. Final Go/No-Go Decision
@@ -175,6 +175,7 @@ Supporting docs:
 
 - `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`
 - `docs/legal/DPA_TEMPLATE.md`
+- `docs/legal/DPA_READINESS.md`
 - `docs/INCIDENT_RESPONSE.md`
 - `docs/DATA_CLASSIFICATION.md`
 - `docs/DATA_DELETION_WORKFLOW.md`
@@ -183,10 +184,10 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review and remove draft status before sharing as final. |
+| DPA package legal approval | Critical before paid/public beta | Legal owner | Review `docs/legal/DPA_TEMPLATE.md` and `docs/legal/DPA_READINESS.md`, confirm legal entity/main agreement terms, then remove draft status before sharing as final. |
 | ICO registration evidence | Important before paid/public beta | Legal owner | Confirm registration status and file release evidence. |
-| Processor/subprocessor register review | Important before paid/public beta | Legal owner | Confirm DPA/SCC status for analytics, consent, anti-abuse, and support tooling. |
-| GDPR legal review and provider evidence | Critical before paid/public beta | Privacy owner | Review `docs/legal/PRIVACY_OPERATING_RECORD.md` and `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`; attach provider DPA/SCC, hosting, backup, and operational evidence. |
+| Processor/subprocessor account evidence | Important before paid/public beta | Legal owner | Use `docs/legal/DPA_READINESS.md` to attach account-level DPA/SCC evidence for analytics, consent, anti-abuse, and support tooling. |
+| GDPR legal review and provider evidence | Critical before paid/public beta | Privacy owner | Review `docs/legal/PRIVACY_OPERATING_RECORD.md`, `docs/legal/DPA_READINESS.md`, and `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`; attach provider DPA/SCC, hosting, backup, and operational evidence. |
 
 ## 10. Monitoring And Support Checks
 
@@ -235,7 +236,8 @@ Release-critical known issues:
 - Baseline branch protection is evidenced complete; expanded CodeQL/dependency-security workflow run evidence is pending.
 - No-PITR risk is accepted only for the initial private tester group; restore
   testing and backup/PITR coverage are still required before broader rollout.
-- DPA and processor/subprocessor materials need legal review.
+- DPA package is repo-ready but still needs legal/DPO approval and
+  account-level subprocessor evidence.
 - Real-device iOS Safari and Android Chrome checks are pending.
 
 ## 13. Beta Success Metrics
@@ -279,7 +281,7 @@ deployed beta URL. The remaining manual checks include:
 | Sentry alert routing evidence | Critical before private beta | Engineering owner | Capture Sentry alert rules, notification destinations, recipients, and test alert delivery. |
 | Tester brief and known issues must be distributed | Critical before private beta | Product owner | Send `docs/beta/BETA_TESTER_BRIEF.md` and `docs/beta/BETA_KNOWN_ISSUES.md` to testers. |
 | Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Capture checkout, replay, out-of-order, failed-payment, cancellation, and reconciliation evidence. |
-| DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review. |
+| DPA package legal approval | Critical before paid/public beta | Legal owner | Complete review of `docs/legal/DPA_TEMPLATE.md` and `docs/legal/DPA_READINESS.md`. |
 | SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure records, run `pnpm email:dns:check`, and verify delivered email headers. |
 
 ## 16. High-Priority Non-Blockers
@@ -306,7 +308,7 @@ deployed beta URL. The remaining manual checks include:
 | --- | --- |
 | Engineering owner | Capture CodeQL/security workflow evidence, run the recovery tabletop, confirm Sentry alerts, and enable/verify Supabase backup/PITR before broader rollout. |
 | Billing owner | Complete Stripe lifecycle/replay evidence, confirm reconciliation process, and confirm billing support path. |
-| Legal owner | Complete DPA review, processor/subprocessor register review, ICO evidence. |
+| Legal owner | Complete DPA approval, processor/subprocessor account evidence, and ICO evidence. |
 | Product owner | Distribute tester brief/known issues, run non-founder journey, assign metrics dashboard owner. |
 | QA owner | Complete email, password reset, real-device, screen reader, and ad blocker checks. |
 | Support owner | Maintain evidenced support ownership and confirm billing-support routing before paid/public beta. |
@@ -329,4 +331,5 @@ deployed beta URL. The remaining manual checks include:
 - `docs/INCIDENT_RESPONSE.md` - SOC 2/GDPR incident response process.
 - `docs/SOC2_READINESS_AUDIT.md` - SOC 2 readiness evidence and gaps.
 - `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md` - GDPR/UK GDPR public-release workplan.
+- `docs/legal/DPA_READINESS.md` - DPA legal approval and subprocessor evidence tracker.
 - `docs/billing/STRIPE_FINALIZATION_RUNBOOK.md` - Stripe price and webhook finalization.

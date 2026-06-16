@@ -40,8 +40,8 @@ in `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`; evidence status remains in
 - Baseline branch protection on `main` is evidenced complete. Expanded CodeQL
   and dependency-security workflow run evidence is still pending.
 - Recovery procedure is documented in `docs/RUNBOOK.md`, but full disaster-recovery testing is still pending.
-- The DPA template is still a draft pending legal review and should not be sent to enterprise testers as final.
-- The processor/subprocessor register needs a final legal review, including DPA/SCC status for analytics, consent, and anti-abuse providers.
+- The DPA package is repo-ready for legal/DPO review, but it is not approved for external signature and should not be sent to enterprise testers as final.
+- The processor/subprocessor register now has a DPA readiness tracker, but account-level DPA/SCC evidence is still needed for analytics, consent, anti-abuse, and support providers.
 
 ## Manual / External Checks Still Open
 - Supabase backup/PITR coverage is not ready: CLI evidence reports

@@ -21,7 +21,7 @@ export default function TermsPage() {
             <h1 className="landing-serif mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
               Terms of Service
             </h1>
-            <p className="mt-3 text-sm text-slate-500">Last updated: February 6, 2026</p>
+            <p className="mt-3 text-sm text-slate-500">Last updated: 16 June 2026</p>
             <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
               These terms govern access to and use of ComplyEur. They outline account responsibilities, billing conditions, and liability boundaries.
             </p>
@@ -205,9 +205,37 @@ export default function TermsPage() {
           </p>
         </section>
 
-        {/* 9. Termination */}
+        {/* 9. Customer Data and Data Processing */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-4">9. Termination</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">9. Customer Data and Data Processing</h2>
+          <p className="text-base text-slate-700 leading-relaxed">
+            If you use ComplyEur on behalf of an organization, you are responsible for ensuring
+            that you have the right to submit employee, contractor, traveller, trip, and related
+            personal data to the Service.
+          </p>
+          <p className="text-base text-slate-700 leading-relaxed mt-4">
+            For customer-managed employee and traveller data, your organization usually acts as
+            the data controller and ComplyEur usually acts as a data processor. ComplyEur acts as
+            controller for its own account, billing, security, support, marketing, and operational
+            records, as described in our Privacy Policy.
+          </p>
+          <p className="text-base text-slate-700 leading-relaxed mt-4">
+            Where data protection law requires controller-processor terms, a Data Processing
+            Agreement may apply through your order form, master services agreement, signed DPA, or
+            other written terms agreed with ComplyEur. If there is a conflict between these Terms
+            and an agreed Data Processing Agreement, the Data Processing Agreement controls only
+            for personal-data processing and data-protection matters.
+          </p>
+          <p className="text-base text-slate-700 leading-relaxed mt-4">
+            You must not submit special-category data, criminal-offence data, children&apos;s data,
+            passport scans, visa documents, or full payment card details unless ComplyEur has
+            expressly agreed to process that data in writing.
+          </p>
+        </section>
+
+        {/* 10. Termination */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">10. Termination</h2>
 
           <h3 className="text-xl font-semibold text-slate-900 mb-3">Termination by You</h3>
           <p className="text-base text-slate-700 leading-relaxed">
@@ -234,9 +262,9 @@ export default function TermsPage() {
           </ul>
         </section>
 
-        {/* 10. Changes to Terms */}
+        {/* 11. Changes to Terms */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-4">10. Changes to Terms</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">11. Changes to Terms</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             We may modify these Terms from time to time. When we make changes:
           </p>
@@ -248,9 +276,9 @@ export default function TermsPage() {
           </ul>
         </section>
 
-        {/* 11. Governing Law */}
+        {/* 12. Governing Law */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-4">11. Governing Law</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">12. Governing Law</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             These Terms shall be governed by and construed in accordance with the laws of
             England and Wales, without regard to its conflict of law provisions.
@@ -265,9 +293,9 @@ export default function TermsPage() {
           </p>
         </section>
 
-        {/* 12. Contact Us */}
+        {/* 13. Contact Us */}
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-semibold text-slate-900 mb-4">12. Contact Us</h2>
+          <h2 className="text-2xl font-semibold text-slate-900 mb-4">13. Contact Us</h2>
           <p className="text-base text-slate-700 leading-relaxed">
             If you have any questions about these Terms of Service, please contact us:
           </p>

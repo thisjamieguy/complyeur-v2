@@ -75,6 +75,7 @@ Use it to answer six questions quickly:
   - [`docs/DATA_DELETION_WORKFLOW.md`](DATA_DELETION_WORKFLOW.md)
   - [`docs/DATA_CLASSIFICATION.md`](DATA_CLASSIFICATION.md)
   - [`docs/legal/DPA_TEMPLATE.md`](legal/DPA_TEMPLATE.md)
+  - [`docs/legal/DPA_READINESS.md`](legal/DPA_READINESS.md)
   - [`docs/SOC2_READINESS_AUDIT.md`](SOC2_READINESS_AUDIT.md)
   - [`docs/compliance/soc2/EVIDENCE_INDEX.md`](compliance/soc2/EVIDENCE_INDEX.md)
   - [`docs/compliance/soc2/GAPS.md`](compliance/soc2/GAPS.md)
