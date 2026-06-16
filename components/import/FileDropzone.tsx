@@ -18,6 +18,18 @@ interface FileDropzoneProps {
   isProcessing: boolean;
 }
 
+const FORMAT_LABELS: Record<ImportFormat, string> = {
+  employees: 'Employees',
+  trips: 'Trip List',
+  gantt: 'Schedule/Gantt',
+};
+
+const FORMAT_DESCRIPTIONS: Record<ImportFormat, string> = {
+  employees: "Upload your Excel or CSV file. We'll validate the employee data before importing.",
+  trips: "Upload your Excel or CSV file. We'll validate the trip data before importing.",
+  gantt: "Upload your schedule workbook or CSV. We'll validate date columns before importing trips.",
+};
+
 export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzoneProps) {
   const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -107,11 +119,9 @@ export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzon
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-slate-900 mb-2">
-          Upload {format === 'employees' ? 'Employees' : 'Trips'} File
+          Upload {FORMAT_LABELS[format]} File
         </h2>
-        <p className="text-slate-600">
-          Upload your Excel or CSV file. We&apos;ll validate the data before importing.
-        </p>
+        <p className="text-slate-600">{FORMAT_DESCRIPTIONS[format]}</p>
       </div>
 
       {error && (

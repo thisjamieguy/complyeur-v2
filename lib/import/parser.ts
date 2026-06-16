@@ -332,6 +332,12 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
     // Read file as ArrayBuffer
     const buffer = await file.arrayBuffer();
 
+    if (format === 'gantt') {
+      // Schedule files can have one column per day, so use the Gantt parser's
+      // wider workbook limits instead of the standard tabular import limits.
+      return await parseGanttFromData(buffer, isCSVFile(file));
+    }
+
     let records: Record<string, unknown>[];
     let rawHeaders: string[];
 
@@ -379,16 +385,6 @@ export async function parseFile(file: File, format: ImportFormat): Promise<Parse
       parsedData = parseEmployeeRows(records, rawHeaders);
     } else if (format === 'trips') {
       parsedData = parseTripRows(records, rawHeaders);
-    } else if (format === 'gantt') {
-      // Gantt format - parse schedule and generate trips
-      const ganttResult = await parseGanttFromData(buffer, isCSVFile(file));
-      if (!ganttResult.success) {
-        return {
-          success: false,
-          error: ganttResult.error || 'Failed to parse Gantt format',
-        };
-      }
-      parsedData = ganttResult.data!;
     } else {
       return {
         success: false,
