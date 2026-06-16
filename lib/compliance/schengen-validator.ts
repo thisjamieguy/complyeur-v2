@@ -90,6 +90,40 @@ export function isSchengenCountry(countryCodeOrName: string | null | undefined):
 }
 
 /**
+ * Validates whether a country counts as Schengen on a specific calendar date.
+ *
+ * This is stricter than isSchengenCountry(), which answers current membership
+ * for UI and import classification. Historical compliance calculations must
+ * respect the country's Schengen accession date for each presence day.
+ *
+ * @param countryCodeOrName - ISO country code or full country name
+ * @param date - Calendar date being counted
+ * @returns true if the country counted as Schengen on that date
+ */
+export function isSchengenCountryOnDate(
+  countryCodeOrName: string | null | undefined,
+  date: Date
+): boolean {
+  if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return false;
+  }
+
+  const result = validateCountry(countryCodeOrName);
+  if (!result.isSchengen || !result.countryCode) {
+    return false;
+  }
+
+  const member = SCHENGEN_MEMBERSHIP.members[result.countryCode];
+  if (member) {
+    const checkedDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const membershipStart = new Date(`${member.since}T00:00:00.000Z`);
+    return checkedDate.getTime() >= membershipStart.getTime();
+  }
+
+  return Boolean(SCHENGEN_MEMBERSHIP.microstates[result.countryCode]);
+}
+
+/**
  * Validates a country and returns detailed information.
  *
  * Use this when you need more than just a boolean result,

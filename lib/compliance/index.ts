@@ -94,6 +94,7 @@ export {
 
 export {
   isSchengenCountry,
+  isSchengenCountryOnDate,
   validateCountry,
   normalizeCountryCode,
   getSchengenCountryCodes,

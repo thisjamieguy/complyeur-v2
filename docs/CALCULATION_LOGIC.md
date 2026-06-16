@@ -87,7 +87,14 @@ A configurable `complianceStartDate` can be set per company. Days before this da
 
 Austria (AT), Belgium (BE), Bulgaria (BG)\*, Croatia (HR), Czech Republic (CZ), Denmark (DK), Estonia (EE), Finland (FI), France (FR), Germany (DE), Greece (GR), Hungary (HU), Iceland (IS), Italy (IT), Latvia (LV), Liechtenstein (LI), Lithuania (LT), Luxembourg (LU), Malta (MT), Netherlands (NL), Norway (NO), Poland (PL), Portugal (PT), Romania (RO)\*, Slovakia (SK), Slovenia (SI), Spain (ES), Sweden (SE), Switzerland (CH).
 
-> \* **Romania and Bulgaria** became full Schengen members with land border checks removed on **1 January 2025**. Both countries were already part of Schengen for air and sea borders from March 2024. Trips to Romania or Bulgaria on or after 1 January 2025 count toward the 90-day limit. The canonical implementation source is `lib/constants/schengen-countries.ts`.
+> \* **Romania and Bulgaria** became full Schengen members with land border checks removed on **1 January 2025**. Both countries were already part of Schengen for air and sea borders from March 2024. Because ComplyEUR trips do not currently store border mode, the conservative implementation counts Romania and Bulgaria from full membership on 1 January 2025. The canonical implementation source is `lib/compliance/constants.ts`.
+
+### Date-aware membership
+
+Country membership is applied per presence day. A trip only contributes days
+when the trip country counted as Schengen on that calendar date. For example,
+a Bulgaria trip from 2024-12-30 to 2025-01-03 contributes only 2025-01-01,
+2025-01-02, and 2025-01-03.
 
 ### Microstates — count as Schengen
 

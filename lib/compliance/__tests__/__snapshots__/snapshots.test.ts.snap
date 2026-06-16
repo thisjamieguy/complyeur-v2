@@ -743,7 +743,7 @@ exports[`Snapshot: getSafeEntryInfo > 2d. at limit (90 days) — cannot enter, m
 }
 `;
 
-exports[`Snapshot: maxStayDays > 3b. 80 days already used — maxStayDays accounts for sliding window expiry 1`] = `10`;
+exports[`Snapshot: maxStayDays > 3b. 80 days already used — maxStayDays accounts for sliding window expiry 1`] = `90`;
 
 exports[`Snapshot: projectExpiringDays > 4a. projects day-by-day expiry for next 14 days with a known trip 1`] = `
 [

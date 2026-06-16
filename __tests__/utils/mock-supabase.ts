@@ -246,7 +246,7 @@ export function createMockTrip(overrides?: Partial<MockTrip>): MockTrip {
  * Setup mock for Supabase server client
  */
 export function mockSupabaseServerClient(client: MockSupabaseClient) {
-  vi.mock('@/lib/supabase/server', () => ({
+  vi.doMock('@/lib/supabase/server', () => ({
     createClient: vi.fn().mockResolvedValue(client),
   }));
 }
@@ -255,7 +255,7 @@ export function mockSupabaseServerClient(client: MockSupabaseClient) {
  * Setup mock for Supabase browser client
  */
 export function mockSupabaseBrowserClient(client: MockSupabaseClient) {
-  vi.mock('@/lib/supabase/client', () => ({
+  vi.doMock('@/lib/supabase/client', () => ({
     createClient: vi.fn().mockReturnValue(client),
   }));
 }

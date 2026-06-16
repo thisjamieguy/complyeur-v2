@@ -29,6 +29,7 @@ The Schengen compliance engine is deterministic, auditable, and implemented in `
 - Decision: Keep Schengen membership data explicit and reviewable.
   - Why: Country membership and edge cases are compliance-sensitive and can change.
   - Repository alignment: `lib/constants/schengen-countries.ts`, `lib/compliance/constants.ts`, and `lib/compliance/schengen-validator.ts`.
+  - Calculation detail: `presenceDays()` applies membership per presence day using accession metadata, so historical trips are clipped to the dates on which the country counted as Schengen. Bulgaria and Romania are counted from full membership on 1 January 2025 because trip records do not currently store border mode.
   - Confidence: High, with periodic legal/source review required.
 
 - Decision: Treat exactly 90 days as exhausted but still compliant.
@@ -48,6 +49,7 @@ Historical AI discussions captured useful edge cases: Bulgaria/Romania dates, mi
 ## Risks / Caveats
 
 - Schengen membership source review must stay current. The June 2026 review confirmed Bulgaria and Romania as full Schengen members from 1 January 2025, while Ireland and Cyprus remain excluded.
+- Bulgaria/Romania air/sea membership from March 2024 is not modelled because trip records do not currently include border mode.
 - Residence permits, national visas, posted-worker rules, and tax/SRT logic are not covered by the Schengen algorithm unless explicitly implemented and reviewed.
 - Native `Date` appears in tests and internal UTC-normalized code; do not treat that as permission to parse user date strings casually.
 
