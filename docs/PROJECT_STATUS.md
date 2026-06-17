@@ -22,14 +22,14 @@ Close the remaining operational and verification gaps required for a controlled 
 
 - Product line: `v2.0.0` Supabase rebuild
 - Package metadata version: `2.0.0` in `package.json`
-- First intended release tag baseline: `v2.0.0`
+- Current release tag baseline: `v2.0.0`
 - Current rule: use annotated Git tags for meaningful milestones and releases only
 
 ## Versioning Notes
 
 - The public product version and package metadata are now aligned at `v2.0.0`.
 - Treat `v2.0.0` as the current product/release baseline for docs, release planning, and the first clean annotated tag.
-- The first external release tag should be created from a committed, reviewable state rather than from a dirty working tree.
+- The annotated Git tag `v2.0.0` now exists on the committed release-baseline change.
 - When the public version changes, update `README.md`, `AGENTS.md`, this file, and the relevant release document in the same change.
 
 ## Active Blockers
