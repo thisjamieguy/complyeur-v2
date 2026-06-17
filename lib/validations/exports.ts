@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { parseDateOnlyAsUTC } from '@/lib/compliance/date-utils'
 
 /**
  * Export validation schemas
@@ -23,7 +24,7 @@ const isoDateSchema = z
     'Date must be in YYYY-MM-DD format'
   )
   .refine(
-    (val) => !isNaN(Date.parse(val)),
+    (val) => !Number.isNaN(parseDateOnlyAsUTC(val).getTime()),
     'Invalid date'
   )
 
@@ -36,7 +37,7 @@ const dateRangeSchema = z.object({
   /** End date / reference date (ISO string YYYY-MM-DD) */
   end: isoDateSchema,
 }).refine(
-  (data) => new Date(data.start) <= new Date(data.end),
+  (data) => data.start <= data.end,
   {
     message: 'Start date must be on or before end date',
     path: ['start'],

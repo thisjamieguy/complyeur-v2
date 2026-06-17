@@ -5,6 +5,7 @@ import path from 'node:path'
 const ROOT = process.cwd()
 const SKIP_DIRS = new Set([
   '.git',
+  '.claude',
   '.next',
   '.pnpm-store',
   '.gstack',

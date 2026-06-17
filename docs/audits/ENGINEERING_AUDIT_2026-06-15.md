@@ -157,7 +157,7 @@ None verified.
 | `pnpm typecheck` | Pass |
 | `pnpm lint` | Pass |
 | `pnpm test __tests__/components/ui-state.test.tsx` | Pass, 4 tests |
-| `pnpm test` | Fail: 2 calendar breach-day expectation failures in protected calendar/compliance behavior; 2122 tests passed |
+| `pnpm test` | Follow-up 2026-06-16: Pass after excluding `.claude` agent worktrees from Vitest discovery; 142 files and 2,144 tests passed |
 | `pnpm build` | Pass |
 | `pnpm security:check` | Pass after dependency remediation |
 | `pnpm test:e2e` | Blocked by invalid/missing seeded auth credentials; stopped after repeated auth failures |

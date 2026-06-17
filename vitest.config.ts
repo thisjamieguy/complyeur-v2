@@ -17,7 +17,7 @@ export default defineConfig({
       '**/*.test.ts',
       '**/*.test.tsx',
     ],
-    exclude: ['node_modules', '.next', '.pnpm-store'],
+    exclude: ['node_modules', '.next', '.pnpm-store', '.claude'],
     setupFiles: ['./__tests__/setup.ts'],
     coverage: {
       provider: 'v8',

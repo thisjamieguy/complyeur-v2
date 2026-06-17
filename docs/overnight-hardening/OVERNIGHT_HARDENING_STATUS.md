@@ -70,3 +70,17 @@ Branch: `codex/engineering-audit-and-hardening-2026-06-15`
 ## Final Results
 
 Audit documents created, safe UI/accessibility/responsive hardening completed, transitive dependency vulnerabilities remediated, typecheck/lint/build/security checks passing, targeted UI tests passing, public a11y checks passing. Full unit and E2E suites have documented blockers in protected calendar behavior and seeded auth credentials.
+
+## Follow-Up Verification - 2026-06-16
+
+The full Vitest blocker above was rechecked on 2026-06-16. The failure was reproduced as test discovery pollution from `.claude/worktrees/silly-hamilton-c3a937`, not an active calendar/compliance regression in the main worktree.
+
+Follow-up fixes:
+
+- `vitest.config.ts` now excludes `.claude` from test discovery.
+- `__tests__/unit/security/service-role-allowlist.test.ts` now skips `.claude` while walking source files.
+
+Follow-up result:
+
+- `pnpm vitest run __tests__/unit/security/service-role-allowlist.test.ts`: Pass, 1 test.
+- `pnpm test`: Pass, 142 files and 2,144 tests.

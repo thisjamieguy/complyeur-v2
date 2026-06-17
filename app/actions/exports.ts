@@ -187,8 +187,7 @@ export async function exportComplianceData(
 
       // Get last trip info
       const sortedTrips = [...activeTrips].sort(
-        (a, b) =>
-          new Date(b.exit_date).getTime() - new Date(a.exit_date).getTime()
+        (a, b) => b.exit_date.localeCompare(a.exit_date)
       )
       const lastTrip = sortedTrips[0]
 
@@ -278,8 +277,7 @@ export async function exportComplianceData(
               parseDateOnlyAsUTC(t.entry_date) <= referenceDate
           )
           .sort(
-            (a, b) =>
-              new Date(b.exit_date).getTime() - new Date(a.exit_date).getTime()
+            (a, b) => b.exit_date.localeCompare(a.exit_date)
           )
 
         const tripRows: TripExportRow[] = trips.map((t) => ({

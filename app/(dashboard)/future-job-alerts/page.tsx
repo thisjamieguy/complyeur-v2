@@ -13,6 +13,7 @@ import {
   sortForecasts,
   filterForecastsByRisk,
 } from '@/lib/services/forecast-service';
+import { parseDateOnlyAsUTC, toUTCMidnight } from '@/lib/compliance/date-utils';
 import type {
   ForecastResult,
   ForecastRiskFilter,
@@ -85,8 +86,7 @@ async function FutureAlertsContent({
   const groupedData = await getAllTripsGroupedByEmployee();
 
   // Calculate forecasts for all future trips
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = toUTCMidnight(new Date());
 
   const allForecasts: ForecastResult[] = [];
 
@@ -94,7 +94,7 @@ async function FutureAlertsContent({
     // Filter to future trips only
     const futureTrips = trips.filter((trip) => {
       if (trip.ghosted) return false;
-      const entryDate = new Date(trip.entryDate);
+      const entryDate = parseDateOnlyAsUTC(trip.entryDate);
       return entryDate >= today;
     });
 

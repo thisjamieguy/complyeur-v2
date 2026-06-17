@@ -3,6 +3,8 @@ import { AuthError, DatabaseError, NotFoundError, ValidationError } from '@/lib/
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { Trip, TripCreateInput, TripUpdate, BulkTripInput } from '@/types/database-helpers'
 
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
 interface AuthContext {
   userId: string
   companyId: string
@@ -407,16 +409,13 @@ export async function createBulkTrips(trips: BulkTripInput[]): Promise<BulkTripR
       continue
     }
 
-    // Validate dates
-    const entryDate = new Date(trip.entry_date)
-    const exitDate = new Date(trip.exit_date)
-
-    if (isNaN(entryDate.getTime()) || isNaN(exitDate.getTime())) {
+    // Validate date-only strings without timezone-sensitive parsing.
+    if (!DATE_ONLY_PATTERN.test(trip.entry_date) || !DATE_ONLY_PATTERN.test(trip.exit_date)) {
       errors.push({ index: i, message: 'Invalid date format' })
       continue
     }
 
-    if (exitDate < entryDate) {
+    if (trip.exit_date < trip.entry_date) {
       errors.push({ index: i, message: 'Exit date must be after entry date' })
       continue
     }

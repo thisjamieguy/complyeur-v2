@@ -36,6 +36,7 @@ export default function AuthLayout({
               width={180}
               height={100}
               className="mx-auto mb-4 drop-shadow-sm"
+              style={{ width: 'auto', height: 'auto' }}
               priority
             />
             <p className="text-slate-600">Schengen Compliance Management</p>
