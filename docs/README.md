@@ -20,6 +20,8 @@ Use it to answer six questions quickly:
 
 ## Start Here
 
+- Current project status:
+  [`docs/PROJECT_STATUS.md`](PROJECT_STATUS.md)
 - Release decision owner:
   [`docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`](release/BETA_RELEASE_SOURCE_OF_TRUTH.md)
 - Architecture authority:
@@ -123,6 +125,14 @@ These documents are intentionally preserved but should not be treated as current
 - [`docs/audits/DOCUMENTATION_AUDIT_2026-06-15.md`](audits/DOCUMENTATION_AUDIT_2026-06-15.md)
 - [`docs/overnight-hardening/OVERNIGHT_HARDENING_STATUS.md`](overnight-hardening/OVERNIGHT_HARDENING_STATUS.md)
 
+## Workflow And Reviews
+
+- **Operational snapshot:** [`docs/PROJECT_STATUS.md`](PROJECT_STATUS.md)
+- Planning docs:
+  - [`docs/plans/`](plans/)
+- Milestone review template:
+  - [`docs/reviews/MILESTONE_REVIEW_TEMPLATE.md`](reviews/MILESTONE_REVIEW_TEMPLATE.md)
+
 ## Section Map
 
 - `architecture/`: architecture decisions, environment model, migration workflow
@@ -137,6 +147,7 @@ These documents are intentionally preserved but should not be treated as current
 - `operations/`: runbooks, release execution helpers, and beta support docs
 - `plans/`: feature design and implementation planning docs
 - `release/`: current release source of truth, inventories, and consolidation docs
+- `reviews/`: milestone review documents and templates
 - `security/`: security audits, pentest material, and authorization reviews
 - `standards/`: coding, security, testing, and AI-agent governance standards
 - `testing/`: test strategy and quality references

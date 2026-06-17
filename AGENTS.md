@@ -8,7 +8,7 @@ ComplyEur is a B2B SaaS application for tracking employee travel compliance
 with the Schengen 90/180-day rule. The target customer is UK and European
 businesses managing post-Brexit travel risk.
 
-- Product version: v2.0 Supabase rebuild
+- Product version: v2.0.0 Supabase rebuild
 - App root: `complyeur/`
 - Primary package manager: `pnpm`
 - Deployment: Vercel
@@ -192,6 +192,29 @@ Use the smallest verification that proves the change:
 - Database changes: local reset or targeted SQL verification, plus type generation.
 - Security or tenant isolation changes: targeted security tests and regression tests.
 - Before shipping: `pnpm typecheck`, `pnpm lint`, relevant tests, and `pnpm build`.
+
+## Workflow Layer
+
+- Keep workflow additions lightweight. Do not create parallel authority systems.
+- For ordinary tasks:
+  1. Read the smallest relevant set of code and docs.
+  2. Make the smallest useful change.
+  3. Run the smallest sufficient verification.
+  4. Review whether docs need updates.
+  5. Provide a concise completion report covering files changed, verification run, docs updated, risks, and the recommended next task.
+- Use `docs/plans/` for multi-step planned work that benefits from written scope or design.
+- Use `docs/reviews/` or `docs/audits/` for milestone-level reviews such as release hardening passes, security sweeps, or major feature deliveries.
+- Keep `docs/PROJECT_STATUS.md` current when the active milestone, blockers, recommended next work, or release-version baseline materially changes.
+- `docs/PROJECT_STATUS.md` is an operational snapshot. It does not override code, tests, or `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`.
+
+## Versioning And Tagging
+
+- Distinguish product versioning from package metadata.
+- Product/release tags should use annotated Git tags in the format `vMAJOR.MINOR.PATCH`.
+- Use tags for meaningful milestones and releases, not for every task-level change.
+- Keep public-facing version references aligned across `README.md`, `AGENTS.md`, `docs/PROJECT_STATUS.md`, and release docs when the product version changes.
+- `package.json` version may track app/package metadata separately during development, but it should be reviewed and aligned before externally meaningful releases or if runtime surfaces expose it.
+- Do not retro-version every historical document. Start with product version, release tags, and the current status snapshot.
 
 ## Working Style
 

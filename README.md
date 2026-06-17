@@ -1,6 +1,6 @@
 # ComplyEUR
 
-Version: v2.0
+Version: v2.0.0
 
 B2B SaaS application helping UK and European companies track employee travel compliance with the EU's 90/180-day Schengen rule. Built as a clean rebuild on Supabase — no data migration from the previous Flask v1.
 
