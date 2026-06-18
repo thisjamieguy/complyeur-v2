@@ -14,6 +14,13 @@ This runbook closes the remaining manual actions for Section 4.
 
 These controls still require live Stripe evidence before paid/public beta.
 
+Repository-side hardening added on 2026-06-18:
+
+- The billing webhook now stores the latest applied Stripe event metadata on
+  `company_entitlements`.
+- Older subscription lifecycle events are ignored instead of overwriting newer
+  entitlement state.
+
 ## Prerequisites
 - `STRIPE_SECRET_KEY` is set (test or live key, matching the environment).
 - `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are set.
@@ -117,3 +124,20 @@ Store evidence in `docs/operations/evidence/stripe-verification/`.
 - failed webhook events are visible to the billing/support owner
 - reconciliation script or manual reconciliation process resolves any missed
   lifecycle events
+
+## 6) Deployed Monitoring First-Run Evidence
+
+Store zero-signup and webhook monitoring evidence in `docs/operations/evidence/`.
+
+```bash
+pnpm beta:monitoring:check -- --base-url https://complyeur.com
+```
+
+This helper:
+
+- calls the CRON-protected `/api/cron/beta-monitoring` endpoint
+- validates the JSON response shape
+- writes a dated Markdown evidence note without storing secrets
+
+If alert delivery is expected, attach the corresponding mailbox or dashboard
+proof to the generated evidence note.

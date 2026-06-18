@@ -58,10 +58,39 @@ Each alert must have:
 - an owner who acknowledges it
 - an evidence link or screenshot stored with release records
 
+## Public Beta Signup Monitoring
+
+The deployed app includes a CRON-protected signup inactivity monitor at
+`/api/cron/beta-monitoring`.
+
+- Schedule: daily at 10:00 UTC from `vercel.json`.
+- Default window: 24 hours.
+- Override window: `ZERO_SIGNUP_ALERT_WINDOW_HOURS`, between 1 and 168 hours.
+- Alert recipient: `ZERO_SIGNUP_ALERT_RECIPIENT`, then `EMAIL_REPLY_TO`, then
+  `support@complyeur.com`.
+- Alert condition: zero new `companies` rows in the configured window.
+- Supporting signal: new `profiles` count is included in the alert body.
+- Stripe webhook monitoring: the same cron alerts when `stripe_webhook_events`
+  has failed events in the configured window or processing events stale for
+  more than 10 minutes.
+
+Before paid/public beta, capture first-run evidence showing either alert
+delivery or an explicit no-alert result from the protected endpoint.
+
+Recommended repo helper:
+
+```bash
+pnpm beta:monitoring:check -- --base-url https://your-beta-url
+```
+
 ## Stripe And Webhook Monitoring
 
 - Stripe webhook endpoint must be configured for the deployed beta URL.
-- Failed webhook events must trigger a dashboard review or alert.
+- Failed or stale webhook events trigger `/api/cron/beta-monitoring` operational
+  alerting after deployment; first-run evidence is still required.
+- The billing webhook now records the latest applied Stripe event timestamp on
+  `company_entitlements` so older lifecycle events can be ignored instead of
+  overwriting fresher entitlement state.
 - Payment-related support email must route to the same monitored support path.
 - Webhook replay, stale-processing, out-of-order event, failed-payment,
   cancellation, and reconciliation evidence must be stored before paid/public
