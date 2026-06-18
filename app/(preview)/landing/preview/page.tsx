@@ -456,7 +456,7 @@ export default function LandingPreviewPage() {
 
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/landing"
+              href="/"
               className="inline-flex rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Back to home

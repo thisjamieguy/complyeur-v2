@@ -68,7 +68,7 @@ const PUBLIC_SITEMAP_PAGES: PublicSitemapPage[] = [
     priority: 0.85,
   },
   {
-    path: '/landing',
+    path: '/',
     lastModified: deploymentLastModified,
     changeFrequency: 'weekly',
     priority: 1.0,

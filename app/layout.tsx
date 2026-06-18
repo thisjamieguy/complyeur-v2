@@ -144,7 +144,7 @@ const structuredDataGraph = {
         "@id": `${SITE_URL}/#organization`,
       },
       mainEntityOfPage: {
-        "@id": `${SITE_URL}/landing#webpage`,
+        "@id": `${SITE_URL}/#webpage`,
       },
     },
   ],

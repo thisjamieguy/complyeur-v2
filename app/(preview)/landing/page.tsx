@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     title: 'ComplyEur — Schengen Compliance Software for UK Travel Teams',
     description:
       'Schengen compliance software for UK employers tracking the 90/180-day rule, employee travel risk, and EU trip approvals before bookings are confirmed.',
-    path: '/landing',
+    path: '/',
   }),
   robots: {
     index: true,
@@ -178,13 +178,32 @@ const employerQuestions = [
   },
 ]
 
+const resourceLinks = [
+  {
+    href: '/pricing',
+    label: 'Schengen compliance software pricing',
+  },
+  {
+    href: '/faq',
+    label: '90/180-day rule employer FAQs',
+  },
+  {
+    href: '/blog/how-ees-works-practical-guide',
+    label: 'EES guide for UK businesses',
+  },
+  {
+    href: '/blog/ees-border-enforcement-shift',
+    label: 'EES border enforcement changes',
+  },
+]
+
 const landingStructuredData = {
   '@context': 'https://schema.org',
   '@graph': [
     {
       '@type': 'WebPage',
-      '@id': `${SITE_URL}/landing#webpage`,
-      url: `${SITE_URL}/landing`,
+      '@id': `${SITE_URL}/#webpage`,
+      url: SITE_URL,
       name: 'Schengen compliance software for UK employers approving EU travel',
       description:
         'ComplyEur helps UK employers track employee Schengen 90/180-day allowance, trip history, and approval risk before EU travel is booked.',
@@ -216,8 +235,8 @@ const landingStructuredData = {
     },
     {
       '@type': 'FAQPage',
-      '@id': `${SITE_URL}/landing#employer-faq`,
-      url: `${SITE_URL}/landing`,
+      '@id': `${SITE_URL}/#employer-faq`,
+      url: SITE_URL,
       mainEntity: employerQuestions.map((item) => ({
         '@type': 'Question',
         name: item.question,
@@ -229,13 +248,13 @@ const landingStructuredData = {
     },
     {
       '@type': 'BreadcrumbList',
-      '@id': `${SITE_URL}/landing#breadcrumbs`,
+      '@id': `${SITE_URL}/#breadcrumbs`,
       itemListElement: [
         {
           '@type': 'ListItem',
           position: 1,
           name: 'Home',
-          item: `${SITE_URL}/landing`,
+          item: SITE_URL,
         },
       ],
     },
@@ -409,6 +428,17 @@ export default function LandingPage() {
                   You stop piecing together the answer from separate files and start reviewing one live record before
                   travel gets approved.
                 </p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {resourceLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm font-semibold text-brand-700 transition hover:border-brand-300 hover:text-brand-800"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

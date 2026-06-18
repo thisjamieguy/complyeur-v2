@@ -15,7 +15,7 @@ export default function PublicLayout({
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/landing" className="inline-block hover:opacity-80 transition-opacity">
+            <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
               <Image
                 src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal_800w.png"
                 alt="ComplyEur"

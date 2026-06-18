@@ -213,7 +213,7 @@ function LoginForm() {
           </div>
           <div className="text-xs text-slate-500 pt-1">
             Exploring first?{' '}
-            <Link href="/landing" className="font-medium text-brand-700 hover:underline">
+            <Link href="/" className="font-medium text-brand-700 hover:underline">
               Visit the landing page
             </Link>
           </div>

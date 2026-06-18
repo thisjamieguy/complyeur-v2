@@ -14,7 +14,7 @@ export default function CookiePolicyPage() {
       <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
         <div className="landing-panel rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-10">
           <div className="max-w-3xl">
-            <Link href="/landing" className="text-sm font-semibold text-brand-700 hover:underline">
+            <Link href="/" className="text-sm font-semibold text-brand-700 hover:underline">
               Back to landing
             </Link>
             <p className="mt-5 inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand-700">

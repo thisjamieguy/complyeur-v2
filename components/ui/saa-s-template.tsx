@@ -103,7 +103,7 @@ const Navigation = React.memo(() => {
     <header className="fixed top-0 z-50 w-full border-b border-slate-700/50 bg-slate-950/85 backdrop-blur-md">
       <nav className="mx-auto max-w-7xl px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/landing" aria-label="ComplyEur preview home">
+          <Link href="/" aria-label="ComplyEur preview home">
             <Image
               src="/images/Icons/01_Logo_Horizontal/ComplyEur_Logo_Horizontal.svg"
               alt="ComplyEur"

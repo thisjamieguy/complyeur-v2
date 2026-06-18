@@ -341,7 +341,7 @@ const faqStructuredData = {
           '@type': 'ListItem',
           position: 1,
           name: 'Home',
-          item: `${SITE_URL}/landing`,
+          item: SITE_URL,
         },
         {
           '@type': 'ListItem',

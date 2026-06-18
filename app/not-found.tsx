@@ -20,7 +20,7 @@ export default function NotFound() {
         </p>
         <div className="mt-6 flex gap-3">
           <Link
-            href="/landing"
+            href="/"
             className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800"
           >
             Go to landing
