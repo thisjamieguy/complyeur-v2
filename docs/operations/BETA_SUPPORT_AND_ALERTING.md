@@ -77,11 +77,20 @@ The deployed app includes a CRON-protected signup inactivity monitor at
 Before paid/public beta, capture first-run evidence showing either alert
 delivery or an explicit no-alert result from the protected endpoint.
 
+Recommended repo helper:
+
+```bash
+pnpm beta:monitoring:check -- --base-url https://your-beta-url
+```
+
 ## Stripe And Webhook Monitoring
 
 - Stripe webhook endpoint must be configured for the deployed beta URL.
 - Failed or stale webhook events trigger `/api/cron/beta-monitoring` operational
   alerting after deployment; first-run evidence is still required.
+- The billing webhook now records the latest applied Stripe event timestamp on
+  `company_entitlements` so older lifecycle events can be ignored instead of
+  overwriting fresher entitlement state.
 - Payment-related support email must route to the same monitored support path.
 - Webhook replay, stale-processing, out-of-order event, failed-payment,
   cancellation, and reconciliation evidence must be stored before paid/public

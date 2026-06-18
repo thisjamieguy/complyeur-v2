@@ -27,6 +27,8 @@ Partially automated from the repo:
 - Prepare structured evidence capture before a restore tabletop or launch review
 - Capture public and protected health evidence when production secrets are
   available locally and are not printed
+- Probe the deployed beta monitoring cron and write a sanitized first-run
+  evidence note without storing secrets
 
 Manual only:
 
@@ -64,10 +66,23 @@ Probe the deployed health endpoint:
 pnpm beta:health -- --base-url https://your-beta-url
 ```
 
+Capture first-run beta monitoring evidence from the deployed environment:
+
+```bash
+pnpm beta:monitoring:check -- --base-url https://your-beta-url
+```
+
+Preview the output path without writing a file:
+
+```bash
+pnpm beta:monitoring:check -- --base-url https://your-beta-url --dry-run
+```
+
 Smoke-test the helper itself in a restricted environment:
 
 ```bash
 pnpm beta:health -- --self-test
+pnpm beta:monitoring:check -- --self-test
 ```
 
 Optional helper checks already in the repo:

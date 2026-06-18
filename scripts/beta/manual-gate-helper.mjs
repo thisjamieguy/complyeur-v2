@@ -25,7 +25,7 @@ const gates = [
     level: 'partially automated',
     name: 'Beta monitoring cron',
     notes: 'The deployed cron checks zero-signup and Stripe webhook failure/stale-processing signals, but alert delivery still requires live env and inbox evidence.',
-    repoHelper: 'GET /api/cron/beta-monitoring with CRON_SECRET',
+    repoHelper: 'pnpm beta:monitoring:check -- --base-url https://your-beta-url',
   },
   {
     level: 'partially automated',
@@ -118,6 +118,7 @@ const requiredRepoPaths = [
   'docs/operations/BETA_EVIDENCE_LOG_TEMPLATE.md',
   'docs/operations/evidence',
   'scripts/beta/manual-gate-helper.mjs',
+  'scripts/beta/check-beta-monitoring.mjs',
   'scripts/beta/check-production-health.mjs',
   'scripts/beta/create-evidence-log.mjs',
   'scripts/beta/check-email-dns.mjs',
@@ -218,6 +219,7 @@ function main() {
   console.log('- pnpm beta:evidence -- --slug private-beta --env-url https://your-beta-url')
   console.log('- pnpm beta:manual-gates')
   console.log('- pnpm beta:health -- --base-url https://your-beta-url')
+  console.log('- pnpm beta:monitoring:check -- --base-url https://your-beta-url')
   console.log('- pnpm billing:webhook:check')
   console.log('- pnpm email:dns:check -- --domain complyeur.com --dkim-selector <selector>')
 

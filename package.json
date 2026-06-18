@@ -51,7 +51,8 @@
     "email:dns:check": "node scripts/beta/check-email-dns.mjs",
     "beta:manual-gates": "node scripts/beta/manual-gate-helper.mjs",
     "beta:health": "node scripts/beta/check-production-health.mjs",
-    "beta:evidence": "node scripts/beta/create-evidence-log.mjs"
+    "beta:evidence": "node scripts/beta/create-evidence-log.mjs",
+    "beta:monitoring:check": "node scripts/beta/check-beta-monitoring.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -42,10 +42,10 @@ dashboard evidence is still required before claiming a 9/10 operational score.
 | Authenticated baseline flows | Ready for private beta | Auth E2E baseline recorded as 49 passed. |
 | Accessibility baseline | Ready for private beta | A11y E2E recorded as 17 passed. |
 | Mobile baseline | Ready for private beta | Mobile E2E recorded as 15 passed. |
-| Billing | Blocked for paid/public beta | Live Stripe prices and production webhook endpoint are verified; subscription lifecycle/replay evidence remains open. |
+| Billing | Conditional for paid/public beta | Live Stripe prices, production webhook endpoint wiring, and production-like lifecycle/replay/reconciliation evidence are now captured. Billing is no longer a direct blocker, but legal/DNS/recovery work still blocks paid/public release. |
 | Operations and recovery | Conditional for private beta | Recovery procedure is documented; public/internal production health is evidenced; no-PITR risk is accepted only for the initial private tester group. Restore-test evidence remains required before broader rollout. |
 | Legal and GDPR packaging | Conditional for private beta | DPA package is now repo-ready for legal/DPO review; approval and account-level provider evidence remain public-beta blockers. |
-| Monitoring and support | Conditional for private beta | Support ownership and public/internal health are evidenced; Sentry issue read access is now verified, but alert routing/test delivery evidence is still pending. Metrics ownership remains paid/public beta work; zero-signup and Stripe webhook monitoring are implemented and need first-run evidence. |
+| Monitoring and support | Conditional for private beta | Support ownership, public/internal health, private-beta Sentry issue-alert baseline, production monitoring first-run evidence, and production-like webhook alert-path evidence are now captured. |
 
 ## 3. Final Go/No-Go Decision
 
@@ -54,11 +54,11 @@ critical tester gates below are closed or explicitly risk-accepted by the owner.
 The no-PITR recovery risk is accepted only for this initial tester group.
 
 **Broader private beta recommendation:** NO-GO until restore-test evidence,
-Sentry alert routing, non-founder onboarding, and remaining manual QA evidence
-are complete or separately risk-accepted.
+non-founder onboarding, and remaining manual QA evidence are complete or
+separately risk-accepted.
 
-**Paid/public beta recommendation:** NO-GO until billing, legal, DNS, recovery,
-and monitoring ownership blockers are closed.
+**Paid/public beta recommendation:** NO-GO until legal, DNS, recovery, and
+remaining onboarding/deliverability blockers are closed.
 
 ## 4. Automated Verification Results
 
@@ -150,7 +150,7 @@ Open checks:
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
 | Stripe price IDs and webhook endpoint | Complete for paid/public beta | Billing owner | Evidence stored in `docs/operations/evidence/stripe-verification/2026-06-16-stripe-price-webhook-verification.md`. |
-| Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Capture webhook replay, stale-processing, out-of-order, failed-payment, cancellation, and reconciliation evidence. |
+| Stripe lifecycle and replay evidence | Complete for paid/public beta | Billing owner | Evidence captured in `docs/operations/evidence/stripe-verification/2026-06-18-stripe-lifecycle-replay-reconciliation-testmode.md`. |
 | Billing support path | Important before paid/public beta | Support owner | Confirm payment-failure and subscription-question routing uses the monitored support path. |
 
 ## 8. Auth And Account Checks
@@ -202,9 +202,9 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Zero-signup monitoring first-run evidence | Important before paid/public beta | Growth/analytics owner | Run `/api/cron/beta-monitoring` in the deployed environment and store the alert/no-alert result. |
-| Sentry alert rules | Critical before private beta | Engineering owner | Configure or verify the alert baseline in `docs/operations/BETA_SUPPORT_AND_ALERTING.md` and capture alert-rule, recipient, and test-delivery evidence. 2026-06-16 issue API read access succeeded and returned no unresolved production issues for the last 24 hours, but it does not prove alert routing. |
-| Webhook-failure monitoring first-run evidence | Important before paid/public beta | Billing owner | Verify `/api/cron/beta-monitoring` reports failed/stale webhook events and store evidence. |
+| Zero-signup monitoring first-run evidence | Complete for paid/public beta | Growth/analytics owner | Evidence captured in `docs/operations/evidence/2026-06-18-beta-monitoring-first-run.md`. |
+| Sentry alert rules | Complete for private beta | Engineering owner | Evidence captured in `docs/operations/evidence/sentry-alerts/2026-06-17-sentry-test-delivery.md`. On 2026-06-17 the required issue-alert baseline was created, the duplicate high-priority rule was removed, and all 9 alert rules sent successful test notifications to the monitored mailbox. Failed Stripe webhook and stale billing-processing alerting remain tracked under Beta Monitoring Cron. |
+| Webhook-failure monitoring first-run evidence | Complete for paid/public beta | Billing owner | Evidence captured in `docs/operations/evidence/stripe-verification/2026-06-18-stripe-lifecycle-replay-reconciliation-testmode.md`. |
 | Public/internal health evidence | Complete for private beta | Engineering owner | Evidence stored in `docs/operations/evidence/platform-dashboard/2026-06-16-vercel-supabase-sentry-dashboard-evidence.md`. |
 
 ## 11. Email And DNS Checks
@@ -278,9 +278,8 @@ deployed beta URL. The remaining manual checks include:
 | Password reset link behavior | Critical before private beta | QA owner | Verify reset delivery, single-use behavior, expiry, and post-reset sessions. |
 | Recovery tabletop and evidence | Risk accepted for initial private testers only; critical before broader rollout | Engineering owner | Restore validation is waived only for the initial tester group under the no-PITR risk acceptance; complete before broader rollout. |
 | Non-founder full journey | Critical before private beta | Product owner | Run signup through logout with a tester who has not seen the app. |
-| Sentry alert routing evidence | Critical before private beta | Engineering owner | Capture Sentry alert rules, notification destinations, recipients, and test alert delivery. |
 | Tester brief and known issues must be distributed | Critical before private beta | Product owner | Send `docs/beta/BETA_TESTER_BRIEF.md` and `docs/beta/BETA_KNOWN_ISSUES.md` to testers. |
-| Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Capture checkout, replay, out-of-order, failed-payment, cancellation, and reconciliation evidence. |
+| Stripe lifecycle and replay evidence | Complete for paid/public beta | Billing owner | Evidence captured in `docs/operations/evidence/stripe-verification/2026-06-18-stripe-lifecycle-replay-reconciliation-testmode.md`. |
 | DPA package legal approval | Critical before paid/public beta | Legal owner | Complete review of `docs/legal/DPA_TEMPLATE.md` and `docs/legal/DPA_READINESS.md`. |
 | SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure records, run `pnpm email:dns:check`, and verify delivered email headers. |
 
@@ -289,7 +288,7 @@ deployed beta URL. The remaining manual checks include:
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
 | Beta metrics ownership/tracking pending | Important before paid/public beta | Product owner | Assign dashboard owner and review cadence. |
-| Zero-signup monitoring first-run evidence pending | Important before paid/public beta | Growth/analytics owner | Verify the scheduled `/api/cron/beta-monitoring` run and store evidence. |
+| Zero-signup monitoring first-run evidence | Complete for paid/public beta | Growth/analytics owner | Evidence captured in `docs/operations/evidence/2026-06-18-beta-monitoring-first-run.md`. |
 | CodeQL and dependency-security workflow run evidence pending | Important before paid/public beta | Engineering owner | Capture GitHub run evidence after workflows are active. |
 | Supabase backup/PITR dashboard verification | Critical before paid/public beta | Engineering owner | Risk accepted only for the initial private tester group; enable backup/PITR coverage and file restore evidence before broader rollout, paid beta, or public beta. |
 
@@ -306,7 +305,7 @@ deployed beta URL. The remaining manual checks include:
 
 | Owner | Next action |
 | --- | --- |
-| Engineering owner | Capture CodeQL/security workflow evidence, run the recovery tabletop, confirm Sentry alerts, and enable/verify Supabase backup/PITR before broader rollout. |
+| Engineering owner | Capture CodeQL/security workflow evidence, run the recovery tabletop, verify Beta Monitoring Cron evidence, and enable/verify Supabase backup/PITR before broader rollout. |
 | Billing owner | Complete Stripe lifecycle/replay evidence, confirm reconciliation process, and confirm billing support path. |
 | Legal owner | Complete DPA approval, processor/subprocessor account evidence, and ICO evidence. |
 | Product owner | Distribute tester brief/known issues, run non-founder journey, assign metrics dashboard owner. |

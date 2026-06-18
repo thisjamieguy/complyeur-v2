@@ -24,6 +24,28 @@ interface ExistingWebhookEventRow {
   processing_started_at: string | null
 }
 
+interface StripeEntitlementEventAuditFields {
+  last_stripe_event_created_at: string | null
+  last_stripe_event_id: string | null
+  last_stripe_event_type: string | null
+}
+
+interface StripeEntitlementEventTimestampRow {
+  last_stripe_event_created_at: string | null
+}
+
+interface SubscriptionEntitlementLookupRow {
+  company_id: string
+  tier_slug: string | null
+  last_stripe_event_created_at: string | null
+}
+
+interface SubscriptionEntitlementLookupResult {
+  entitlement: SubscriptionEntitlementLookupRow
+  matchColumn: 'stripe_subscription_id' | 'company_id'
+  matchValue: string
+}
+
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature')
   if (!signature) {
@@ -87,13 +109,13 @@ async function processWebhookEvent(admin: SupabaseClient, event: Stripe.Event) {
 
   switch (event.type) {
     case 'checkout.session.completed':
-      await handleCheckoutCompleted(admin, event.data.object as Stripe.Checkout.Session)
+      await handleCheckoutCompleted(admin, event)
       return
     case 'customer.subscription.updated':
-      await handleSubscriptionUpdated(admin, event.data.object as Stripe.Subscription)
+      await handleSubscriptionUpdated(admin, event)
       return
     case 'customer.subscription.deleted':
-      await handleSubscriptionDeleted(admin, event.data.object as Stripe.Subscription)
+      await handleSubscriptionDeleted(admin, event)
       return
     case 'invoice.payment_failed':
       await handlePaymentFailed(admin, event.data.object as Stripe.Invoice)
@@ -101,6 +123,117 @@ async function processWebhookEvent(admin: SupabaseClient, event: Stripe.Event) {
     default:
       return
   }
+}
+
+function getStripeEventCreatedAtIso(event: Stripe.Event): string {
+  return new Date(event.created * 1000).toISOString()
+}
+
+function buildStripeEventAuditFields(
+  event: Stripe.Event
+): Pick<
+  StripeEntitlementEventAuditFields,
+  'last_stripe_event_created_at' | 'last_stripe_event_id' | 'last_stripe_event_type'
+> {
+  return {
+    last_stripe_event_created_at: getStripeEventCreatedAtIso(event),
+    last_stripe_event_id: event.id,
+    last_stripe_event_type: event.type,
+  }
+}
+
+function isStaleStripeEntitlementEvent(
+  event: Stripe.Event,
+  latestAppliedEventCreatedAt: string | null
+): boolean {
+  if (!latestAppliedEventCreatedAt) {
+    return false
+  }
+
+  const latestAppliedMs = Date.parse(latestAppliedEventCreatedAt)
+  const incomingMs = Date.parse(getStripeEventCreatedAtIso(event))
+
+  if (Number.isNaN(latestAppliedMs) || Number.isNaN(incomingMs)) {
+    return false
+  }
+
+  return incomingMs < latestAppliedMs
+}
+
+function logIgnoredStaleStripeEvent(
+  event: Stripe.Event,
+  latestAppliedEventCreatedAt: string | null,
+  target: string
+) {
+  console.info(
+    `[billing/webhook] Ignored stale ${event.type} event ${event.id} for ${target}; latest applied event timestamp is ${latestAppliedEventCreatedAt}`
+  )
+}
+
+async function findEntitlementForSubscriptionEvent(
+  admin: SupabaseClient,
+  subscription: Stripe.Subscription
+): Promise<SubscriptionEntitlementLookupResult | null> {
+  const subscriptionId = subscription.id
+
+  const { data: bySubscriptionId, error: bySubscriptionIdError } = await admin
+    .from('company_entitlements')
+    .select('company_id, tier_slug, last_stripe_event_created_at')
+    .eq('stripe_subscription_id', subscriptionId)
+    .single<SubscriptionEntitlementLookupRow>()
+
+  if (bySubscriptionIdError && bySubscriptionIdError.code !== 'PGRST116') {
+    throw bySubscriptionIdError
+  }
+
+  if (bySubscriptionId) {
+    return {
+      entitlement: bySubscriptionId,
+      matchColumn: 'stripe_subscription_id',
+      matchValue: subscriptionId,
+    }
+  }
+
+  const customerId =
+    typeof subscription.customer === 'string'
+      ? subscription.customer
+      : subscription.customer?.id ?? null
+
+  if (!customerId) {
+    return null
+  }
+
+  const { data: company, error: companyError } = await admin
+    .from('companies')
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle<{ id: string }>()
+
+  if (companyError) {
+    throw companyError
+  }
+
+  if (!company?.id) {
+    return null
+  }
+
+  const { data: byCompanyId, error: byCompanyIdError } = await admin
+    .from('company_entitlements')
+    .select('company_id, tier_slug, last_stripe_event_created_at')
+    .eq('company_id', company.id)
+    .single<SubscriptionEntitlementLookupRow>()
+
+  if (byCompanyIdError) {
+    throw byCompanyIdError
+  }
+
+  return byCompanyId
+    ? {
+        entitlement: byCompanyId,
+        matchColumn: 'company_id',
+        matchValue: company.id,
+      }
+    : null
 }
 
 async function claimWebhookEvent(
@@ -262,10 +395,8 @@ function isWebhookProcessingStale(
   return processingStartedAtMs < staleBeforeMs
 }
 
-async function handleCheckoutCompleted(
-  admin: SupabaseClient,
-  session: Stripe.Checkout.Session
-) {
+async function handleCheckoutCompleted(admin: SupabaseClient, event: Stripe.Event) {
+  const session = event.data.object as Stripe.Checkout.Session
   const userId = session.client_reference_id
   const planSlug = session.metadata?.plan_slug
   const metadataCompanyId = session.metadata?.company_id
@@ -326,6 +457,30 @@ async function handleCheckoutCompleted(
     }
   }
 
+  const { data: currentEntitlements, error: entitlementFetchError } = await admin
+    .from('company_entitlements')
+    .select('last_stripe_event_created_at')
+    .eq('company_id', companyId)
+    .single<StripeEntitlementEventTimestampRow>()
+
+  if (entitlementFetchError || !currentEntitlements) {
+    throw new Error(`No entitlements found for company ${companyId}`)
+  }
+
+  if (
+    isStaleStripeEntitlementEvent(
+      event,
+      currentEntitlements.last_stripe_event_created_at
+    )
+  ) {
+    logIgnoredStaleStripeEvent(
+      event,
+      currentEntitlements.last_stripe_event_created_at,
+      `company ${companyId}`
+    )
+    return
+  }
+
   const { data: tier, error: tierError } = await admin
     .from('tiers')
     .select('*')
@@ -354,6 +509,7 @@ async function handleCheckoutCompleted(
       can_api_access: tier.can_api_access,
       can_sso: tier.can_sso,
       can_audit_logs: tier.can_audit_logs,
+      ...buildStripeEventAuditFields(event),
     })
     .eq('company_id', companyId)
 
@@ -366,20 +522,30 @@ async function handleCheckoutCompleted(
   )
 }
 
-async function handleSubscriptionUpdated(
-  admin: SupabaseClient,
-  subscription: Stripe.Subscription
-) {
+async function handleSubscriptionUpdated(admin: SupabaseClient, event: Stripe.Event) {
+  const subscription = event.data.object as Stripe.Subscription
   const subscriptionId = subscription.id
 
-  const { data: entitlement, error: entitlementError } = await admin
-    .from('company_entitlements')
-    .select('company_id, tier_slug')
-    .eq('stripe_subscription_id', subscriptionId)
-    .single()
+  const lookup = await findEntitlementForSubscriptionEvent(admin, subscription)
 
-  if (entitlementError || !entitlement) {
+  if (!lookup) {
     throw new Error(`No entitlement found for subscription ${subscriptionId}`)
+  }
+
+  const { entitlement } = lookup
+
+  if (
+    isStaleStripeEntitlementEvent(
+      event,
+      entitlement.last_stripe_event_created_at
+    )
+  ) {
+    logIgnoredStaleStripeEvent(
+      event,
+      entitlement.last_stripe_event_created_at,
+      `subscription ${subscriptionId}`
+    )
+    return
   }
 
   const updates: Record<string, unknown> = {
@@ -387,6 +553,7 @@ async function handleSubscriptionUpdated(
     current_period_end: subscription.items.data[0]?.current_period_end
       ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString()
       : null,
+    ...buildStripeEventAuditFields(event),
   }
 
   const priceId = subscription.items.data[0]?.price?.id
@@ -415,18 +582,38 @@ async function handleSubscriptionUpdated(
   const { error: updateError } = await admin
     .from('company_entitlements')
     .update(updates)
-    .eq('stripe_subscription_id', subscriptionId)
+    .eq(lookup.matchColumn, lookup.matchValue)
 
   if (updateError) {
     throw updateError
   }
 }
 
-async function handleSubscriptionDeleted(
-  admin: SupabaseClient,
-  subscription: Stripe.Subscription
-) {
+async function handleSubscriptionDeleted(admin: SupabaseClient, event: Stripe.Event) {
+  const subscription = event.data.object as Stripe.Subscription
   const subscriptionId = subscription.id
+
+  const lookup = await findEntitlementForSubscriptionEvent(admin, subscription)
+
+  if (!lookup) {
+    throw new Error(`No entitlement found for subscription ${subscriptionId}`)
+  }
+
+  const { entitlement: currentEntitlements } = lookup
+
+  if (
+    isStaleStripeEntitlementEvent(
+      event,
+      currentEntitlements.last_stripe_event_created_at
+    )
+  ) {
+    logIgnoredStaleStripeEvent(
+      event,
+      currentEntitlements.last_stripe_event_created_at,
+      `subscription ${subscriptionId}`
+    )
+    return
+  }
 
   const { data: freeTier } = await admin
     .from('tiers')
@@ -440,6 +627,7 @@ async function handleSubscriptionDeleted(
     tier_slug: 'free',
     is_trial: false,
     trial_ends_at: null,
+    ...buildStripeEventAuditFields(event),
   }
 
   if (freeTier) {
@@ -458,7 +646,7 @@ async function handleSubscriptionDeleted(
   const { error: updateError } = await admin
     .from('company_entitlements')
     .update(updates)
-    .eq('stripe_subscription_id', subscriptionId)
+    .eq(lookup.matchColumn, lookup.matchValue)
 
   if (updateError) {
     throw updateError
@@ -490,20 +678,54 @@ async function handlePaymentFailed(admin: SupabaseClient, invoice: Stripe.Invoic
     return
   }
 
-  // Look up the company email via stripe_customer_id
-  const { data: company, error } = await admin
+  const { data: company, error: companyError } = await admin
     .from('companies')
-    .select('name, email')
+    .select('id, name')
     .eq('stripe_customer_id', customerId)
-    .maybeSingle()
+    .maybeSingle<{ id: string; name: string | null }>()
 
-  if (error || !company?.email) {
-    console.error('[billing/webhook] Could not find company for customer', { customerId, error })
+  if (companyError || !company?.id) {
+    console.error('[billing/webhook] Could not find company for customer', {
+      customerId,
+      error: companyError,
+    })
+    return
+  }
+
+  const { data: recipients, error: recipientsError } = await admin
+    .from('profiles')
+    .select('email, role')
+    .eq('company_id', company.id)
+    .not('email', 'is', null)
+
+  if (recipientsError || !recipients || recipients.length === 0) {
+    console.error('[billing/webhook] Could not find payment-failed email recipient', {
+      companyId: company.id,
+      customerId,
+      error: recipientsError,
+    })
+    return
+  }
+
+  const rolePriority = ['owner', 'admin', 'manager', 'viewer']
+  const sortedRecipients = [...recipients].sort((left, right) => {
+    const leftIndex = rolePriority.indexOf(left.role ?? '')
+    const rightIndex = rolePriority.indexOf(right.role ?? '')
+    return (leftIndex === -1 ? rolePriority.length : leftIndex) -
+      (rightIndex === -1 ? rolePriority.length : rightIndex)
+  })
+
+  const recipientEmail = sortedRecipients[0]?.email?.trim().toLowerCase()
+  if (!recipientEmail) {
+    console.error('[billing/webhook] Resolved payment-failed recipient had no usable email', {
+      companyId: company.id,
+      customerId,
+    })
     return
   }
 
   await sendPaymentFailedEmail({
-    recipientEmail: company.email,
+    recipientEmail,
     companyName: company.name ?? undefined,
     amountDue,
     attemptCount,
