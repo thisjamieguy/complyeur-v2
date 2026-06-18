@@ -4,6 +4,7 @@ import {
   sendTrialExpiringEmail,
   sendUpcomingRenewalEmail,
 } from '@/lib/services/email-service'
+import { getPrimaryCompanyRecipientEmail } from '@/lib/services/email-recipients'
 import { withCronAuth } from '@/lib/security/cron-auth'
 import { getPlanBySlug } from '@/lib/billing/plans'
 import { logger } from '@/lib/logger.mjs'
@@ -73,12 +74,25 @@ async function handleBillingCron(): Promise<NextResponse> {
 
     const { data: company } = await admin
       .from('companies')
-      .select('name, email')
+      .select('name')
       .eq('id', entitlement.company_id)
       .maybeSingle()
 
-    if (!company?.email) {
+    const recipient = await getPrimaryCompanyRecipientEmail(admin, entitlement.company_id)
+    if (recipient.error) {
+      results.trialExpiring.errors++
+      logger.error('[Billing Cron] Failed to resolve trial recipient', {
+        companyId: entitlement.company_id,
+        error: recipient.error,
+      })
+      continue
+    }
+
+    if (!recipient.email) {
       results.trialExpiring.skipped++
+      logger.warn('[Billing Cron] Skipping trial expiring email - no company recipient', {
+        companyId: entitlement.company_id,
+      })
       continue
     }
 
@@ -86,8 +100,8 @@ async function handleBillingCron(): Promise<NextResponse> {
     const daysRemaining = Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 
     const emailResult = await sendTrialExpiringEmail({
-      recipientEmail: company.email,
-      companyName: company.name ?? undefined,
+      recipientEmail: recipient.email,
+      companyName: company?.name ?? undefined,
       trialEndsAt,
       daysRemaining,
     })
@@ -148,12 +162,25 @@ async function handleBillingCron(): Promise<NextResponse> {
 
     const { data: company } = await admin
       .from('companies')
-      .select('name, email')
+      .select('name')
       .eq('id', entitlement.company_id)
       .maybeSingle()
 
-    if (!company?.email) {
+    const recipient = await getPrimaryCompanyRecipientEmail(admin, entitlement.company_id)
+    if (recipient.error) {
+      results.upcomingRenewal.errors++
+      logger.error('[Billing Cron] Failed to resolve renewal recipient', {
+        companyId: entitlement.company_id,
+        error: recipient.error,
+      })
+      continue
+    }
+
+    if (!recipient.email) {
       results.upcomingRenewal.skipped++
+      logger.warn('[Billing Cron] Skipping upcoming renewal email - no company recipient', {
+        companyId: entitlement.company_id,
+      })
       continue
     }
 
@@ -165,8 +192,8 @@ async function handleBillingCron(): Promise<NextResponse> {
       : 'your subscription fee'
 
     const emailResult = await sendUpcomingRenewalEmail({
-      recipientEmail: company.email,
-      companyName: company.name ?? undefined,
+      recipientEmail: recipient.email,
+      companyName: company?.name ?? undefined,
       planName,
       amountDue,
       renewsAt,

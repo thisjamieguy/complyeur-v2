@@ -144,6 +144,8 @@ async function main() {
   const projectRef = getProjectRef()
   const sender = parseEmailFrom(process.env.EMAIL_FROM || 'ComplyEur <hello@complyeur.com>')
   const currentConfig = await getCurrentAuthConfig(projectRef, accessToken)
+  const smtpConfigured = Boolean(currentConfig.smtp_host) && Boolean(currentConfig.smtp_port)
+  const needsResendSmtpConfig = !currentConfig.external_email_enabled || !smtpConfigured
 
   const payload: Record<string, string | number | boolean> = {
     smtp_admin_email: sender.email,
@@ -156,10 +158,10 @@ async function main() {
     mailer_templates_invite_content: readTemplate('invite'),
   }
 
-  if (!currentConfig.external_email_enabled) {
+  if (needsResendSmtpConfig) {
     if (!configureResendSmtp) {
       throw new Error(
-        'Supabase Auth custom SMTP is not enabled. Re-run with --configure-resend-smtp to switch Auth emails to Resend SMTP using RESEND_API_KEY.'
+        'Supabase Auth custom SMTP is disabled or incomplete. Re-run with --configure-resend-smtp to switch Auth emails to Resend SMTP using RESEND_API_KEY.'
       )
     }
 
@@ -180,7 +182,8 @@ async function main() {
           externalEmailEnabled: Boolean(currentConfig.external_email_enabled),
           smtpHost: currentConfig.smtp_host ?? null,
           smtpPort: currentConfig.smtp_port ?? null,
-          wouldConfigureResendSmtp: !currentConfig.external_email_enabled && configureResendSmtp,
+          smtpConfigured,
+          wouldConfigureResendSmtp: needsResendSmtpConfig && configureResendSmtp,
           templates: ['confirmation', 'recovery', 'invite'],
         },
         null,

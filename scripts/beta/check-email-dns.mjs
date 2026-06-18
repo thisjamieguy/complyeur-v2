@@ -76,7 +76,10 @@ function checkDmarc(records) {
 }
 
 function checkDkim(selector, records) {
-  const dkim = records.find((record) => record.toLowerCase().includes('v=dkim1'))
+  const dkim = records.find((record) => {
+    const lower = record.toLowerCase()
+    return lower.includes('v=dkim1') || lower.startsWith('p=')
+  })
   if (!dkim) {
     return {
       selector,

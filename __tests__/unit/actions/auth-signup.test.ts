@@ -12,6 +12,10 @@ vi.mock('@/lib/security/client-ip', () => ({
   getTrustedClientIpFromHeaders: vi.fn(() => '127.0.0.1'),
 }))
 
+vi.mock('@/lib/env', () => ({
+  getBaseUrl: vi.fn(() => 'https://complyeur.com'),
+}))
+
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
@@ -126,6 +130,7 @@ describe('signup action enumeration parity', () => {
       email: 'new@example.com',
       password: 'SecurePass123!',
       options: {
+        emailRedirectTo: 'https://complyeur.com/auth/callback?next=%2Fdashboard',
         data: {
           company_name: 'Test Company',
           full_name: 'Test User',
@@ -186,5 +191,14 @@ describe('signup action enumeration parity', () => {
       redirectTo:
         '/check-email?next=%2Fpricing%3Fautostart%3D1%26plan%3Dstarter%26billingInterval%3Dmonthly',
     })
+
+    expect(supabase.auth.signUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          emailRedirectTo:
+            'https://complyeur.com/auth/callback?next=%2Fpricing%3Fautostart%3D1%26plan%3Dstarter%26billingInterval%3Dmonthly',
+        }),
+      })
+    )
   })
 })

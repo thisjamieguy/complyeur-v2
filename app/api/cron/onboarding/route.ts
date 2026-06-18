@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendOnboardingDay1Email, sendOnboardingDay3Email } from '@/lib/services/email-service'
+import { getPrimaryCompanyRecipientEmail } from '@/lib/services/email-recipients'
 import { withCronAuth } from '@/lib/security/cron-auth'
 import { logger } from '@/lib/logger.mjs'
 
@@ -45,10 +46,9 @@ async function handleOnboardingCron(): Promise<NextResponse> {
 
   const { data: day1Candidates, error: day1Error } = await admin
     .from('companies')
-    .select('id, name, email')
+    .select('id, name')
     .lte('created_at', day1MinAge)
     .gte('created_at', maxAge)
-    .not('email', 'is', null)
 
   if (day1Error) {
     logger.error('[Onboarding Cron] Failed to query day1 candidates', { error: day1Error })
@@ -85,8 +85,26 @@ async function handleOnboardingCron(): Promise<NextResponse> {
       continue
     }
 
+    const recipient = await getPrimaryCompanyRecipientEmail(admin, company.id)
+    if (recipient.error) {
+      results.day1.errors++
+      logger.error('[Onboarding Cron] Failed to resolve day1 recipient', {
+        companyId: company.id,
+        error: recipient.error,
+      })
+      continue
+    }
+
+    if (!recipient.email) {
+      results.day1.skipped++
+      logger.warn('[Onboarding Cron] Skipping day1 email - no company recipient', {
+        companyId: company.id,
+      })
+      continue
+    }
+
     const emailResult = await sendOnboardingDay1Email({
-      recipientEmail: company.email!,
+      recipientEmail: recipient.email,
       companyName: company.name ?? undefined,
     })
 
@@ -113,10 +131,9 @@ async function handleOnboardingCron(): Promise<NextResponse> {
 
   const { data: day3Candidates, error: day3Error } = await admin
     .from('companies')
-    .select('id, name, email')
+    .select('id, name')
     .lte('created_at', day3MinAge)
     .gte('created_at', maxAge)
-    .not('email', 'is', null)
 
   if (day3Error) {
     logger.error('[Onboarding Cron] Failed to query day3 candidates', { error: day3Error })
@@ -164,8 +181,26 @@ async function handleOnboardingCron(): Promise<NextResponse> {
       continue
     }
 
+    const recipient = await getPrimaryCompanyRecipientEmail(admin, company.id)
+    if (recipient.error) {
+      results.day3.errors++
+      logger.error('[Onboarding Cron] Failed to resolve day3 recipient', {
+        companyId: company.id,
+        error: recipient.error,
+      })
+      continue
+    }
+
+    if (!recipient.email) {
+      results.day3.skipped++
+      logger.warn('[Onboarding Cron] Skipping day3 email - no company recipient', {
+        companyId: company.id,
+      })
+      continue
+    }
+
     const emailResult = await sendOnboardingDay3Email({
-      recipientEmail: company.email!,
+      recipientEmail: recipient.email,
       companyName: company.name ?? undefined,
     })
 

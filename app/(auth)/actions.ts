@@ -38,6 +38,12 @@ function getSignupRedirectPath(redirectTo: string | null | undefined): string {
   return `${SIGNUP_PARITY_REDIRECT}?next=${encodeURIComponent(validatedRedirect)}`
 }
 
+function getSignupConfirmationRedirectUrl(redirectTo: string | null | undefined): string {
+  const callbackUrl = new URL('/auth/callback', getBaseUrl())
+  callbackUrl.searchParams.set('next', validateRedirectUrl(redirectTo))
+  return callbackUrl.toString()
+}
+
 function isExistingAccountErrorMessage(message: string): boolean {
   const normalized = message.toLowerCase()
   return (
@@ -136,9 +142,11 @@ export async function signup(formData: FormData) {
   }
 
   const supabase = await createClient()
+  const requestedRedirect = formData.get('redirectTo') as string | null
   const signupRedirectPath = getSignupRedirectPath(
-    formData.get('redirectTo') as string | null
+    requestedRedirect
   )
+  const confirmationRedirectUrl = getSignupConfirmationRedirectUrl(requestedRedirect)
 
   const rawData = {
     name: formData.get('name') as string,
@@ -166,6 +174,7 @@ export async function signup(formData: FormData) {
     email: normalizedEmail,
     password,
     options: {
+      emailRedirectTo: confirmationRedirectUrl,
       data: {
         company_name: companyName,
         full_name: name,
