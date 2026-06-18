@@ -10,7 +10,7 @@
 - This file is intentionally minimal today and should be expanded only when new
   evidence is verified and linked.
 
-## TODO
+## Maintenance Notes
 
 - Expand this index as additional verified evidence is added.
 - Keep entries aligned with `docs/SOC2_READINESS_AUDIT.md`.

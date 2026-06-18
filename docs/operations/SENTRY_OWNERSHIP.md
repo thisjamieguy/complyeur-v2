@@ -1,6 +1,6 @@
 # Sentry Ownership
 
-Last updated: 2026-06-16
+Last updated: 2026-06-17
 
 Owner:
 James Walsh
@@ -40,7 +40,9 @@ Before this area can be scored 9/10, capture live evidence for:
 - Production Sentry runtime configuration: present in Vercel production environment
 - Production Sentry build authentication configuration: present in Vercel production environment
 - Production issue API access: verified on 2026-06-16 with a newly created read-capable personal token; unresolved production issue query returned `[]` for the last 24 hours
-- Live alert-rule destinations and recipients: not verified on 2026-06-16
+- Production Vercel `SENTRY_AUTH_TOKEN`: verified on 2026-06-17 as not valid for organization/project alert-rule APIs; read-only alert endpoints returned `401 Invalid org token`
+- Dedicated personal-token alert inventory read: verified on 2026-06-17; initial inventory showed one active high-priority issue rule and one disabled uptime rule before the private-beta alert baseline was completed
+- Live alert-rule destinations, recipients, and test delivery: verified on 2026-06-17 with 9 successful test notifications to the monitored mailbox
 
 ## Escalation Process
 
@@ -53,8 +55,13 @@ James Walsh reviews production Sentry alerts during the beta period.
 ## Verification Status
 
 Sentry ownership is assigned for beta. Production issue API read access was
-verified on 2026-06-16, but live alert routing was not verified.
+verified on 2026-06-16 with a dedicated read-capable personal token. On
+2026-06-17, a dedicated personal token also verified live rule inventory, while
+the Vercel production `SENTRY_AUTH_TOKEN` remained insufficient for alert-rule
+verification.
 
-The beta blocker remains open until Sentry alert rules, notification
-destinations, recipients, and test delivery are captured from the Sentry
-dashboard or a read-capable Sentry API token.
+The private-beta issue-alert baseline is now verified complete. On 2026-06-17,
+the operator created the required alert set, removed a duplicate high-priority
+rule, and confirmed 9 successful test notifications to the monitored mailbox.
+Failed Stripe webhook and stale billing-processing alerting remain tracked
+under the separate Beta Monitoring Cron evidence item.

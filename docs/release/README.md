@@ -4,15 +4,19 @@
 
 **Authoritative directory for release-readiness documentation.**
 
-- Current source of truth: `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`
+- Current beta source of truth: `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`
+- Current public-release source of truth:
+  `docs/release/PUBLIC_RELEASE_SOURCE_OF_TRUTH.md`
 - Supporting docs live in `docs/beta/`, `docs/operations/`, `docs/legal/`, and
   related folders.
 - Historical launch/readiness documents are preserved elsewhere in `docs/` and
   should not override the source-of-truth file below.
 
-The current beta launch source of truth is:
+The current release source-of-truth files are:
 
 - `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`
+- `docs/release/PUBLIC_RELEASE_SOURCE_OF_TRUTH.md`
+- `docs/release/PUBLIC_RELEASE_CHECKLIST.md`
 
 Use this directory for current release-readiness decisions, go/no-go status, and
 the consolidated list of blockers.

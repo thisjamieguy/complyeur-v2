@@ -9,7 +9,7 @@
 - Use this file as a lightweight index of discrete gap records only.
 - This file is intentionally incomplete and should not be read in isolation.
 
-## TODO
+## Maintenance Notes
 
 - Add entries only when a gap has a verified owner, status, and linked
   evidence.

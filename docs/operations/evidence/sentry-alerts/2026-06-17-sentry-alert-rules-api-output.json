@@ -1,0 +1,72 @@
+[
+  {
+    "path": "/api/0/organizations/james-walsh/combined-rules/?projectSlug=complyeur",
+    "status": 200,
+    "payload": [
+      {
+        "id": "6251073",
+        "name": "Uptime Monitoring for https://complyeur-gold-rc.onrender.com",
+        "status": "disabled",
+        "type": "uptime",
+        "projectSlug": "complyeur",
+        "url": "https://complyeur-gold-rc.onrender.com"
+      },
+      {
+        "id": "16480726",
+        "name": "Send a notification for high priority issues",
+        "status": "active",
+        "type": "rule",
+        "projects": [
+          "complyeur"
+        ],
+        "conditions": [
+          "Sentry marks a new issue as high priority",
+          "Sentry marks an existing issue as high priority"
+        ],
+        "actions": [
+          "Send a notification to IssueOwners and if none can be found then send a notification to ActiveMembers"
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/api/0/organizations/james-walsh/combined-rules/?project=4510433250050048",
+    "status": 200,
+    "payload": [
+      {
+        "id": "6251073",
+        "name": "Uptime Monitoring for https://complyeur-gold-rc.onrender.com",
+        "status": "disabled",
+        "type": "uptime",
+        "projectSlug": "complyeur",
+        "url": "https://complyeur-gold-rc.onrender.com"
+      },
+      {
+        "id": "16480726",
+        "name": "Send a notification for high priority issues",
+        "status": "active",
+        "type": "rule",
+        "projects": [
+          "complyeur"
+        ],
+        "conditions": [
+          "Sentry marks a new issue as high priority",
+          "Sentry marks an existing issue as high priority"
+        ],
+        "actions": [
+          "Send a notification to IssueOwners and if none can be found then send a notification to ActiveMembers"
+        ]
+      }
+    ]
+  },
+  {
+    "path": "/api/0/organizations/james-walsh/monitors/",
+    "status": 200,
+    "payload": []
+  },
+  {
+    "path": "/api/0/organizations/james-walsh/alert-rules/",
+    "status": 200,
+    "payload": []
+  }
+]

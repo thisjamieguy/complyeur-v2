@@ -1,0 +1,22 @@
+[
+  {
+    "path": "/api/0/projects/james-walsh/complyeur/rules/",
+    "status": 401,
+    "snippet": "{\"detail\":\"Invalid org token\"}"
+  },
+  {
+    "path": "/api/0/projects/james-walsh/complyeur/rules/configuration/",
+    "status": 401,
+    "snippet": "{\"detail\":\"Invalid org token\"}"
+  },
+  {
+    "path": "/api/0/organizations/james-walsh/combined-rules/?projectSlug=complyeur",
+    "status": 401,
+    "snippet": "{\"detail\":\"Invalid org token\"}"
+  },
+  {
+    "path": "/api/0/organizations/james-walsh/projects/",
+    "status": 401,
+    "snippet": "{\"detail\":\"Invalid org token\"}"
+  }
+]

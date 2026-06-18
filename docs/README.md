@@ -22,8 +22,10 @@ Use it to answer six questions quickly:
 
 - Current project status:
   [`docs/PROJECT_STATUS.md`](PROJECT_STATUS.md)
-- Release decision owner:
+- Release decision owners:
   [`docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`](release/BETA_RELEASE_SOURCE_OF_TRUTH.md)
+  and
+  [`docs/release/PUBLIC_RELEASE_SOURCE_OF_TRUTH.md`](release/PUBLIC_RELEASE_SOURCE_OF_TRUTH.md)
 - Architecture authority:
   [`docs/architecture/ENVIRONMENTS.md`](architecture/ENVIRONMENTS.md)
 - Migration authority:
@@ -38,7 +40,9 @@ Use it to answer six questions quickly:
 ## Release
 
 - **Authoritative:** [`docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`](release/BETA_RELEASE_SOURCE_OF_TRUTH.md)
+- **Authoritative for public paid release:** [`docs/release/PUBLIC_RELEASE_SOURCE_OF_TRUTH.md`](release/PUBLIC_RELEASE_SOURCE_OF_TRUTH.md)
 - Supporting:
+  - [`docs/release/PUBLIC_RELEASE_CHECKLIST.md`](release/PUBLIC_RELEASE_CHECKLIST.md)
   - [`docs/release/README.md`](release/README.md)
   - [`docs/beta/BETA_KNOWN_ISSUES.md`](beta/BETA_KNOWN_ISSUES.md)
   - [`docs/beta/BETA_SUCCESS_METRICS.md`](beta/BETA_SUCCESS_METRICS.md)

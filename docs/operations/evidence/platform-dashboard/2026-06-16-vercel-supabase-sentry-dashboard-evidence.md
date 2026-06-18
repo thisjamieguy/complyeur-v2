@@ -18,8 +18,8 @@ PARTIAL PASS
 - Supabase production project health, migrations, Edge Function state, RLS table
   summary, and advisor output are verified.
 - Sentry production issue API read access is verified with a newly created
-  read-capable personal token, but alert rules, recipients, and test alert
-  delivery remain unverified.
+  read-capable personal token, and the private-beta issue-alert baseline,
+  recipient routing, and test delivery were completed on 2026-06-17.
 - Supabase backup/PITR evidence is now explicitly blocked by current platform
   state: `supabase backups list` reports `pitr_enabled: false` and no listed
   physical backups.
@@ -225,17 +225,35 @@ Read API attempts:
   `HTTP 403 ... {"detail":"You do not have permission to perform this action."}`
 - Follow-up with a newly created read-capable personal token:
   `[]`
+- 2026-06-17 follow-up using a fresh `vercel env pull` of production config and
+  the production `SENTRY_AUTH_TOKEN` against project and organization alert
+  endpoints:
+  `401 ... {"detail":"Invalid org token"}`
+- 2026-06-17 follow-up using an operator-created personal Sentry token against
+  combined-rules and project rule endpoints succeeded and initially showed one
+  active high-priority issue notification rule plus one disabled uptime rule
+  for `https://complyeur-gold-rc.onrender.com`
+- 2026-06-17 operator follow-up in the Sentry UI created the required
+  private-beta issue-alert baseline, removed a duplicate high-priority rule,
+  and confirmed 9 successful test notifications delivered to the monitored
+  mailbox
 - Evidence:
-  `docs/operations/evidence/sentry-alerts/2026-06-16-sentry-production-issues-api-check.md`
+  `docs/operations/evidence/sentry-alerts/2026-06-16-sentry-production-issues-api-check.md`,
+  `docs/operations/evidence/sentry-alerts/2026-06-17-sentry-org-token-api-check.md`,
+  `docs/operations/evidence/sentry-alerts/2026-06-17-sentry-alert-rules-api-check.md`,
+  `docs/operations/evidence/sentry-alerts/2026-06-17-sentry-test-delivery.md`
 
 Conclusion:
 
 - Sentry runtime/build configuration is present.
 - Live Sentry project issue access is verified for the production issues query.
-- Live alert rules, notification recipients, and test alert delivery are still
-  not verified.
-- This remains a private-beta blocker until dashboard screenshots or API
-  evidence prove alert routing to a responsible recipient.
+- The production Vercel `SENTRY_AUTH_TOKEN` is not usable for alert-rule API
+  verification.
+- A dedicated personal token is usable for alert-rule API verification.
+- Live alert rules, notification recipients, and test alert delivery are now
+  verified for the private-beta issue-alert baseline.
+- Failed Stripe webhook and stale billing-processing monitoring remain tracked
+  under the separate Beta Monitoring Cron evidence item.
 
 ## Follow-Up
 
