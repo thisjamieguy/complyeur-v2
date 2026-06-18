@@ -15,6 +15,7 @@ import {
   generateTripsFromGantt,
 } from './gantt-parser';
 import { MAX_GANTT_COLUMNS } from './gantt/constants';
+import { parseDate } from './date-parser';
 
 const MAX_XLSX_WORKSHEETS = 5;
 const MAX_XLSX_COLUMNS = 200;
@@ -613,14 +614,9 @@ function formatDateValue(value: string): string {
     return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
   }
 
-  // Fallback: try native Date parsing (not recommended but catches edge cases)
-  try {
-    const date = new Date(value);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0];
-    }
-  } catch {
-    // Fall through
+  const parsed = parseDate(value, { preferredFormat: 'DD/MM' });
+  if (parsed.date) {
+    return parsed.date;
   }
 
   // Return original value if we can't parse it - validation will catch invalid dates

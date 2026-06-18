@@ -18,7 +18,7 @@ import type { SchengenMembershipData, RiskThresholds, StatusThresholds } from '.
  * Set to epoch — the 90/180 rule has been in effect since Schengen's
  * inception, so no trips should be artificially excluded.
  */
-export const DEFAULT_COMPLIANCE_START_DATE = new Date('1970-01-01');
+export const DEFAULT_COMPLIANCE_START_DATE = new Date('1970-01-01T00:00:00.000Z');
 
 /**
  * Maximum days allowed in Schengen within any 180-day rolling window.

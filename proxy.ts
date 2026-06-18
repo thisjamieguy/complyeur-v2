@@ -240,8 +240,10 @@ export async function proxy(request: NextRequest) {
     return withSecurityHeaders(supabaseResponse)
   }
 
-  // If user is authenticated and trying to access auth routes, redirect to dashboard
-  if (user && isAuthRoute) {
+  // Only redirect authenticated users away from auth pages on document requests.
+  // Server Action POSTs to auth routes must be allowed to complete, otherwise the
+  // client receives a redirect response instead of the expected action payload.
+  if (user && isAuthRoute && (request.method === 'GET' || request.method === 'HEAD')) {
     return redirectWithCookies(new URL('/dashboard', request.url))
   }
 
