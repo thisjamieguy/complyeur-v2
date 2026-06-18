@@ -89,9 +89,8 @@ test.describe('Route coverage matrix', () => {
       });
     }
 
-    test('root redirects to landing', async ({ page }) => {
+    test('root renders the landing page', async ({ page }) => {
       await page.goto('/', { waitUntil: 'domcontentloaded' });
-      await expect(page).toHaveURL(/\/landing$/);
       await expect(
         page.getByRole('heading', { name: /schengen compliance software for uk employers approving eu travel/i })
       ).toBeVisible();

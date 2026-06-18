@@ -7,12 +7,11 @@ test.use({
 });
 
 test.describe('Public smoke coverage', () => {
-  test('root redirects to landing and shows primary marketing CTAs', async ({ page }) => {
+  test('root renders the landing page and shows primary marketing CTAs', async ({ page }) => {
     test.setTimeout(60_000);
 
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
-    await expect(page).toHaveURL(/\/landing$/);
     await expect(
       page.getByRole('heading', { name: /schengen compliance software for uk employers approving eu travel/i })
     ).toBeVisible();
