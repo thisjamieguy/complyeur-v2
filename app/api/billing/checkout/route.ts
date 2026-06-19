@@ -213,7 +213,8 @@ export async function POST(request: NextRequest) {
     const guard = await requireMutationPermission(
       supabase,
       PERMISSIONS.BILLING_MANAGE,
-      'billingCheckout'
+      'billingCheckout',
+      { allowIncompleteOnboardingWithoutMfa: source === 'onboarding' }
     )
     if (!guard.allowed) {
       return NextResponse.json(

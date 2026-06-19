@@ -13,6 +13,7 @@ type AuthProfile = {
   company_id: string | null
   role: string | null
   is_superadmin: boolean | null
+  onboarding_completed_at?: string | null
   status?: string | null
   is_active?: boolean | null
   disabled_at?: string | null
@@ -39,6 +40,10 @@ export type MutationGuardSuccess = AuthGuardSuccess & {
 }
 
 export type MutationGuardResult = MutationGuardSuccess | AuthGuardFailure
+
+type MutationAuthorizationOptions = {
+  allowIncompleteOnboardingWithoutMfa?: boolean
+}
 
 async function getAuthProfile(
   supabase: Awaited<ReturnType<typeof createClient>>
@@ -129,6 +134,16 @@ function toMutationGuardSuccess(
   }
 }
 
+function shouldSkipMfaForIncompleteOnboarding(
+  profile: AuthProfile,
+  options?: MutationAuthorizationOptions
+): boolean {
+  return (
+    options?.allowIncompleteOnboardingWithoutMfa === true &&
+    profile.onboarding_completed_at === null
+  )
+}
+
 export async function requirePermission(
   supabase: Awaited<ReturnType<typeof createClient>>,
   permission: Permission
@@ -191,7 +206,8 @@ export async function requireAdminAccess(
 export async function requireMutationPermission(
   supabase: Awaited<ReturnType<typeof createClient>>,
   permission: Permission,
-  actionName: string
+  actionName: string,
+  options?: MutationAuthorizationOptions
 ): Promise<MutationGuardResult> {
   const { user, profile } = await getAuthProfile(supabase)
   if (!user || !profile?.company_id) {
@@ -206,9 +222,11 @@ export async function requireMutationPermission(
     return { allowed: false, status: 403, error: 'Forbidden' }
   }
 
-  const mfaFailure = await enforceMfaIfRequired(supabase, user, profile)
-  if (mfaFailure) {
-    return { allowed: false, ...mfaFailure }
+  if (!shouldSkipMfaForIncompleteOnboarding(profile, options)) {
+    const mfaFailure = await enforceMfaIfRequired(supabase, user, profile)
+    if (mfaFailure) {
+      return { allowed: false, ...mfaFailure }
+    }
   }
 
   const rateLimitFailure = await enforceMutationRateLimit(user.id, actionName)
