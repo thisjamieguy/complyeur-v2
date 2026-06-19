@@ -23,6 +23,7 @@ const VALID_PLAN_SLUGS: ReadonlySet<string> = new Set(
 )
 const VALID_CHECKOUT_SOURCES = new Set<CheckoutSource>(['pricing', 'onboarding'])
 const MAX_PROMOTION_CODE_LENGTH = 80
+const PAID_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing'])
 
 type StripePromotionCodeLookupResponse = {
   data?: Array<{ id?: string }>
@@ -163,6 +164,43 @@ async function resolvePromotionCodeId(
   return { promotionCodeId, error: null }
 }
 
+async function isInitialOnboardingCheckoutState(companyId: string): Promise<boolean> {
+  const admin = createAdminClient()
+
+  const [
+    { data: entitlements, error: entitlementsError },
+    { data: company, error: companyError },
+  ] = await Promise.all([
+    admin
+      .from('company_entitlements')
+      .select('subscription_status, stripe_subscription_id')
+      .eq('company_id', companyId)
+      .maybeSingle(),
+    admin
+      .from('companies')
+      .select('stripe_customer_id')
+      .eq('id', companyId)
+      .maybeSingle(),
+  ])
+
+  if (entitlementsError || companyError || !entitlements) {
+    console.error('[billing/checkout] Failed to verify initial onboarding checkout state:', {
+      companyId,
+      entitlementsError,
+      companyError,
+    })
+    return false
+  }
+
+  const subscriptionStatus = entitlements.subscription_status ?? 'none'
+
+  return (
+    !PAID_SUBSCRIPTION_STATUSES.has(subscriptionStatus) &&
+    !entitlements.stripe_subscription_id &&
+    !company?.stripe_customer_id
+  )
+}
+
 export async function POST(request: NextRequest) {
   let body: CheckoutRequestBody
 
@@ -213,7 +251,13 @@ export async function POST(request: NextRequest) {
     const guard = await requireMutationPermission(
       supabase,
       PERMISSIONS.BILLING_MANAGE,
-      'billingCheckout'
+      'billingCheckout',
+      {
+        shouldSkipMfa:
+          source === 'onboarding'
+            ? ({ companyId }) => isInitialOnboardingCheckoutState(companyId)
+            : undefined,
+      }
     )
     if (!guard.allowed) {
       return NextResponse.json(

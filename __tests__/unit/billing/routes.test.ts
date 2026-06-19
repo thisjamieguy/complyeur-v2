@@ -192,6 +192,168 @@ describe('billing routes', () => {
       expect(fetchMock).not.toHaveBeenCalled()
     })
 
+    it('allows incomplete onboarding owners to start onboarding checkout before MFA enrollment', async () => {
+      const supabase = createSupabaseMock({
+        tables: {
+          profiles: {
+            single: {
+              data: {
+                company_id: 'company_123',
+                role: 'owner',
+                is_superadmin: false,
+                status: 'active',
+                onboarding_completed_at: null,
+              },
+              error: null,
+            },
+          },
+          tiers: {
+            maybeSingle: {
+              data: {
+                slug: 'starter',
+                is_active: true,
+                stripe_price_id_monthly: 'price_monthly_123',
+                stripe_price_id_annual: 'price_annual_123',
+                max_employees: 50,
+                max_users: 5,
+                can_export_csv: true,
+                can_export_pdf: true,
+                can_forecast: true,
+                can_calendar: true,
+                can_bulk_import: true,
+                can_api_access: false,
+                can_sso: false,
+                can_audit_logs: false,
+              },
+              error: null,
+            },
+          },
+          companies: {
+            maybeSingle: {
+              data: { stripe_customer_id: null },
+              error: null,
+            },
+          },
+        },
+      })
+
+      createClientMock.mockResolvedValue(supabase)
+      createAdminClientMock.mockReturnValue(createSupabaseMock({
+        tables: {
+          company_entitlements: {
+            maybeSingle: {
+              data: {
+                subscription_status: 'none',
+                stripe_subscription_id: null,
+              },
+              error: null,
+            },
+          },
+          companies: {
+            maybeSingle: {
+              data: { stripe_customer_id: null },
+              error: null,
+            },
+          },
+        },
+      }))
+      enforceMfaForPrivilegedUserMock.mockResolvedValue({
+        ok: false,
+        reason: 'enroll',
+      })
+      fetchMock.mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          url: 'https://checkout.stripe.test/session/cs_test_onboarding',
+        }),
+      })
+      process.env.STRIPE_SECRET_KEY = 'sk_test_checkout_route'
+
+      const request = new NextRequest('https://app.test/api/billing/checkout', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          planSlug: 'starter',
+          billingInterval: 'monthly',
+          source: 'onboarding',
+        }),
+      })
+
+      const response = await checkoutPOST(request)
+      const payload = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(payload.url).toBe('https://checkout.stripe.test/session/cs_test_onboarding')
+      expect(enforceMfaForPrivilegedUserMock).not.toHaveBeenCalled()
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not let billable owners bypass checkout MFA by resetting onboarding state', async () => {
+      const supabase = createSupabaseMock({
+        tables: {
+          profiles: {
+            single: {
+              data: {
+                company_id: 'company_123',
+                role: 'owner',
+                is_superadmin: false,
+                status: 'active',
+                onboarding_completed_at: null,
+              },
+              error: null,
+            },
+          },
+        },
+      })
+
+      createClientMock.mockResolvedValue(supabase)
+      createAdminClientMock.mockReturnValue(createSupabaseMock({
+        tables: {
+          company_entitlements: {
+            maybeSingle: {
+              data: {
+                subscription_status: 'active',
+                stripe_subscription_id: 'sub_123',
+              },
+              error: null,
+            },
+          },
+          companies: {
+            maybeSingle: {
+              data: { stripe_customer_id: 'cus_123' },
+              error: null,
+            },
+          },
+        },
+      }))
+      enforceMfaForPrivilegedUserMock.mockResolvedValue({
+        ok: false,
+        reason: 'verify',
+      })
+
+      const request = new NextRequest('https://app.test/api/billing/checkout', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          planSlug: 'starter',
+          billingInterval: 'monthly',
+          source: 'onboarding',
+        }),
+      })
+
+      const response = await checkoutPOST(request)
+      const payload = await response.json()
+
+      expect(response.status).toBe(403)
+      expect(payload.error).toBe('MFA required. Complete setup or verification to continue.')
+      expect(enforceMfaForPrivilegedUserMock).toHaveBeenCalledTimes(1)
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+
     it('creates a Stripe checkout session with the expected payload', async () => {
       const supabase = createSupabaseMock({
         tables: {
