@@ -49,5 +49,32 @@ export {
   isPotentialCsvInjection,
 } from './sanitize'
 
+// Travel audit engine + types
+export {
+  buildEmployeeTravelAudit,
+  buildCompanyTravelAudit,
+} from './travel-audit'
+export type {
+  AuditTripInput,
+  AuditEmployeeInput,
+  AuditWindow,
+  AuditOptions,
+  CountryPresence,
+  TravelAuditTotals,
+  EmployeeTravelAudit,
+  CompanyTravelAudit,
+} from './travel-audit'
+
+// Travel audit CSV
+export {
+  generateIndividualAuditCsv,
+  generateCompanyAuditCsv,
+  getIndividualAuditCsvFilename,
+  getCompanyAuditCsvFilename,
+} from './travel-audit-csv'
+
+// Travel audit PDF: import directly from '@/lib/exports/travel-audit-pdf'
+// to avoid pulling @react-pdf/renderer into unrelated module graphs.
+
 // PDF functions: import directly from '@/lib/exports/pdf-generator'
 // to avoid pulling @react-pdf/renderer into unrelated module graphs.

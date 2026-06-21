@@ -29,6 +29,12 @@ import {
   getFutureAlertsCsvFilename,
   riskLevelToStatus,
   forecastRiskToStatus,
+  buildEmployeeTravelAudit,
+  buildCompanyTravelAudit,
+  generateIndividualAuditCsv,
+  generateCompanyAuditCsv,
+  getIndividualAuditCsvFilename,
+  getCompanyAuditCsvFilename,
   type ExportOptions,
   type ExportResult,
   type EmployeeExportRow,
@@ -36,6 +42,8 @@ import {
   type TripExportRow,
   type PdfMetadata,
   type FutureAlertExportRow,
+  type AuditEmployeeInput,
+  type AuditWindow,
 } from '@/lib/exports'
 // PDF — direct import avoids pulling @react-pdf/renderer into barrel consumers
 import {
@@ -45,10 +53,17 @@ import {
   generateFutureAlertsPdf,
   getFutureAlertsPdfFilename,
 } from '@/lib/exports/pdf-generator'
+import {
+  generateIndividualAuditPdf,
+  generateCompanyAuditPdf,
+  getIndividualAuditPdfFilename,
+  getCompanyAuditPdfFilename,
+  type AuditPdfMeta,
+} from '@/lib/exports/travel-audit-pdf'
 import { getCountryName } from '@/lib/constants/schengen-countries'
 import { calculateFutureJobCompliance } from '@/lib/services/forecast-service'
 import type { ForecastTrip } from '@/types/forecast'
-import { exportOptionsSchema } from '@/lib/validations/exports'
+import { exportOptionsSchema, travelAuditOptionsSchema } from '@/lib/validations/exports'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { requireExportPermission } from '@/lib/security/authorization'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
@@ -352,7 +367,11 @@ async function logExport(
   companyId: string,
   exportType: 'csv' | 'pdf',
   metadata: {
-    reportType: 'compliance_summary' | 'individual_employee' | 'future_alerts'
+    reportType:
+      | 'compliance_summary'
+      | 'individual_employee'
+      | 'future_alerts'
+      | 'travel_audit'
     employeeId?: string
     recordCount: number
     dateRange: { start: string; end: string }
@@ -384,7 +403,11 @@ async function logExport(
 export interface RecentExport {
   id: string
   documentId: string
-  reportType: 'individual_employee' | 'compliance_summary' | 'future_alerts'
+  reportType:
+    | 'individual_employee'
+    | 'compliance_summary'
+    | 'future_alerts'
+    | 'travel_audit'
   exportType: 'csv' | 'pdf'
   recordCount: number
   dateRange: { start: string; end: string }
@@ -634,6 +657,209 @@ async function exportFutureAlerts(
         error instanceof Error
           ? error.message
           : 'Failed to generate future alerts export',
+    }
+  }
+}
+
+/**
+ * Options for a Travel Audit export.
+ */
+export interface TravelAuditOptions {
+  /** Audit scope */
+  scope: 'individual' | 'company'
+  /** Employee ID (required when scope is 'individual') */
+  employeeId?: string
+  /** Date range / time frame for the audit (ISO YYYY-MM-DD) */
+  dateRange: { start: string; end: string }
+  /** Optional ISO country-code filter for customised reports */
+  countries?: string[]
+  /** Export format */
+  format: 'csv' | 'pdf'
+}
+
+/**
+ * Generates a Travel Audit report (individual employee or company-wide).
+ *
+ * Reports cover countries visited, days per country, and the working-vs-rest
+ * day split, over a set time frame with optional country filtering — suitable
+ * for third-party / compliance requests.
+ */
+export async function exportTravelAudit(
+  options: TravelAuditOptions
+): Promise<ExportResult> {
+  const validation = travelAuditOptionsSchema.safeParse(options)
+  if (!validation.success) {
+    const errors = validation.error.issues.map((e) => e.message).join(', ')
+    return { success: false, error: errors }
+  }
+
+  const opts = validation.data
+  const supabase = await createClient()
+
+  const auth = await requireExportPermission(supabase, opts.format)
+  if (!auth.allowed) {
+    return { success: false, error: auth.error }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(auth.user.id, 'exportTravelAudit')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error }
+  }
+
+  const entitlementFlag =
+    opts.format === 'pdf' ? ('can_export_pdf' as const) : ('can_export_csv' as const)
+  const hasEntitlement = await checkEntitlement(entitlementFlag)
+  if (!hasEntitlement) {
+    return {
+      success: false,
+      error: `${opts.format.toUpperCase()} export is not available on your current plan. Please upgrade to access this feature.`,
+    }
+  }
+
+  if (!auth.profile.company_id) {
+    return { success: false, error: 'No company associated with user' }
+  }
+
+  const companyId = auth.profile.company_id
+  const user = auth.user
+
+  try {
+    let query = supabase
+      .from('employees')
+      .select(
+        `
+        id,
+        name,
+        trips!trips_employee_id_fkey (
+          country,
+          entry_date,
+          exit_date,
+          is_private,
+          ghosted,
+          non_working_days
+        )
+      `
+      )
+      .eq('company_id', companyId)
+      .order('name')
+
+    if (opts.scope === 'individual' && opts.employeeId) {
+      query = query.eq('id', opts.employeeId)
+    }
+
+    const [employeesResult, companyResult] = await Promise.all([
+      query,
+      supabase.from('companies').select('name').eq('id', companyId).single(),
+    ])
+
+    const { data: employees, error: fetchError } = employeesResult
+    if (fetchError) {
+      console.error('[Export] Database error:', fetchError)
+      return { success: false, error: 'Failed to fetch employee data' }
+    }
+    if (!employees || employees.length === 0) {
+      return { success: false, error: 'No employees found' }
+    }
+
+    const auditEmployees: AuditEmployeeInput[] = employees.map((e) => ({
+      id: e.id,
+      name: e.name,
+      trips: (e.trips || []).map((t) => ({
+        country: t.country,
+        entryDate: t.entry_date,
+        exitDate: t.exit_date,
+        isPrivate: t.is_private ?? false,
+        ghosted: t.ghosted ?? false,
+        nonWorkingDays: t.non_working_days ?? 0,
+      })),
+    }))
+
+    const window: AuditWindow = {
+      start: opts.dateRange.start,
+      end: opts.dateRange.end,
+    }
+    const auditOptions = { countries: opts.countries }
+
+    const documentId = `AUD-${new Date().getFullYear()}-${crypto
+      .randomUUID()
+      .slice(0, 6)
+      .toUpperCase()}`
+    const companyName = companyResult.data?.name || 'Company'
+    const generatedAt = new Date().toISOString()
+    const generatedBy = user.email || 'Unknown'
+
+    let fileContent: string
+    let fileName: string
+    let mimeType: string
+    let recordCount: number
+
+    if (opts.scope === 'individual') {
+      const audit = buildEmployeeTravelAudit(auditEmployees[0], window, auditOptions)
+      recordCount = audit.totals.countryCount
+
+      if (opts.format === 'csv') {
+        fileContent = generateIndividualAuditCsv(audit, window)
+        fileName = getIndividualAuditCsvFilename(audit.employeeName)
+        mimeType = 'text/csv;charset=utf-8'
+      } else {
+        const meta: AuditPdfMeta = {
+          documentId,
+          generatedAt,
+          generatedBy,
+          companyName,
+          window,
+          version: '2.0.0',
+        }
+        const buf = await generateIndividualAuditPdf(audit, meta)
+        fileContent = Buffer.from(buf).toString('base64')
+        fileName = getIndividualAuditPdfFilename(audit.employeeName)
+        mimeType = 'application/pdf'
+      }
+    } else {
+      const audit = buildCompanyTravelAudit(auditEmployees, window, auditOptions)
+      recordCount = audit.employees.length
+
+      if (opts.format === 'csv') {
+        fileContent = generateCompanyAuditCsv(audit, window)
+        fileName = getCompanyAuditCsvFilename()
+        mimeType = 'text/csv;charset=utf-8'
+      } else {
+        const meta: AuditPdfMeta = {
+          documentId,
+          generatedAt,
+          generatedBy,
+          companyName,
+          window,
+          version: '2.0.0',
+        }
+        const buf = await generateCompanyAuditPdf(audit, meta)
+        fileContent = Buffer.from(buf).toString('base64')
+        fileName = getCompanyAuditPdfFilename()
+        mimeType = 'application/pdf'
+      }
+    }
+
+    await logExport(supabase, user.id, companyId, opts.format, {
+      reportType: 'travel_audit',
+      employeeId: opts.scope === 'individual' ? opts.employeeId : undefined,
+      recordCount,
+      dateRange: opts.dateRange,
+      documentId,
+    })
+
+    return {
+      success: true,
+      fileName,
+      mimeType,
+      content: fileContent,
+      documentId,
+    }
+  } catch (error) {
+    console.error('[Export] Error generating travel audit:', error)
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to generate travel audit',
     }
   }
 }
