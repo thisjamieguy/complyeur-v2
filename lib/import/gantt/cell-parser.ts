@@ -15,7 +15,9 @@ import type { GanttCell } from './types';
  *
  * Everything after the second hyphen is client info - ignored.
  */
-function extractCountryFromText(text: string): { code: string | null; isTravelDay: boolean } {
+function extractCountryFromText(
+  text: string
+): { code: string | null; isTravelDay: boolean; isNonWorkingDay: boolean } {
   const trimmed = text.trim();
 
   // Check for travel day prefix (tr-XX)
@@ -28,7 +30,11 @@ function extractCountryFromText(text: string): { code: string | null; isTravelDa
   if (nwMatch) {
     const code = nwMatch[1].toUpperCase();
     if (KNOWN_COUNTRY_CODES.has(code)) {
-      return { code: code === 'UK' ? 'GB' : code, isTravelDay: false };
+      return {
+        code: code === 'UK' ? 'GB' : code,
+        isTravelDay: false,
+        isNonWorkingDay: true,
+      };
     }
   }
 
@@ -45,6 +51,7 @@ function extractCountryFromText(text: string): { code: string | null; isTravelDa
       return {
         code: potentialCode === 'UK' ? 'GB' : potentialCode,
         isTravelDay,
+        isNonWorkingDay: false,
       };
     }
 
@@ -56,11 +63,15 @@ function extractCountryFromText(text: string): { code: string | null; isTravelDa
   if (/^[A-Z]{2}$/i.test(trimmed)) {
     const upper = trimmed.toUpperCase();
     if (KNOWN_COUNTRY_CODES.has(upper)) {
-      return { code: upper === 'UK' ? 'GB' : upper, isTravelDay: false };
+      return {
+        code: upper === 'UK' ? 'GB' : upper,
+        isTravelDay: false,
+        isNonWorkingDay: false,
+      };
     }
   }
 
-  return { code: null, isTravelDay: false };
+  return { code: null, isTravelDay: false, isNonWorkingDay: false };
 }
 
 /**
@@ -80,6 +91,7 @@ export function parseCell(value: unknown, rowIdx: number, colIdx: number): Gantt
       countryCode: null,
       isSchengen: false,
       isTravelDay: false,
+      isNonWorkingDay: false,
       countsAsDay: false,
     };
   }
@@ -97,6 +109,7 @@ export function parseCell(value: unknown, rowIdx: number, colIdx: number): Gantt
       countryCode: result.code,
       isSchengen: result.isSchengen,
       isTravelDay: extracted.isTravelDay,
+      isNonWorkingDay: extracted.isNonWorkingDay,
       countsAsDay: result.isSchengen, // Only Schengen countries count for 90/180
     };
   }
@@ -109,6 +122,7 @@ export function parseCell(value: unknown, rowIdx: number, colIdx: number): Gantt
     countryCode: null,
     isSchengen: false,
     isTravelDay: false,
+    isNonWorkingDay: false,
     countsAsDay: false,
   };
 }

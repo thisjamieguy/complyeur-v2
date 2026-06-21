@@ -50,6 +50,12 @@ export const tripSchema = z
       .transform((val) => val?.trim() || null),
     is_private: z.boolean().optional().default(false),
     ghosted: z.boolean().optional().default(false),
+    non_working_days: z
+      .number()
+      .int('Rest days must be a whole number')
+      .min(0, 'Rest days cannot be negative')
+      .optional()
+      .default(0),
   })
   // Validate exit date is on or after entry date
   .refine(
@@ -74,6 +80,19 @@ export const tripSchema = z
     {
       message: 'Trip duration cannot exceed 180 days',
       path: ['exit_date'],
+    }
+  )
+  // Rest days cannot exceed the trip duration
+  .refine(
+    (data) => {
+      const entry = parseDateOnlyAsUTC(data.entry_date)
+      const exit = parseDateOnlyAsUTC(data.exit_date)
+      const duration = getTripDurationDays(entry, exit)
+      return (data.non_working_days ?? 0) <= duration
+    },
+    {
+      message: 'Rest days cannot exceed the trip length',
+      path: ['non_working_days'],
     }
   )
 
@@ -113,6 +132,11 @@ export const tripUpdateSchema = z
       .transform((val) => val?.trim() || null),
     is_private: z.boolean().optional(),
     ghosted: z.boolean().optional(),
+    non_working_days: z
+      .number()
+      .int('Rest days must be a whole number')
+      .min(0, 'Rest days cannot be negative')
+      .optional(),
   })
   .refine(
     (data) => {

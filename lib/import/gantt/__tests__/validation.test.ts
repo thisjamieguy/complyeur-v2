@@ -30,6 +30,7 @@ function makeCell(rawValue: string, countryCode: string | null) {
     countryCode,
     isSchengen: !!countryCode,
     isTravelDay: false,
+    isNonWorkingDay: false,
     countsAsDay: !!countryCode,
   }
 }

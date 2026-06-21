@@ -16,6 +16,8 @@ export interface GanttCell {
   isSchengen: boolean;
   /** Whether this is a travel day (TR prefix) */
   isTravelDay: boolean;
+  /** Whether this is a non-working day (n/w prefix) — still abroad, but rest */
+  isNonWorkingDay: boolean;
   /** Whether this day should count for trip aggregation */
   countsAsDay: boolean;
 }
@@ -82,6 +84,8 @@ export interface GeneratedTrip {
   isSchengen: boolean;
   /** Number of days in this trip */
   dayCount: number;
+  /** Rest / non-working days within the trip (from "n/w" cells) */
+  nonWorkingDays: number;
   /** Source row number in original file (for error reporting) */
   sourceRow: number;
 }

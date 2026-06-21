@@ -86,6 +86,8 @@ export interface ParsedTripRow {
   exit_date: string;
   country: string;
   purpose?: string;
+  /** Rest / non-working days within the trip (from Gantt "n/w" cells) */
+  non_working_days?: number;
   // Fields added for Gantt-generated trips
   _generated?: boolean;
   _dayCount?: number;
