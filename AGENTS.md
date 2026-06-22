@@ -193,6 +193,27 @@ Use the smallest verification that proves the change:
 - Security or tenant isolation changes: targeted security tests and regression tests.
 - Before shipping: `pnpm typecheck`, `pnpm lint`, relevant tests, and `pnpm build`.
 
+## Git Workflow Decisions
+
+- Commit when a change is logically complete or a useful local checkpoint, such
+  as a finished bug fix, passing targeted test, focused refactor, or docs update.
+- Push when a committed branch should be backed up, made visible on GitHub, or
+  run through CI/preview deployment checks.
+- Open a draft PR when work is useful to share but not ready to merge, such as
+  incomplete work, risky changes needing feedback, or changes that need preview
+  validation before final polish.
+- Open a ready PR when the change is complete, scoped, tested, and mergeable
+  with no known blockers, unresolved migrations, or missing environment updates.
+- When starting work that is completely unrelated to the current branch, create
+  or switch to a new focused branch before editing, using the `codex/` prefix by
+  default. Keep unrelated work out of the active branch.
+- If the current branch has uncommitted changes, do not stash, commit, move, or
+  mix them into a new branch without explicit user direction; pause and ask how
+  to separate the work.
+- Typical flow: small finished fix -> commit -> push -> ready PR; incomplete or
+  risky work -> commit -> push -> draft PR; local experiment -> no PR yet.
+- Continue to commit, push, or open PRs only when explicitly asked.
+
 ## Working Style
 
 - Prefer clear diagnosis before edits.
