@@ -289,7 +289,7 @@ Outside the repo, but real launch blockers:
 ## The Critical Path (do these in order)
 
 **To start private beta (🟢 close to done):**
-1. ✅ Verify auth + password-reset email delivery across Gmail/Outlook/corporate.
+1. ✅ Verify auth + password-reset email delivery across Gmail/Outlook/corporate, including reset-link single-use, expiry, and post-reset session invalidation.
 2. ✅ Run the disaster-recovery / restore tabletop and file evidence.
 3. ✅ Configure + test Sentry alert routing; capture `/api/health` evidence.
 4. ✅ One non-founder completes the full signup → trip → compliance → logout journey.
