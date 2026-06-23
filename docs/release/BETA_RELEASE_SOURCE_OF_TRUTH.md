@@ -143,8 +143,9 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Placeholder Stripe price IDs | Critical before paid/public beta | Billing owner | Create products/prices, sync IDs into `tiers`, and audit with the existing Stripe scripts. |
-| Stripe webhook endpoint in target environment | Critical before paid/public beta | Billing owner | Configure or validate webhook endpoint for the deployed beta URL. |
+| Production Stripe price IDs | Complete for current production config | Billing owner | 2026-06-23 live audit passed for all six configured prices; re-run after any pricing change. |
+| Stripe webhook endpoint in target environment | Complete for current production endpoint | Billing owner | 2026-06-23 live check passed for `https://complyeur.com/api/billing/webhook`; re-run after endpoint or event changes. |
+| Live successful checkout and entitlement provisioning | Complete for happy path | Billing owner | 2026-06-23 live GBP 1 discounted subscription payment processed and app entitlement provisioned. |
 | Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Capture webhook replay, stale-processing, out-of-order, failed-payment, cancellation, and reconciliation evidence. |
 | Billing support path | Important before paid/public beta | Support owner | Confirm payment-failure and subscription-question routing uses the monitored support path. |
 
@@ -272,7 +273,7 @@ deployed beta URL. The remaining manual checks include:
 | Sentry alert routing evidence | Critical before private beta | Engineering owner | Capture Sentry alert rules, notification destinations, recipients, and test alert delivery. |
 | Public/internal health evidence | Critical before private beta | Engineering owner | Capture public `/api/health` and protected `/api/internal/health` evidence for the deployed environment. |
 | Tester brief and known issues must be distributed | Critical before private beta | Product owner | Send `docs/beta/BETA_TESTER_BRIEF.md` and `docs/beta/BETA_KNOWN_ISSUES.md` to testers. |
-| Placeholder Stripe price IDs | Critical before paid/public beta | Billing owner | Replace and audit IDs. |
+| Stripe lifecycle and failure-mode evidence | Critical before paid/public beta | Billing owner | Capture replay, stale/out-of-order, failed-payment, cancellation, failed-webhook monitoring, reconciliation, and `current_period_end` evidence. |
 | DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review. |
 | SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure and verify DNS/email headers. |
 

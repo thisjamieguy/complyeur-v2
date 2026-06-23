@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type Stripe from 'stripe'
-import { constructWebhookEvent } from '@/lib/billing/stripe'
+import { constructWebhookEvent, getStripe } from '@/lib/billing/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendPaymentFailedEmail } from '@/lib/services/email-service'
 
@@ -336,6 +336,11 @@ async function handleCheckoutCompleted(
     throw new Error(`Unknown tier slug: ${planSlug}`)
   }
 
+  const subscription = await getStripe().subscriptions.retrieve(subscriptionId)
+  const currentPeriodEnd = subscription.items.data[0]?.current_period_end
+    ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString()
+    : null
+
   const { error: updateError } = await admin
     .from('company_entitlements')
     .update({
@@ -344,6 +349,7 @@ async function handleCheckoutCompleted(
       trial_ends_at: null,
       stripe_subscription_id: subscriptionId,
       subscription_status: 'active',
+      current_period_end: currentPeriodEnd,
       max_employees: tier.max_employees,
       max_users: tier.max_users,
       can_export_csv: tier.can_export_csv,

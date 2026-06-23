@@ -89,7 +89,7 @@ function getDaysRemainingClassName(
       return 'text-slate-900'
     case 'exempt':
     default:
-      return 'text-brand-500'
+      return 'text-slate-500'
   }
 }
 
@@ -121,11 +121,11 @@ const EmployeeCard = memo(function EmployeeCard({
   const isExempt = employee.risk_level === 'exempt'
 
   return (
-    <div className="bg-white border border-slate-200/80 rounded-lg p-4 space-y-3">
+    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <Link
           href={`/employee/${employee.id}`}
-          className="font-medium text-brand-900 hover:underline"
+          className="font-medium text-slate-900 hover:underline"
         >
           {employee.name}
         </Link>
@@ -148,16 +148,16 @@ const EmployeeCard = memo(function EmployeeCard({
       <div className="grid grid-cols-2 gap-2 text-sm">
         {isExempt ? (
           <div className="col-span-2">
-            <span className="text-brand-600">EU/Schengen citizen — exempt from 90/180-day tracking</span>
+            <span className="text-slate-600">EU/Schengen citizen — exempt from 90/180-day tracking</span>
           </div>
         ) : (
           <>
             <div>
-              <span className="text-brand-600">Days Used:</span>
+              <span className="text-slate-600">Days Used:</span>
               <span className="ml-2 font-medium">{employee.days_used} / 90</span>
             </div>
             <div>
-              <span className="text-brand-600">Remaining:</span>
+              <span className="text-slate-600">Remaining:</span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
@@ -169,7 +169,7 @@ const EmployeeCard = memo(function EmployeeCard({
                     {employee.days_remaining}
                   </span>
                 </TooltipTrigger>
-                <TooltipContent className="w-64 p-3 shadow-xl border-slate-200 bg-white" side="bottom">
+                <TooltipContent className="w-64 border-slate-200 bg-white p-3 shadow-lg" side="bottom">
                   <ComplianceCalculationTrace employee={employee} />
                 </TooltipContent>
               </Tooltip>
@@ -177,13 +177,13 @@ const EmployeeCard = memo(function EmployeeCard({
           </>
         )}
         <div className="col-span-2">
-          <span className="text-brand-600">Last Trip:</span>
+          <span className="text-slate-600">Last Trip:</span>
           <span className="ml-2">{formatDate(employee.last_trip_date)}</span>
         </div>
       </div>
       <Link
         href={`/employee/${employee.id}`}
-        className="pt-2 border-t border-slate-100 flex items-center justify-center gap-2 text-sm text-brand-500 hover:text-brand-800"
+        className="flex items-center justify-center gap-2 border-t border-slate-100 pt-2 text-sm text-slate-500 hover:text-slate-900"
       >
         <Eye className="h-4 w-4" />
         <span>View Details</span>
@@ -235,7 +235,7 @@ function ComplianceCalculationTrace({ employee }: { employee: EmployeeCompliance
         {employee.max_stay_days !== undefined && (
           <div className="flex justify-between items-center text-xs">
             <span className="text-slate-500">Max Stay if Entering Today:</span>
-            <span className="font-semibold text-brand-600">{employee.max_stay_days} days</span>
+            <span className="font-semibold text-slate-600">{employee.max_stay_days} days</span>
           </div>
         )}
 
@@ -467,16 +467,16 @@ export function ComplianceTable({
       </div>
 
       {/* Desktop table view */}
-      <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-md overflow-hidden">
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
         <Table>
           <TableHeader>
-            <TableRow className="bg-brand-50">
-              <TableHead className="font-semibold text-brand-700">Employee</TableHead>
-              <TableHead className="font-semibold text-brand-700 w-[130px]">Status</TableHead>
-              <TableHead className="font-semibold text-brand-700 w-[100px]">Days Used</TableHead>
-              <TableHead className="font-semibold text-brand-700 w-[130px]">Days Remaining</TableHead>
-              <TableHead className="font-semibold text-brand-700 w-[120px]">Last Trip</TableHead>
-              <TableHead className="font-semibold text-brand-700 w-[140px]">Actions</TableHead>
+            <TableRow className="bg-slate-50">
+              <TableHead className="font-semibold text-slate-700">Employee</TableHead>
+              <TableHead className="w-[130px] font-semibold text-slate-700">Status</TableHead>
+              <TableHead className="w-[100px] font-semibold text-slate-700">Days Used</TableHead>
+              <TableHead className="w-[130px] font-semibold text-slate-700">Days Remaining</TableHead>
+              <TableHead className="w-[120px] font-semibold text-slate-700">Last Trip</TableHead>
+              <TableHead className="w-[140px] font-semibold text-slate-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -484,7 +484,7 @@ export function ComplianceTable({
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="text-center py-8 text-brand-600"
+                  className="py-8 text-center text-slate-600"
                 >
                   No employees match the selected filter.
                 </TableCell>
@@ -504,7 +504,7 @@ export function ComplianceTable({
                     <TableCell className="font-medium">
                       <Link
                         href={`/employee/${employee.id}`}
-                        className="hover:underline text-brand-900"
+                        className="text-slate-900 hover:underline"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {employee.name}
@@ -513,12 +513,12 @@ export function ComplianceTable({
                     <TableCell>
                       <StatusBadge status={employee.risk_level} />
                     </TableCell>
-                    <TableCell className="text-brand-500">
+                    <TableCell className="text-slate-600">
                       {isExempt ? '-' : `${employee.days_used} / 90`}
                     </TableCell>
                     <TableCell>
                       {isExempt ? (
-                        <span className="text-brand-300">-</span>
+                        <span className="text-slate-300">-</span>
                       ) : (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -532,13 +532,13 @@ export function ComplianceTable({
                               {employee.days_remaining} days
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent className="w-64 p-3 shadow-xl border-slate-200 bg-white" side="top">
+                          <TooltipContent className="w-64 border-slate-200 bg-white p-3 shadow-lg" side="top">
                             <ComplianceCalculationTrace employee={employee} />
                           </TooltipContent>
                         </Tooltip>
                       )}
                     </TableCell>
-                    <TableCell className="text-brand-600">
+                    <TableCell className="text-slate-600">
                       {formatDate(employee.last_trip_date)}
                     </TableCell>
                     <TableCell>
@@ -576,7 +576,7 @@ export function ComplianceTable({
       {/* Mobile card view */}
       <div className="md:hidden space-y-4">
         {filteredAndSorted.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center text-brand-600">
+          <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-600 shadow-sm">
             No employees match the selected filter.
           </div>
         ) : (

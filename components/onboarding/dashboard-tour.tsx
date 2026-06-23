@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, ArrowRight, Compass, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { completeDashboardTour } from '@/app/(dashboard)/dashboard/tour-actions'
 import { cn } from '@/lib/utils'
 
@@ -132,10 +132,9 @@ export function DashboardTour({ startOpen }: DashboardTourProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Dashboard onboarding tour"
-        className="fixed inset-x-4 bottom-4 z-[70] max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-900/20 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[420px] sm:p-6"
+        className="fixed inset-x-4 bottom-4 z-[70] max-h-[90vh] overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-900/10 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:w-[420px] sm:p-6"
       >
-        <p className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-800">
-          <Sparkles className="h-3.5 w-3.5" />
+        <p className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
           Guided Tour
         </p>
         <h2 className="mt-3 text-xl font-semibold text-slate-900">
@@ -146,22 +145,11 @@ export function DashboardTour({ startOpen }: DashboardTourProps) {
         </p>
 
         <div className="mt-4 rounded-full bg-slate-100">
-          <div
-            className="h-2 rounded-full bg-cyan-600 transition-[width] duration-300"
-            style={{ width: `${progressPercent}%` }}
-          />
+          <div className="h-2 rounded-full bg-slate-900 transition-[width] duration-300" style={{ width: `${progressPercent}%` }} />
         </div>
         <p className="mt-2 text-xs text-slate-500">
           Step {currentStep + 1} of {totalSteps}
         </p>
-
-        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-          <p className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
-            <Compass className="h-3.5 w-3.5" />
-            Looking at
-          </p>
-          <p className="mt-1 break-all font-mono text-[11px]">{step.targetId}</p>
-        </div>
 
         {completionError && (
           <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">

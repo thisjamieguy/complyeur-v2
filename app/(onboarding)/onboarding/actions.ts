@@ -128,7 +128,7 @@ export async function inviteTeamMembers(formData: FormData) {
 }
 
 export async function completeOnboarding() {
-  await completeOnboardingWithRedirect('/dashboard?tour=1')
+  await completeOnboardingWithRedirect('/dashboard')
 }
 
 export async function completeOnboardingForImport() {
@@ -136,29 +136,11 @@ export async function completeOnboardingForImport() {
 }
 
 async function completeOnboardingWithRedirect(redirectPath: string) {
-  const { supabase, user, companyId } = await getAuthenticatedUser()
+  const { supabase, user } = await getAuthenticatedUser()
 
   const rateLimit = await checkServerActionRateLimit(user.id, 'completeOnboarding')
   if (!rateLimit.allowed) {
     throw new Error(rateLimit.error ?? 'Rate limit exceeded')
-  }
-
-  const { data: entitlements, error: entitlementError } = await supabase
-    .from('company_entitlements')
-    .select('subscription_status')
-    .eq('company_id', companyId)
-    .single()
-
-  if (entitlementError) {
-    console.error('Failed to validate billing status during onboarding completion:', entitlementError)
-    throw new DatabaseError('Unable to verify billing status')
-  }
-
-  const subscriptionStatus = entitlements?.subscription_status
-  const isPaid = subscriptionStatus === 'active' || subscriptionStatus === 'trialing'
-
-  if (!isPaid) {
-    throw new ValidationError('Please choose a plan and complete payment before continuing.')
   }
 
   const { error } = await supabase

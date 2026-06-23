@@ -22,14 +22,14 @@ function AppShellContent({ children, user }: AppShellProps) {
   const { isOpen } = useSidebar()
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-slate-50">
       {/* Desktop Sidebar - fixed position */}
       <div className="hidden lg:block fixed inset-y-0 left-0 z-40">
         <Sidebar user={user} />
       </div>
 
       {/* Mobile Header - visible below 1024px */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-30 flex h-16 items-center gap-3 border-b border-brand-100 bg-white px-4">
+      <header className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur lg:hidden">
         <MobileNav user={user} />
         <Link href="/dashboard" className="flex items-center gap-3">
           <Image
@@ -54,7 +54,7 @@ function AppShellContent({ children, user }: AppShellProps) {
         )}
       >
         {/* Content container with max-width and responsive padding */}
-        <div className="flex-1 w-full max-w-[1280px] mx-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <div className="mx-auto flex-1 w-full max-w-[1280px] px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
           {children}
         </div>
 
