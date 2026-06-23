@@ -76,7 +76,11 @@ Source: `stripe subscriptions retrieve sub_1TlMyvANIxv7H45OqQYb2Vt5` and
 
 ## Production Price Audit
 
-Source: `pnpm tsx scripts/auditStripePriceIds.ts --json` using production env.
+Source: `pnpm tsx scripts/auditStripePriceIds.ts` using production env.
+
+The audit now checks that each stored Supabase price ID exists in Stripe and
+matches the local plan catalog for amount, currency, active status, and
+recurring interval.
 
 - `free` monthly: valid, active, `GBP 49.00 / month`
 - `free` annual: valid, active, `GBP 490.00 / year`
@@ -102,7 +106,12 @@ using production env.
   - `customer.subscription.updated`
   - `customer.subscription.deleted`
   - `invoice.payment_failed`
+  - `charge.refunded`
+  - `charge.dispute.created`
 - Repo webhook check result: endpoint configured correctly.
+
+Note: The endpoint was updated on 2026-06-23 after the webhook handler added
+refund and dispute incident alerts.
 
 ## Stripe Event Delivery
 
@@ -126,6 +135,8 @@ metadata company and subscription IDs.
 - Entitlement tier: `professional`
 - Entitlement trial flag: `false`
 - Entitlement subscription status: `active`
+- Entitlement current period end after reconciliation:
+  `2026-07-23T05:34:06.000Z`
 - Entitlement limits: `max_employees=200`, `max_users=15`
 - Entitlement features enabled: CSV export, PDF export, forecasting, calendar,
   and bulk import.
@@ -134,6 +145,19 @@ metadata company and subscription IDs.
 - App webhook received at: `2026-06-23T05:34:50.694+00:00`
 - App webhook processed at: `2026-06-23T05:34:51.967+00:00`
 - App webhook last error: `null`
+
+## Reconciliation Evidence
+
+Source: `pnpm tsx scripts/reconcileStripeSubscriptions.ts --dry-run`, then
+`pnpm tsx scripts/reconcileStripeSubscriptions.ts`, using production env.
+
+- Dry run found two live active subscriptions with Stripe current-period end
+  values available.
+- Apply run updated two production entitlement rows.
+- Tested checkout subscription:
+  `sub_1TlMyvANIxv7H45OqQYb2Vt5 -> 2026-07-23T05:34:06.000Z`.
+- Earlier active subscription:
+  `sub_1TlGEvANIxv7H45O3ZMlCriG -> 2026-07-22T22:22:47.000Z`.
 
 ## Remaining Billing Evidence Gaps
 
@@ -148,8 +172,5 @@ Do not mark Stripe Verification complete yet. The release checklist still needs:
 - Failed-payment entitlement and alerting evidence.
 - Cancellation entitlement evidence.
 - Billing/support owner visibility for failed webhook events.
-- Reconciliation process evidence for missed lifecycle events.
-- Follow-up on `company_entitlements.current_period_end`, which remained `null`
-  after this checkout even though the Stripe subscription has a current period
-  end. This affects renewal-email/lifecycle evidence and should be fixed or
-  risk-accepted before paid/public beta.
+- Deployment of the updated webhook handler and cron renewal pricing changes,
+  followed by live lifecycle re-check evidence.

@@ -5,6 +5,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 import { POST } from '@/app/api/billing/webhook/route'
 import { constructWebhookEvent, getStripe } from '@/lib/billing/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendBillingIncidentEmail } from '@/lib/services/email-service'
 
 vi.mock('@/lib/billing/stripe', () => ({
   constructWebhookEvent: vi.fn(),
@@ -13,6 +14,11 @@ vi.mock('@/lib/billing/stripe', () => ({
 
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: vi.fn(),
+}))
+
+vi.mock('@/lib/services/email-service', () => ({
+  sendBillingIncidentEmail: vi.fn(async () => ({ success: true, messageId: 'message-1' })),
+  sendPaymentFailedEmail: vi.fn(async () => ({ success: true, messageId: 'message-1' })),
 }))
 
 type EventStatus = 'processed' | 'processing' | 'failed'
@@ -236,6 +242,36 @@ function createCheckoutSessionCompletedEvent() {
   } as unknown as Stripe.Event
 }
 
+function createChargeRefundedEvent() {
+  return {
+    id: 'evt_refund_123',
+    type: 'charge.refunded',
+    data: {
+      object: {
+        id: 'ch_refunded_123',
+        amount_refunded: 100,
+        currency: 'gbp',
+        customer: 'cus_test_123',
+      },
+    },
+  } as unknown as Stripe.Event
+}
+
+function createDisputeCreatedEvent() {
+  return {
+    id: 'evt_dispute_123',
+    type: 'charge.dispute.created',
+    data: {
+      object: {
+        id: 'dp_test_123',
+        amount: 100,
+        currency: 'gbp',
+        charge: 'ch_disputed_123',
+      },
+    },
+  } as unknown as Stripe.Event
+}
+
 function createCheckoutProvisioningTables(state: CheckoutProvisioningState) {
   return (table: string) => {
     if (table === 'profiles') {
@@ -312,6 +348,25 @@ function createCheckoutProvisioningTables(state: CheckoutProvisioningState) {
   }
 }
 
+function createCompanyLookupTables() {
+  return (table: string) => {
+    if (table === 'companies') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn(async () => ({
+              data: { name: 'Acme Ltd' },
+              error: null,
+            })),
+          }),
+        }),
+      }
+    }
+
+    return null
+  }
+}
+
 function createRequest() {
   return new Request('http://localhost/api/billing/webhook', {
     method: 'POST',
@@ -327,6 +382,7 @@ describe('/api/billing/webhook', () => {
   const mockedConstructWebhookEvent = vi.mocked(constructWebhookEvent)
   const mockedGetStripe = vi.mocked(getStripe)
   const mockedCreateAdminClient = vi.mocked(createAdminClient)
+  const mockedSendBillingIncidentEmail = vi.mocked(sendBillingIncidentEmail)
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -338,6 +394,11 @@ describe('/api/billing/webhook', () => {
           items: {
             data: [{ current_period_end: 1784784846 }],
           },
+        })),
+      },
+      charges: {
+        retrieve: vi.fn(async () => ({
+          customer: 'cus_test_123',
         })),
       },
     } as unknown as ReturnType<typeof getStripe>)
@@ -451,6 +512,49 @@ describe('/api/billing/webhook', () => {
         stripe_subscription_id: 'sub_test_123',
         subscription_status: 'active',
         current_period_end: '2026-07-23T05:34:06.000Z',
+      })
+    )
+    expect(admin.state.row?.processing_status).toBe('processed')
+  })
+
+  it('sends a billing incident notification when a charge is refunded', async () => {
+    const admin = createWebhookEventMock(null, createCompanyLookupTables())
+    mockedCreateAdminClient.mockReturnValue(admin.client)
+    mockedConstructWebhookEvent.mockReturnValue(createChargeRefundedEvent())
+
+    const response = await POST(createRequest())
+
+    expect(response.status).toBe(200)
+    expect(mockedSendBillingIncidentEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        incidentType: 'refund',
+        stripeEventId: 'evt_refund_123',
+        stripeObjectId: 'ch_refunded_123',
+        amount: '£1',
+        customerId: 'cus_test_123',
+        companyName: 'Acme Ltd',
+      })
+    )
+    expect(admin.state.row?.processing_status).toBe('processed')
+  })
+
+  it('looks up the disputed charge and sends a billing incident notification', async () => {
+    const admin = createWebhookEventMock(null, createCompanyLookupTables())
+    mockedCreateAdminClient.mockReturnValue(admin.client)
+    mockedConstructWebhookEvent.mockReturnValue(createDisputeCreatedEvent())
+
+    const response = await POST(createRequest())
+
+    expect(response.status).toBe(200)
+    expect(mockedGetStripe().charges.retrieve).toHaveBeenCalledWith('ch_disputed_123')
+    expect(mockedSendBillingIncidentEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        incidentType: 'dispute',
+        stripeEventId: 'evt_dispute_123',
+        stripeObjectId: 'dp_test_123',
+        amount: '£1',
+        customerId: 'cus_test_123',
+        companyName: 'Acme Ltd',
       })
     )
     expect(admin.state.row?.processing_status).toBe('processed')

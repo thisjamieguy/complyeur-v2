@@ -1101,6 +1101,15 @@ export interface PaymentFailedEmailData {
   attemptCount: number
 }
 
+export interface BillingIncidentEmailData {
+  incidentType: 'refund' | 'dispute'
+  stripeEventId: string
+  stripeObjectId: string
+  amount: string
+  customerId?: string | null
+  companyName?: string | null
+}
+
 function getPaymentFailedSubject(attemptCount: number): string {
   if (attemptCount >= 3) return `[Final notice] Your ComplyEur subscription is at risk`
   if (attemptCount === 2) return `[2nd attempt failed] Update your ComplyEur payment method`
@@ -1274,6 +1283,68 @@ export async function sendPaymentFailedEmail(data: PaymentFailedEmailData): Prom
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error'
     logger.error('[Email] Failed to send payment failed email', { error: err })
+    return { success: false, error: errorMessage }
+  }
+}
+
+export async function sendBillingIncidentEmail(data: BillingIncidentEmailData): Promise<EmailResult> {
+  const recipientEmail = process.env.BILLING_ALERT_EMAIL || REPLY_TO_EMAIL
+
+  if (!process.env.RESEND_API_KEY) {
+    logger.info('[Email] Skipping billing incident email — no RESEND_API_KEY', {
+      incidentType: data.incidentType,
+      stripeEventId: data.stripeEventId,
+    })
+    return { success: true, messageId: 'dev-mode-skip' }
+  }
+
+  const incidentLabel = data.incidentType === 'dispute' ? 'Stripe dispute opened' : 'Stripe refund recorded'
+  const subject = `[Billing] ${incidentLabel}`
+  const companyLine = data.companyName ? `Company: ${data.companyName}` : 'Company: not matched'
+  const customerLine = data.customerId ? `Stripe customer: ${data.customerId}` : 'Stripe customer: not available'
+  const text = [
+    incidentLabel,
+    '',
+    companyLine,
+    customerLine,
+    `Stripe object: ${data.stripeObjectId}`,
+    `Stripe event: ${data.stripeEventId}`,
+    `Amount: ${data.amount}`,
+    '',
+    `Review in Stripe Dashboard and update the support/billing tracker if customer action is required.`,
+  ].join('\n')
+
+  try {
+    const resend = getResendClient()
+    if (!resend) {
+      return { success: true, messageId: 'client-unavailable' }
+    }
+
+    const { data: result, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: recipientEmail,
+      subject,
+      text,
+      tags: [
+        { name: 'category', value: 'billing' },
+        { name: 'step', value: data.incidentType },
+      ],
+    })
+
+    if (error) {
+      logger.error('[Email] Billing incident email error', { error })
+      return { success: false, error: error.message }
+    }
+
+    logger.info('[Email] Billing incident email sent', {
+      incidentType: data.incidentType,
+      messageId: result?.id,
+    })
+    return { success: true, messageId: result?.id }
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+    logger.error('[Email] Failed to send billing incident email', { error: err })
     return { success: false, error: errorMessage }
   }
 }

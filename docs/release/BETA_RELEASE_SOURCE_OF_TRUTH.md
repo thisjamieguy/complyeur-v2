@@ -10,7 +10,7 @@ private beta go/no-go decisions.
 - Treat older launch checklists and audit summaries as historical reference
   only.
 
-Last updated: 2026-06-15
+Last updated: 2026-06-23
 Baseline commit reviewed: `08002bf chore: complete authenticated beta readiness checks`
 
 This is the single consolidated checklist for ComplyEur private beta launch
@@ -42,7 +42,7 @@ dashboard evidence is still required before claiming a 9/10 operational score.
 | Authenticated baseline flows | Ready for private beta | Auth E2E baseline recorded as 49 passed. |
 | Accessibility baseline | Ready for private beta | A11y E2E recorded as 17 passed. |
 | Mobile baseline | Ready for private beta | Mobile E2E recorded as 15 passed. |
-| Billing | Blocked for paid/public beta | Placeholder Stripe price IDs still need live/test-live replacement and audit. |
+| Billing | In progress for paid/public beta | Live Stripe payment, price audit, webhook endpoint, and entitlement provisioning are evidenced; lifecycle failure-mode evidence still remains. |
 | Operations and recovery | Conditional for private beta | Recovery procedure is now documented; restore-test evidence still remains incomplete. |
 | Legal and GDPR packaging | Conditional for private beta | DPA remains draft; GDPR public release workplan still has public-release blockers. |
 | Monitoring and support | Conditional for private beta | Support ownership is evidenced; Sentry routing and public/internal health evidence remain open. Metrics ownership and zero-signup alert remain paid/public beta work. |
@@ -144,10 +144,11 @@ Open checks:
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
 | Production Stripe price IDs | Complete for current production config | Billing owner | 2026-06-23 live audit passed for all six configured prices; re-run after any pricing change. |
-| Stripe webhook endpoint in target environment | Complete for current production endpoint | Billing owner | 2026-06-23 live check passed for `https://complyeur.com/api/billing/webhook`; re-run after endpoint or event changes. |
+| Stripe webhook endpoint in target environment | Complete for current production endpoint | Billing owner | 2026-06-23 live check passed for `https://complyeur.com/api/billing/webhook`, including refund and dispute events; re-run after endpoint or event changes. |
 | Live successful checkout and entitlement provisioning | Complete for happy path | Billing owner | 2026-06-23 live GBP 1 discounted subscription payment processed and app entitlement provisioned. |
-| Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Capture webhook replay, stale-processing, out-of-order, failed-payment, cancellation, and reconciliation evidence. |
-| Billing support path | Important before paid/public beta | Support owner | Confirm payment-failure and subscription-question routing uses the monitored support path. |
+| Stripe subscription reconciliation | Complete for current production subscriptions | Billing owner | 2026-06-23 reconciliation refreshed two active Stripe subscriptions and filled the tested checkout `current_period_end`; run `scripts/reconcileStripeSubscriptions.ts` after missed events. |
+| Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Deploy the updated handler, then capture webhook replay, stale-processing, out-of-order, failed-payment, cancellation, and post-deploy lifecycle evidence. |
+| Billing support path | Important before paid/public beta | Support owner | Refund and dispute alert code is in place; confirm delivery to the monitored billing/support mailbox after deploy. |
 
 ## 8. Auth And Account Checks
 
@@ -224,8 +225,8 @@ Tester onboarding package is prepared in `docs/beta/BETA_TESTER_BRIEF.md`.
 
 Release-critical known issues:
 
-- Stripe price IDs must be synced and audited before live billing.
-- Stripe lifecycle monitoring and reconciliation evidence are pending.
+- Stripe price IDs are synced and audited for current live billing.
+- Stripe lifecycle replay, failure-mode, cancellation, and post-deploy alert evidence remain pending.
 - Production signup email is evidenced for one tested path; multi-provider deliverability still needs Gmail, Outlook, and corporate inbox testing.
 - SPF/DKIM/DMARC setup is pending before paid/public launch.
 - Baseline branch protection is evidenced complete; expanded CodeQL/dependency-security workflow run evidence is pending.

@@ -1,6 +1,6 @@
 # Beta Evidence Status Dashboard
 
-Last updated: 2026-06-15
+Last updated: 2026-06-23
 
 ## Purpose
 
@@ -156,10 +156,12 @@ Before marking any beta blocker complete:
 
 - 2026-06-23 live Stripe API evidence confirms the account has charges and payouts enabled.
 - A live `GBP 1.00` discounted subscription checkout completed successfully in live mode.
-- Production Stripe price audit passed for all six configured price IDs.
-- The live webhook endpoint for `https://complyeur.com/api/billing/webhook` is enabled and matches the repo-required event set.
+- Production Stripe price audit passed for all six configured price IDs, including amount, currency, interval, and active-status checks against the local plan catalog.
+- The live webhook endpoint for `https://complyeur.com/api/billing/webhook` is enabled and matches the repo-required event set, including refund and dispute events.
 - Production Supabase evidence confirms the checkout webhook was processed and provisioned the expected `professional` active entitlement.
-- Stripe Verification remains in progress until replay, stale/out-of-order event, failed-payment, cancellation, failed-webhook monitoring, reconciliation, and `current_period_end` lifecycle evidence are closed.
+- Production reconciliation on 2026-06-23 refreshed two active Stripe subscriptions and filled the tested checkout entitlement `current_period_end`.
+- Code changes now retrieve `current_period_end` during checkout provisioning, source renewal-email amounts from Stripe invoice previews, alert billing/support on refunds and disputes, refresh entitlements when tier capabilities change, and provide a repeatable reconciliation script.
+- Stripe Verification remains in progress until the updated handler is deployed and replay, stale/out-of-order event, failed-payment, cancellation, failed-webhook monitoring, and post-deploy lifecycle evidence are closed.
 
 ## Release Progress Summary
 

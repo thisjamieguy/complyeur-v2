@@ -6,7 +6,49 @@ import {
 } from '@/lib/services/email-service'
 import { withCronAuth } from '@/lib/security/cron-auth'
 import { getPlanBySlug } from '@/lib/billing/plans'
+import { getStripe } from '@/lib/billing/stripe'
 import { logger } from '@/lib/logger.mjs'
+
+function formatBillingAmount(amountMinor: number | null | undefined, currency: string | null | undefined): string {
+  if (amountMinor === null || amountMinor === undefined || !currency) {
+    return 'your subscription fee'
+  }
+
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amountMinor / 100)
+}
+
+export async function resolveRenewalAmountDue(params: {
+  stripeSubscriptionId: string | null
+  tierSlug: string | null
+}): Promise<string> {
+  const plan = getPlanBySlug(params.tierSlug)
+  const fallbackAmount = plan
+    ? formatBillingAmount(plan.monthlyPriceGbp * 100, 'gbp')
+    : 'your subscription fee'
+
+  if (!params.stripeSubscriptionId) {
+    return fallbackAmount
+  }
+
+  try {
+    const invoicePreview = await getStripe().invoices.createPreview({
+      subscription: params.stripeSubscriptionId,
+    })
+
+    return formatBillingAmount(invoicePreview.amount_due, invoicePreview.currency)
+  } catch (error) {
+    logger.error('[Billing Cron] Failed to preview Stripe renewal invoice', {
+      stripeSubscriptionId: params.stripeSubscriptionId,
+      error,
+    })
+    return fallbackAmount
+  }
+}
 
 /**
  * Billing Email Sequence Cron
@@ -116,7 +158,7 @@ async function handleBillingCron(): Promise<NextResponse> {
 
   const { data: renewalCandidates, error: renewalError } = await admin
     .from('company_entitlements')
-    .select('company_id, tier_slug, current_period_end')
+    .select('company_id, tier_slug, current_period_end, stripe_subscription_id')
     .eq('subscription_status', 'active')
     .eq('is_trial', false)
     .not('current_period_end', 'is', null)
@@ -159,10 +201,10 @@ async function handleBillingCron(): Promise<NextResponse> {
 
     const plan = getPlanBySlug(entitlement.tier_slug)
     const planName = plan?.publicName ?? entitlement.tier_slug ?? 'your plan'
-    // Use monthly price as a fallback — in practice this should come from Stripe
-    const amountDue = plan
-      ? new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 0 }).format(plan.monthlyPriceGbp)
-      : 'your subscription fee'
+    const amountDue = await resolveRenewalAmountDue({
+      stripeSubscriptionId: entitlement.stripe_subscription_id,
+      tierSlug: entitlement.tier_slug,
+    })
 
     const emailResult = await sendUpcomingRenewalEmail({
       recipientEmail: company.email,
