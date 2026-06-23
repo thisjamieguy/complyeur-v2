@@ -60,6 +60,7 @@ export function QuickAddTripModal({
         job_ref: data.job_ref || undefined,
         is_private: data.is_private,
         ghosted: data.ghosted,
+        non_working_days: data.non_working_days,
       })
 
       showSuccess('Trip added successfully')

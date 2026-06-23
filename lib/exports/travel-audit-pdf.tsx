@@ -148,7 +148,7 @@ function CountryTable({ countries }: { countries: CountryPresence[] }) {
         <Text style={[styles.th, styles.colNum]}>Trips</Text>
       </View>
       {countries.map((c, i) => (
-        <View key={c.country} style={[styles.tableRow, ...(i % 2 === 1 ? [styles.tableRowAlt] : [])]} wrap={false}>
+        <View key={`${c.country}-${c.isSchengen ? 'schengen' : 'non-schengen'}-${i}`} style={[styles.tableRow, ...(i % 2 === 1 ? [styles.tableRowAlt] : [])]} wrap={false}>
           <Text style={[styles.td, styles.colCountry]}>
             {c.countryName} ({c.country})
           </Text>

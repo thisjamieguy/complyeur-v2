@@ -55,6 +55,31 @@ describe('buildEmployeeTravelAudit', () => {
     expect(result.totals.workingDays).toBe(0)
   })
 
+  it('masks private trip destinations while preserving Schengen totals', () => {
+    const result = buildEmployeeTravelAudit(
+      employee([trip({ country: 'FR', isPrivate: true, nonWorkingDays: 0 })]),
+      WINDOW
+    )
+
+    expect(result.countries).toHaveLength(1)
+    expect(result.countries[0].country).toBe('XX')
+    expect(result.countries[0].countryName).toBe('Private trip')
+    expect(result.countries[0].isSchengen).toBe(true)
+    expect(result.totals.schengenDays).toBe(10)
+    expect(result.countries.some((c) => c.country === 'FR')).toBe(false)
+  })
+
+  it('does not reveal private destinations through country filters', () => {
+    const result = buildEmployeeTravelAudit(
+      employee([trip({ country: 'FR', isPrivate: true })]),
+      WINDOW,
+      { countries: ['FR'] }
+    )
+
+    expect(result.countries).toHaveLength(0)
+    expect(result.totals.totalDays).toBe(0)
+  })
+
   it('clamps non_working_days to the trip length', () => {
     const result = buildEmployeeTravelAudit(
       employee([trip({ nonWorkingDays: 999 })]),

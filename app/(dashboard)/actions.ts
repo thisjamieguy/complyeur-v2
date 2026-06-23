@@ -344,6 +344,7 @@ export async function bulkAddTripsAction(
         job_ref: result.data.job_ref,
         is_private: result.data.is_private,
         ghosted: result.data.ghosted,
+        non_working_days: result.data.non_working_days,
       })
     }
   }

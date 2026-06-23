@@ -24,6 +24,9 @@
 import { getCountryName, isSchengenCountry } from '@/lib/constants/schengen-countries'
 import { parseDateOnlyAsUTC, differenceInUtcDays } from '@/lib/compliance/date-utils'
 
+const PRIVATE_COUNTRY_CODE = 'XX'
+const PRIVATE_COUNTRY_NAME = 'Private trip'
+
 /**
  * A single trip in the shape the audit engine needs.
  */
@@ -122,6 +125,8 @@ export interface CompanyTravelAudit {
  */
 interface ClippedTrip {
   country: string
+  countryName: string
+  isSchengen: boolean
   totalDays: number
   workingDays: number
   restDays: number
@@ -165,7 +170,9 @@ function clipTrip(
   }
 
   return {
-    country: trip.country,
+    country: trip.isPrivate ? PRIVATE_COUNTRY_CODE : trip.country,
+    countryName: trip.isPrivate ? PRIVATE_COUNTRY_NAME : getCountryName(trip.country),
+    isSchengen: isSchengenCountry(trip.country),
     totalDays: overlapDays,
     workingDays: overlapDays - restDays,
     restDays,
@@ -179,7 +186,8 @@ function buildCountryPresence(clipped: ClippedTrip[]): CountryPresence[] {
   const map = new Map<string, CountryPresence>()
 
   for (const c of clipped) {
-    const key = c.country.toUpperCase()
+    const code = c.country.toUpperCase()
+    const key = `${code}:${c.isSchengen ? 'schengen' : 'non-schengen'}`
     const existing = map.get(key)
     if (existing) {
       existing.totalDays += c.totalDays
@@ -188,9 +196,9 @@ function buildCountryPresence(clipped: ClippedTrip[]): CountryPresence[] {
       existing.tripCount += 1
     } else {
       map.set(key, {
-        country: key,
-        countryName: getCountryName(key),
-        isSchengen: isSchengenCountry(key),
+        country: code,
+        countryName: c.countryName,
+        isSchengen: c.isSchengen,
         totalDays: c.totalDays,
         workingDays: c.workingDays,
         restDays: c.restDays,
@@ -237,14 +245,15 @@ function mergeCountryPresences(lists: CountryPresence[][]): CountryPresence[] {
 
   for (const list of lists) {
     for (const c of list) {
-      const existing = map.get(c.country)
+      const key = `${c.country}:${c.isSchengen ? 'schengen' : 'non-schengen'}`
+      const existing = map.get(key)
       if (existing) {
         existing.totalDays += c.totalDays
         existing.workingDays += c.workingDays
         existing.restDays += c.restDays
         existing.tripCount += c.tripCount
       } else {
-        map.set(c.country, { ...c })
+        map.set(key, { ...c })
       }
     }
   }
@@ -273,6 +282,7 @@ export function buildEmployeeTravelAudit(
   const clipped: ClippedTrip[] = []
   for (const trip of employee.trips) {
     if (trip.ghosted) continue
+    if (trip.isPrivate && countryFilter) continue
     if (countryFilter && !countryFilter.has(trip.country.toUpperCase())) continue
     const c = clipTrip(trip, windowStart, windowEnd)
     if (c) clipped.push(c)
