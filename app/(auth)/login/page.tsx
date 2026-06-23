@@ -79,7 +79,10 @@ function LoginForm() {
       formData.append('email', data.email)
       formData.append('password', data.password)
       formData.append('redirectTo', redirectTo)
-      await login(formData)
+      const result = await login(formData)
+      if (result?.success === false) {
+        toast.error(result.error)
+      }
     } catch (error) {
       toast.error(
         error instanceof Error
