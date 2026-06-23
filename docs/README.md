@@ -67,6 +67,7 @@ Use it to answer six questions quickly:
   - [`docs/architecture/MIGRATION_WORKFLOW.md`](architecture/MIGRATION_WORKFLOW.md)
   - [`docs/architecture/PRODUCTION_SAFETY_RAILS.md`](architecture/PRODUCTION_SAFETY_RAILS.md)
   - [`docs/architecture/README.md`](architecture/README.md)
+  - [`docs/CALCULATION_LOGIC.md`](CALCULATION_LOGIC.md) — human-readable 90/180-day compliance engine spec (rolling window, Schengen membership, worked examples)
 
 ## Compliance And Legal
 
@@ -119,8 +120,9 @@ These documents are intentionally preserved but should not be treated as current
 
 ## Current Audits
 
+- [`docs/audits/DOCUMENTATION_AUDIT_2026-06-21.md`](audits/DOCUMENTATION_AUDIT_2026-06-21.md) — latest documentation/staleness audit
 - [`docs/audits/ENGINEERING_AUDIT_2026-06-15.md`](audits/ENGINEERING_AUDIT_2026-06-15.md)
-- [`docs/audits/DOCUMENTATION_AUDIT_2026-06-15.md`](audits/DOCUMENTATION_AUDIT_2026-06-15.md)
+- [`docs/audits/DOCUMENTATION_AUDIT_2026-06-15.md`](audits/DOCUMENTATION_AUDIT_2026-06-15.md) — superseded by the 2026-06-21 audit
 - [`docs/overnight-hardening/OVERNIGHT_HARDENING_STATUS.md`](overnight-hardening/OVERNIGHT_HARDENING_STATUS.md)
 
 ## Section Map

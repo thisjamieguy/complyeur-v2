@@ -40,6 +40,12 @@ export type MutationGuardSuccess = AuthGuardSuccess & {
 
 export type MutationGuardResult = MutationGuardSuccess | AuthGuardFailure
 
+type MutationGuardContext = MutationGuardSuccess
+
+type MutationAuthorizationOptions = {
+  shouldSkipMfa?: (context: MutationGuardContext) => boolean | Promise<boolean>
+}
+
 async function getAuthProfile(
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<{ user: { id: string; email?: string | null } | null; profile: AuthProfile | null }> {
@@ -191,7 +197,8 @@ export async function requireAdminAccess(
 export async function requireMutationPermission(
   supabase: Awaited<ReturnType<typeof createClient>>,
   permission: Permission,
-  actionName: string
+  actionName: string,
+  options?: MutationAuthorizationOptions
 ): Promise<MutationGuardResult> {
   const { user, profile } = await getAuthProfile(supabase)
   if (!user || !profile?.company_id) {
@@ -206,9 +213,14 @@ export async function requireMutationPermission(
     return { allowed: false, status: 403, error: 'Forbidden' }
   }
 
-  const mfaFailure = await enforceMfaIfRequired(supabase, user, profile)
-  if (mfaFailure) {
-    return { allowed: false, ...mfaFailure }
+  const guardContext = toMutationGuardSuccess(user, profile)
+  const skipMfa = await options?.shouldSkipMfa?.(guardContext)
+
+  if (skipMfa !== true) {
+    const mfaFailure = await enforceMfaIfRequired(supabase, user, profile)
+    if (mfaFailure) {
+      return { allowed: false, ...mfaFailure }
+    }
   }
 
   const rateLimitFailure = await enforceMutationRateLimit(user.id, actionName)
@@ -216,7 +228,7 @@ export async function requireMutationPermission(
     return { allowed: false, ...rateLimitFailure }
   }
 
-  return toMutationGuardSuccess(user, profile)
+  return guardContext
 }
 
 export async function requireOwnerOrAdminMutation(

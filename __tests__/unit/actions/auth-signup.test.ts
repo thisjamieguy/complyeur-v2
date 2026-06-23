@@ -40,6 +40,93 @@ function createSignupFormData(overrides?: Partial<{
   return formData
 }
 
+function createLoginFormData(overrides?: Partial<{
+  email: string
+  password: string
+  redirectTo: string
+}>): FormData {
+  const formData = new FormData()
+  formData.append('email', overrides?.email ?? 'test@example.com')
+  formData.append('password', overrides?.password ?? 'SecurePass123')
+  if (overrides?.redirectTo) {
+    formData.append('redirectTo', overrides.redirectTo)
+  }
+  return formData
+}
+
+describe('login action expected failures', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns a structured error for invalid credentials instead of throwing', async () => {
+    const { createClient } = await import('@/lib/supabase/server')
+    const { rateLimit } = await import('@/lib/rate-limit')
+
+    const supabase = {
+      auth: {
+        signInWithPassword: vi.fn().mockResolvedValue({
+          data: { user: null, session: null },
+          error: { message: 'Invalid login credentials', status: 400 },
+        }),
+      },
+      from: vi.fn(),
+    }
+
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+    vi.mocked(rateLimit).mockResolvedValue({
+      success: true,
+      limit: 10,
+      remaining: 9,
+      reset: Date.now() + 60_000,
+    })
+
+    const { login } = await import('@/app/(auth)/actions')
+
+    await expect(
+      login(createLoginFormData({ email: 'test@example.com', password: 'wrong-password' }))
+    ).resolves.toEqual({
+      success: false,
+      error: 'Invalid email or password',
+    })
+
+    expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      password: 'wrong-password',
+    })
+  })
+
+  it('returns validation errors without calling Supabase auth', async () => {
+    const { createClient } = await import('@/lib/supabase/server')
+    const { rateLimit } = await import('@/lib/rate-limit')
+
+    const supabase = {
+      auth: {
+        signInWithPassword: vi.fn(),
+      },
+      from: vi.fn(),
+    }
+
+    vi.mocked(createClient).mockResolvedValue(supabase as never)
+    vi.mocked(rateLimit).mockResolvedValue({
+      success: true,
+      limit: 10,
+      remaining: 9,
+      reset: Date.now() + 60_000,
+    })
+
+    const { login } = await import('@/app/(auth)/actions')
+
+    const result = await login(createLoginFormData({ email: 'not-an-email' }))
+
+    expect(result).toEqual({
+      success: false,
+      error: 'Please enter a valid email address',
+    })
+    expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled()
+  })
+})
+
 describe('signup action enumeration parity', () => {
   beforeEach(() => {
     vi.clearAllMocks()
