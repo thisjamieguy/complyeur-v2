@@ -2,6 +2,10 @@
 
 Last reviewed: 2026-06-15
 
+> **Audited:** A full item-by-item audit of this checklist (audited by Claude,
+> 2026-06-21) lives in
+> [`2026-06-21-gdpr-public-release-audit-results.md`](./2026-06-21-gdpr-public-release-audit-results.md).
+
 Purpose: provide a practical, engineering-owned checklist for bringing
 ComplyEur's GDPR and UK GDPR posture to public-release standard.
 
