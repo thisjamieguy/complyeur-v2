@@ -34,8 +34,8 @@ describe('rateLimit fallback behavior', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-    vi.unmock('@upstash/redis')
-    vi.unmock('@upstash/ratelimit')
+    vi.doUnmock('@upstash/redis')
+    vi.doUnmock('@upstash/ratelimit')
     process.env = { ...ORIGINAL_ENV }
   })
 

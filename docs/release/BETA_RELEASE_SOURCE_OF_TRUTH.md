@@ -10,7 +10,7 @@ private beta go/no-go decisions.
 - Treat older launch checklists and audit summaries as historical reference
   only.
 
-Last updated: 2026-06-15
+Last updated: 2026-06-16
 Baseline commit reviewed: `08002bf chore: complete authenticated beta readiness checks`
 
 This is the single consolidated checklist for ComplyEur private beta launch
@@ -42,15 +42,20 @@ dashboard evidence is still required before claiming a 9/10 operational score.
 | Authenticated baseline flows | Ready for private beta | Auth E2E baseline recorded as 49 passed. |
 | Accessibility baseline | Ready for private beta | A11y E2E recorded as 17 passed. |
 | Mobile baseline | Ready for private beta | Mobile E2E recorded as 15 passed. |
-| Billing | Blocked for paid/public beta | Placeholder Stripe price IDs still need live/test-live replacement and audit. |
-| Operations and recovery | Conditional for private beta | Recovery procedure is now documented; restore-test evidence still remains incomplete. |
-| Legal and GDPR packaging | Conditional for private beta | DPA remains draft; GDPR public release workplan still has public-release blockers. |
-| Monitoring and support | Conditional for private beta | Support ownership is evidenced; Sentry routing and public/internal health evidence remain open. Metrics ownership and zero-signup alert remain paid/public beta work. |
+| Billing | Blocked for paid/public beta | Live Stripe prices and production webhook endpoint are verified; subscription lifecycle/replay evidence remains open. |
+| Operations and recovery | Conditional for private beta | Recovery procedure is documented; public/internal production health is evidenced; no-PITR risk is accepted only for the initial private tester group. Restore-test evidence remains required before broader rollout. |
+| Legal and GDPR packaging | Conditional for private beta | DPA package is now repo-ready for legal/DPO review; approval and account-level provider evidence remain public-beta blockers. |
+| Monitoring and support | Conditional for private beta | Support ownership and public/internal health are evidenced; Sentry issue read access is now verified, but alert routing/test delivery evidence is still pending. Metrics ownership remains paid/public beta work; zero-signup and Stripe webhook monitoring are implemented and need first-run evidence. |
 
 ## 3. Final Go/No-Go Decision
 
-**Private beta recommendation:** Conditional GO after critical private-beta
-items below are closed or explicitly risk-accepted by the owner.
+**Initial private tester recommendation:** Conditional GO after the remaining
+critical tester gates below are closed or explicitly risk-accepted by the owner.
+The no-PITR recovery risk is accepted only for this initial tester group.
+
+**Broader private beta recommendation:** NO-GO until restore-test evidence,
+Sentry alert routing, non-founder onboarding, and remaining manual QA evidence
+are complete or separately risk-accepted.
 
 **Paid/public beta recommendation:** NO-GO until billing, legal, DNS, recovery,
 and monitoring ownership blockers are closed.
@@ -110,7 +115,7 @@ Open checks:
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
 | CodeQL and dependency-security workflow run evidence | Important before paid/public beta | Engineering owner | New workflow files exist locally; capture GitHub run evidence after they are merged and active. |
-| Vercel production env vars, custom domain, SSL, and health endpoint | Important before paid/public beta | Engineering owner | Verify in Vercel dashboard and capture release evidence. |
+| Vercel production env vars, custom domain, SSL, and health endpoint | Complete for paid/public beta | Engineering owner | Evidence stored in `docs/operations/evidence/platform-dashboard/2026-06-16-vercel-supabase-sentry-dashboard-evidence.md`. |
 | Production rollback procedure | Important before paid/public beta | Engineering owner | Run tabletop rollback using `docs/RUNBOOK.md`; record evidence. |
 
 ## 6. Supabase, RLS, Backups, And PITR Checks
@@ -127,8 +132,9 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Recovery tabletop and evidence | Critical before private beta | Engineering owner | Execute the `docs/RUNBOOK.md` recovery procedure against an isolated restore target and file evidence. |
-| Supabase production backups and PITR | Important before paid/public beta | Engineering owner | Verify Supabase plan, backups, PITR, and restore target from the dashboard. |
+| Recovery tabletop and evidence | Risk accepted for initial private testers only; critical before broader rollout | Engineering owner | No-PITR risk acceptance filed for initial testers; execute the `docs/RUNBOOK.md` recovery procedure against an isolated restore target before broader rollout. |
+| Supabase production project, RLS, Edge Function, and advisor evidence | Complete for paid/public beta | Engineering owner | Evidence stored in `docs/operations/evidence/platform-dashboard/2026-06-16-vercel-supabase-sentry-dashboard-evidence.md`; repo password policy is hardened to minimum 12 characters plus symbols, but hosted leaked-password protection is plan-blocked unless Supabase is upgraded to Pro or risk-accepted. |
+| Supabase production backups and PITR | Risk accepted for initial private testers only; critical before paid/public beta | Engineering owner | No-PITR risk acceptance filed in `docs/operations/evidence/release-approvals/2026-06-16-no-pitr-initial-tester-risk-acceptance.md`; enable backup/PITR coverage and run restore drill before broader rollout, paid beta, or public beta. |
 | Fresh staging or production-like RLS attack-test evidence | Important before paid/public beta | Security owner | Run attack plan and file evidence under compliance or security docs. |
 
 ## 7. Stripe And Billing Checks
@@ -143,8 +149,7 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Placeholder Stripe price IDs | Critical before paid/public beta | Billing owner | Create products/prices, sync IDs into `tiers`, and audit with the existing Stripe scripts. |
-| Stripe webhook endpoint in target environment | Critical before paid/public beta | Billing owner | Configure or validate webhook endpoint for the deployed beta URL. |
+| Stripe price IDs and webhook endpoint | Complete for paid/public beta | Billing owner | Evidence stored in `docs/operations/evidence/stripe-verification/2026-06-16-stripe-price-webhook-verification.md`. |
 | Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Capture webhook replay, stale-processing, out-of-order, failed-payment, cancellation, and reconciliation evidence. |
 | Billing support path | Important before paid/public beta | Support owner | Confirm payment-failure and subscription-question routing uses the monitored support path. |
 
@@ -170,6 +175,7 @@ Supporting docs:
 
 - `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`
 - `docs/legal/DPA_TEMPLATE.md`
+- `docs/legal/DPA_READINESS.md`
 - `docs/INCIDENT_RESPONSE.md`
 - `docs/DATA_CLASSIFICATION.md`
 - `docs/DATA_DELETION_WORKFLOW.md`
@@ -178,10 +184,10 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review and remove draft status before sharing as final. |
+| DPA package legal approval | Critical before paid/public beta | Legal owner | Review `docs/legal/DPA_TEMPLATE.md` and `docs/legal/DPA_READINESS.md`, confirm legal entity/main agreement terms, then remove draft status before sharing as final. |
 | ICO registration evidence | Important before paid/public beta | Legal owner | Confirm registration status and file release evidence. |
-| Processor/subprocessor register review | Important before paid/public beta | Legal owner | Confirm DPA/SCC status for analytics, consent, anti-abuse, and support tooling. |
-| Public GDPR release workplan P0/P1 items | Critical before paid/public beta | Privacy owner | Work through `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`. |
+| Processor/subprocessor account evidence | Important before paid/public beta | Legal owner | Use `docs/legal/DPA_READINESS.md` to attach account-level DPA/SCC evidence for analytics, consent, anti-abuse, and support tooling. |
+| GDPR legal review and provider evidence | Critical before paid/public beta | Privacy owner | Review `docs/legal/PRIVACY_OPERATING_RECORD.md`, `docs/legal/DPA_READINESS.md`, and `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`; attach provider DPA/SCC, hosting, backup, and operational evidence. |
 
 ## 10. Monitoring And Support Checks
 
@@ -196,10 +202,10 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Zero-signup alert not implemented | Important before paid/public beta | Growth/analytics owner | Define signup inactivity window and add alerting or dashboard review. |
-| Sentry alert rules | Critical before private beta | Engineering owner | Configure or verify the alert baseline in `docs/operations/BETA_SUPPORT_AND_ALERTING.md` and capture evidence. |
-| Webhook-failure monitoring | Important before paid/public beta | Billing owner | Confirm alerting for failed Stripe webhook events. |
-| Public/internal health evidence | Critical before private beta | Engineering owner | Capture current public `/api/health` and protected `/api/internal/health` evidence for the deployed environment. |
+| Zero-signup monitoring first-run evidence | Important before paid/public beta | Growth/analytics owner | Run `/api/cron/beta-monitoring` in the deployed environment and store the alert/no-alert result. |
+| Sentry alert rules | Critical before private beta | Engineering owner | Configure or verify the alert baseline in `docs/operations/BETA_SUPPORT_AND_ALERTING.md` and capture alert-rule, recipient, and test-delivery evidence. 2026-06-16 issue API read access succeeded and returned no unresolved production issues for the last 24 hours, but it does not prove alert routing. |
+| Webhook-failure monitoring first-run evidence | Important before paid/public beta | Billing owner | Verify `/api/cron/beta-monitoring` reports failed/stale webhook events and store evidence. |
+| Public/internal health evidence | Complete for private beta | Engineering owner | Evidence stored in `docs/operations/evidence/platform-dashboard/2026-06-16-vercel-supabase-sentry-dashboard-evidence.md`. |
 
 ## 11. Email And DNS Checks
 
@@ -212,7 +218,7 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure records from the email provider dashboard and verify headers. |
+| SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure records from the email provider dashboard, verify with `pnpm email:dns:check`, and confirm delivered headers pass. |
 | Multi-provider auth email deliverability | Critical before private beta | QA owner | Test Gmail, Outlook, and one corporate provider. |
 | Reply-to/support routing | Important before paid/public beta | Support owner | Confirm monitored reply-to address for transactional and alert emails. |
 
@@ -223,13 +229,15 @@ Tester onboarding package is prepared in `docs/beta/BETA_TESTER_BRIEF.md`.
 
 Release-critical known issues:
 
-- Stripe price IDs must be synced and audited before live billing.
+- Stripe price IDs and the production webhook endpoint are verified.
 - Stripe lifecycle monitoring and reconciliation evidence are pending.
 - Production signup email is evidenced for one tested path; multi-provider deliverability still needs Gmail, Outlook, and corporate inbox testing.
 - SPF/DKIM/DMARC setup is pending before paid/public launch.
 - Baseline branch protection is evidenced complete; expanded CodeQL/dependency-security workflow run evidence is pending.
-- Disaster-recovery testing and evidence are pending.
-- DPA and processor/subprocessor materials need legal review.
+- No-PITR risk is accepted only for the initial private tester group; restore
+  testing and backup/PITR coverage are still required before broader rollout.
+- DPA package is repo-ready but still needs legal/DPO approval and
+  account-level subprocessor evidence.
 - Real-device iOS Safari and Android Chrome checks are pending.
 
 ## 13. Beta Success Metrics
@@ -259,7 +267,8 @@ deployed beta URL. The remaining manual checks include:
 - Screen reader checks with VoiceOver or NVDA.
 - Dark-mode email client rendering.
 - Full user journey by a non-founder.
-- Vercel, Supabase, Sentry, Resend, Stripe, and GitHub dashboard checks.
+- Sentry, Resend, Stripe lifecycle, GitHub workflow, and Supabase backup/PITR
+  dashboard checks before broader rollout.
 
 ## 15. Critical Blockers
 
@@ -267,23 +276,22 @@ deployed beta URL. The remaining manual checks include:
 | --- | --- | --- | --- |
 | Multi-provider auth email delivery | Critical before private beta | QA owner | Test Gmail, Outlook, and one corporate provider. |
 | Password reset link behavior | Critical before private beta | QA owner | Verify reset delivery, single-use behavior, expiry, and post-reset sessions. |
-| Recovery tabletop and evidence | Critical before private beta | Engineering owner | Execute the documented restore and validation flow and store evidence. |
+| Recovery tabletop and evidence | Risk accepted for initial private testers only; critical before broader rollout | Engineering owner | Restore validation is waived only for the initial tester group under the no-PITR risk acceptance; complete before broader rollout. |
 | Non-founder full journey | Critical before private beta | Product owner | Run signup through logout with a tester who has not seen the app. |
 | Sentry alert routing evidence | Critical before private beta | Engineering owner | Capture Sentry alert rules, notification destinations, recipients, and test alert delivery. |
-| Public/internal health evidence | Critical before private beta | Engineering owner | Capture public `/api/health` and protected `/api/internal/health` evidence for the deployed environment. |
 | Tester brief and known issues must be distributed | Critical before private beta | Product owner | Send `docs/beta/BETA_TESTER_BRIEF.md` and `docs/beta/BETA_KNOWN_ISSUES.md` to testers. |
-| Placeholder Stripe price IDs | Critical before paid/public beta | Billing owner | Replace and audit IDs. |
-| DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review. |
-| SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure and verify DNS/email headers. |
+| Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Capture checkout, replay, out-of-order, failed-payment, cancellation, and reconciliation evidence. |
+| DPA package legal approval | Critical before paid/public beta | Legal owner | Complete review of `docs/legal/DPA_TEMPLATE.md` and `docs/legal/DPA_READINESS.md`. |
+| SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure records, run `pnpm email:dns:check`, and verify delivered email headers. |
 
 ## 16. High-Priority Non-Blockers
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
 | Beta metrics ownership/tracking pending | Important before paid/public beta | Product owner | Assign dashboard owner and review cadence. |
-| Zero-signup alert not implemented | Important before paid/public beta | Growth/analytics owner | Implement alert or documented manual review. |
+| Zero-signup monitoring first-run evidence pending | Important before paid/public beta | Growth/analytics owner | Verify the scheduled `/api/cron/beta-monitoring` run and store evidence. |
 | CodeQL and dependency-security workflow run evidence pending | Important before paid/public beta | Engineering owner | Capture GitHub run evidence after workflows are active. |
-| Supabase backup/PITR dashboard verification | Important before paid/public beta | Engineering owner | Verify and store evidence. |
+| Supabase backup/PITR dashboard verification | Critical before paid/public beta | Engineering owner | Risk accepted only for the initial private tester group; enable backup/PITR coverage and file restore evidence before broader rollout, paid beta, or public beta. |
 
 ## 17. Nice-To-Have Items
 
@@ -298,13 +306,13 @@ deployed beta URL. The remaining manual checks include:
 
 | Owner | Next action |
 | --- | --- |
-| Engineering owner | Capture CodeQL/security workflow evidence, run the recovery tabletop, confirm Sentry alerts, capture health evidence, and verify Supabase backup/PITR plus production dashboard settings. |
-| Billing owner | Replace Stripe price IDs, validate webhook endpoint, confirm billing support path. |
-| Legal owner | Complete DPA review, processor/subprocessor register review, ICO evidence. |
+| Engineering owner | Capture CodeQL/security workflow evidence, run the recovery tabletop, confirm Sentry alerts, and enable/verify Supabase backup/PITR before broader rollout. |
+| Billing owner | Complete Stripe lifecycle/replay evidence, confirm reconciliation process, and confirm billing support path. |
+| Legal owner | Complete DPA approval, processor/subprocessor account evidence, and ICO evidence. |
 | Product owner | Distribute tester brief/known issues, run non-founder journey, assign metrics dashboard owner. |
 | QA owner | Complete email, password reset, real-device, screen reader, and ad blocker checks. |
 | Support owner | Maintain evidenced support ownership and confirm billing-support routing before paid/public beta. |
-| Growth/analytics owner | Define and implement signup inactivity alert or manual monitoring process. |
+| Growth/analytics owner | Verify zero-signup monitoring evidence and maintain the beta metrics review cadence. |
 
 ## Supporting Documents
 
@@ -323,4 +331,5 @@ deployed beta URL. The remaining manual checks include:
 - `docs/INCIDENT_RESPONSE.md` - SOC 2/GDPR incident response process.
 - `docs/SOC2_READINESS_AUDIT.md` - SOC 2 readiness evidence and gaps.
 - `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md` - GDPR/UK GDPR public-release workplan.
+- `docs/legal/DPA_READINESS.md` - DPA legal approval and subprocessor evidence tracker.
 - `docs/billing/STRIPE_FINALIZATION_RUNBOOK.md` - Stripe price and webhook finalization.

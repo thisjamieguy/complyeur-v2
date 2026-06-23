@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   isSchengenCountry,
+  isSchengenCountryOnDate,
   validateCountry,
   normalizeCountryCode,
   getSchengenCountryCodes,
@@ -117,6 +118,31 @@ describe('isSchengenCountry', () => {
       expect(isSchengenCountry('Narnia')).toBe(false);
       expect(isSchengenCountry('Atlantis')).toBe(false);
     });
+  });
+});
+
+describe('isSchengenCountryOnDate', () => {
+  it('keeps current membership checks separate from historical counting', () => {
+    expect(isSchengenCountry('BG')).toBe(true);
+    expect(isSchengenCountryOnDate('BG', new Date('2024-12-31'))).toBe(false);
+    expect(isSchengenCountryOnDate('BG', new Date('2025-01-01'))).toBe(true);
+  });
+
+  it('applies accession dates for Bulgaria and Romania', () => {
+    expect(isSchengenCountryOnDate('Bulgaria', new Date('2024-12-31'))).toBe(false);
+    expect(isSchengenCountryOnDate('Bulgaria', new Date('2025-01-01'))).toBe(true);
+    expect(isSchengenCountryOnDate('RO', new Date('2024-12-31'))).toBe(false);
+    expect(isSchengenCountryOnDate('Romania', new Date('2025-01-01'))).toBe(true);
+  });
+
+  it('returns false for excluded or invalid countries on any date', () => {
+    expect(isSchengenCountryOnDate('IE', new Date('2026-01-01'))).toBe(false);
+    expect(isSchengenCountryOnDate('CY', new Date('2026-01-01'))).toBe(false);
+    expect(isSchengenCountryOnDate('XX', new Date('2026-01-01'))).toBe(false);
+  });
+
+  it('returns false for invalid dates', () => {
+    expect(isSchengenCountryOnDate('FR', new Date('invalid'))).toBe(false);
   });
 });
 

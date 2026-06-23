@@ -23,6 +23,7 @@ export default function OnboardingLayout({
             width={160}
             height={90}
             className="mx-auto mb-2 drop-shadow-sm"
+            style={{ width: 'auto', height: 'auto' }}
             priority
           />
         </div>

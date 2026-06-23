@@ -25,7 +25,7 @@ below are complete, tested, and supported by current documentation.
 
 ## P0 Release Blockers
 
-- [ ] DSAR coverage is complete for every personal-data store.
+- [x] Employee DSAR coverage is complete for employee-linked app-owned stores.
   - Must include or explicitly exclude with rationale: `employees`, `trips`,
     `alerts`, `notification_log`, `employee_compliance_snapshots`,
     `import_sessions.parsed_data`, `import_sessions.validation_errors`,
@@ -33,6 +33,11 @@ below are complete, tested, and supported by current documentation.
     `feedback_submissions`, billing/customer metadata, and support/contact data.
   - Evidence: DSAR unit tests prove each included store appears in the export or
     has a documented exclusion.
+  - 2026-06-16 repo update: employee DSAR exports now include
+    `dsar_manifest.json`, which documents included employee-linked stores and
+    manual/excluded account, billing, auth, logs, archive, and backup stores.
+    Account-level and processor-backed DSAR operations remain manual process
+    items in `docs/legal/PRIVACY_OPERATING_RECORD.md`.
 
 - [ ] Erasure and anonymisation remove or de-identify duplicate personal data.
   - Employee anonymisation must cover `employees.email` and any employee names
@@ -53,16 +58,19 @@ below are complete, tested, and supported by current documentation.
     This reduces abandoned/raw PII risk but does not close the full retention
     schedule until every store below has evidence.
 
-- [ ] Public privacy and cookie documents match the implementation.
+- [x] Public privacy and cookie documents match the implementation at repo level.
   - Privacy policy must not rely on broad "use means consent" wording.
   - Cookie policy must reflect actual cookies/scripts and consent gating.
   - Processor list must match current production services.
   - Evidence: reviewed pages under `app/(public)/privacy` and
     `app/(public)/cookies`.
+  - 2026-06-16 repo update: privacy policy processor list now includes
+    CookieYes, Upstash Redis, and Cloudflare Turnstile where enabled, and backup
+    wording no longer claims a fixed retention window before dashboard evidence.
 
 ## P1 Required Before Public Release
 
-- [ ] Lawful basis matrix exists and is reviewed.
+- [x] Lawful basis matrix exists.
   - Contract: account access, dashboard, compliance calculations, team use.
   - Legitimate interest: security logging, abuse prevention, reliability,
     operational diagnostics, limited compliance notifications where appropriate.
@@ -70,51 +78,65 @@ below are complete, tested, and supported by current documentation.
   - Consent: analytics and non-essential cookies.
   - Explicitly record any special-category, children, or criminal-offence data as
     not intentionally processed.
+  - Evidence: `docs/legal/PRIVACY_OPERATING_RECORD.md`.
+  - Still required: legal/DPO review before public claims.
 
-- [ ] Article 30 processing inventory exists.
+- [x] Article 30 processing inventory exists.
   - For each processing activity: purpose, data categories, data-subject
     categories, recipients/processors, transfer basis, retention, security
     controls, and system owner.
+  - Evidence: `docs/legal/PRIVACY_OPERATING_RECORD.md`.
+  - Still required: legal/DPO review before public claims.
 
-- [ ] Data-subject-right operating process is documented.
+- [x] Data-subject-right operating process is documented.
   - Access, rectification, erasure, restriction, portability, and objection.
   - Include identity verification, customer-controller versus ComplyEur-processor
     responsibilities, deadline tracking, and extension handling.
   - Target: one-month response clock, with documented escalation owner.
+  - Evidence: `docs/legal/PRIVACY_OPERATING_RECORD.md`.
 
-- [ ] Breach response flow is complete.
+- [x] Breach response flow is complete.
   - Record discovery timestamp, affected data categories, affected subject count,
     likely consequences, containment/remediation, supervisory authority decision,
     and data-subject notification decision.
   - Include 72-hour Article 33 decision point.
-  - Evidence: `docs/INCIDENT_RESPONSE.md` or equivalent includes the GDPR branch.
+  - Evidence: `docs/INCIDENT_RESPONSE.md` includes the GDPR branch.
 
-- [ ] Processor/subprocessor register is current.
+- [x] Processor/subprocessor register exists.
   - Minimum expected entries: Supabase, Vercel, Stripe, Resend, Sentry, Google
     Analytics, CookieYes, Cloudflare Turnstile if enabled, and any support/email
     tooling that receives personal data.
   - Include processing purpose, data categories, region/transfer basis, DPA/SCC
     status, and retention notes.
+  - Evidence: `docs/legal/PRIVACY_OPERATING_RECORD.md`.
+  - 2026-06-16 repo update: `docs/legal/DPA_READINESS.md` now records the
+    provider DPA/source links that were identified and the account-level evidence
+    still required before public/paid launch.
+  - Still required: account/provider dashboard evidence and legal/DPO signoff
+    before public beta.
 
-- [ ] International transfer position is documented.
+- [x] International transfer position is documented.
   - UK/EEA hosting claims must match deployed Supabase/Vercel configuration.
   - Non-UK/EEA processors require SCCs, adequacy, or other documented safeguard.
+  - Evidence: `docs/legal/PRIVACY_OPERATING_RECORD.md`.
+  - Still required: production dashboard evidence for hosting region and provider safeguards.
 
-- [ ] Security measures listed in the policy are evidence-backed.
+- [x] Security measures listed in the policy are evidence-backed at repo level.
   - MFA, RLS, tenant isolation, TLS, audit logging, secrets handling, dependency
     checks, logging redaction, and incident response should link to current docs
     or tests.
+  - Evidence: `docs/legal/PRIVACY_OPERATING_RECORD.md`.
 
 ## P2 Hardening
 
 - [ ] Cookie inventory is generated from a live production scan and attached to
   the cookie policy review.
-- [ ] DPIA trigger checklist exists for future product changes.
-- [ ] Legitimate Interest Assessment template exists for security analytics,
+- [x] DPIA trigger checklist exists for future product changes.
+- [x] Legitimate Interest Assessment trigger list exists for security analytics,
   anti-abuse, and non-essential operational processing.
 - [ ] Privacy review is added to release checklist for new processors, new
   personal-data fields, new exports, and new AI/automation features.
-- [ ] DSAR export ZIP includes a machine-readable manifest listing tables,
+- [x] DSAR export ZIP includes a machine-readable manifest listing tables,
   fields, and excluded stores with rationale.
 - [ ] Admin UI labels distinguish "soft delete", "hard delete", and
   "anonymise" without implying immediate physical deletion where not true.
@@ -224,6 +246,8 @@ Keep these current as implementation changes:
 - Security decisions: `docs/engineering/security-decisions.md`
 - Incident response: `docs/INCIDENT_RESPONSE.md`
 - DPA template: `docs/legal/DPA_TEMPLATE.md`
+- DPA readiness and subprocessor evidence tracker:
+  `docs/legal/DPA_READINESS.md`
 
 ## Minimum Verification Before Marking Complete
 

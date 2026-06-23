@@ -251,6 +251,46 @@ describe('maxStayDays', () => {
     expect(result).toBe(1); // Can only stay entry day
   });
 
+  describe('European Commission manual examples', () => {
+    const manualVisaHolderPresence = createPresence([
+      ...generateDates('2024-01-01', 10),
+      ...generateDates('2024-03-01', 30),
+      ...generateDates('2024-05-01', 40),
+    ]);
+
+    it('allows 20 consecutive days from 19 June 2024 as older January days expire', () => {
+      const result = maxStayDays(manualVisaHolderPresence, new Date('2024-06-19'), {
+        complianceStartDate: EARLY_COMPLIANCE_START,
+      });
+
+      expect(result).toBe(20);
+    });
+
+    it('allows 20 consecutive days from 7 August 2024 before the March stay expires', () => {
+      const result = maxStayDays(manualVisaHolderPresence, new Date('2024-08-07'), {
+        complianceStartDate: EARLY_COMPLIANCE_START,
+      });
+
+      expect(result).toBe(20);
+    });
+
+    it('allows 50 consecutive days from 8 August 2024 as March days start expiring', () => {
+      const result = maxStayDays(manualVisaHolderPresence, new Date('2024-08-08'), {
+        complianceStartDate: EARLY_COMPLIANCE_START,
+      });
+
+      expect(result).toBe(50);
+    });
+
+    it('allows the full 90 days from 8 September 2024 after a 90-day absence', () => {
+      const result = maxStayDays(manualVisaHolderPresence, new Date('2024-09-08'), {
+        complianceStartDate: EARLY_COMPLIANCE_START,
+      });
+
+      expect(result).toBe(90);
+    });
+  });
+
   describe('custom limit', () => {
     it('respects custom limit for max stay calculation', () => {
       // 30 days used, custom limit of 60

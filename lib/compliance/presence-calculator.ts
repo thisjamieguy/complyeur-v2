@@ -9,7 +9,7 @@
  */
 
 import { isAfter, isBefore, isValid, max } from 'date-fns';
-import { isSchengenCountry } from './schengen-validator';
+import { isSchengenCountry, isSchengenCountryOnDate } from './schengen-validator';
 import { DEFAULT_COMPLIANCE_START_DATE } from './constants';
 import { InvalidTripError, InvalidDateRangeError, InvalidReferenceDateError } from './errors';
 import type { Trip, ComplianceConfig } from './types';
@@ -177,7 +177,9 @@ export function presenceDays(
     const endNormalized = normalizeToUTCDate(effectiveEnd);
 
     while (current.getTime() <= endNormalized.getTime()) {
-      days.add(dateToKey(current));
+      if (isSchengenCountryOnDate(trip.country, current)) {
+        days.add(dateToKey(current));
+      }
       // Add 1 day in milliseconds
       current = new Date(current.getTime() + 24 * 60 * 60 * 1000);
     }

@@ -565,10 +565,10 @@ ACP supports a command system for common workflows. Commands are file-based trig
 
 ### What are ACP Commands?
 
-Commands are markdown files in [`agent/commands/`](agent/commands/) that contain step-by-step instructions for AI agents. Instead of typing long prompts like "AGENT.md: Initialize", you can reference command files like `@acp.init` to trigger specific workflows.
+Commands are markdown files in [`agent/commands/`](../agent/commands/) that contain step-by-step instructions for AI agents. Instead of typing long prompts like "AGENT.md: Initialize", you can reference command files like `@acp.init` to trigger specific workflows.
 
 **Benefits**:
-- **Discoverable**: Browse [`agent/commands/`](agent/commands/) to see all available commands
+- **Discoverable**: Browse [`agent/commands/`](../agent/commands/) to see all available commands
 - **Consistent**: All commands follow the same structure
 - **Extensible**: Create custom commands for your project
 - **Self-Documenting**: Each command file contains complete documentation
@@ -576,14 +576,14 @@ Commands are markdown files in [`agent/commands/`](agent/commands/) that contain
 
 ### Core Commands
 
-Core ACP commands use the `acp.` prefix and are available in [`agent/commands/`](agent/commands/):
+Core ACP commands use the `acp.` prefix and are available in [`agent/commands/`](../agent/commands/):
 
-- **[`@acp.init`](agent/commands/acp.init.md)** - Initialize agent context (replaces "AGENT.md: Initialize")
-- **[`@acp.proceed`](agent/commands/acp.proceed.md)** - Continue with next task (replaces "AGENT.md: Proceed")
-- **[`@acp.status`](agent/commands/acp.status.md)** - Display project status
-- **[`@acp.version-check`](agent/commands/acp.version-check.md)** - Show current ACP version
-- **[`@acp.version-check-for-updates`](agent/commands/acp.version-check-for-updates.md)** - Check for ACP updates
-- **[`@acp.version-update`](agent/commands/acp.version-update.md)** - Update ACP to latest version
+- **[`@acp.init`](../agent/commands/acp.init.md)** - Initialize agent context (replaces "AGENT.md: Initialize")
+- **[`@acp.proceed`](../agent/commands/acp.proceed.md)** - Continue with next task (replaces "AGENT.md: Proceed")
+- **[`@acp.status`](../agent/commands/acp.status.md)** - Display project status
+- **[`@acp.version-check`](../agent/commands/acp.version-check.md)** - Show current ACP version
+- **[`@acp.version-check-for-updates`](../agent/commands/acp.version-check-for-updates.md)** - Check for ACP updates
+- **[`@acp.version-update`](../agent/commands/acp.version-update.md)** - Update ACP to latest version
 
 ### Command Invocation
 
@@ -634,7 +634,7 @@ cp agent/commands/command.template.md agent/commands/deploy.production.md
 
 ### Command Template
 
-See [`agent/commands/command.template.md`](agent/commands/command.template.md) for the complete command template with all sections and examples.
+See [`agent/commands/command.template.md`](../agent/commands/command.template.md) for the complete command template with all sections and examples.
 
 ### Installing Third-Party Commands
 
@@ -878,7 +878,7 @@ Run ./agent/scripts/uninstall.sh to remove all ACP files (agent/ directory and A
 7. **CRITICAL: Always update CHANGELOG.md for version changes**
    - ❌ **DO NOT** commit version changes without updating CHANGELOG.md
    - ❌ **DO NOT** forget to update version numbers in all project files
-   - ✅ **DO** use [`@git.commit`](agent/commands/git.commit.md) for version-aware commits
+   - ✅ **DO** use [`@git.commit`](../agent/commands/git.commit.md) for version-aware commits
    - ✅ **DO** detect version impact: major (breaking), minor (features), patch (fixes)
    - ✅ **DO** update CHANGELOG.md with clear, user-focused descriptions
    - ✅ **DO** update all version files (package.json, AGENT.md, etc.)
@@ -1046,13 +1046,13 @@ The Agent Directory Pattern transforms software development from an implicit, me
 - `PROGRESS_SUMMARY.md`
 - Any file with `SUMMARY` in the name
 
-**Why**: All summary information belongs in [`progress.yaml`](agent/progress.yaml). Creating separate summary documents:
+**Why**: All summary information belongs in [`progress.yaml`](../agent/progress.yaml). Creating separate summary documents:
 - Duplicates information
 - Creates inconsistency
 - Requires maintaining multiple files
 - Defeats the purpose of structured progress tracking
 
-**Instead**: Update [`progress.yaml`](agent/progress.yaml):
+**Instead**: Update [`progress.yaml`](../agent/progress.yaml):
 ```yaml
 recent_work:
   - date: 2026-02-13
@@ -1096,9 +1096,9 @@ recent_work:
 
 ### ✅ Correct Approach
 
-1. **For summaries**: Update [`progress.yaml`](agent/progress.yaml)
+1. **For summaries**: Update [`progress.yaml`](../agent/progress.yaml)
 2. **For task changes**: Modify existing task documents in place
-3. **For major changes**: Update the task and note the changes in [`progress.yaml`](agent/progress.yaml)
+3. **For major changes**: Update the task and note the changes in [`progress.yaml`](../agent/progress.yaml)
 4. **For new work**: Create new task documents with new numbers
 
 ---

@@ -97,8 +97,8 @@ describe('signupSchema', () => {
   const validSignup = {
     email: 'newuser@example.com',
     companyName: 'Test Company Ltd',
-    password: 'SecurePass123',
-    confirmPassword: 'SecurePass123',
+    password: 'SecurePass123!',
+    confirmPassword: 'SecurePass123!',
     termsAccepted: true,
   };
 
@@ -178,16 +178,16 @@ describe('signupSchema', () => {
   });
 
   describe('password validation', () => {
-    it('rejects password under 8 characters', () => {
+    it('rejects password under 12 characters', () => {
       const result = signupSchema.safeParse({
         ...validSignup,
-        password: 'Short1',
-        confirmPassword: 'Short1',
+        password: 'Short1!',
+        confirmPassword: 'Short1!',
       });
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues.some(i => i.message.includes('8 characters'))).toBe(true);
+        expect(result.error.issues.some(i => i.message.includes('12 characters'))).toBe(true);
       }
     });
 
@@ -220,8 +220,8 @@ describe('signupSchema', () => {
     it('rejects password without number', () => {
       const result = signupSchema.safeParse({
         ...validSignup,
-        password: 'NoNumbersHere',
-        confirmPassword: 'NoNumbersHere',
+        password: 'NoNumbersHere!',
+        confirmPassword: 'NoNumbersHere!',
       });
 
       expect(result.success).toBe(false);
@@ -230,11 +230,24 @@ describe('signupSchema', () => {
       }
     });
 
-    it('rejects mismatched passwords', () => {
+    it('rejects password without symbol', () => {
       const result = signupSchema.safeParse({
         ...validSignup,
         password: 'SecurePass123',
-        confirmPassword: 'DifferentPass123',
+        confirmPassword: 'SecurePass123',
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues.some(i => i.message.includes('symbol'))).toBe(true);
+      }
+    });
+
+    it('rejects mismatched passwords', () => {
+      const result = signupSchema.safeParse({
+        ...validSignup,
+        password: 'SecurePass123!',
+        confirmPassword: 'DifferentPass123!',
       });
 
       expect(result.success).toBe(false);
@@ -250,8 +263,8 @@ describe('emailSignupSchema', () => {
     name: 'Jane Doe',
     email: 'newuser@example.com',
     companyName: 'Test Company Ltd',
-    password: 'SecurePass123',
-    confirmPassword: 'SecurePass123',
+    password: 'SecurePass123!',
+    confirmPassword: 'SecurePass123!',
   };
 
   it('accepts valid email signup data', () => {
@@ -299,7 +312,7 @@ describe('emailSignupSchema', () => {
   it('rejects mismatched passwords', () => {
     const result = emailSignupSchema.safeParse({
       ...validEmailSignup,
-      confirmPassword: 'DifferentPass123',
+      confirmPassword: 'DifferentPass123!',
     });
 
     expect(result.success).toBe(false);
@@ -341,8 +354,8 @@ describe('forgotPasswordSchema', () => {
 describe('resetPasswordSchema', () => {
   it('accepts valid password reset', () => {
     const result = resetPasswordSchema.safeParse({
-      password: 'NewSecure123',
-      confirmPassword: 'NewSecure123',
+      password: 'NewSecure123!',
+      confirmPassword: 'NewSecure123!',
     });
 
     expect(result.success).toBe(true);
@@ -359,8 +372,8 @@ describe('resetPasswordSchema', () => {
 
   it('rejects mismatched passwords', () => {
     const result = resetPasswordSchema.safeParse({
-      password: 'NewSecure123',
-      confirmPassword: 'Different123',
+      password: 'NewSecure123!',
+      confirmPassword: 'Different123!',
     });
 
     expect(result.success).toBe(false);
@@ -374,20 +387,21 @@ describe('getPasswordStrengthFeedback', () => {
   it('returns all requirements for empty password', () => {
     const feedback = getPasswordStrengthFeedback('');
 
-    expect(feedback).toContain('At least 8 characters');
+    expect(feedback).toContain('At least 12 characters');
     expect(feedback).toContain('One uppercase letter');
     expect(feedback).toContain('One lowercase letter');
     expect(feedback).toContain('One number');
+    expect(feedback).toContain('One symbol');
   });
 
   it('returns empty array for valid password', () => {
-    const feedback = getPasswordStrengthFeedback('SecurePass123');
+    const feedback = getPasswordStrengthFeedback('SecurePass123!');
 
     expect(feedback).toHaveLength(0);
   });
 
   it('identifies missing uppercase', () => {
-    const feedback = getPasswordStrengthFeedback('lowercase123');
+    const feedback = getPasswordStrengthFeedback('lowercase123!');
 
     expect(feedback).toContain('One uppercase letter');
     expect(feedback).not.toContain('One lowercase letter');
@@ -395,14 +409,14 @@ describe('getPasswordStrengthFeedback', () => {
   });
 
   it('identifies missing lowercase', () => {
-    const feedback = getPasswordStrengthFeedback('UPPERCASE123');
+    const feedback = getPasswordStrengthFeedback('UPPERCASE123!');
 
     expect(feedback).toContain('One lowercase letter');
     expect(feedback).not.toContain('One uppercase letter');
   });
 
   it('identifies missing number', () => {
-    const feedback = getPasswordStrengthFeedback('NoNumbersHere');
+    const feedback = getPasswordStrengthFeedback('NoNumbersHere!');
 
     expect(feedback).toContain('One number');
     expect(feedback).not.toContain('One uppercase letter');
@@ -410,8 +424,8 @@ describe('getPasswordStrengthFeedback', () => {
   });
 
   it('identifies short password', () => {
-    const feedback = getPasswordStrengthFeedback('Ab1');
+    const feedback = getPasswordStrengthFeedback('Ab1!');
 
-    expect(feedback).toContain('At least 8 characters');
+    expect(feedback).toContain('At least 12 characters');
   });
 });

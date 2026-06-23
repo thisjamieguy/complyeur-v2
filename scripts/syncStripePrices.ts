@@ -2,8 +2,11 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import Stripe from 'stripe'
+import { loadEnvConfig } from '@next/env'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database'
+
+loadEnvConfig(process.cwd())
 
 type BillingInterval = 'monthly' | 'annual' | 'both'
 

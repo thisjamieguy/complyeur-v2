@@ -14,7 +14,9 @@ ComplyEur still does **not** meet the long-term **9.7 / 10** readiness target. T
 - MFA is not yet enforced for tenant `owner` and `admin` roles, only `is_superadmin`.
 - Backup restore testing is documented but not evidenced.
 - Availability and vendor-response controls are still lighter than a mature SOC 2 Type II posture.
-- The DPA is still marked draft and dependency/security scanning is not automated in CI.
+- The DPA package is repo-ready for legal/DPO review, but final approval and
+  account-level subprocessor evidence are still open; dependency/security
+  scanning is not automated in CI.
 
 **Overall Result:** **FAIL** (7.9 / 10 vs required 9.7 / 10)
 
@@ -136,7 +138,8 @@ Net movement: **+0.8**
 | P5 | Cookie/tracking consent (GDPR) | **Met** | 8 | production CookieYes script is configured in `app/layout.tsx`; analytics gated by consent helpers |
 
 **Residual Gaps**
-- The DPA is still marked draft pending legal review.
+- The DPA package is repo-ready for legal/DPO review, but final approval and
+  account-level subprocessor evidence are still open.
 - Privacy controls are strong in-product, but legal/commercial packaging is not yet fully mature.
 
 ---
@@ -148,7 +151,7 @@ Net movement: **+0.8**
 | G1 | MFA enforced only for `is_superadmin`, not tenant `owner` / `admin` roles | **High** | P0 | Security | Extend `shouldEnforceMfaForRole()` and prove flows with tests + docs | 8–16 |
 | G2 | Backup restore test procedure exists but no executed evidence is stored | **High** | P0 | Availability | Run restore into isolated environment, capture screenshots/query results, file evidence under `docs/compliance/soc2/evidence/` | 4–8 |
 | G3 | Vendor outage/degraded-mode playbooks incomplete | **Medium** | P1 | Availability | Add explicit runbooks for Supabase, Stripe, Resend, Sentry outages and operator actions | 4–8 |
-| G4 | DPA template still marked draft | **Medium** | P1 | Privacy | Complete legal review and remove draft status before treating as enterprise-ready evidence | 2–6 |
+| G4 | DPA package not legally approved | **Medium** | P1 | Privacy | Complete legal/DPO review of `docs/legal/DPA_TEMPLATE.md` and `docs/legal/DPA_READINESS.md`, attach account-level subprocessor evidence, and remove draft status before treating as enterprise-ready evidence | 2–6 |
 | G5 | Dependency/security scanning not automated in CI | **Medium** | P1 | Security | Add CI workflow for `pnpm audit` / SAST or document approved compensating control | 4–8 |
 | G6 | Provider-side controls (at-rest encryption, backup success, production secrets posture) are not independently evidenced in repo | **Medium** | P2 | Security / Availability | Collect dashboard screenshots or exported evidence for provider controls | 4–8 |
 | G7 | Retention/deletion and privacy controls need cleaner compliance evidence packaging | **Low** | P2 | Confidentiality / Privacy | Consolidate evidence index and map controls to evidence artifacts | 3–6 |
@@ -163,7 +166,7 @@ Net movement: **+0.8**
 - Finalise explicit outage playbooks for critical third parties.
 
 ### Phase 1
-- Complete DPA legal review.
+- Complete DPA legal review and account-level subprocessor evidence.
 - Add automated dependency/security scanning in CI.
 - Capture provider-control evidence for encryption, backups, and production secret handling.
 
@@ -211,6 +214,7 @@ Net movement: **+0.8**
 - `docs/INCIDENT_RESPONSE.md`
 - `docs/DATA_CLASSIFICATION.md`
 - `docs/legal/DPA_TEMPLATE.md`
+- `docs/legal/DPA_READINESS.md`
 - `docs/compliance/soc2/EVIDENCE_INDEX.md`
 - `docs/compliance/soc2/evidence/uptime_monitoring_evidence.md`
 - `docs/compliance/soc2/evidence/session_timeout_evidence.md`

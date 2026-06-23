@@ -1,6 +1,6 @@
 # ComplyEur Private Beta Tester Brief
 
-Last updated: 2026-06-15
+Last updated: 2026-06-16
 
 Use this brief when inviting or onboarding private beta testers.
 
@@ -34,7 +34,7 @@ Send that document alongside this brief when inviting testers.
 - Multi-provider email deliverability across Gmail, Outlook, and corporate providers
 - Password reset delivery and reset-link behavior
 - Real-device iPhone Safari and Android Chrome coverage
-- Sentry alert routing and public/internal health evidence
+- Sentry alert routing evidence
 - Non-founder onboarding evidence from a tester who has not seen the app
 
 Repo-side verification helpers are tracked in

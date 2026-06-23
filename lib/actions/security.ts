@@ -7,10 +7,11 @@ import { checkServerActionRateLimit } from '@/lib/rate-limit'
 
 const updatePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z.string().min(8, "Password must be at least 8 characters")
+  newPassword: z.string().min(12, "Password must be at least 12 characters")
     .regex(/[A-Z]/, "Must contain an uppercase letter")
     .regex(/[a-z]/, "Must contain a lowercase letter")
-    .regex(/[0-9]/, "Must contain a number"),
+    .regex(/[0-9]/, "Must contain a number")
+    .regex(/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/, "Must contain a symbol"),
 })
 
 export type UpdatePasswordResult = 

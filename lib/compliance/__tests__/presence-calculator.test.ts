@@ -176,6 +176,51 @@ describe('presenceDays', () => {
     });
   });
 
+  describe('historical Schengen membership dates', () => {
+    it('excludes Bulgaria days before full Schengen membership on 1 January 2025', () => {
+      const trips = [createTrip('2024-12-01', '2024-12-05', 'BG')];
+      const config = createConfig({
+        referenceDate: new Date('2025-02-01'),
+        complianceStartDate: new Date('2024-01-01'),
+      });
+
+      const days = presenceDays(trips, config);
+
+      expect(days.size).toBe(0);
+    });
+
+    it('counts only Bulgaria trip days on or after 1 January 2025', () => {
+      const trips = [createTrip('2024-12-30', '2025-01-03', 'BG')];
+      const config = createConfig({
+        referenceDate: new Date('2025-02-01'),
+        complianceStartDate: new Date('2024-01-01'),
+      });
+
+      const days = presenceDays(trips, config);
+
+      expect(Array.from(days).sort()).toEqual([
+        '2025-01-01',
+        '2025-01-02',
+        '2025-01-03',
+      ]);
+    });
+
+    it('counts only Romania trip days on or after 1 January 2025', () => {
+      const trips = [createTrip('2024-12-31', '2025-01-02', 'Romania')];
+      const config = createConfig({
+        referenceDate: new Date('2025-02-01'),
+        complianceStartDate: new Date('2024-01-01'),
+      });
+
+      const days = presenceDays(trips, config);
+
+      expect(Array.from(days).sort()).toEqual([
+        '2025-01-01',
+        '2025-01-02',
+      ]);
+    });
+  });
+
   describe('audit vs planning mode', () => {
     it('audit mode excludes future trips', () => {
       const trips = [

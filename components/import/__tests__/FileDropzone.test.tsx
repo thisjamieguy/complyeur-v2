@@ -34,6 +34,14 @@ function getFileInput(container: HTMLElement): HTMLInputElement {
 }
 
 describe('FileDropzone', () => {
+  it('labels schedule uploads distinctly from simple trip lists', () => {
+    const onFileSelect = vi.fn();
+    render(<FileDropzone format="gantt" onFileSelect={onFileSelect} isProcessing={false} />);
+
+    expect(screen.getByRole('heading', { name: /upload schedule\/gantt file/i })).toBeInTheDocument();
+    expect(screen.getByText(/validate date columns/i)).toBeInTheDocument();
+  });
+
   it('keeps Validate & Preview disabled until a file is selected', () => {
     const onFileSelect = vi.fn();
     render(<FileDropzone format="employees" onFileSelect={onFileSelect} isProcessing={false} />);

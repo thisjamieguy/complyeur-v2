@@ -1,6 +1,6 @@
 # Beta Evidence Status Dashboard
 
-Last updated: 2026-06-15
+Last updated: 2026-06-16
 
 ## Purpose
 
@@ -27,14 +27,16 @@ Before marking any beta blocker complete:
 | Signup Email Verification | 🟩 Complete | `2026-06-05-check-email-page.png`, `2026-06-05-confirmation-email-received.png`, `2026-06-05-confirmation-link-login.png`, `2026-06-05-dashboard-access.png`; prior signup-fix evidence preserved | `2026-06-04-email-verification.md`, `2026-06-04-me-user-removal-before.md`, `2026-06-04-me-user-removal-after.md` | `docs/operations/evidence/email-verification/` |
 | Multi-Provider Email Deliverability | 🟨 In Progress | One production signup path evidenced; Gmail, Outlook, and corporate inbox evidence pending | Pending provider-specific note | `docs/operations/evidence/email-verification/` |
 | Password Reset | ⬜ Not Started | Pending | Pending | `docs/operations/evidence/password-reset/` |
-| Recovery Drill | ⬜ Not Started | Pending | Pending | `docs/operations/evidence/recovery-drills/` |
+| Recovery Drill | 🟨 Risk Accepted | Restore drill waived only for the initial private tester group under no-PITR risk acceptance; required before broader rollout | `2026-06-16-no-pitr-initial-tester-risk-acceptance.md` | `docs/operations/evidence/release-approvals/`, `docs/operations/evidence/recovery-drills/` |
 | Non-Founder Onboarding | ⬜ Not Started | Founder simulation screenshots captured; non-founder evidence pending | `2026-06-05-founder-simulation-onboarding.md` founder simulation only | `docs/operations/evidence/beta-onboarding/` |
-| Sentry Alert Routing | 🚫 Blocked | `2026-06-04-sentry-project-settings-blocked.png`, `2026-06-04-sentry-alert-rules-blocked.png`, `2026-06-04-sentry-notification-routing-blocked.png` | `2026-06-04-sentry-alert-routing.md` | `docs/operations/evidence/sentry-alerts/` |
+| Sentry Alert Routing | 🟨 In Progress | `2026-06-04-sentry-project-settings-blocked.png`, `2026-06-04-sentry-alert-rules-blocked.png`, `2026-06-04-sentry-notification-routing-blocked.png`; API output captured | `2026-06-04-sentry-alert-routing.md`, `2026-06-16-sentry-production-issues-api-check.md` | `docs/operations/evidence/sentry-alerts/` |
 | Support Ownership | 🟩 Complete | `2026-06-04-support-mailbox.png`, `2026-06-04-support-routing.png`, `2026-06-04-support-address-configuration.png` | `2026-06-04-support-ownership.md` | `docs/operations/evidence/support-ownership/` |
-| Stripe Verification | ⬜ Not Started | Pending | Pending | `docs/operations/evidence/stripe-verification/` |
+| Beta Monitoring Cron | 🟨 In Progress | Pending first deployed run | `/api/cron/beta-monitoring` implemented for zero-signup and Stripe webhook failure/stale-processing alerts; evidence pending | `docs/operations/evidence/` |
+| Stripe Verification | 🟨 In Progress | Dashboard links from connector; screenshots pending if required | `2026-06-16-stripe-price-webhook-verification.md` proves live price IDs and production webhook endpoint; lifecycle/replay evidence pending | `docs/operations/evidence/stripe-verification/` |
 | CodeQL And Dependency Security | 🟨 In Progress | Pending GitHub run evidence | `.github/workflows/codeql.yml`, `.github/workflows/security.yml`, and `.github/dependabot.yml` added locally; dashboard evidence pending | `docs/operations/evidence/branch-protection/` |
-| Public/Internal Health | 🟨 In Progress | Pending current production probe | Public health is now anon `ping()` only; internal deep health is CRON-protected | `docs/operations/evidence/` |
-| Supabase Backup/PITR Restore Drill | ⬜ Not Started | Pending | Must include isolated restore, row counts, RLS check, auth smoke, app smoke, and reviewer sign-off | `docs/operations/evidence/recovery-drills/` |
+| Platform Dashboard | 🟨 In Progress | CLI/API evidence captured; Sentry issue read access verified but alert routing still pending; Supabase backup/PITR risk accepted only for the initial tester group | `2026-06-16-vercel-supabase-sentry-dashboard-evidence.md` | `docs/operations/evidence/platform-dashboard/` |
+| Public/Internal Health | 🟩 Complete | CLI/API evidence note | `2026-06-16-vercel-supabase-sentry-dashboard-evidence.md` confirms public and protected production health | `docs/operations/evidence/platform-dashboard/` |
+| Supabase Backup/PITR Restore Drill | 🟨 Risk Accepted | Accepted only for the initial private tester group; CLI reports `pitr_enabled: false` and no listed physical backups | `2026-06-16-no-pitr-initial-tester-risk-acceptance.md`, `2026-06-16-vercel-supabase-sentry-dashboard-evidence.md` | `docs/operations/evidence/release-approvals/`, `docs/operations/evidence/recovery-drills/`, `docs/operations/evidence/platform-dashboard/` |
 | GDPR/DSAR Lifecycle | 🟨 In Progress | Pending reviewer sign-off | Import raw PII retention was broadened in code; full DSAR and backup limitation evidence pending | `docs/operations/evidence/` |
 
 ## Status Legend
@@ -42,6 +44,8 @@ Before marking any beta blocker complete:
 ⬜ Not Started
 
 🟨 In Progress
+
+🟨 Risk Accepted
 
 🟩 Complete
 
@@ -122,6 +126,28 @@ Before marking any beta blocker complete:
 - Routing is documented as founder-monitored support; no forwarding rule is required for beta.
 - Provider-console forwarding screenshots were not available in this environment; the evidence note records direct mailbox monitoring instead.
 
+### Beta Monitoring Cron
+
+- 2026-06-16 repo update added `/api/cron/beta-monitoring`, scheduled daily in
+  `vercel.json`, to alert the monitored operations recipient when no companies
+  are created during the configured signup window.
+- 2026-06-16 repo update expanded the same cron to alert on failed Stripe
+  webhook events in the configured window and stale processing webhook rows.
+- Evidence remains in progress until a deployed run proves alert delivery or a
+  no-alert result.
+
+### Stripe Verification
+
+- 2026-06-16 live Stripe connector search confirmed all six active GBP self-serve
+  prices exist and match the repo pricing model.
+- 2026-06-16 production dry-run sync found no tier updates required.
+- 2026-06-16 production audit found six valid prices and zero invalid prices.
+- 2026-06-16 production webhook check confirmed endpoint
+  `https://complyeur.com/api/billing/webhook` is configured with the required
+  event set.
+- Stripe Verification remains in progress until lifecycle/replay evidence is
+  captured.
+
 ### Signup Email Verification
 
 - 2026-06-04 repository review confirmed signup, password reset, and transactional welcome email paths are present for production.
@@ -149,29 +175,64 @@ Before marking any beta blocker complete:
 
 - 2026-06-04 verification found Sentry production environment variables present in Vercel for `james-walsh/complyeur`.
 - Live Sentry project settings, environments, alert rules, notification destinations, and recipients could not be verified because the configured production `SENTRY_AUTH_TOKEN` returned `403 Forbidden` for read-only Sentry project API access.
+- 2026-06-16 initial re-check confirmed Sentry production environment variables still exist in Vercel, but the configured production token returned `403 Forbidden` for read-only production issue access.
+- 2026-06-16 follow-up with a newly created read-capable personal token succeeded for the production issues API and returned `[]` for unresolved production issues in the last 24 hours.
 - Sentry ownership is documented in `docs/operations/SENTRY_OWNERSHIP.md`, but routing evidence is incomplete.
-- Sentry Alert Routing remains a beta blocker until live Sentry screenshots or read-capable API evidence show alerts routed to a responsible recipient.
+- Sentry Alert Routing remains a beta blocker until live Sentry screenshots or API evidence show alert rules, notification routes, recipients, and test delivery to a responsible recipient.
+
+### Platform Dashboard
+
+- 2026-06-16 Vercel CLI evidence confirmed the `complyeur` production deployment
+  is `Ready`, aliased to `https://complyeur.com` and `https://www.complyeur.com`,
+  and has expected encrypted production environment-variable names.
+- 2026-06-16 TLS check confirmed `complyeur.com` serves a valid Let's Encrypt
+  certificate for `complyeur.com` over TLS 1.3.
+- 2026-06-16 public health returned `{"status":"ok"}` from
+  `https://complyeur.com/api/health`.
+- 2026-06-16 protected internal health returned
+  `{"status":"ok","checks":{"ping":"ok"}}` when called with the production
+  cron secret loaded locally without printing it.
+- 2026-06-16 Supabase connector evidence confirmed `complyeur-prod`
+  (`bewydxxynjtfpytunlcq`) is `ACTIVE_HEALTHY`, all listed `public` and
+  `storage` tables have RLS enabled, and the `auth-hook-prevent-linking` Edge
+  Function is active.
+- Supabase security advisors report one warning: leaked password protection is
+  disabled.
+- 2026-06-16 repo-side password policy was hardened to require at least 12
+  characters and a symbol in Supabase local config plus app signup, reset, and
+  account password-change validation; targeted auth tests passed.
+- Supabase leaked password protection remains disabled in the hosted project and
+  still requires a Pro-or-higher plan plus dashboard enablement or explicit risk
+  acceptance. Screenshot evidence:
+  `docs/operations/evidence/platform-dashboard/2026-06-16-supabase-leaked-password-protection-plan-blocked.png`.
+- 2026-06-16 `supabase backups list` reported `pitr_enabled: false`, `walg_enabled: true`,
+  no listed physical backups, and no physical backup metadata. Backup/PITR
+  evidence is blocked until backup/PITR coverage is enabled or risk-accepted.
+- 2026-06-16 James Walsh accepted the no-PITR risk for the initial private
+  tester group only. Evidence:
+  `docs/operations/evidence/release-approvals/2026-06-16-no-pitr-initial-tester-risk-acceptance.md`.
+- This risk acceptance expires before broader rollout, paid beta, public beta,
+  enterprise trials, or 2026-07-16, whichever comes first.
 
 ## Release Progress Summary
 
 ### Critical Evidence Areas Complete
 
-3 complete:
+4 complete:
 
 - Branch Protection
 - Signup Email Verification
+- Public/Internal Health
 - Support Ownership
 
 ### Private Beta Evidence Blockers Remaining
 
-6 remaining:
+4 remaining:
 
 - Multi-Provider Email Deliverability
 - Password Reset
-- Recovery Drill
 - Non-Founder Onboarding
 - Sentry Alert Routing
-- Public/Internal Health
 
 Tester brief and known-issues distribution is tracked in
 `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md` because it is a communication
@@ -182,6 +243,7 @@ task rather than an operational evidence area.
 - Stripe Verification
 - CodeQL And Dependency Security run evidence
 - Supabase Backup/PITR Restore Drill
+- Beta Monitoring Cron first-run evidence
 - GDPR/DSAR Lifecycle
 
 ## Recommendations

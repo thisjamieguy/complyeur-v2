@@ -289,6 +289,7 @@ describe('generateDsarExport content coverage', () => {
     const currentCalculation = JSON.parse(
       await zip.file('current_compliance_calculation.json')!.async('string')
     )
+    const manifest = JSON.parse(await zip.file('dsar_manifest.json')!.async('string'))
     const metadata = JSON.parse(await zip.file('metadata.json')!.async('string'))
     const readme = await zip.file('README.txt')!.async('string')
 
@@ -348,6 +349,7 @@ describe('generateDsarExport content coverage', () => {
       includes_import_sessions: true,
       includes_stored_compliance_snapshots: true,
       includes_generated_current_compliance_calculation: true,
+      includes_manifest: true,
       alert_count: 1,
       notification_log_count: 1,
       import_session_count: 1,
@@ -355,6 +357,38 @@ describe('generateDsarExport content coverage', () => {
     })
     expect(readme).toContain('currently exported by Acme Travel Ltd')
     expect(readme).toContain('generated at export time')
+    expect(manifest).toMatchObject({
+      export_type: 'employee_dsar',
+      data_subject_id: 'employee-1',
+      company_id: 'company-1',
+    })
+    expect(manifest.included_stores.map((entry: { store: string }) => entry.store)).toEqual(
+      expect.arrayContaining([
+        'employees',
+        'trips',
+        'alerts',
+        'notification_log',
+        'employee_compliance_snapshots',
+        'import_sessions',
+        'current_compliance_calculation',
+      ])
+    )
+    expect(manifest.manual_or_excluded_stores).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          store: 'profiles',
+          handling: 'manual_process',
+        }),
+        expect.objectContaining({
+          store: 'Stripe billing records',
+          handling: 'manual_process',
+        }),
+        expect.objectContaining({
+          store: 'backups',
+          handling: 'excluded',
+        }),
+      ])
+    )
 
     expect(logGdprActionMock).toHaveBeenCalledTimes(1)
     const [auditEntry] = logGdprActionMock.mock.calls[0]
@@ -366,6 +400,7 @@ describe('generateDsarExport content coverage', () => {
       affected_import_sessions_count: 1,
       affected_stored_compliance_snapshots_count: 1,
     })
+    expect(auditEntry.details.files_included).toContain('dsar_manifest.json')
     expect(auditEntry.details).not.toHaveProperty('employee_name')
     expect(auditEntry.details).not.toHaveProperty('requester_email')
   })

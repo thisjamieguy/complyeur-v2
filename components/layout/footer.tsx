@@ -23,6 +23,7 @@ export function Footer() {
               alt="ComplyEur icon"
               width={20}
               height={20}
+              className="h-5 w-5"
               loading="eager"
             />
             <span className="font-medium text-brand-700">ComplyEur</span>

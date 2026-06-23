@@ -4,17 +4,18 @@ import { z } from 'zod'
  * Auth validation schemas
  *
  * Password requirements:
- * - Minimum 8 characters
+ * - Minimum 12 characters
  * - At least one uppercase letter
  * - At least one lowercase letter
  * - At least one number
+ * - At least one symbol
  */
 
 // Password strength validation
 const passwordSchema = z
   .string()
   .min(1, 'Password is required')
-  .min(8, 'Password must be at least 8 characters')
+  .min(12, 'Password must be at least 12 characters')
   .max(128, 'Password must be less than 128 characters')
   .refine(
     (val) => /[A-Z]/.test(val),
@@ -27,6 +28,10 @@ const passwordSchema = z
   .refine(
     (val) => /[0-9]/.test(val),
     'Password must include at least one number'
+  )
+  .refine(
+    (val) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(val),
+    'Password must include at least one symbol'
   )
 
 // Company name pattern: allows letters, numbers, spaces, common business characters
@@ -148,8 +153,8 @@ export type EmailSignupInput = z.infer<typeof emailSignupSchema>
 export function getPasswordStrengthFeedback(password: string): string[] {
   const feedback: string[] = []
 
-  if (password.length < 8) {
-    feedback.push('At least 8 characters')
+  if (password.length < 12) {
+    feedback.push('At least 12 characters')
   }
   if (!/[A-Z]/.test(password)) {
     feedback.push('One uppercase letter')
@@ -159,6 +164,9 @@ export function getPasswordStrengthFeedback(password: string): string[] {
   }
   if (!/[0-9]/.test(password)) {
     feedback.push('One number')
+  }
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password)) {
+    feedback.push('One symbol')
   }
 
   return feedback

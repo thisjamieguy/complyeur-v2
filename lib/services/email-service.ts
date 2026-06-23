@@ -62,6 +62,103 @@ interface EmailResult {
   error?: string
 }
 
+interface OperationalAlertEmailData {
+  recipientEmail: string
+  subject: string
+  heading: string
+  body: string[]
+  severity?: 'info' | 'warning' | 'critical'
+  actionUrl?: string
+  actionLabel?: string
+  tags?: { name: string; value: string }[]
+}
+
+function generateOperationalAlertEmailHtml(data: OperationalAlertEmailData): string {
+  const severity = data.severity ?? 'info'
+  const colors = {
+    info: { header: '#2563EB', badgeBg: '#DBEAFE', badgeText: '#1E40AF', label: 'Info' },
+    warning: { header: '#D97706', badgeBg: '#FEF3C7', badgeText: '#92400E', label: 'Warning' },
+    critical: { header: '#DC2626', badgeBg: '#FEE2E2', badgeText: '#991B1B', label: 'Critical' },
+  }[severity]
+
+  const body = data.body
+    .map((paragraph) => `<p style="margin: 0 0 16px; color: #374151; font-size: 15px; line-height: 1.6;">${escapeHtml(paragraph)}</p>`)
+    .join('')
+
+  const action = data.actionUrl && data.actionLabel
+    ? `
+          <tr>
+            <td style="padding: 0 32px 32px; text-align: center;">
+              <a href="${escapeHtml(data.actionUrl)}" style="display: inline-block; background-color: #2563EB; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 15px;">
+                ${escapeHtml(data.actionLabel)}
+              </a>
+            </td>
+          </tr>`
+    : ''
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(data.subject)}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          <tr>
+            <td style="background-color: ${colors.header}; padding: 24px; text-align: center;">
+              <p style="margin: 0 0 4px; color: rgba(255,255,255,0.8); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;">ComplyEur Operations</p>
+              <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 600;">${escapeHtml(data.heading)}</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 32px 12px;">
+              <div style="display: inline-block; background-color: ${colors.badgeBg}; color: ${colors.badgeText}; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+                ${colors.label}
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 12px 32px 24px;">
+              ${body}
+            </td>
+          </tr>
+          ${action}
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px 32px; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0; color: #6b7280; font-size: 12px; text-align: center;">
+                This operational email was sent by ComplyEur. Reply to this email or contact <a href="mailto:${REPLY_TO_EMAIL}" style="color: #6b7280;">${REPLY_TO_EMAIL}</a>.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
+function generateOperationalAlertEmailText(data: OperationalAlertEmailData): string {
+  const lines = [
+    data.heading,
+    '='.repeat(data.heading.length),
+    '',
+    ...data.body.flatMap((paragraph) => [paragraph, '']),
+  ]
+
+  if (data.actionUrl && data.actionLabel) {
+    lines.push(`${data.actionLabel}: ${data.actionUrl}`, '')
+  }
+
+  lines.push(`Reply to this email or contact ${REPLY_TO_EMAIL}.`)
+  return lines.join('\n').trim()
+}
+
 /**
  * Generate alert email subject based on type
  */
@@ -647,6 +744,43 @@ export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<EmailRes
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown error'
     logger.error('[Email] Failed to send welcome email', { error: err })
+    return { success: false, error: errorMessage }
+  }
+}
+
+export async function sendOperationalAlertEmail(data: OperationalAlertEmailData): Promise<EmailResult> {
+  if (!process.env.RESEND_API_KEY) {
+    logger.info('[Email] Skipping operational alert email — no RESEND_API_KEY', {
+      recipientEmail: data.recipientEmail,
+      subject: data.subject,
+    })
+    return { success: true, messageId: 'dev-mode-skip' }
+  }
+
+  try {
+    const resend = getResendClient()
+    if (!resend) return { success: true, messageId: 'client-unavailable' }
+
+    const { data: result, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      replyTo: REPLY_TO_EMAIL,
+      to: data.recipientEmail,
+      subject: data.subject,
+      html: generateOperationalAlertEmailHtml(data),
+      text: generateOperationalAlertEmailText(data),
+      tags: data.tags ?? [{ name: 'category', value: 'operations' }],
+    })
+
+    if (error) {
+      logger.error('[Email] Operational alert email error', { error })
+      return { success: false, error: error.message }
+    }
+
+    logger.info('[Email] Operational alert email sent', { messageId: result?.id })
+    return { success: true, messageId: result?.id }
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+    logger.error('[Email] Failed to send operational alert email', { error: err })
     return { success: false, error: errorMessage }
   }
 }

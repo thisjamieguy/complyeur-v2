@@ -247,7 +247,7 @@ const faqData: FAQSection[] = [
       {
         question: 'What data does ComplyEur store?',
         answer:
-          'We store employee names, trip dates, destinations, and job references. Data is encrypted in transit (TLS), and at-rest protections are applied via infrastructure controls. Waitlist email addresses also use application-layer AES-256-GCM encryption at rest. We do not sell or share your data with third parties.',
+          'We store employee names, trip dates, destinations, and job references. Data is encrypted in transit (TLS), and at-rest protections are applied via infrastructure controls. Waitlist email addresses also use application-layer AES-256-GCM encryption at rest. We do not sell your personal data, and we use vetted service providers only to operate, secure, bill, support, and improve the service.',
       },
       {
         question: "How do I export an employee's data (DSAR)?",
@@ -267,7 +267,7 @@ const faqData: FAQSection[] = [
       {
         question: 'Where is my data stored?',
         answer:
-          'ComplyEur uses Supabase (built on PostgreSQL) with data centres in the EU. Your data never leaves the EU unless you explicitly export it.',
+          'ComplyEur uses Supabase (built on PostgreSQL) for the primary production database, currently configured for London (UK). Supporting processors may handle limited operational data in the UK, EEA, or other countries where appropriate safeguards such as Standard Contractual Clauses or equivalent protections apply.',
       },
     ],
   },

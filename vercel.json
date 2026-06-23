@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/billing",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/beta-monitoring",
+      "schedule": "0 10 * * *"
     }
   ]
 }

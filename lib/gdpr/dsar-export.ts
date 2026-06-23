@@ -15,6 +15,7 @@
  * - import_sessions.json: Employee-linked retained import staging/history rows, where present
  * - stored_compliance_snapshots.json: Stored application snapshot rows, where present
  * - current_compliance_calculation.json: Current compliance calculation generated at export time
+ * - dsar_manifest.json: Machine-readable coverage map and documented exclusions
  * - metadata.json: Export metadata and scope
  */
 
@@ -143,6 +144,24 @@ interface ComplianceSnapshot {
   window_end: string
 }
 
+interface DsarManifestStore {
+  store: string
+  personal_data: string[]
+  handling: 'included' | 'generated' | 'manual_process' | 'excluded'
+  files: string[]
+  rationale: string
+}
+
+interface DsarCoverageManifest {
+  generated_at: string
+  export_type: 'employee_dsar'
+  data_subject_id: string
+  company_id: string
+  included_stores: DsarManifestStore[]
+  manual_or_excluded_stores: DsarManifestStore[]
+  notes: string[]
+}
+
 /**
  * Export metadata
  */
@@ -170,6 +189,7 @@ interface ExportMetadata {
     includes_import_sessions: boolean
     includes_stored_compliance_snapshots: boolean
     includes_generated_current_compliance_calculation: boolean
+    includes_manifest: boolean
     trip_count: number
     alert_count: number
     notification_log_count: number
@@ -185,6 +205,135 @@ interface ExportMetadata {
     scheduled_deletion: string | null
   }
   gdpr_article: 'Article 15 - Right of Access'
+}
+
+function buildDsarCoverageManifest(args: {
+  generatedAtIso: string
+  employeeId: string
+  companyId: string
+}): DsarCoverageManifest {
+  const { generatedAtIso, employeeId, companyId } = args
+
+  return {
+    generated_at: generatedAtIso,
+    export_type: 'employee_dsar',
+    data_subject_id: employeeId,
+    company_id: companyId,
+    included_stores: [
+      {
+        store: 'employees',
+        personal_data: ['employee id', 'name', 'email', 'nationality type', 'timestamps', 'deletion/anonymisation markers'],
+        handling: 'included',
+        files: ['employee_data.json', 'employee_data.csv'],
+        rationale: 'Primary data-subject record for this employee.',
+      },
+      {
+        store: 'trips',
+        personal_data: ['travel dates', 'countries', 'purpose', 'job reference', 'private-trip flag'],
+        handling: 'included',
+        files: ['trips.json', 'trips.csv'],
+        rationale: 'All travel records linked to this employee are exported.',
+      },
+      {
+        store: 'alerts',
+        personal_data: ['compliance status', 'risk level', 'message', 'acknowledgement metadata'],
+        handling: 'included',
+        files: ['alerts.json', 'alerts.csv'],
+        rationale: 'All compliance alerts linked to this employee are exported.',
+      },
+      {
+        store: 'notification_log',
+        personal_data: ['recipient email', 'subject', 'delivery status', 'provider message id', 'error text'],
+        handling: 'included',
+        files: ['notification_log.json', 'notification_log.csv'],
+        rationale: 'All notification events linked to this employee are exported.',
+      },
+      {
+        store: 'employee_compliance_snapshots',
+        personal_data: ['stored compliance status', 'days used', 'days remaining', 'risk level'],
+        handling: 'included',
+        files: ['stored_compliance_snapshots.json'],
+        rationale: 'Stored application-generated compliance snapshots linked to this employee are exported.',
+      },
+      {
+        store: 'import_sessions',
+        personal_data: ['retained matching parsed rows', 'matching validation errors', 'matching result errors or warnings'],
+        handling: 'included',
+        files: ['import_sessions.json'],
+        rationale: 'Only retained import rows/errors that can be matched to this employee are exported; stale raw payloads are minimized by retention cleanup.',
+      },
+      {
+        store: 'current_compliance_calculation',
+        personal_data: ['generated compliance status', 'window dates', 'days used', 'days remaining'],
+        handling: 'generated',
+        files: ['current_compliance_calculation.json'],
+        rationale: 'Generated at export time from included trip records for transparency; not a stored historical record.',
+      },
+    ],
+    manual_or_excluded_stores: [
+      {
+        store: 'profiles',
+        personal_data: ['user id', 'email', 'name', 'company role', 'timestamps'],
+        handling: 'manual_process',
+        files: [],
+        rationale: 'This employee DSAR export is scoped to customer-managed employee records. Account-user profile requests are handled through the account-level DSAR/privacy process.',
+      },
+      {
+        store: 'notification_preferences',
+        personal_data: ['user email preference state', 'unsubscribe token'],
+        handling: 'manual_process',
+        files: [],
+        rationale: 'Preference records are account-user data, not employee-linked data, and are handled through the account-level DSAR/privacy process.',
+      },
+      {
+        store: 'feedback_submissions',
+        personal_data: ['submitter identity where authenticated', 'feedback free text', 'page path'],
+        handling: 'manual_process',
+        files: [],
+        rationale: 'Feedback may contain arbitrary account/support content and is reviewed through the support/privacy DSAR process.',
+      },
+      {
+        store: 'Stripe billing records',
+        personal_data: ['customer id', 'subscription id', 'invoice and payment metadata', 'tax records'],
+        handling: 'manual_process',
+        files: [],
+        rationale: 'Billing data is processor-backed and subject to tax/accounting retention. Requests are handled through the billing/privacy process and Stripe export where needed.',
+      },
+      {
+        store: 'Supabase Auth',
+        personal_data: ['auth user id', 'email', 'session/auth metadata'],
+        handling: 'manual_process',
+        files: [],
+        rationale: 'Auth metadata is account-user data held by the authentication provider and handled through the account-level DSAR/privacy process.',
+      },
+      {
+        store: 'application logs and Sentry events',
+        personal_data: ['request metadata', 'user identifiers where present', 'error context'],
+        handling: 'manual_process',
+        files: [],
+        rationale: 'Operational logs are minimized and searched manually where needed because they are not reliably keyed by employee id.',
+      },
+      {
+        store: 'DSAR export archives',
+        personal_data: ['generated ZIP archive contents', 'signed URL metadata'],
+        handling: 'excluded',
+        files: [],
+        rationale: 'This export is the generated archive. Stored archives are short-lived operational copies cleaned by retention jobs.',
+      },
+      {
+        store: 'backups',
+        personal_data: ['point-in-time database snapshots'],
+        handling: 'excluded',
+        files: [],
+        rationale: 'Backups are restore-only operational copies with expiry; they are not used for live processing and cannot be selectively exported from this flow.',
+      },
+    ],
+    notes: [
+      'This manifest documents the scope of the employee-linked DSAR export.',
+      'Manual-process stores must be reviewed for account-level DSAR, support, billing, auth, or legal-retention requests.',
+      'The export intentionally avoids pulling unrelated company/team data for tenant-minimisation.',
+    ],
+  }
 }
 
 /**
@@ -697,6 +846,12 @@ export async function generateDsarExport(
       window_end: windowEnd.toISOString().slice(0, 10),
     }
 
+    const coverageManifest = buildDsarCoverageManifest({
+      generatedAtIso,
+      employeeId: employee.id,
+      companyId: employeeCompanyId,
+    })
+
     // Find date range of trips
     const tripDates = tripList.map((t) => new Date(t.entry_date))
     const earliestTrip =
@@ -736,6 +891,7 @@ export async function generateDsarExport(
         includes_import_sessions: true,
         includes_stored_compliance_snapshots: true,
         includes_generated_current_compliance_calculation: true,
+        includes_manifest: true,
         trip_count: tripList.length,
         alert_count: alertList.length,
         notification_log_count: notificationLogList.length,
@@ -859,6 +1015,9 @@ export async function generateDsarExport(
     // Add current compliance calculation generated at export time
     zip.file('current_compliance_calculation.json', JSON.stringify(complianceSnapshot, null, 2))
 
+    // Add machine-readable coverage manifest and documented manual/exclusion scope
+    zip.file('dsar_manifest.json', JSON.stringify(coverageManifest, null, 2))
+
     // Add metadata
     zip.file('metadata.json', JSON.stringify(metadata, null, 2))
 
@@ -897,6 +1056,7 @@ export async function generateDsarExport(
           'import_sessions.json',
           'stored_compliance_snapshots.json',
           'current_compliance_calculation.json',
+          'dsar_manifest.json',
           'metadata.json',
         ],
         export_size_bytes: zipBuffer.length,

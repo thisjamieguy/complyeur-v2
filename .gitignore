@@ -89,6 +89,7 @@ ai-export*/
 # Editor / IDE
 .cursor/
 *.swp
+*.swo
 
 # Superpowers brainstorming sessions
 .superpowers/

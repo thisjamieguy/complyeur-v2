@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'vitest';
 import ExcelJS from 'exceljs';
-import { parseFileRaw, sanitizeValue, normalizeHeader, formatDateValue } from '@/lib/import/parser';
+import { parseFile, parseFileRaw, sanitizeValue, normalizeHeader, formatDateValue } from '@/lib/import/parser';
 import { validateRows, getValidationSummary, getAllWarnings } from '@/lib/import/validator';
 import type {
   ParsedEmployeeRow,
@@ -314,6 +314,45 @@ Jane,Smith,jane@test.com
 
       expect(result.success).toBe(true);
       expect(result.rawData).toHaveLength(2);
+    });
+
+    it('parses wide schedule workbooks with more than 200 date columns as Gantt imports', async () => {
+      const dateHeaders = Array.from({ length: 250 }, (_, index) => {
+        const date = new Date(Date.UTC(2026, 0, index + 1));
+        return date.toISOString().slice(0, 10);
+      });
+      const rows = [
+        ['Employee', ...dateHeaders],
+        ['Jane Smith', ...dateHeaders.map(() => 'FR')],
+      ];
+
+      const buffer = await createExcelBuffer(rows);
+      const file = createExcelFile(buffer, 'schedule.xlsx');
+      const result = await parseFile(file, 'gantt');
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.data?.[0]).toMatchObject({
+        employee_name: 'Jane Smith',
+        entry_date: '2026-01-01',
+        exit_date: '2026-09-07',
+        country: 'FR',
+      });
+    });
+
+    it('keeps the standard Excel parser column limit for tabular imports', async () => {
+      const headers = Array.from({ length: 201 }, (_, index) => `column_${index + 1}`);
+      const rows = [
+        headers,
+        headers.map((header) => `${header}_value`),
+      ];
+
+      const buffer = await createExcelBuffer(rows);
+      const file = createExcelFile(buffer, 'too-wide.xlsx');
+      const result = await parseFileRaw(file);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Worksheet has too many columns. Limit: 200.');
     });
 
     it('handles multiple sheets (uses first sheet by default)', async () => {

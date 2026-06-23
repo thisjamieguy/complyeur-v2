@@ -83,6 +83,10 @@ const NON_SCHENGEN_CODES = ['IE', 'CY', 'GB', 'US', 'CA', 'TR'] as const;
 const SCHENGEN_SET = new Set<string>(SCHENGEN_CODES);
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const EPOCH_START = toDate('1970-01-01');
+const SCHENGEN_START_DAY_BY_CODE = new Map<string, number>([
+  ['BG', toUtcDayIndex(toDate('2025-01-01'))],
+  ['RO', toUtcDayIndex(toDate('2025-01-01'))],
+]);
 
 function toUtcDayIndex(date: Date): number {
   return Math.floor(
@@ -94,8 +98,14 @@ function utcDayIndexToDate(dayIndex: number): Date {
   return new Date(dayIndex * MS_PER_DAY);
 }
 
-function isSchengenForReference(country: string): boolean {
-  return SCHENGEN_SET.has(country.trim().toUpperCase());
+function isSchengenForReference(country: string, day: number): boolean {
+  const code = country.trim().toUpperCase();
+  if (!SCHENGEN_SET.has(code)) {
+    return false;
+  }
+
+  const membershipStartDay = SCHENGEN_START_DAY_BY_CODE.get(code);
+  return membershipStartDay === undefined || day >= membershipStartDay;
 }
 
 function strictUtcPresenceDays(trips: readonly Trip[], config: ComplianceConfig): ReadonlySet<number> {
@@ -104,7 +114,7 @@ function strictUtcPresenceDays(trips: readonly Trip[], config: ComplianceConfig)
   const days = new Set<number>();
 
   for (const trip of trips) {
-    if (!isSchengenForReference(trip.country)) {
+    if (!SCHENGEN_SET.has(trip.country.trim().toUpperCase())) {
       continue;
     }
 
@@ -126,7 +136,9 @@ function strictUtcPresenceDays(trips: readonly Trip[], config: ComplianceConfig)
     }
 
     for (let day = startDay; day <= endDay; day++) {
-      days.add(day);
+      if (isSchengenForReference(trip.country, day)) {
+        days.add(day);
+      }
     }
   }
 
@@ -206,7 +218,7 @@ function strictUtcCalculate(trips: readonly Trip[], config: ComplianceConfig): E
     daysUsed,
     daysRemaining,
     riskLevel: strictUtcRiskLevel(daysRemaining),
-    isCompliant: daysUsed <= limit - 1,
+    isCompliant: daysUsed <= limit,
   };
 }
 

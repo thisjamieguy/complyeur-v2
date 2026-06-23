@@ -68,17 +68,22 @@ was safe enough to delete without losing history or breaking references.
 
 ## Remaining Unfinished Items
 
-- Branch protection on `main` is still not verified.
-- Placeholder Stripe price IDs still block paid/public beta.
-- Data corruption recovery and restore-validation runbook work remains open.
+- Branch protection on `main` is now evidenced complete in the beta evidence
+  tracker; CodeQL/dependency-security workflow run evidence remains open.
+- Stripe live price IDs and the production webhook endpoint are verified;
+  lifecycle/replay evidence still blocks paid/public beta.
+- Data corruption recovery and restore-validation evidence remains open.
 - DPA template is still marked draft.
 - SPF/DKIM/DMARC DNS records still require configuration and verification.
 - Branded 404 page is still missing.
 - Known issues list must be shared with testers.
 - Beta metrics ownership and tracking are pending.
-- Zero-signup alert is not implemented.
-- External dashboard checks remain: Vercel, Supabase, Sentry, Resend, Stripe,
-  GitHub branch protection.
+- Zero-signup and Stripe webhook-failure monitoring are implemented; first
+  deployed-run evidence remains open.
+- External dashboard checks remain for Sentry alert routing, Resend/email DNS,
+  Stripe lifecycle, GitHub workflow runs, and Supabase backup/PITR. Vercel
+  production deployment/domain/TLS/health and Supabase project/RLS/advisor
+  evidence were captured on 2026-06-16.
 
 ## Final Recommended Next 5 Actions
 
@@ -86,12 +91,12 @@ was safe enough to delete without losing history or breaking references.
    `docs/BRANCH_PROTECTION_BASELINE.md`.
 2. Add the explicit recovery/corruption runbook and run a restore tabletop or
    isolated restore test.
-3. Replace and audit Stripe price IDs using
+3. Complete Stripe lifecycle/replay evidence using
    `docs/billing/STRIPE_FINALIZATION_RUNBOOK.md`.
 4. Share `docs/beta/BETA_KNOWN_ISSUES.md` with testers and assign a feedback
    inbox owner.
-5. Assign beta metrics ownership and decide whether zero-signup monitoring is
-   automated or manually reviewed during private beta.
+5. Assign beta metrics ownership and capture the first deployed run of
+   zero-signup monitoring.
 
 ## Readiness Posture
 
@@ -99,5 +104,5 @@ The posture **stayed WARN**.
 
 The documentation posture improved because there is now one source of truth for
 beta launch decisions. Product readiness did not move to PASS because the
-remaining blockers are operational, legal, billing, DNS, and external dashboard
-checks that were not completed during this docs-only cleanup.
+remaining blockers are operational, legal, billing lifecycle, DNS/email, and
+external dashboard checks that need live owner evidence.

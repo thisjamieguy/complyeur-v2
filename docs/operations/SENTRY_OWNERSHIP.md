@@ -1,6 +1,6 @@
 # Sentry Ownership
 
-Last updated: 2026-06-15
+Last updated: 2026-06-16
 
 Owner:
 James Walsh
@@ -39,7 +39,8 @@ Before this area can be scored 9/10, capture live evidence for:
 - Sentry organization: `james-walsh`
 - Production Sentry runtime configuration: present in Vercel production environment
 - Production Sentry build authentication configuration: present in Vercel production environment
-- Live alert-rule destinations and recipients: not verified on 2026-06-15 in this local remediation pass; prior 2026-06-04 API attempt returned `403 Forbidden` for read-only project API access
+- Production issue API access: verified on 2026-06-16 with a newly created read-capable personal token; unresolved production issue query returned `[]` for the last 24 hours
+- Live alert-rule destinations and recipients: not verified on 2026-06-16
 
 ## Escalation Process
 
@@ -51,6 +52,9 @@ James Walsh reviews production Sentry alerts during the beta period.
 
 ## Verification Status
 
-Sentry ownership is assigned for beta, but live alert routing was not verified on 2026-06-15.
+Sentry ownership is assigned for beta. Production issue API read access was
+verified on 2026-06-16, but live alert routing was not verified.
 
-The beta blocker remains open until Sentry alert rules, notification destinations, and recipients are captured from the Sentry dashboard or a read-capable Sentry API token.
+The beta blocker remains open until Sentry alert rules, notification
+destinations, recipients, and test delivery are captured from the Sentry
+dashboard or a read-capable Sentry API token.

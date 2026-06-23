@@ -186,15 +186,9 @@ function findOverlap(
   endDate: string,
   trips: Array<{ id: string; entry_date: string; exit_date: string }>
 ): { id: string; entry_date: string; exit_date: string } | null {
-  const newStart = new Date(startDate)
-  const newEnd = new Date(endDate)
-
   for (const trip of trips) {
-    const tripStart = new Date(trip.entry_date)
-    const tripEnd = new Date(trip.exit_date)
-
     // Overlap exists if: newStart <= tripEnd AND newEnd >= tripStart
-    if (newStart <= tripEnd && newEnd >= tripStart) {
+    if (startDate <= trip.exit_date && endDate >= trip.entry_date) {
       return trip
     }
   }

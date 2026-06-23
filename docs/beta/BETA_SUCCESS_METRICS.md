@@ -13,13 +13,16 @@ The release source of truth is
 Definition: A new company completes onboarding and adds at least 1 employee and 1 trip within 24 hours of signup.
 Target: 40 percent or higher.
 Owner: Product owner.
-Current tracking state: owner and dashboard/reporting source pending.
+Current tracking state: dashboard source is `/admin/metrics`; zero-signup
+monitoring runs from `/api/cron/beta-monitoring`. Weekly reporting owner and
+review cadence still need operational confirmation.
 
 ## Core Usage
 Definition: Weekly active companies that create or edit at least 1 trip.
 Target: 50 percent or higher of activated companies.
 Owner: Product owner.
-Current tracking state: weekly review cadence pending.
+Current tracking state: `/admin/metrics` reports new trips over 7 or 30 days;
+weekly review cadence pending.
 
 ## Retention
 Definition: Companies active at least once between days 14 and 21 after signup.

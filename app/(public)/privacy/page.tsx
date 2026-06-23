@@ -23,7 +23,7 @@ export default function PrivacyPage() {
             <h1 className="landing-serif mt-4 text-balance text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl">
               Privacy Policy
             </h1>
-            <p className="mt-3 text-sm text-slate-500">Last updated: February 17, 2026</p>
+            <p className="mt-3 text-sm text-slate-500">Last updated: 16 June 2026</p>
             <p className="mt-4 text-base leading-relaxed text-slate-600 sm:text-lg">
               We explain what data we collect, why we collect it, and the controls available to your organization and users.
             </p>
@@ -147,11 +147,23 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong>Google Analytics</strong> - Website analytics to understand how users interact
-              with our service. This data is anonymized and used only for service improvement.
+              with our service. Analytics is loaded only after consent and used for service improvement.
+            </li>
+            <li>
+              <strong>CookieYes</strong> - Cookie consent management. CookieYes stores your consent
+              choices so non-essential scripts can be allowed or blocked.
             </li>
             <li>
               <strong>Sentry</strong> - Error monitoring used to detect and fix application failures.
               We use event monitoring only; browser session replay is disabled.
+            </li>
+            <li>
+              <strong>Upstash Redis</strong> - Rate limiting and abuse-prevention infrastructure where
+              enabled. It processes short-lived operational keys used to protect the service.
+            </li>
+            <li>
+              <strong>Cloudflare Turnstile</strong> - Bot protection where enabled on forms such as
+              sign-up or waitlist flows.
             </li>
           </ul>
           <h3 className="text-xl font-semibold text-slate-900 mt-6 mb-3">Data Residency</h3>
@@ -191,8 +203,9 @@ export default function PrivacyPage() {
               are not currently initiated through self-service settings.
             </li>
             <li>
-              <strong>Backups:</strong> Encrypted backups are retained for 90 days for disaster
-              recovery purposes before being permanently deleted.
+              <strong>Backups:</strong> Backups are used only for disaster recovery and expire according
+              to our configured provider backup window. Backup and point-in-time recovery settings are
+              verified as part of release evidence.
             </li>
             <li>
               <strong>Legal requirements:</strong> Some data may be retained longer if required

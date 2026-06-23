@@ -309,8 +309,8 @@ describe('Auth form validation', () => {
     const validSignup = {
       email: 'newuser@example.com',
       companyName: 'Test Company Ltd',
-      password: 'SecurePass123',
-      confirmPassword: 'SecurePass123',
+      password: 'SecurePass123!',
+      confirmPassword: 'SecurePass123!',
       termsAccepted: true,
     };
 
@@ -346,7 +346,7 @@ describe('Auth form validation', () => {
     it('shows password mismatch error on confirmPassword field', () => {
       const result = signupSchema.safeParse({
         ...validSignup,
-        confirmPassword: 'DifferentPass123',
+        confirmPassword: 'DifferentPass123!',
       });
 
       expect(result.success).toBe(false);
@@ -364,25 +364,27 @@ describe('Auth form validation', () => {
     it('provides all feedback for empty password', () => {
       const feedback = getPasswordStrengthFeedback('');
 
-      expect(feedback).toHaveLength(4);
-      expect(feedback).toContain('At least 8 characters');
+      expect(feedback).toHaveLength(5);
+      expect(feedback).toContain('At least 12 characters');
       expect(feedback).toContain('One uppercase letter');
       expect(feedback).toContain('One lowercase letter');
       expect(feedback).toContain('One number');
+      expect(feedback).toContain('One symbol');
     });
 
     it('removes satisfied requirements from feedback', () => {
       // Has uppercase and lowercase, missing length and number
       const feedback = getPasswordStrengthFeedback('AbcDef');
 
-      expect(feedback).toContain('At least 8 characters');
+      expect(feedback).toContain('At least 12 characters');
       expect(feedback).toContain('One number');
+      expect(feedback).toContain('One symbol');
       expect(feedback).not.toContain('One uppercase letter');
       expect(feedback).not.toContain('One lowercase letter');
     });
 
     it('returns empty array for valid password', () => {
-      const feedback = getPasswordStrengthFeedback('SecurePass123');
+      const feedback = getPasswordStrengthFeedback('SecurePass123!');
 
       expect(feedback).toHaveLength(0);
     });

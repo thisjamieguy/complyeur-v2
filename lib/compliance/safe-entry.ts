@@ -10,7 +10,7 @@
 
 import { isBefore, isValid } from 'date-fns';
 import { normalizeToUTCDate } from './presence-calculator';
-import { daysUsedInWindow, canSafelyEnter } from './window-calculator';
+import { daysUsedInWindow } from './window-calculator';
 import { SCHENGEN_DAY_LIMIT, WINDOW_SIZE_DAYS, DEFAULT_COMPLIANCE_START_DATE } from './constants';
 import { InvalidReferenceDateError } from './errors';
 import { addUtcDays, differenceInUtcDays } from './date-utils';
@@ -249,7 +249,7 @@ export function projectExpiringDays(
  * Calculates how many days an employee can stay starting from a given entry date.
  *
  * This looks at the current window and determines the maximum consecutive
- * days of stay before hitting the 90-day limit.
+ * days of stay before exceeding the 90-day limit.
  *
  * @param presence - Set of date keys representing days in Schengen
  * @param entryDate - Proposed entry date
@@ -263,16 +263,16 @@ export function maxStayDays(
 ): number {
   const normalizedEntry = normalizeToUTCDate(entryDate);
   const limit = config.limit ?? SCHENGEN_DAY_LIMIT;
+  const simulatedPresence = new Set(presence);
 
-  // Check if entry is even possible
-  if (!canSafelyEnter(presence, normalizedEntry, config)) {
-    return 0;
+  for (let stayLength = 1; stayLength <= limit; stayLength++) {
+    const stayDate = addUtcDays(normalizedEntry, stayLength - 1);
+    simulatedPresence.add(dateToKey(stayDate));
+
+    if (daysUsedInWindow(simulatedPresence, stayDate, config) > limit) {
+      return stayLength - 1;
+    }
   }
 
-  // Get current days used in window (looking back from entry date)
-  const daysUsed = daysUsedInWindow(presence, normalizedEntry, config);
-
-  // Maximum additional days = limit - days already used
-  // Entry day counts as day 1, so we can stay for (limit - daysUsed) days
-  return limit - daysUsed;
+  return limit;
 }

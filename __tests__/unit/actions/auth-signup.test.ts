@@ -32,8 +32,8 @@ function createSignupFormData(overrides?: Partial<{
   formData.append('name', overrides?.name ?? 'Test User')
   formData.append('email', overrides?.email ?? 'test@example.com')
   formData.append('companyName', overrides?.companyName ?? 'Test Company')
-  formData.append('password', overrides?.password ?? 'SecurePass123')
-  formData.append('confirmPassword', overrides?.confirmPassword ?? 'SecurePass123')
+  formData.append('password', overrides?.password ?? 'SecurePass123!')
+  formData.append('confirmPassword', overrides?.confirmPassword ?? 'SecurePass123!')
   if (overrides?.redirectTo) {
     formData.append('redirectTo', overrides.redirectTo)
   }
@@ -211,7 +211,7 @@ describe('signup action enumeration parity', () => {
 
     expect(supabase.auth.signUp).toHaveBeenCalledWith({
       email: 'new@example.com',
-      password: 'SecurePass123',
+      password: 'SecurePass123!',
       options: {
         data: {
           company_name: 'Test Company',
