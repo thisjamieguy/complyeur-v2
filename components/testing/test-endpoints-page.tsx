@@ -44,9 +44,14 @@ export function TestEndpointsPage() {
       formData.append('email', testData.email)
       formData.append('password', testData.password)
 
-      await login(formData)
-      updateResult('login', 'success', 'Login successful (redirected)')
-      toast.success('Login test completed')
+      const result = await login(formData)
+      if (result?.success === false) {
+        updateResult('login', 'error', result.error)
+        toast.error(`Login test failed: ${result.error}`)
+      } else {
+        updateResult('login', 'success', 'Login successful (redirected)')
+        toast.success('Login test completed')
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       updateResult('login', 'error', message)

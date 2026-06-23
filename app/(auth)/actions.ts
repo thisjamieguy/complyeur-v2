@@ -28,6 +28,8 @@ type SignupActionResult =
   | { success: true; redirectTo: string }
   | { success: false; error: string }
 
+type LoginActionResult = { success: false; error: string }
+
 function getSignupRedirectPath(redirectTo: string | null | undefined): string {
   const validatedRedirect = validateRedirectUrl(redirectTo)
 
@@ -78,7 +80,12 @@ export async function login(formData: FormData) {
   const requestHeaders = await headers()
   const ip = getRequestIp(requestHeaders)
   const rl = await rateLimit(ip, 'auth')
-  if (!rl.success) throw new AuthError('Too many login attempts. Please wait a moment and try again.')
+  if (!rl.success) {
+    return {
+      success: false,
+      error: 'Too many login attempts. Please wait a moment and try again.',
+    } satisfies LoginActionResult
+  }
 
   const supabase = await createClient()
   const redirectTo = validateRedirectUrl(formData.get('redirectTo') as string | null)
@@ -92,7 +99,7 @@ export async function login(formData: FormData) {
   const result = loginSchema.safeParse(rawData)
   if (!result.success) {
     const errorMessage = result.error?.issues[0]?.message ?? 'Invalid input'
-    throw new ValidationError(errorMessage)
+    return { success: false, error: errorMessage } satisfies LoginActionResult
   }
 
   const { email, password } = result.data!
@@ -106,7 +113,7 @@ export async function login(formData: FormData) {
   })
 
   if (error) {
-    throw new AuthError(getAuthErrorMessage(error))
+    return { success: false, error: getAuthErrorMessage(error) } satisfies LoginActionResult
   }
 
   if (data.user) {
