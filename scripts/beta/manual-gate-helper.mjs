@@ -23,6 +23,12 @@ const gates = [
   },
   {
     level: 'partially automated',
+    name: 'Beta monitoring cron',
+    notes: 'The deployed cron checks zero-signup and Stripe webhook failure/stale-processing signals, but alert delivery still requires live env and inbox evidence.',
+    repoHelper: 'pnpm beta:monitoring:check -- --base-url https://your-beta-url',
+  },
+  {
+    level: 'partially automated',
     name: 'Runtime env var name coverage',
     notes: 'Check that required env var names are present in the current shell without printing values.',
     repoHelper: 'pnpm beta:manual-gates',
@@ -44,6 +50,12 @@ const gates = [
     name: 'Auth email configuration sync',
     notes: 'Supabase auth email settings can be synchronized from repo configuration, but live provider behavior remains manual.',
     repoHelper: 'pnpm email:auth:sync',
+  },
+  {
+    level: 'partially automated',
+    name: 'Email DNS authentication check',
+    notes: 'DNS TXT records can be checked from the repo after SPF, DMARC, and provider DKIM records are configured.',
+    repoHelper: 'pnpm email:dns:check -- --domain complyeur.com --dkim-selector <selector>',
   },
   {
     level: 'partially automated',
@@ -106,8 +118,10 @@ const requiredRepoPaths = [
   'docs/operations/BETA_EVIDENCE_LOG_TEMPLATE.md',
   'docs/operations/evidence',
   'scripts/beta/manual-gate-helper.mjs',
+  'scripts/beta/check-beta-monitoring.mjs',
   'scripts/beta/check-production-health.mjs',
   'scripts/beta/create-evidence-log.mjs',
+  'scripts/beta/check-email-dns.mjs',
 ]
 
 const envGroups = [
@@ -205,7 +219,9 @@ function main() {
   console.log('- pnpm beta:evidence -- --slug private-beta --env-url https://your-beta-url')
   console.log('- pnpm beta:manual-gates')
   console.log('- pnpm beta:health -- --base-url https://your-beta-url')
+  console.log('- pnpm beta:monitoring:check -- --base-url https://your-beta-url')
   console.log('- pnpm billing:webhook:check')
+  console.log('- pnpm email:dns:check -- --domain complyeur.com --dkim-selector <selector>')
 
   if (missing.length > 0) {
     process.exitCode = 1

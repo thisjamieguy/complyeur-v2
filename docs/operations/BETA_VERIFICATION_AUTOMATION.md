@@ -1,6 +1,6 @@
 # Beta Verification Automation
 
-Last updated: 2026-06-15
+Last updated: 2026-06-16
 
 This guide explains which private-beta checks ComplyEur can now verify from the
 repo, which checks can be partially assisted, and which checks still require a
@@ -25,6 +25,10 @@ Partially automated from the repo:
   human recipient
 - Reuse existing Playwright baseline coverage to reduce the manual surface area
 - Prepare structured evidence capture before a restore tabletop or launch review
+- Capture public and protected health evidence when production secrets are
+  available locally and are not printed
+- Probe the deployed beta monitoring cron and write a sanitized first-run
+  evidence note without storing secrets
 
 Manual only:
 
@@ -32,7 +36,8 @@ Manual only:
 - Password reset token reuse and post-reset session behavior
 - Real-device Safari and Android Chrome passes
 - Screen reader, ad blocker, and dark-mode email checks
-- Sentry alert recipients, public/internal health evidence, and Supabase backup/PITR verification
+- Sentry alert recipients and test-alert delivery
+- Supabase backup/PITR dashboard verification and restore-drill sign-off
 - SPF/DKIM/DMARC verification and legal review
 
 ## Commands
@@ -61,10 +66,23 @@ Probe the deployed health endpoint:
 pnpm beta:health -- --base-url https://your-beta-url
 ```
 
+Capture first-run beta monitoring evidence from the deployed environment:
+
+```bash
+pnpm beta:monitoring:check -- --base-url https://your-beta-url
+```
+
+Preview the output path without writing a file:
+
+```bash
+pnpm beta:monitoring:check -- --base-url https://your-beta-url --dry-run
+```
+
 Smoke-test the helper itself in a restricted environment:
 
 ```bash
 pnpm beta:health -- --self-test
+pnpm beta:monitoring:check -- --self-test
 ```
 
 Optional helper checks already in the repo:
@@ -73,6 +91,7 @@ Optional helper checks already in the repo:
 pnpm billing:webhook:check
 pnpm email:auth:sync
 pnpm email:test your-address@example.com
+pnpm email:dns:check -- --domain complyeur.com --dkim-selector your-selector
 pnpm test:e2e:baseline
 ```
 
@@ -98,7 +117,6 @@ Beta is safe to proceed only when all of the following are true:
    - non-founder core journey
    - recovery tabletop evidence
    - Sentry alert routing evidence
-   - public/internal health evidence
    - tester brief and known-issues distribution
 3. No unresolved critical blocker remains in
    `docs/release/BETA_RELEASE_SOURCE_OF_TRUTH.md`
