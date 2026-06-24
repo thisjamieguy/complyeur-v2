@@ -53,7 +53,8 @@ describe('tier admin entitlement sync', () => {
   })
 
   it('updates company entitlements assigned to the changed tier', async () => {
-    const eq = vi.fn(async () => ({ count: 3, error: null }))
+    const or = vi.fn(async () => ({ count: 3, error: null }))
+    const eq = vi.fn(() => ({ or }))
     const update = vi.fn(() => ({ eq }))
     const from = vi.fn(() => ({ update }))
     const supabase = { from }
@@ -70,5 +71,6 @@ describe('tier admin entitlement sync', () => {
       { count: 'exact' }
     )
     expect(eq).toHaveBeenCalledWith('tier_slug', 'starter')
+    expect(or).toHaveBeenCalledWith('manual_override.is.null,manual_override.eq.false')
   })
 })

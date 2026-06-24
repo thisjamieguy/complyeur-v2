@@ -97,6 +97,7 @@ export async function syncCompanyEntitlementsForTier(
     .from('company_entitlements')
     .update(entitlementUpdatesForTier(tier), { count: 'exact' })
     .eq('tier_slug', tier.slug)
+    .or('manual_override.is.null,manual_override.eq.false')
 
   if (error) {
     throw error

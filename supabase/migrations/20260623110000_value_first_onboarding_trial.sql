@@ -66,6 +66,52 @@ $$;
 COMMENT ON FUNCTION public.create_default_company_entitlements() IS
   'Trigger: creates a value-first 14-day Pro trial entitlement for new companies. SECURITY DEFINER with search_path locked.';
 
+CREATE OR REPLACE FUNCTION app_private.is_current_company_active()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.company_entitlements ce
+    WHERE ce.company_id = app_private.get_current_user_company_id()
+      AND COALESCE(ce.is_suspended, false) = false
+      AND COALESCE(ce.subscription_status, 'none') <> ALL (
+        ARRAY[
+          'canceled'::text,
+          'unpaid'::text,
+          'paused'::text,
+          'incomplete_expired'::text
+        ]
+      )
+      AND (
+        COALESCE(ce.subscription_status, 'none') <> 'trialing'
+        OR (
+          ce.trial_ends_at IS NOT NULL
+          AND ce.trial_ends_at > NOW()
+        )
+      )
+  );
+$$;
+
+REVOKE ALL ON FUNCTION app_private.is_current_company_active() FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION app_private.is_current_company_active() TO authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.is_current_company_active()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path TO ''
+AS $$
+  SELECT app_private.is_current_company_active();
+$$;
+
+REVOKE ALL ON FUNCTION public.is_current_company_active() FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_current_company_active() TO authenticated, service_role;
+
 CREATE OR REPLACE FUNCTION app_private.create_company_and_profile(
   user_id uuid,
   user_email text,
