@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 interface Actor {
@@ -427,7 +428,7 @@ async function runProbe(): Promise<void> {
     throw new Error('Production probe refuses to run against local Supabase URL.')
   }
 
-  const runId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+  const runId = `${Date.now().toString(36)}-${randomBytes(4).toString('hex')}`
   const password = `CodexProbe-${runId}-Aa1!`
   const admin = makeClient(url, serviceKey)
   const results: ProbeResult[] = []
