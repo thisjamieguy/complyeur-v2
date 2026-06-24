@@ -135,7 +135,7 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Recovery tabletop and evidence | Blocked pending isolated restore | Engineering owner | 2026-06-24 precheck filed daily-backup metadata, production row-count baseline, and RLS baseline; execute restore into an isolated Supabase target and file screenshots/app smoke/reviewer sign-off. |
+| Recovery tabletop and evidence | Blocked pending isolated restore | Engineering owner | 2026-06-24 precheck filed daily-backup metadata, production row-count baseline, and RLS baseline. Automated data-bearing preview restore ended `RESTORE_FAILED`; use dashboard restore-to-new-project or resolve the Supabase branch restore failure, then file screenshots/app smoke/reviewer sign-off. |
 | Supabase production backups and PITR | Partially verified; PITR disabled | Engineering owner | Daily physical backups are present for production; PITR is disabled. Enable PITR or approve daily-backup-only RPO before public release, then run restore-to-new-project drill. |
 | Fresh staging or production-like RLS attack-test evidence | Complete for current production schema | Security owner | 2026-06-24 production probe passed 13 RLS/RPC checks and cleanup verification; re-run after any Supabase migration or tenant-isolation change. |
 

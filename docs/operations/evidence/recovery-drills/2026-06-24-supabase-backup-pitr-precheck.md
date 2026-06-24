@@ -15,7 +15,7 @@ non-PII production validation baseline for a future isolated restore drill.
 The full Backup/PITR restore drill is not complete because:
 
 - PITR is currently disabled for production.
-- No isolated restored project or production-data preview branch exists.
+- The attempted production-data preview branch restore failed before validation.
 - The documented Supabase "Restore to a new project" flow requires dashboard
   confirmation and cost review before creating a production-data copy.
 
@@ -68,6 +68,49 @@ Additional metadata:
 | `pitr_enabled` | `false` |
 | `walg_enabled` | `true` |
 | Backup region | `eu-west-2` |
+
+## Isolated Branch Restore Attempt
+
+An isolated production-data preview branch was attempted as a lower-confidence
+restore-drill target because PITR was disabled and the CLI does not expose the
+documented dashboard-only "Restore to a New Project" flow.
+
+Command shape:
+
+```bash
+supabase branches create complyeur-restore-drill-2026-06-24 \
+  --project-ref bewydxxynjtfpytunlcq \
+  --with-data \
+  --region eu-west-2 \
+  -o json
+```
+
+Sanitized result:
+
+| Field | Value |
+| --- | --- |
+| Branch name | `complyeur-restore-drill-2026-06-24` |
+| Branch id | `8a70f128-e695-4801-a60a-0721401c79c2` |
+| Preview project ref | `fqzmtfsckrpujodghluv` |
+| Source project ref | `bewydxxynjtfpytunlcq` |
+| `with_data` | `true` |
+| Final observed status | `RESTORE_FAILED` / `RUNNING_MIGRATIONS` |
+
+Cleanup:
+
+```bash
+supabase branches delete 8a70f128-e695-4801-a60a-0721401c79c2 \
+  --project-ref bewydxxynjtfpytunlcq \
+  --yes \
+  -o json
+```
+
+Follow-up `supabase branches list --project-ref bewydxxynjtfpytunlcq -o json`
+showed only the default `main` branch with `ACTIVE_HEALTHY` status. The failed
+preview branch no longer appears in the branch list.
+
+No branch credentials, API keys, database URLs, or service-role secrets are
+stored in this evidence file.
 
 ## Production Baseline For Future Restore Comparison
 
@@ -160,7 +203,7 @@ Relevant operational points:
 | Blocker | Why it matters | Required owner action |
 | --- | --- | --- |
 | PITR disabled | The public release gate asks for Backup/PITR evidence, but only daily physical backups are currently available. | Enable PITR add-on or explicitly approve daily-backup-only RPO for this release. |
-| No isolated restore target | Row-count, RLS, auth, and app smoke checks must run against a restored copy, not production. | Use Supabase Dashboard > Database > Backups > Restore to a New Project, or approve a production-data preview branch if accepted as a lower-confidence drill. |
+| Isolated preview restore failed | Row-count, RLS, auth, and app smoke checks must run against a restored copy, not production. The attempted data-bearing preview branch ended in `RESTORE_FAILED`. | Use Supabase Dashboard > Database > Backups > Restore to a New Project, or investigate the preview-branch restore failure with Supabase. |
 | Cost and data-copy approval pending | Restore-to-new-project creates an independent paid project containing production data. | Approve the restore target name, cost, lifecycle, and deletion/pause plan. |
 | Dashboard screenshots pending | Release evidence requires control-panel restore confirmation screenshots. | Capture backup/restore dashboard screenshots during the restore. |
 
@@ -183,7 +226,8 @@ Relevant operational points:
 
 ## Current Release Decision
 
-Backup existence is verified.
+Backup existence is verified, and an automated isolated preview-branch restore
+attempt was made and cleaned up after Supabase reported `RESTORE_FAILED`.
 
 The Supabase Backup/PITR restore drill gate remains open until an isolated
 restore target is created, validated, evidenced, and reviewed. PITR is not
