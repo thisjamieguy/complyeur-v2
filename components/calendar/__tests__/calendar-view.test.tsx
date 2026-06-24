@@ -70,7 +70,7 @@ describe('CalendarView', () => {
                 id: 'current-1',
                 country: 'DE',
                 entry_date: '2026-03-10',
-                exit_date: '2026-03-21',
+                exit_date: '2026-03-22',
                 purpose: 'Client visit',
                 is_private: false,
                 ghosted: false,
@@ -105,22 +105,27 @@ describe('CalendarView', () => {
     const historyDay = dayMap.get('2026-02-10')
     const startDay = dayMap.get('2026-03-10')
     const preBreachDay = dayMap.get('2026-03-20')
-    const breachDay = dayMap.get('2026-03-21')
+    const exhaustedDay = dayMap.get('2026-03-21')
+    const breachDay = dayMap.get('2026-03-22')
 
     expect(historyDay?.trip.id).toBe('history-1')
     expect(historyDay?.displayMode).toBe('historical')
 
     expect(startDay?.trip.id).toBe('current-1')
     expect(preBreachDay?.trip.id).toBe('current-1')
+    expect(exhaustedDay?.trip.id).toBe('current-1')
     expect(breachDay?.trip.id).toBe('current-1')
 
     expect(startDay?.displayMode).toBe('planning')
     expect(preBreachDay?.displayMode).toBe('planning')
+    expect(exhaustedDay?.displayMode).toBe('planning')
     expect(breachDay?.displayMode).toBe('planning')
     expect(startDay?.riskLevel).toBe('amber')
     expect(startDay?.isBreachDay).toBe(false)
     expect(preBreachDay?.riskLevel).toBe('amber')
     expect(preBreachDay?.isBreachDay).toBe(false)
+    expect(exhaustedDay?.riskLevel).toBe('red')
+    expect(exhaustedDay?.isBreachDay).toBe(false)
     expect(breachDay?.riskLevel).toBe('red')
     expect(breachDay?.isBreachDay).toBe(true)
 
@@ -134,7 +139,7 @@ describe('CalendarView', () => {
         {
           country: 'DE',
           entryDate: parseDateOnlyAsUTC('2026-03-10'),
-          exitDate: parseDateOnlyAsUTC('2026-03-21'),
+          exitDate: parseDateOnlyAsUTC('2026-03-22'),
         },
         {
           country: 'ES',
