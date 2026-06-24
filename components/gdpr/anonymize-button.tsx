@@ -12,6 +12,7 @@ import {
 import { EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDestructiveAction } from './confirm-destructive-action'
+import { StepUpDialog } from '@/components/mfa/step-up-dialog'
 import { anonymizeEmployeeGdpr } from '@/app/(dashboard)/gdpr/actions'
 
 interface Employee {
@@ -33,6 +34,7 @@ export function AnonymizeButton({ employees, onAnonymized }: AnonymizeButtonProp
   const [selectedEmployee, setSelectedEmployee] = React.useState<string>('')
   const [isAnonymizing, setIsAnonymizing] = React.useState(false)
   const [showConfirm, setShowConfirm] = React.useState(false)
+  const [showStepUp, setShowStepUp] = React.useState(false)
 
   const activeEmployees = employees.filter((emp) => !emp.isAnonymized)
   const selectedName = activeEmployees.find((e) => e.id === selectedEmployee)?.name ?? ''
@@ -44,6 +46,13 @@ export function AnonymizeButton({ employees, onAnonymized }: AnonymizeButtonProp
 
     try {
       const result = await anonymizeEmployeeGdpr(selectedEmployee)
+
+      if (result.requiresReverification) {
+        // Session needs a fresh MFA verification; prompt for it, then retry.
+        setShowConfirm(false)
+        setShowStepUp(true)
+        return
+      }
 
       if (!result.success) {
         toast.error(result.error ?? 'Failed to anonymize employee')
@@ -147,6 +156,13 @@ export function AnonymizeButton({ employees, onAnonymized }: AnonymizeButtonProp
         confirmButtonLabel="Anonymize Employee"
         isLoading={isAnonymizing}
         onConfirm={handleAnonymize}
+      />
+
+      <StepUpDialog
+        open={showStepUp}
+        onOpenChange={setShowStepUp}
+        onVerified={handleAnonymize}
+        description="Anonymizing an employee is irreversible. Enter a fresh code from your authenticator app to confirm it's you."
       />
     </>
   )
