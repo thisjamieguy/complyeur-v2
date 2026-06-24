@@ -15,7 +15,7 @@
     "shellcheck": "shellcheck scripts/claude-stop-hook.sh scripts/seed-test-accounts.sh load-testing/run-load-test.sh agent/scripts/*.sh",
     "changelog": "git log --oneline --no-merges $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD",
     "prepare": "husky",
-    "db:types": "supabase gen types typescript --project-id sheqtawytsidyhzpzefk > types/database.ts",
+    "db:types": "supabase gen types typescript --local > types/database.ts",
     "test:endpoints": "echo 'Use the test page at /test-endpoints or install tsx: pnpm add -D tsx && pnpm tsx scripts/test-endpoints.ts'",
     "test": "vitest run",
     "test:watch": "vitest",

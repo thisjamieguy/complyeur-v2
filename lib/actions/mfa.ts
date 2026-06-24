@@ -147,6 +147,51 @@ export async function verifyTotpAction(factorId: string, code: string): Promise<
   return { success: true }
 }
 
+/**
+ * Re-verifies the current user's TOTP factor to satisfy a step-up
+ * (re-authentication) challenge before an irreversible action. On success the
+ * session is elevated to AAL2 and the MFA verification timestamp is refreshed,
+ * which is what {@link requireRecentMfaVerification} checks server-side.
+ */
+export async function verifyStepUpAction(code: string): Promise<VerifyResult> {
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const rateLimit = await checkServerActionRateLimit(user.id, 'verifyStepUp')
+  if (!rateLimit.allowed) {
+    return { success: false, error: rateLimit.error ?? 'Too many requests. Please try again later.' }
+  }
+
+  const trimmed = code?.replace(/\s/g, '') ?? ''
+  if (!trimmed) {
+    return { success: false, error: 'Enter your authenticator code' }
+  }
+
+  const { data: factors } = await supabase.auth.mfa.listFactors()
+  const totpFactor =
+    factors?.totp?.[0] ??
+    factors?.all?.find((f) => f.factor_type === 'totp' && f.status === 'verified') ??
+    null
+
+  if (!totpFactor) {
+    return { success: false, error: 'No authenticator app is set up for this account' }
+  }
+
+  const { error } = await supabase.auth.mfa.challengeAndVerify({
+    factorId: totpFactor.id,
+    code: trimmed,
+  })
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
+}
+
 export async function unenrollTotpAction(
   method: MfaProofMethod,
   code: string

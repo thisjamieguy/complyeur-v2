@@ -12,6 +12,7 @@ import {
 import { Trash2, Loader2, ShieldAlert } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDestructiveAction } from './confirm-destructive-action'
+import { StepUpDialog } from '@/components/mfa/step-up-dialog'
 import { deleteEmployeeGdpr } from '@/app/(dashboard)/gdpr/actions'
 import { RECOVERY_PERIOD_DAYS } from '@/lib/gdpr/constants'
 
@@ -33,6 +34,7 @@ export function DeleteButton({ employees, onDeleted }: DeleteButtonProps) {
   const [selectedEmployee, setSelectedEmployee] = React.useState<string>('')
   const [isDeleting, setIsDeleting] = React.useState(false)
   const [showConfirm, setShowConfirm] = React.useState(false)
+  const [showStepUp, setShowStepUp] = React.useState(false)
 
   const activeEmployees = employees.filter((emp) => !emp.isAnonymized)
   const selectedName = activeEmployees.find((e) => e.id === selectedEmployee)?.name ?? ''
@@ -44,6 +46,13 @@ export function DeleteButton({ employees, onDeleted }: DeleteButtonProps) {
 
     try {
       const result = await deleteEmployeeGdpr(selectedEmployee)
+
+      if (result.requiresReverification) {
+        // Session needs a fresh MFA verification; prompt for it, then retry.
+        setShowConfirm(false)
+        setShowStepUp(true)
+        return
+      }
 
       if (!result.success) {
         toast.error(result.error ?? 'Failed to delete employee')
@@ -143,6 +152,13 @@ export function DeleteButton({ employees, onDeleted }: DeleteButtonProps) {
         confirmButtonLabel="Delete Employee"
         isLoading={isDeleting}
         onConfirm={handleDelete}
+      />
+
+      <StepUpDialog
+        open={showStepUp}
+        onOpenChange={setShowStepUp}
+        onVerified={handleDelete}
+        description="Deleting employee data requires a fresh identity check. Enter a code from your authenticator app to confirm it's you."
       />
     </>
   )
