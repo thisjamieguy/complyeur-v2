@@ -101,7 +101,9 @@ describe('calendar-view helpers', () => {
       makeComplianceMap([
         makeCompliance('2026-02-01', { daysUsed: 79, daysRemaining: 11, riskLevel: 'amber' }),
         makeCompliance('2026-02-02', { daysUsed: 80, daysRemaining: 10, riskLevel: 'amber' }),
-        makeCompliance('2026-02-03', { daysUsed: 90, daysRemaining: 0, riskLevel: 'red' }),
+        // 91 days used = genuine breach (>90). Exactly 90 is "exhausted" but
+        // still compliant, so a breach fixture must exceed the limit.
+        makeCompliance('2026-02-03', { daysUsed: 91, daysRemaining: -1, riskLevel: 'red' }),
       ]),
       makeDayMapContext()
     )
