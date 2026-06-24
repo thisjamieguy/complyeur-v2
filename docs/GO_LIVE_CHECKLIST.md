@@ -67,6 +67,9 @@ checks before the manual go-live pass.
 - [ ] Accessibility statement live
 - [ ] GDPR data export working
 - [ ] Account deletion working
+- [ ] Processor/subprocessor register reviewed for new providers and transfer safeguards
+- [ ] Article 30 processing record, DSR process, and retention schedule reviewed
+- [ ] New personal-data fields, exports, email flows, processors, AI/automation features, and cookie changes checked against `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`
 
 ## Critical User Flows (Test Each)
 - [ ] **Signup**: New user can create account

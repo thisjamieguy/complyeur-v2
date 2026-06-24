@@ -1,6 +1,6 @@
 # Beta Evidence Status Dashboard
 
-Last updated: 2026-06-23
+Last updated: 2026-06-24
 
 ## Purpose
 
@@ -32,6 +32,8 @@ Before marking any beta blocker complete:
 | Sentry Alert Routing | 🚫 Blocked | `2026-06-04-sentry-project-settings-blocked.png`, `2026-06-04-sentry-alert-rules-blocked.png`, `2026-06-04-sentry-notification-routing-blocked.png` | `2026-06-04-sentry-alert-routing.md` | `docs/operations/evidence/sentry-alerts/` |
 | Support Ownership | 🟩 Complete | `2026-06-04-support-mailbox.png`, `2026-06-04-support-routing.png`, `2026-06-04-support-address-configuration.png` | `2026-06-04-support-ownership.md` | `docs/operations/evidence/support-ownership/` |
 | Stripe Verification | 🟨 In Progress | API evidence captured; dashboard screenshots still optional/pending | `2026-06-23-live-stripe-payment-evidence.md` | `docs/operations/evidence/stripe-verification/` |
+| Local Multi-User E2E | 🟩 Complete | Command output recorded in note | `2026-06-24-local-multi-user-e2e.md` | `docs/operations/evidence/multi-user-e2e/` |
+| Production RLS/RPC Attack Probe | 🟩 Complete | Command output recorded in note | `2026-06-24-production-rls-rpc-attack-probe.md` | `docs/operations/evidence/multi-user-e2e/` |
 | CodeQL And Dependency Security | 🟨 In Progress | Pending GitHub run evidence | `.github/workflows/codeql.yml`, `.github/workflows/security.yml`, and `.github/dependabot.yml` added locally; dashboard evidence pending | `docs/operations/evidence/branch-protection/` |
 | Public/Internal Health | 🟨 In Progress | Pending current production probe | Public health is now anon `ping()` only; internal deep health is CRON-protected | `docs/operations/evidence/` |
 | Supabase Backup/PITR Restore Drill | ⬜ Not Started | Pending | Must include isolated restore, row counts, RLS check, auth smoke, app smoke, and reviewer sign-off | `docs/operations/evidence/recovery-drills/` |
@@ -163,14 +165,31 @@ Before marking any beta blocker complete:
 - Code changes now retrieve `current_period_end` during checkout provisioning, source renewal-email amounts from Stripe invoice previews, alert billing/support on refunds and disputes, refresh entitlements when tier capabilities change, and provide a repeatable reconciliation script.
 - Stripe Verification remains in progress until the updated handler is deployed and replay, stale/out-of-order event, failed-payment, cancellation, failed-webhook monitoring, and post-deploy lifecycle evidence are closed.
 
+### Local Multi-User E2E
+
+- 2026-06-24 local Supabase was running at `http://127.0.0.1:54321`.
+- `pnpm test:e2e:multi-user` completed with `2 passed (1.1m)`.
+- Evidence note stored as `docs/operations/evidence/multi-user-e2e/2026-06-24-local-multi-user-e2e.md`.
+- This closes local tenant-isolation E2E evidence only. Staging or production-like RLS/RPC attack evidence remains required before paid/public release.
+
+### Production RLS/RPC Attack Probe
+
+- 2026-06-24 production Supabase project `bewydxxynjtfpytunlcq.supabase.co` was tested with disposable `codex-rls-*` users and companies.
+- `scripts/security/production-rls-attack-probe.ts` passed 13 cross-tenant RLS and direct-RPC misuse checks.
+- The probe confirmed cross-tenant employee/trip reads returned zero rows, cross-tenant writes were blocked, viewer invite access was blocked, and direct RPC misuse for seat usage, user limit, and ownership transfer was denied.
+- Main run cleanup reported no errors, and cleanup-only verification for run id `mqsfpgw4-9od9t7` found no remaining disposable users or companies.
+- Evidence note stored as `docs/operations/evidence/multi-user-e2e/2026-06-24-production-rls-rpc-attack-probe.md`.
+
 ## Release Progress Summary
 
 ### Critical Evidence Areas Complete
 
-3 complete:
+5 complete:
 
 - Branch Protection
 - Signup Email Verification
+- Local Multi-User E2E
+- Production RLS/RPC Attack Probe
 - Support Ownership
 
 ### Private Beta Evidence Blockers Remaining
