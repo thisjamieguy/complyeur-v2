@@ -507,6 +507,9 @@ export type Database = {
           id: string
           is_suspended: boolean | null
           is_trial: boolean | null
+          last_stripe_event_created_at: string | null
+          last_stripe_event_id: string | null
+          last_stripe_event_type: string | null
           manual_override: boolean | null
           max_employees: number | null
           max_users: number | null
@@ -533,6 +536,9 @@ export type Database = {
           id?: string
           is_suspended?: boolean | null
           is_trial?: boolean | null
+          last_stripe_event_created_at?: string | null
+          last_stripe_event_id?: string | null
+          last_stripe_event_type?: string | null
           manual_override?: boolean | null
           max_employees?: number | null
           max_users?: number | null
@@ -559,6 +565,9 @@ export type Database = {
           id?: string
           is_suspended?: boolean | null
           is_trial?: boolean | null
+          last_stripe_event_created_at?: string | null
+          last_stripe_event_id?: string | null
+          last_stripe_event_type?: string | null
           manual_override?: boolean | null
           max_employees?: number | null
           max_users?: number | null

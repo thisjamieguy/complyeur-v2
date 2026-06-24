@@ -54,6 +54,9 @@ export interface AdminDatabase {
           suspended_reason: string | null
           manual_override: boolean | null
           override_notes: string | null
+          last_stripe_event_id: string | null
+          last_stripe_event_type: string | null
+          last_stripe_event_created_at: string | null
           stripe_subscription_id: string | null
           subscription_status: string | null
           created_at: string
