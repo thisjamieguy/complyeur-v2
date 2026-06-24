@@ -13,6 +13,26 @@ export default async function TeamSettingsPage() {
   const result = await listTeamMembersAndInvites()
 
   if (!result.success || !result.data) {
+    if (result.error === 'Forbidden') {
+      return (
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold text-slate-900">Team</h1>
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+              Access
+            </p>
+            <h2 className="mt-2 text-lg font-semibold text-slate-900">
+              Team access is managed by an Owner or Admin
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Your current role can use the workspace, but cannot view invite details, seat
+              usage, or member roles.
+            </p>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold text-slate-900">Team</h1>
