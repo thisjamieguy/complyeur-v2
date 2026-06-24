@@ -69,6 +69,14 @@ Additional metadata:
 | `walg_enabled` | `true` |
 | Backup region | `eu-west-2` |
 
+Dashboard evidence captured:
+
+- `2026-06-24-supabase-backups-restore-tab.png`
+
+The screenshot shows the production Supabase Database Backups page on the
+`Restore to new project` tab, completed daily backups, and the previous
+`complyeur-restore-drill-2026-06-24` restoration marked as removed.
+
 ## Isolated Branch Restore Attempt
 
 An isolated production-data preview branch was attempted as a lower-confidence
@@ -205,7 +213,7 @@ Relevant operational points:
 | PITR disabled | The public release gate asks for Backup/PITR evidence, but only daily physical backups are currently available. | Enable PITR add-on or explicitly approve daily-backup-only RPO for this release. |
 | Isolated preview restore failed | Row-count, RLS, auth, and app smoke checks must run against a restored copy, not production. The attempted data-bearing preview branch ended in `RESTORE_FAILED`. | Use Supabase Dashboard > Database > Backups > Restore to a New Project, or investigate the preview-branch restore failure with Supabase. |
 | Cost and data-copy approval pending | Restore-to-new-project creates an independent paid project containing production data. | Approve the restore target name, cost, lifecycle, and deletion/pause plan. |
-| Dashboard screenshots pending | Release evidence requires control-panel restore confirmation screenshots. | Capture backup/restore dashboard screenshots during the restore. |
+| Restore completion screenshot pending | The backup/restore dashboard tab screenshot is captured, but release evidence still needs the successful restore completion view. | Capture the final restore confirmation screenshot after dashboard restore-to-new-project succeeds. |
 
 ## Required Next Drill Steps
 

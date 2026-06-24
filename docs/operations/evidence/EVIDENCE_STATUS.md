@@ -86,6 +86,9 @@ Before marking any beta blocker complete:
   row-count/RLS baseline, and current Supabase project/plan metadata. Full
   restore-drill sign-off remains blocked because PITR is disabled and the
   attempted data-bearing preview branch restore ended `RESTORE_FAILED`.
+- Backup/restore dashboard tab screenshot captured as
+  `2026-06-24-supabase-backups-restore-tab.png`; successful restore completion
+  screenshot remains pending.
 
 ### Non-Founder Onboarding
 
