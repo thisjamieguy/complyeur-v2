@@ -27,7 +27,7 @@ Before marking any beta blocker complete:
 | Signup Email Verification | 🟩 Complete | `2026-06-05-check-email-page.png`, `2026-06-05-confirmation-email-received.png`, `2026-06-05-confirmation-link-login.png`, `2026-06-05-dashboard-access.png`; prior signup-fix evidence preserved | `2026-06-04-email-verification.md`, `2026-06-04-me-user-removal-before.md`, `2026-06-04-me-user-removal-after.md` | `docs/operations/evidence/email-verification/` |
 | Multi-Provider Email Deliverability | 🟨 In Progress | One production signup path evidenced; Gmail, Outlook, and corporate inbox evidence pending | Pending provider-specific note | `docs/operations/evidence/email-verification/` |
 | Password Reset | ⬜ Not Started | Pending | Pending | `docs/operations/evidence/password-reset/` |
-| Recovery Drill | 🟨 In Progress | Backup/PITR precheck captured; data-bearing preview restore attempted but failed before validation | `2026-06-24-supabase-backup-pitr-precheck.md` | `docs/operations/evidence/recovery-drills/` |
+| Recovery Drill | 🟩 Complete | Backup tab and restored project screenshots captured; row-count, RLS, auth, app smoke, and tenant-isolation validation passed | `2026-06-24-supabase-backup-pitr-precheck.md` | `docs/operations/evidence/recovery-drills/` |
 | Non-Founder Onboarding | ⬜ Not Started | Founder simulation screenshots captured; non-founder evidence pending | `2026-06-05-founder-simulation-onboarding.md` founder simulation only | `docs/operations/evidence/beta-onboarding/` |
 | Sentry Alert Routing | 🚫 Blocked | `2026-06-04-sentry-project-settings-blocked.png`, `2026-06-04-sentry-alert-rules-blocked.png`, `2026-06-04-sentry-notification-routing-blocked.png` | `2026-06-04-sentry-alert-routing.md` | `docs/operations/evidence/sentry-alerts/` |
 | Support Ownership | 🟩 Complete | `2026-06-04-support-mailbox.png`, `2026-06-04-support-routing.png`, `2026-06-04-support-address-configuration.png` | `2026-06-04-support-ownership.md` | `docs/operations/evidence/support-ownership/` |
@@ -36,7 +36,7 @@ Before marking any beta blocker complete:
 | Production RLS/RPC Attack Probe | 🟩 Complete | Command output recorded in note | `2026-06-24-production-rls-rpc-attack-probe.md` | `docs/operations/evidence/multi-user-e2e/` |
 | CodeQL And Dependency Security | 🟨 In Progress | Pending GitHub run evidence | `.github/workflows/codeql.yml`, `.github/workflows/security.yml`, and `.github/dependabot.yml` added locally; dashboard evidence pending | `docs/operations/evidence/branch-protection/` |
 | Public/Internal Health | 🟨 In Progress | Pending current production probe | Public health is now anon `ping()` only; internal deep health is CRON-protected | `docs/operations/evidence/` |
-| Supabase Backup/PITR Restore Drill | 🚫 Blocked | Production daily physical backups verified; PITR disabled; automated data-bearing preview restore ended `RESTORE_FAILED` and was deleted | `2026-06-24-supabase-backup-pitr-precheck.md` | `docs/operations/evidence/recovery-drills/` |
+| Supabase Backup/PITR Restore Drill | 🟨 In Progress | Daily-backup restore drill passed against isolated restored project; PITR remains disabled | `2026-06-24-supabase-backup-pitr-precheck.md` | `docs/operations/evidence/recovery-drills/` |
 | GDPR/DSAR Lifecycle | 🟨 In Progress | Pending reviewer sign-off | Import raw PII retention was broadened in code; full DSAR and backup limitation evidence pending | `docs/operations/evidence/` |
 
 ## Status Legend
@@ -82,13 +82,20 @@ Before marking any beta blocker complete:
 - Required screenshots: Backup or restore control panel, recovery drill execution record, restore verification result, and any incident or follow-up tracker used during the drill.
 - Required note must include restore target, restore point, critical-table row counts, RLS validation, auth smoke, app smoke, executor, reviewer, and residual risk.
 - Folder: `docs/operations/evidence/recovery-drills/`
-- 2026-06-24 precheck verified production daily physical backups, production
-  row-count/RLS baseline, and current Supabase project/plan metadata. Full
-  restore-drill sign-off remains blocked because PITR is disabled and the
-  attempted data-bearing preview branch restore ended `RESTORE_FAILED`.
+- 2026-06-24 production daily physical backups were verified and the latest
+  backup was restored into isolated project
+  `complyeur-restore-drill-2026-06-24` (`ubpztqbdkyesfpcqrohe`).
+- Restored target validation passed: row counts matched production baseline,
+  RLS remained enabled on critical tables, latest migration matched, restored
+  target RLS/RPC probe passed 13 checks, local app auth/dashboard smoke passed,
+  and disposable probe/smoke data was cleaned up.
+- The isolated restored project was deleted after validation; follow-up project
+  list showed only prod/staging/dev.
 - Backup/restore dashboard tab screenshot captured as
-  `2026-06-24-supabase-backups-restore-tab.png`; successful restore completion
-  screenshot remains pending.
+  `2026-06-24-supabase-backups-restore-tab.png`; restored active project
+  screenshot captured as `2026-06-24-supabase-restored-project-active.png`.
+- PITR remains disabled and needs either enablement or accepted daily-backup-only
+  RPO before public release.
 
 ### Non-Founder Onboarding
 
@@ -191,21 +198,21 @@ Before marking any beta blocker complete:
 
 ### Critical Evidence Areas Complete
 
-5 complete:
+6 complete:
 
 - Branch Protection
 - Signup Email Verification
 - Local Multi-User E2E
 - Production RLS/RPC Attack Probe
+- Recovery Drill
 - Support Ownership
 
 ### Private Beta Evidence Blockers Remaining
 
-6 remaining:
+5 remaining:
 
 - Multi-Provider Email Deliverability
 - Password Reset
-- Recovery Drill
 - Non-Founder Onboarding
 - Sentry Alert Routing
 - Public/Internal Health
@@ -218,6 +225,7 @@ task rather than an operational evidence area.
 
 - Stripe lifecycle and failure-mode evidence
 - CodeQL And Dependency Security run evidence
+- Supabase PITR enablement or accepted daily-backup-only RPO
 - Supabase Backup/PITR Restore Drill
 - GDPR/DSAR Lifecycle
 

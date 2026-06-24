@@ -43,7 +43,7 @@ dashboard evidence is still required before claiming a 9/10 operational score.
 | Accessibility baseline | Ready for private beta | A11y E2E recorded as 17 passed. |
 | Mobile baseline | Ready for private beta | Mobile E2E recorded as 15 passed. |
 | Billing | In progress for paid/public beta | Live Stripe payment, price audit, webhook endpoint, and entitlement provisioning are evidenced; lifecycle failure-mode evidence still remains. |
-| Operations and recovery | Conditional for private beta | Recovery procedure is now documented; restore-test evidence still remains incomplete. |
+| Operations and recovery | Conditional for private beta | Daily-backup restore drill is evidenced complete; PITR is disabled and needs enablement or accepted daily-backup-only RPO before paid/public release. |
 | Legal and GDPR packaging | Conditional for private beta | Engineering GDPR package is drafted; DPA/provider terms/legal review and live evidence remain before paid/public beta. |
 | Monitoring and support | Conditional for private beta | Support ownership is evidenced; Sentry routing and public/internal health evidence remain open. Metrics ownership and zero-signup alert remain paid/public beta work. |
 
@@ -135,8 +135,8 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Recovery tabletop and evidence | Blocked pending isolated restore | Engineering owner | 2026-06-24 precheck filed daily-backup metadata, production row-count baseline, and RLS baseline. Automated data-bearing preview restore ended `RESTORE_FAILED`; use dashboard restore-to-new-project or resolve the Supabase branch restore failure, then file screenshots/app smoke/reviewer sign-off. |
-| Supabase production backups and PITR | Partially verified; PITR disabled | Engineering owner | Daily physical backups are present for production; PITR is disabled. Enable PITR or approve daily-backup-only RPO before public release, then run restore-to-new-project drill. |
+| Recovery tabletop and evidence | Complete for daily-backup restore | Engineering owner | 2026-06-24 dashboard restore-to-new-project drill passed: row counts matched, RLS/migrations matched, restored-target RLS/RPC probe passed 13 checks, local auth/dashboard smoke passed, and disposable data was cleaned up. |
+| Supabase production backups and PITR | Partially verified; PITR disabled | Engineering owner | Daily physical backups and restore validation are complete. PITR is disabled; enable PITR or approve daily-backup-only RPO before public release. |
 | Fresh staging or production-like RLS attack-test evidence | Complete for current production schema | Security owner | 2026-06-24 production probe passed 13 RLS/RPC checks and cleanup verification; re-run after any Supabase migration or tenant-isolation change. |
 
 ## 7. Stripe And Billing Checks
@@ -284,7 +284,6 @@ deployed beta URL. The remaining manual checks include:
 | --- | --- | --- | --- |
 | Multi-provider auth email delivery | Critical before private beta | QA owner | Test Gmail, Outlook, and one corporate provider. |
 | Password reset link behavior | Critical before private beta | QA owner | Verify reset delivery, single-use behavior, expiry, and post-reset sessions. |
-| Recovery tabletop and evidence | Critical before private beta | Engineering owner | Execute the documented restore and validation flow and store evidence. |
 | Non-founder full journey | Critical before private beta | Product owner | Run signup through logout with a tester who has not seen the app. |
 | Sentry alert routing evidence | Critical before private beta | Engineering owner | Capture Sentry alert rules, notification destinations, recipients, and test alert delivery. |
 | Public/internal health evidence | Critical before private beta | Engineering owner | Capture public `/api/health` and protected `/api/internal/health` evidence for the deployed environment. |
@@ -300,7 +299,7 @@ deployed beta URL. The remaining manual checks include:
 | Beta metrics ownership/tracking pending | Important before paid/public beta | Product owner | Assign dashboard owner and review cadence. |
 | Zero-signup alert not implemented | Important before paid/public beta | Growth/analytics owner | Implement alert or documented manual review. |
 | CodeQL and dependency-security workflow run evidence pending | Important before paid/public beta | Engineering owner | Capture GitHub run evidence after workflows are active. |
-| Supabase backup/PITR dashboard verification | Important before paid/public beta | Engineering owner | Verify and store evidence. |
+| Supabase PITR enablement or RPO decision | Important before paid/public beta | Engineering owner | Daily backups and restore validation are evidenced; PITR is disabled. Enable PITR or formally accept daily-backup-only RPO. |
 
 ## 17. Nice-To-Have Items
 

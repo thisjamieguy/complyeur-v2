@@ -27,8 +27,8 @@ checks before the manual go-live pass.
 - [ ] PITR enabled (Point-in-Time Recovery)
 
 2026-06-24 note: production daily physical backups were verified; PITR is not
-currently enabled. An attempted data-bearing preview restore ended
-`RESTORE_FAILED` and was deleted. See
+currently enabled. A dashboard restore-to-new-project drill passed against the
+isolated restored project `complyeur-restore-drill-2026-06-24`. See
 `docs/operations/evidence/recovery-drills/2026-06-24-supabase-backup-pitr-precheck.md`.
 
 ## Environment Variables

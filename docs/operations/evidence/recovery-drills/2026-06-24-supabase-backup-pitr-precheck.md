@@ -1,23 +1,24 @@
-# Supabase Backup/PITR Restore Drill Precheck
+# Supabase Backup/PITR Restore Drill Evidence
 
 Date: 2026-06-24
 Executed by: Codex with James Walsh
 Environment reviewed: production Supabase project `complyeur-prod`
 Project ref: `bewydxxynjtfpytunlcq`
 Region: `eu-west-2` / West Europe (London)
-Result: Blocked for full restore-drill sign-off
+Restore target reviewed: `complyeur-restore-drill-2026-06-24`
+Restore target ref: `ubpztqbdkyesfpcqrohe`
+Result: Backup restore drill passed; PITR remains disabled
 
 ## Summary
 
-This precheck verified that production daily physical backups exist and captured a
-non-PII production validation baseline for a future isolated restore drill.
+This drill verified that production daily physical backups exist, restored the
+latest backup into an isolated Supabase project, and validated the restored
+target with non-PII row-count comparison, RLS checks, migration checks,
+tenant-isolation probes, auth smoke, and a local app dashboard smoke.
 
-The full Backup/PITR restore drill is not complete because:
+Residual gap:
 
 - PITR is currently disabled for production.
-- The attempted production-data preview branch restore failed before validation.
-- The documented Supabase "Restore to a new project" flow requires dashboard
-  confirmation and cost review before creating a production-data copy.
 
 Do not restore directly over production for this release gate.
 
@@ -120,6 +121,41 @@ preview branch no longer appears in the branch list.
 No branch credentials, API keys, database URLs, or service-role secrets are
 stored in this evidence file.
 
+## Dashboard Restore-To-New-Project
+
+The Supabase Dashboard restore flow was used after the automated preview branch
+attempt failed. The restored project was created as an independent isolated
+project, not as a production overwrite.
+
+Dashboard evidence captured:
+
+- `2026-06-24-supabase-restored-project-active.png`
+
+Observed restored project metadata:
+
+| Field | Value |
+| --- | --- |
+| Restored project | `complyeur-restore-drill-2026-06-24` |
+| Restored project ref | `ubpztqbdkyesfpcqrohe` |
+| Source project | `complyeur-prod` |
+| Source project ref | `bewydxxynjtfpytunlcq` |
+| Status | `ACTIVE_HEALTHY` |
+| Region | `eu-west-2` |
+| Created at UTC | 2026-06-24 21:17:38 |
+| Compute | Nano |
+| Postgres version | `17.6.1.127` |
+
+The restored project remains separate from production and was not wired to the
+production app.
+
+Cleanup:
+
+- After validation, project `ubpztqbdkyesfpcqrohe`
+  (`complyeur-restore-drill-2026-06-24`) was deleted with
+  `supabase projects delete ubpztqbdkyesfpcqrohe --yes -o json`.
+- Follow-up `supabase projects list` showed only `complyeur-prod`,
+  `complyeur-staging`, and `complyeur-dev`.
+
 ## Production Baseline For Future Restore Comparison
 
 Read-only exact row-count query against production:
@@ -143,19 +179,19 @@ select * from critical_counts order by table_name;
 
 Observed row counts:
 
-| Table | Production row count |
-| --- | ---: |
-| `admin_audit_log` | 7 |
-| `alerts` | 0 |
-| `audit_log` | 0 |
-| `companies` | 5 |
-| `company_user_invites` | 0 |
-| `employee_compliance_snapshots` | 0 |
-| `employees` | 2 |
-| `import_sessions` | 0 |
-| `notification_log` | 0 |
-| `profiles` | 3 |
-| `trips` | 0 |
+| Table | Production baseline | Restored target | Result |
+| --- | ---: | ---: | --- |
+| `admin_audit_log` | 7 | 7 | Match |
+| `alerts` | 0 | 0 | Match |
+| `audit_log` | 0 | 0 | Match |
+| `companies` | 5 | 5 | Match |
+| `company_user_invites` | 0 | 0 | Match |
+| `employee_compliance_snapshots` | 0 | 0 | Match |
+| `employees` | 2 | 2 | Match |
+| `import_sessions` | 0 | 0 | Match |
+| `notification_log` | 0 | 0 | Match |
+| `profiles` | 3 | 3 | Match |
+| `trips` | 0 | 0 | Match |
 
 ## RLS Baseline
 
@@ -186,6 +222,86 @@ Latest production migration observed:
 | --- | --- |
 | `20260618173000` | `harden_stripe_webhook_ordering` |
 
+The restored target reported the same latest migration:
+
+| Version | Name |
+| --- | --- |
+| `20260618173000` | `harden_stripe_webhook_ordering` |
+
+## Restored Target Tenant-Isolation And Auth Smoke
+
+The existing production RLS/RPC attack probe was run against the restored target
+using temporary restored-project credentials stored under `/private/tmp` and
+deleted after validation.
+
+Command shape:
+
+```bash
+CONFIRM_PRODUCTION_SUPABASE_RLS_PROBE=true \
+  NEXT_PUBLIC_SUPABASE_URL=https://ubpztqbdkyesfpcqrohe.supabase.co \
+  pnpm exec tsx scripts/security/production-rls-attack-probe.ts
+```
+
+Run id: `mqsl6ub6-e61d4915`
+
+Result: 13 checks passed.
+
+Validated controls:
+
+| Check family | Result |
+| --- | --- |
+| Cross-tenant employee read blocked | Pass |
+| Cross-tenant trip read blocked | Pass |
+| Same-tenant employee read positive control | Pass |
+| Cross-tenant trip update blocked | Pass |
+| Cross-tenant alert delete blocked | Pass |
+| Cross-tenant employee insert blocked | Pass |
+| Cross-tenant trip insert blocked | Pass |
+| Viewer invite metadata read blocked | Pass |
+| Viewer invite update blocked | Pass |
+| Cross-tenant seat usage RPC blocked | Pass |
+| Cross-tenant user-limit RPC blocked | Pass |
+| Cross-tenant ownership transfer RPC blocked | Pass |
+| Viewer ownership transfer RPC blocked | Pass |
+
+Cleanup:
+
+- Main run cleanup reported `cleanupErrors: []`.
+- Cleanup-only verification for run id `mqsl6ub6-e61d4915` found no remaining
+  probe users or companies.
+- Post-cleanup row counts matched the restored baseline.
+
+## Restored Target App Smoke
+
+A local Next.js app was started with environment variables pointing at the
+restored project, not production. Playwright used the real `/login` UI and a
+disposable restored-project test account.
+
+Command shape:
+
+```bash
+E2E_ALLOW_REMOTE_SUPABASE=true \
+  TEST_USER_EMAIL=restore-smoke-20260624@complyeur.test \
+  TEST_USER_COMPANY=RestoreDrillSmoke20260624 \
+  PLAYWRIGHT_PORT=3111 \
+  pnpm exec playwright test e2e/auth-smoke.spec.ts --project=chromium
+```
+
+Result:
+
+- `1 passed (25.4s)`
+- Auth setup created and signed in as the disposable restored-project user.
+- The test reached `/dashboard`.
+- The dashboard heading `Employee Compliance` was visible.
+
+Cleanup:
+
+- Disposable smoke user remaining count: `0`.
+- Disposable smoke company remaining count: `0`.
+- Post-cleanup row counts matched the restored baseline.
+- Temporary API keys, service-role key file, local auth state, and Playwright
+  reports were deleted after validation.
+
 ## External Documentation Checked
 
 Supabase documentation reviewed on 2026-06-24:
@@ -206,37 +322,20 @@ Relevant operational points:
 - Restored copies should be reviewed for external-operation extensions such as
   `pg_net` or `pg_cron`.
 
-## Full Drill Blockers
+## Residual Gaps
 
 | Blocker | Why it matters | Required owner action |
 | --- | --- | --- |
 | PITR disabled | The public release gate asks for Backup/PITR evidence, but only daily physical backups are currently available. | Enable PITR add-on or explicitly approve daily-backup-only RPO for this release. |
-| Isolated preview restore failed | Row-count, RLS, auth, and app smoke checks must run against a restored copy, not production. The attempted data-bearing preview branch ended in `RESTORE_FAILED`. | Use Supabase Dashboard > Database > Backups > Restore to a New Project, or investigate the preview-branch restore failure with Supabase. |
-| Cost and data-copy approval pending | Restore-to-new-project creates an independent paid project containing production data. | Approve the restore target name, cost, lifecycle, and deletion/pause plan. |
-| Restore completion screenshot pending | The backup/restore dashboard tab screenshot is captured, but release evidence still needs the successful restore completion view. | Capture the final restore confirmation screenshot after dashboard restore-to-new-project succeeds. |
-
-## Required Next Drill Steps
-
-1. Enable PITR if point-in-time recovery is required for public release.
-2. In the Supabase Dashboard, open production project `complyeur-prod`.
-3. Go to Database > Backups > Restore to a New Project.
-4. Select the target backup or PITR timestamp.
-5. Name the isolated target `complyeur-restore-drill-2026-06-24` or equivalent.
-6. Confirm cost and restore scope before creating the target.
-7. After restore completes, capture the restore confirmation screenshot.
-8. Run the row-count query above against the restore target and compare with
-   this baseline.
-9. Re-run the RLS catalog query against the restore target.
-10. Run tenant-isolation smoke tests against the restore target.
-11. Run auth and dashboard app smoke tests against an isolated app environment
-    pointed at the restore target.
-12. Record reviewer sign-off and cleanup/pause/delete the restore target.
 
 ## Current Release Decision
 
-Backup existence is verified, and an automated isolated preview-branch restore
-attempt was made and cleaned up after Supabase reported `RESTORE_FAILED`.
+Backup existence and daily-backup restore validation are complete.
 
-The Supabase Backup/PITR restore drill gate remains open until an isolated
-restore target is created, validated, evidenced, and reviewed. PITR is not
-currently enabled.
+The Backup/PITR gate remains partially open only for the PITR-specific decision:
+production PITR is not currently enabled. If daily-backup-only RPO is accepted,
+the restore-drill evidence is sufficient for the backup restore portion. If PITR
+is required before public release, enable PITR and repeat a PITR-specific
+restore validation.
+
+The isolated restored project was deleted after validation.
