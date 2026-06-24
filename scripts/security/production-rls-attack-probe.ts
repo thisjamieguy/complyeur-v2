@@ -265,6 +265,15 @@ async function createOwnerTenant(params: {
   )
   params.createdCompanyIds.add(companyId)
 
+  const { error: companyNameError } = await params.admin
+    .from('companies')
+    .update({ name: `Codex RLS Probe ${params.label.toUpperCase()} ${params.runId}` })
+    .eq('id', companyId)
+
+  if (companyNameError) {
+    throw new Error(`Failed to mark probe company ${shortId(companyId)}: ${companyNameError.message}`)
+  }
+
   await params.admin
     .from('profiles')
     .update({
@@ -730,6 +739,10 @@ async function runProbe(): Promise<void> {
         2
       )
     )
+
+    if (cleanupErrors.length > 0) {
+      process.exitCode = 1
+    }
   }
 
   const failed = results.filter((result) => result.status === 'fail')
