@@ -14,6 +14,7 @@ import { getCompanyEntitlements } from '@/lib/billing/entitlements'
 import { BillingSection } from '@/components/settings/billing-section'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { createClient } from '@/lib/supabase/server'
+import { hasPermission, PERMISSIONS } from '@/lib/permissions'
 import type { NotificationPreferences } from '@/types/database-helpers'
 import { cn } from '@/lib/utils'
 
@@ -99,6 +100,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   let entitlements: Awaited<ReturnType<typeof getCompanyEntitlements>> = null
   let hasStripeCustomer = false
   let userId = ''
+  let canViewTeamAccess = false
 
   if (activeSection === 'general') {
     const { companyId, userId: uid } = await requireCompanyAccessCached()
@@ -114,6 +116,11 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
     userPreferences = prefsResult
     entitlements = entitlementsResult
     hasStripeCustomer = !!companyResult.data?.stripe_customer_id
+  }
+
+  if (activeSection === 'workspace') {
+    const { role } = await requireCompanyAccessCached()
+    canViewTeamAccess = hasPermission(role, PERMISSIONS.USERS_VIEW)
   }
 
   return (
@@ -235,25 +242,43 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
           {activeSection === 'workspace' && (
             <>
-              <Link
-                href="/settings/team"
-                className="block rounded-xl border bg-white p-6 shadow-sm transition-colors hover:border-slate-300 group"
-              >
-                <div className="flex items-start justify-between gap-4">
+              {canViewTeamAccess ? (
+                <Link
+                  href="/settings/team"
+                  className="block rounded-xl border bg-white p-6 shadow-sm transition-colors hover:border-slate-300 group"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        Access
+                      </p>
+                      <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
+                        Team
+                      </h2>
+                      <p className="text-sm text-slate-600">
+                        Invite teammates, assign roles, and transfer ownership.
+                      </p>
+                    </div>
+                    <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600" />
+                  </div>
+                </Link>
+              ) : (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Access
                     </p>
-                    <h2 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-slate-950">
-                      Team
-                    </h2>
+                    <h2 className="text-lg font-semibold text-slate-900">Team</h2>
                     <p className="text-sm text-slate-600">
-                      Invite teammates, assign roles, and transfer ownership.
+                      Team member access is managed by an Owner or Admin.
                     </p>
                   </div>
-                  <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-colors group-hover:text-slate-600" />
+                  <p className="mt-4 text-sm text-slate-500">
+                    Your current role can view workspace tools, but cannot view or change team
+                    membership.
+                  </p>
                 </div>
-              </Link>
+              )}
 
               <Link
                 href="/settings/mappings"
