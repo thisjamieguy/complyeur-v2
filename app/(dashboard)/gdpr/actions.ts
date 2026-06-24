@@ -22,6 +22,7 @@ import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { isOwnerOrAdmin } from '@/lib/permissions'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { requireAdminAccess } from '@/lib/security/authorization'
+import { requireRecentMfaVerification } from '@/lib/security/mfa'
 import {
   cleanupExpiredGdprExportArchives,
   storeGdprExportArchive,
@@ -307,12 +308,23 @@ export async function deleteEmployeeGdpr(
   success: boolean
   message?: string
   error?: string
+  requiresReverification?: boolean
 }> {
   const ctx = await requireCompanyAccessCached()
 
   const rateLimit = await checkServerActionRateLimit(ctx.userId, 'deleteEmployeeGdpr')
   if (!rateLimit.allowed) {
     return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
+
+  // Step-up: require a recent MFA verification before erasing employee data.
+  const stepUp = await requireRecentMfaVerification(await createClient())
+  if (!stepUp.ok) {
+    return {
+      success: false,
+      error: 'For your security, please re-verify your identity to delete employee data.',
+      requiresReverification: true,
+    }
   }
 
   const validation = gdprDeletionSchema.safeParse({ employeeId, reason })
@@ -410,12 +422,23 @@ export async function anonymizeEmployeeGdpr(
   success: boolean
   message?: string
   error?: string
+  requiresReverification?: boolean
 }> {
   const ctx = await requireCompanyAccessCached()
 
   const rateLimit = await checkServerActionRateLimit(ctx.userId, 'anonymizeEmployeeGdpr')
   if (!rateLimit.allowed) {
     return { success: false, error: rateLimit.error ?? 'Rate limit exceeded' }
+  }
+
+  // Step-up: require a recent MFA verification before this irreversible erasure.
+  const stepUp = await requireRecentMfaVerification(await createClient())
+  if (!stepUp.ok) {
+    return {
+      success: false,
+      error: 'For your security, please re-verify your identity to anonymize this employee.',
+      requiresReverification: true,
+    }
   }
 
   const validation = gdprAnonymizationSchema.safeParse({ employeeId, reason })

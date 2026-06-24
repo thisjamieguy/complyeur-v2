@@ -144,6 +144,86 @@ export async function clearBackupSessionCookie(): Promise<void> {
   cookieStore.delete(MFA_BACKUP_SESSION_COOKIE)
 }
 
+/**
+ * Step-up (re-authentication) support for irreversible actions.
+ *
+ * Being AAL2 only proves MFA was completed *at some point* during the session.
+ * For irreversible operations (GDPR erasure) we additionally require that the
+ * MFA verification happened *recently*, so that a hijacked or long-lived session
+ * cannot destroy data without a fresh proof of identity ("sudo mode").
+ */
+export const STEP_UP_MAX_AGE_SECONDS = 5 * 60
+
+export type StepUpResult = { ok: true } | { ok: false; reason: 'reverify' }
+
+/**
+ * Returns the Unix-seconds timestamp of the most recent MFA (TOTP) verification
+ * in the current session, or null when none is present (e.g. the session is
+ * only AAL1, so no TOTP authentication method is recorded).
+ *
+ * The AMR method label differs across Supabase versions ('totp' vs 'mfa/totp'),
+ * so we match any method containing 'totp' to stay robust.
+ */
+export async function getLatestMfaVerificationTimestamp(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<number | null> {
+  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+  const methods = data?.currentAuthenticationMethods
+  if (error || !methods) return null
+
+  // `currentAuthenticationMethods` is typed as `(string | AMREntry)[]`; only the
+  // object entries carry a method label and timestamp.
+  const totpTimestamps: number[] = []
+  for (const entry of methods) {
+    if (typeof entry === 'string') continue
+    if (!String(entry.method).includes('totp')) continue
+    if (typeof entry.timestamp === 'number' && Number.isFinite(entry.timestamp)) {
+      totpTimestamps.push(entry.timestamp)
+    }
+  }
+
+  if (totpTimestamps.length === 0) return null
+  return Math.max(...totpTimestamps)
+}
+
+/**
+ * Requires a recent MFA verification before an irreversible action.
+ *
+ * - Users without a verified factor are not blocked here: they have no second
+ *   factor to step up with, and privileged users already have MFA enforced by
+ *   {@link enforceMfaForPrivilegedUser} at the layout boundary.
+ * - Users with a verified factor must have verified within `maxAgeSeconds`,
+ *   otherwise they are asked to re-verify. Fails closed (reverify) when the
+ *   last-verification timestamp cannot be determined.
+ */
+export async function requireRecentMfaVerification(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  options: { maxAgeSeconds?: number; nowSeconds?: number } = {}
+): Promise<StepUpResult> {
+  const maxAgeSeconds = options.maxAgeSeconds ?? STEP_UP_MAX_AGE_SECONDS
+
+  const { data: factorsData } = await supabase.auth.mfa.listFactors()
+  const hasVerifiedFactor = Boolean(
+    factorsData?.all?.some((factor) => factor.status === 'verified')
+  )
+
+  if (!hasVerifiedFactor) {
+    return { ok: true }
+  }
+
+  const lastVerifiedAt = await getLatestMfaVerificationTimestamp(supabase)
+  if (lastVerifiedAt === null) {
+    return { ok: false, reason: 'reverify' }
+  }
+
+  const nowSeconds = options.nowSeconds ?? Math.floor(Date.now() / 1000)
+  if (nowSeconds - lastVerifiedAt > maxAgeSeconds) {
+    return { ok: false, reason: 'reverify' }
+  }
+
+  return { ok: true }
+}
+
 async function hasValidBackupSession(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
