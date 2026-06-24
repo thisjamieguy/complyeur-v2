@@ -17,7 +17,7 @@
  * - Error handling
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach, Mock } from 'vitest';
 import type { ImportFormat } from '@/types/import';
 
 // ============================================================================
@@ -214,6 +214,15 @@ vi.mock('next/cache', () => ({
 // ============================================================================
 
 describe('Import API / Server Actions', () => {
+  // Pre-load the server action module once. Its dependency tree (xlsx parsing,
+  // validators, inserter) is expensive to transform on first import and can push
+  // the first test past the default 5s timeout. Warming it here pays that cost in
+  // setup (longer hook timeout) so individual test timeouts can stay tight and
+  // still catch genuine hangs.
+  beforeAll(async () => {
+    await import('@/app/(dashboard)/import/actions');
+  }, 30000);
+
   beforeEach(async () => {
     vi.clearAllMocks();
     // Reset environment
