@@ -53,5 +53,5 @@ Use clear, specific descriptions that identify the control, workflow, or outcome
 - `sentry-alerts/`: alert routing and monitoring ownership evidence
 - `support-ownership/`: support ownership records and response targets
 - `stripe-verification/`: billing, checkout, webhook, and subscription evidence
+- `multi-user-e2e/`: tenant-isolation and multi-user E2E evidence
 - `release-approvals/`: release decision and go-live approval records
-

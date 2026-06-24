@@ -10,7 +10,7 @@ private beta go/no-go decisions.
 - Treat older launch checklists and audit summaries as historical reference
   only.
 
-Last updated: 2026-06-23
+Last updated: 2026-06-24
 Baseline commit reviewed: `08002bf chore: complete authenticated beta readiness checks`
 
 This is the single consolidated checklist for ComplyEur private beta launch
@@ -44,7 +44,7 @@ dashboard evidence is still required before claiming a 9/10 operational score.
 | Mobile baseline | Ready for private beta | Mobile E2E recorded as 15 passed. |
 | Billing | In progress for paid/public beta | Live Stripe payment, price audit, webhook endpoint, and entitlement provisioning are evidenced; lifecycle failure-mode evidence still remains. |
 | Operations and recovery | Conditional for private beta | Recovery procedure is now documented; restore-test evidence still remains incomplete. |
-| Legal and GDPR packaging | Conditional for private beta | DPA remains draft; GDPR public release workplan still has public-release blockers. |
+| Legal and GDPR packaging | Conditional for private beta | Engineering GDPR package is drafted; DPA/provider terms/legal review and live evidence remain before paid/public beta. |
 | Monitoring and support | Conditional for private beta | Support ownership is evidenced; Sentry routing and public/internal health evidence remain open. Metrics ownership and zero-signup alert remain paid/public beta work. |
 
 ## 3. Final Go/No-Go Decision
@@ -79,6 +79,14 @@ Latest known verification results from the beta hardening pass:
 | Lint | Passed |
 | Build | Passed, 44 static pages |
 | Security check | No known vulnerabilities |
+| Focused multi-user/GDPR/security suite, 2026-06-24 | 15 files passed, 160 tests passed |
+| Full Vitest suite, 2026-06-24 | 147 files passed, 2144 tests passed |
+| Typecheck, 2026-06-24 | Passed |
+| Lint, 2026-06-24 | Passed |
+| Build, 2026-06-24 | Passed, 48 static pages |
+| Security check, 2026-06-24 | No known vulnerabilities |
+| Multi-user E2E, 2026-06-24 | Passed, 2 Playwright tests |
+| Production RLS/RPC attack probe, 2026-06-24 | Passed, 13 checks; cleanup verified |
 | Whitespace diff check | Clean |
 | Baseline commit | `08002bf chore: complete authenticated beta readiness checks` |
 
@@ -129,7 +137,7 @@ Open checks:
 | --- | --- | --- | --- |
 | Recovery tabletop and evidence | Critical before private beta | Engineering owner | Execute the `docs/RUNBOOK.md` recovery procedure against an isolated restore target and file evidence. |
 | Supabase production backups and PITR | Important before paid/public beta | Engineering owner | Verify Supabase plan, backups, PITR, and restore target from the dashboard. |
-| Fresh staging or production-like RLS attack-test evidence | Important before paid/public beta | Security owner | Run attack plan and file evidence under compliance or security docs. |
+| Fresh staging or production-like RLS attack-test evidence | Complete for current production schema | Security owner | 2026-06-24 production probe passed 13 RLS/RPC checks and cleanup verification; re-run after any Supabase migration or tenant-isolation change. |
 
 ## 7. Stripe And Billing Checks
 
@@ -172,6 +180,12 @@ Supporting docs:
 
 - `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`
 - `docs/legal/DPA_TEMPLATE.md`
+- `docs/legal/PROCESSOR_SUBPROCESSOR_REGISTER.md`
+- `docs/legal/ARTICLE_30_RECORD_OF_PROCESSING.md`
+- `docs/legal/DATA_SUBJECT_RIGHTS_PROCESS.md`
+- `docs/legal/RETENTION_SCHEDULE.md`
+- `docs/legal/DPIA_TRIGGER_CHECKLIST.md`
+- `docs/legal/LEGITIMATE_INTEREST_ASSESSMENT_TEMPLATE.md`
 - `docs/INCIDENT_RESPONSE.md`
 - `docs/DATA_CLASSIFICATION.md`
 - `docs/DATA_DELETION_WORKFLOW.md`
@@ -182,8 +196,9 @@ Open checks:
 | --- | --- | --- | --- |
 | DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review and remove draft status before sharing as final. |
 | ICO registration evidence | Important before paid/public beta | Legal owner | Confirm registration status and file release evidence. |
-| Processor/subprocessor register review | Important before paid/public beta | Legal owner | Confirm DPA/SCC status for analytics, consent, anti-abuse, and support tooling. |
-| Public GDPR release workplan P0/P1 items | Critical before paid/public beta | Privacy owner | Work through `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`. |
+| Processor/subprocessor register legal confirmation | Important before paid/public beta | Legal owner | Register now exists; confirm provider roles, DPA/SCC/UK transfer terms, and account-region settings for Supabase, Vercel, Stripe, Resend, Sentry, GA4, CookieYes, Cloudflare Turnstile, and Upstash. |
+| Public GDPR release workplan remaining P0/P1 items | Critical before paid/public beta | Privacy owner | Close remaining erasure/anonymisation evidence, lawful-basis legal review, transfer confirmation, and security evidence links in `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`. |
+| Live privacy and cookie evidence | Important before paid/public beta | Privacy owner | Run production cookie scan and confirm CookieYes reject/withdraw paths prevent GA cookies/scripts/events. |
 
 ## 10. Monitoring And Support Checks
 
@@ -231,7 +246,7 @@ Release-critical known issues:
 - SPF/DKIM/DMARC setup is pending before paid/public launch.
 - Baseline branch protection is evidenced complete; expanded CodeQL/dependency-security workflow run evidence is pending.
 - Disaster-recovery testing and evidence are pending.
-- DPA and processor/subprocessor materials need legal review.
+- DPA, processor/subprocessor, transfer, and lawful-basis materials need legal review.
 - Real-device iOS Safari and Android Chrome checks are pending.
 
 ## 13. Beta Success Metrics
