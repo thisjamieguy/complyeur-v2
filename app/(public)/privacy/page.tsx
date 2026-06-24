@@ -153,6 +153,19 @@ export default function PrivacyPage() {
               <strong>Sentry</strong> - Error monitoring used to detect and fix application failures.
               We use event monitoring only; browser session replay is disabled.
             </li>
+            <li>
+              <strong>CookieYes</strong> - Cookie consent management. CookieYes stores and
+              processes consent choices so non-essential analytics remain opt-in.
+            </li>
+            <li>
+              <strong>Cloudflare Turnstile</strong> - Bot protection on selected public forms.
+              Turnstile processes challenge data to help prevent automated abuse.
+            </li>
+            <li>
+              <strong>Upstash Redis</strong> - Rate limiting for abuse prevention and platform
+              reliability. Request identifiers such as IP-derived rate-limit keys may be processed
+              for security controls.
+            </li>
           </ul>
           <h3 className="text-xl font-semibold text-slate-900 mt-6 mb-3">Data Residency</h3>
           <p className="text-base text-slate-700 leading-relaxed">

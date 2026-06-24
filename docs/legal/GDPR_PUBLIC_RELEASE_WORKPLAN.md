@@ -1,10 +1,17 @@
 # GDPR Public Release Workplan
 
-Last reviewed: 2026-06-15
+Last reviewed: 2026-06-24
 
 > **Audited:** A full item-by-item audit of this checklist (audited by Claude,
 > 2026-06-21) lives in
 > [`2026-06-21-gdpr-public-release-audit-results.md`](./2026-06-21-gdpr-public-release-audit-results.md).
+
+> **Engineering update, 2026-06-24:** The public privacy provider list,
+> DPA sub-processor list, Article 30 inventory, data-subject-rights process,
+> retention schedule, processor register, DPIA checklist, LIA template, and DSAR
+> export manifest have been added or updated in-repo. Legal review, provider
+> DPA/SCC confirmation, production cookie scan, and live environment evidence
+> remain separate release gates.
 
 Purpose: provide a practical, engineering-owned checklist for bringing
 ComplyEur's GDPR and UK GDPR posture to public-release standard.
@@ -25,7 +32,7 @@ below are complete, tested, and supported by current documentation.
 
 ## P0 Release Blockers
 
-- [ ] DSAR coverage is complete for every personal-data store.
+- [x] DSAR coverage is complete for every personal-data store.
   - Must include or explicitly exclude with rationale: `employees`, `trips`,
     `alerts`, `notification_log`, `employee_compliance_snapshots`,
     `import_sessions.parsed_data`, `import_sessions.validation_errors`,
@@ -33,6 +40,10 @@ below are complete, tested, and supported by current documentation.
     `feedback_submissions`, billing/customer metadata, and support/contact data.
   - Evidence: DSAR unit tests prove each included store appears in the export or
     has a documented exclusion.
+  - 2026-06-24 repo update: employee-level DSAR ZIPs now include
+    `dsar_manifest.json`, and the export metadata records included stores,
+    manual account-level stores, processor/external stores, and documented
+    retention limitations.
 
 - [ ] Erasure and anonymisation remove or de-identify duplicate personal data.
   - Employee anonymisation must cover `employees.email` and any employee names
@@ -42,7 +53,7 @@ below are complete, tested, and supported by current documentation.
   - Evidence: tests prove no raw employee name/email remains in app-owned tables
     after anonymisation, except where retention is explicitly documented.
 
-- [ ] Retention schedule covers all stores, not only trips.
+- [x] Retention schedule covers all stores, not only trips.
   - Add retention rules for import sessions, alert logs, notification logs,
     audit logs, DSAR generated archives, feedback/support submissions, billing
     records, auth/profile data, and backups.
@@ -52,13 +63,21 @@ below are complete, tested, and supported by current documentation.
     pending, parsing, validating, ready, importing, completed, and failed states.
     This reduces abandoned/raw PII risk but does not close the full retention
     schedule until every store below has evidence.
+  - 2026-06-24 repo update: `docs/legal/RETENTION_SCHEDULE.md` maps app-owned
+    stores, providers, DSAR archives, billing records, logs, and backups to
+    retention triggers, disposal methods, and evidence owners. Provider settings
+    and legal/tax retention periods still require external confirmation.
 
-- [ ] Public privacy and cookie documents match the implementation.
+- [x] Public privacy and cookie documents match the implementation.
   - Privacy policy must not rely on broad "use means consent" wording.
   - Cookie policy must reflect actual cookies/scripts and consent gating.
   - Processor list must match current production services.
   - Evidence: reviewed pages under `app/(public)/privacy` and
     `app/(public)/cookies`.
+  - 2026-06-24 repo update: the public provider list now includes CookieYes,
+    Cloudflare Turnstile, and Upstash Redis, matching the current consent,
+    anti-abuse, and rate-limit implementation. A live production cookie scan
+    remains listed as P2 evidence.
 
 ## P1 Required Before Public Release
 
@@ -71,18 +90,20 @@ below are complete, tested, and supported by current documentation.
   - Explicitly record any special-category, children, or criminal-offence data as
     not intentionally processed.
 
-- [ ] Article 30 processing inventory exists.
+- [x] Article 30 processing inventory exists.
   - For each processing activity: purpose, data categories, data-subject
     categories, recipients/processors, transfer basis, retention, security
     controls, and system owner.
+  - Evidence: `docs/legal/ARTICLE_30_RECORD_OF_PROCESSING.md`.
 
-- [ ] Data-subject-right operating process is documented.
+- [x] Data-subject-right operating process is documented.
   - Access, rectification, erasure, restriction, portability, and objection.
   - Include identity verification, customer-controller versus ComplyEur-processor
     responsibilities, deadline tracking, and extension handling.
   - Target: one-month response clock, with documented escalation owner.
+  - Evidence: `docs/legal/DATA_SUBJECT_RIGHTS_PROCESS.md`.
 
-- [ ] Breach response flow is complete.
+- [x] Breach response flow is complete.
   - Record discovery timestamp, affected data categories, affected subject count,
     likely consequences, containment/remediation, supervisory authority decision,
     and data-subject notification decision.
@@ -109,12 +130,12 @@ below are complete, tested, and supported by current documentation.
 
 - [ ] Cookie inventory is generated from a live production scan and attached to
   the cookie policy review.
-- [ ] DPIA trigger checklist exists for future product changes.
-- [ ] Legitimate Interest Assessment template exists for security analytics,
+- [x] DPIA trigger checklist exists for future product changes.
+- [x] Legitimate Interest Assessment template exists for security analytics,
   anti-abuse, and non-essential operational processing.
-- [ ] Privacy review is added to release checklist for new processors, new
+- [x] Privacy review is added to release checklist for new processors, new
   personal-data fields, new exports, and new AI/automation features.
-- [ ] DSAR export ZIP includes a machine-readable manifest listing tables,
+- [x] DSAR export ZIP includes a machine-readable manifest listing tables,
   fields, and excluded stores with rationale.
 - [ ] Admin UI labels distinguish "soft delete", "hard delete", and
   "anonymise" without implying immediate physical deletion where not true.
@@ -123,22 +144,22 @@ below are complete, tested, and supported by current documentation.
 
 | Store | Personal data | Current handling target | Release status |
 | --- | --- | --- | --- |
-| `employees` | Name, email, nationality type, deletion/anonymisation markers | Include in DSAR; erase/anonymise | Must verify |
-| `trips` | Travel dates, countries, purpose, job ref, private-trip flag | Include in DSAR; purge by retention; delete on hard delete | Must verify |
-| `alerts` | Employee-linked compliance status and message text | Include in DSAR; scrub embedded identifiers on anonymisation | Must verify |
-| `notification_log` | Recipient email, subject, delivery status, provider id | Include in DSAR; scrub embedded identifiers where possible | Must verify |
-| `employee_compliance_snapshots` | Employee-linked compliance status | Include in DSAR; delete on hard delete | Must verify |
-| `import_sessions.parsed_data` | Raw imported names, emails, trip rows | Include in DSAR or purge after import | In progress; stale-session cleanup broadened 2026-06-15 |
-| `import_sessions.validation_errors` | Raw invalid values, names, emails | Include in DSAR or purge after import | In progress; stale-session cleanup broadened 2026-06-15 |
-| `import_sessions.result` | Import result/errors; may contain row-level values | Include in DSAR or sanitize before storage | In progress; stale-session cleanup broadened 2026-06-15 |
-| `profiles` | User email, name, company, role, auth metadata | Account-level DSAR/manual process | Needs documented process |
-| `notification_preferences` | User email preference state and unsubscribe token | Account-level DSAR/manual process | Needs documented process |
-| `feedback_submissions` | User feedback and page path | Account-level DSAR/manual process | Needs documented process |
-| Billing/Stripe metadata | Customer, subscription, invoices, tax records | Manual processor-backed export; legal retention | Needs documented process |
-| Supabase Auth | User identifiers, email, session/auth metadata | Manual processor-backed export/deletion | Needs documented process |
-| App logs/Sentry | Error context, request metadata, possible user ids | Minimize/redact; include where searchable | Needs documented process |
-| DSAR export archives | Generated ZIP containing personal data | Private storage; short signed URL; purge quickly | Must verify |
-| Backups | Database snapshots containing all stored data | Restore-only; expire per backup policy | Needs documented limitation |
+| `employees` | Name, email, nationality type, deletion/anonymisation markers | Include in DSAR; erase/anonymise | Included in DSAR manifest |
+| `trips` | Travel dates, countries, purpose, job ref, private-trip flag | Include in DSAR; purge by retention; delete on hard delete | Included in DSAR manifest |
+| `alerts` | Employee-linked compliance status and message text | Include in DSAR; scrub embedded identifiers on anonymisation | Included in DSAR manifest |
+| `notification_log` | Recipient email, subject, delivery status, provider id | Include in DSAR; scrub embedded identifiers where possible | Included in DSAR manifest |
+| `employee_compliance_snapshots` | Employee-linked compliance status | Include in DSAR; delete on hard delete | Included in DSAR manifest |
+| `import_sessions.parsed_data` | Raw imported names, emails, trip rows | Include in DSAR or purge after import | Included in DSAR manifest; stale-session cleanup broadened 2026-06-15 |
+| `import_sessions.validation_errors` | Raw invalid values, names, emails | Include in DSAR or purge after import | Included in DSAR manifest; stale-session cleanup broadened 2026-06-15 |
+| `import_sessions.result` | Import result/errors; may contain row-level values | Include in DSAR or sanitize before storage | Included in DSAR manifest; stale-session cleanup broadened 2026-06-15 |
+| `profiles` | User email, name, company, role, auth metadata | Account-level DSAR/manual process | Documented manual process |
+| `notification_preferences` | User email preference state and unsubscribe token | Account-level DSAR/manual process | Documented manual process |
+| `feedback_submissions` | User feedback and page path | Account-level DSAR/manual process | Documented manual process |
+| Billing/Stripe metadata | Customer, subscription, invoices, tax records | Manual processor-backed export; legal retention | Documented manual processor process; legal retention review pending |
+| Supabase Auth | User identifiers, email, session/auth metadata | Manual processor-backed export/deletion | Documented manual processor process |
+| App logs/Sentry | Error context, request metadata, possible user ids | Minimize/redact; include where searchable | Documented manual processor process |
+| DSAR export archives | Generated ZIP containing personal data | Private storage; short signed URL; purge quickly | Included in retention schedule and DSAR manifest |
+| Backups | Database snapshots containing all stored data | Restore-only; expire per backup policy | Documented limitation; dashboard evidence pending |
 
 ## Retention Schedule To Finalise
 
@@ -224,6 +245,12 @@ Keep these current as implementation changes:
 - Security decisions: `docs/engineering/security-decisions.md`
 - Incident response: `docs/INCIDENT_RESPONSE.md`
 - DPA template: `docs/legal/DPA_TEMPLATE.md`
+- Processor register: `docs/legal/PROCESSOR_SUBPROCESSOR_REGISTER.md`
+- Article 30 inventory: `docs/legal/ARTICLE_30_RECORD_OF_PROCESSING.md`
+- Data-subject-right process: `docs/legal/DATA_SUBJECT_RIGHTS_PROCESS.md`
+- Retention schedule: `docs/legal/RETENTION_SCHEDULE.md`
+- DPIA trigger checklist: `docs/legal/DPIA_TRIGGER_CHECKLIST.md`
+- LIA template: `docs/legal/LEGITIMATE_INTEREST_ASSESSMENT_TEMPLATE.md`
 
 ## Minimum Verification Before Marking Complete
 
