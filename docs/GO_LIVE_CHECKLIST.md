@@ -26,6 +26,10 @@ checks before the manual go-live pass.
 - [ ] Database backups enabled (daily)
 - [ ] PITR enabled (Point-in-Time Recovery)
 
+2026-06-24 note: production daily physical backups were verified; PITR is not
+currently enabled. See
+`docs/operations/evidence/recovery-drills/2026-06-24-supabase-backup-pitr-precheck.md`.
+
 ## Environment Variables
 - [ ] All env vars set in Vercel Production environment
 - [ ] `NEXT_PUBLIC_SUPABASE_URL` configured

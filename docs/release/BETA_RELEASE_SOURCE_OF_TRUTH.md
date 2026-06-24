@@ -135,8 +135,8 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Recovery tabletop and evidence | Critical before private beta | Engineering owner | Execute the `docs/RUNBOOK.md` recovery procedure against an isolated restore target and file evidence. |
-| Supabase production backups and PITR | Important before paid/public beta | Engineering owner | Verify Supabase plan, backups, PITR, and restore target from the dashboard. |
+| Recovery tabletop and evidence | Blocked pending isolated restore | Engineering owner | 2026-06-24 precheck filed daily-backup metadata, production row-count baseline, and RLS baseline; execute restore into an isolated Supabase target and file screenshots/app smoke/reviewer sign-off. |
+| Supabase production backups and PITR | Partially verified; PITR disabled | Engineering owner | Daily physical backups are present for production; PITR is disabled. Enable PITR or approve daily-backup-only RPO before public release, then run restore-to-new-project drill. |
 | Fresh staging or production-like RLS attack-test evidence | Complete for current production schema | Security owner | 2026-06-24 production probe passed 13 RLS/RPC checks and cleanup verification; re-run after any Supabase migration or tenant-isolation change. |
 
 ## 7. Stripe And Billing Checks
