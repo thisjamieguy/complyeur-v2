@@ -23,12 +23,16 @@ checks before the manual go-live pass.
 - [ ] SSL certificate valid (padlock icon in browser)
 - [ ] HTTP redirects to HTTPS
 - [ ] www subdomain redirects correctly
-- [ ] Database backups enabled (daily)
-- [ ] PITR enabled (Point-in-Time Recovery)
+- [x] Database backups enabled (daily physical backups verified)
+- [x] Backup/PITR posture approved for beta (PITR deferred; daily-backup-only RPO accepted)
 
-2026-06-24 note: production daily physical backups were verified; PITR is not
-currently enabled. A dashboard restore-to-new-project drill passed against the
-isolated restored project `complyeur-restore-drill-2026-06-24`. See
+2026-06-24 note: production daily physical backups were verified and PITR is
+not currently enabled. A dashboard restore-to-new-project drill passed against
+the isolated restored project `complyeur-restore-drill-2026-06-24`. Owner
+approved daily-backup-only RPO for beta/public readiness because the PITR add-on
+cost is not sustainable before revenue. Production compute was moved to Micro
+for cost control; PITR should be revisited after first paying customer,
+customer/security requirement, or materially higher production data value. See
 `docs/operations/evidence/recovery-drills/2026-06-24-supabase-backup-pitr-precheck.md`.
 
 ## Environment Variables

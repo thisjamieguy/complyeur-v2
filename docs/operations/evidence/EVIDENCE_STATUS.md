@@ -36,7 +36,7 @@ Before marking any beta blocker complete:
 | Production RLS/RPC Attack Probe | 🟩 Complete | Command output recorded in note | `2026-06-24-production-rls-rpc-attack-probe.md` | `docs/operations/evidence/multi-user-e2e/` |
 | CodeQL And Dependency Security | 🟨 In Progress | Pending GitHub run evidence | `.github/workflows/codeql.yml`, `.github/workflows/security.yml`, and `.github/dependabot.yml` added locally; dashboard evidence pending | `docs/operations/evidence/branch-protection/` |
 | Public/Internal Health | 🟨 In Progress | Pending current production probe | Public health is now anon `ping()` only; internal deep health is CRON-protected | `docs/operations/evidence/` |
-| Supabase Backup/PITR Restore Drill | 🟨 In Progress | Daily-backup restore drill passed against isolated restored project; PITR remains disabled | `2026-06-24-supabase-backup-pitr-precheck.md` | `docs/operations/evidence/recovery-drills/` |
+| Supabase Backup/PITR Restore Drill | 🟩 Complete | Daily-backup restore drill passed; PITR is intentionally deferred by owner-approved daily-backup-only RPO/cost decision | `2026-06-24-supabase-backup-pitr-precheck.md` | `docs/operations/evidence/recovery-drills/` |
 | GDPR/DSAR Lifecycle | 🟨 In Progress | Pending reviewer sign-off | Import raw PII retention was broadened in code; full DSAR and backup limitation evidence pending | `docs/operations/evidence/` |
 
 ## Status Legend
@@ -94,8 +94,12 @@ Before marking any beta blocker complete:
 - Backup/restore dashboard tab screenshot captured as
   `2026-06-24-supabase-backups-restore-tab.png`; restored active project
   screenshot captured as `2026-06-24-supabase-restored-project-active.png`.
-- PITR remains disabled and needs either enablement or accepted daily-backup-only
-  RPO before public release.
+- PITR remains disabled. Owner accepted daily-backup-only RPO for beta/public
+  readiness because the PITR add-on cost is not sustainable before revenue.
+- Production compute was moved to Micro for cost control; screenshot captured as
+  `2026-06-24-supabase-compute-micro-selection.png`. Micro does not satisfy the
+  PITR prerequisite, so PITR must be revisited after first paying customer,
+  customer/security requirement, or materially higher production data value.
 
 ### Non-Founder Onboarding
 
@@ -225,9 +229,12 @@ task rather than an operational evidence area.
 
 - Stripe lifecycle and failure-mode evidence
 - CodeQL And Dependency Security run evidence
-- Supabase PITR enablement or accepted daily-backup-only RPO
-- Supabase Backup/PITR Restore Drill
 - GDPR/DSAR Lifecycle
+
+Supabase Backup/PITR Restore Drill is complete for the current budget posture:
+daily-backup restore was validated and daily-backup-only RPO was explicitly
+accepted. PITR remains a deferred enhancement, not a completed technical
+control.
 
 ## Recommendations
 

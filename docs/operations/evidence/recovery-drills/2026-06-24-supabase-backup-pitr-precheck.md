@@ -7,7 +7,7 @@ Project ref: `bewydxxynjtfpytunlcq`
 Region: `eu-west-2` / West Europe (London)
 Restore target reviewed: `complyeur-restore-drill-2026-06-24`
 Restore target ref: `ubpztqbdkyesfpcqrohe`
-Result: Backup restore drill passed; PITR remains disabled
+Result: Backup restore drill passed; PITR deferred by accepted cost/RPO decision
 
 ## Summary
 
@@ -16,9 +16,13 @@ latest backup into an isolated Supabase project, and validated the restored
 target with non-PII row-count comparison, RLS checks, migration checks,
 tenant-isolation probes, auth smoke, and a local app dashboard smoke.
 
-Residual gap:
+Accepted residual risk:
 
 - PITR is currently disabled for production.
+- Owner approved daily-backup-only recovery for beta because the PITR add-on
+  cost is not sustainable before revenue.
+- Public/beta recovery posture is therefore an RPO of up to 24 hours and an RTO
+  based on the validated restore-to-new-project path.
 
 Do not restore directly over production for this release gate.
 
@@ -70,13 +74,32 @@ Additional metadata:
 | `walg_enabled` | `true` |
 | Backup region | `eu-west-2` |
 
+Post-decision live recheck on 2026-06-24 with Supabase CLI `2.75.0`:
+
+| Field | Value |
+| --- | --- |
+| `pitr_enabled` | `false` |
+| `walg_enabled` | `true` |
+| Backup region | `eu-west-2` |
+| Latest observed backup entry | `2026-06-24T21:51:19.045Z` |
+| Latest observed backup status | `PENDING` |
+
+The same recheck still showed completed daily physical backups for
+2026-06-17 through 2026-06-24.
+
 Dashboard evidence captured:
 
 - `2026-06-24-supabase-backups-restore-tab.png`
+- `2026-06-24-supabase-compute-micro-selection.png`
 
 The screenshot shows the production Supabase Database Backups page on the
 `Restore to new project` tab, completed daily backups, and the previous
 `complyeur-restore-drill-2026-06-24` restoration marked as removed.
+
+The compute screenshot records the owner-selected cost-control posture:
+production compute was moved from Nano to Micro rather than Small. Supabase's
+current backup documentation states that PITR requires at least a Small compute
+add-on, so Micro does not enable PITR.
 
 ## Isolated Branch Restore Attempt
 
@@ -314,6 +337,8 @@ Relevant operational points:
 - Pro projects receive daily backups; PITR is a separate add-on.
 - PITR provides finer-grained restore points and replaces daily backups when
   enabled.
+- PITR requires at least a Small compute add-on; Micro does not satisfy the
+  PITR prerequisite.
 - Restoring to a new project creates an independent database copy and requires
   paid-plan/physical-backup support.
 - The new project copy includes database schema/data/auth records, but not
@@ -322,20 +347,21 @@ Relevant operational points:
 - Restored copies should be reviewed for external-operation extensions such as
   `pg_net` or `pg_cron`.
 
-## Residual Gaps
+## Accepted Recovery Risk
 
-| Blocker | Why it matters | Required owner action |
+| Risk | Why it matters | Accepted decision |
 | --- | --- | --- |
-| PITR disabled | The public release gate asks for Backup/PITR evidence, but only daily physical backups are currently available. | Enable PITR add-on or explicitly approve daily-backup-only RPO for this release. |
+| PITR disabled | Without PITR, production can lose up to a day of database changes depending on the last successful daily backup. | Owner accepted daily-backup-only RPO for beta/public readiness at the current budget level. Enable PITR after first paying customer, customer/security requirement, or materially higher production data value. |
 
 ## Current Release Decision
 
-Backup existence and daily-backup restore validation are complete.
+Backup existence, daily-backup restore validation, and the PITR cost/RPO
+decision are complete for the current beta/public-readiness gate.
 
-The Backup/PITR gate remains partially open only for the PITR-specific decision:
-production PITR is not currently enabled. If daily-backup-only RPO is accepted,
-the restore-drill evidence is sufficient for the backup restore portion. If PITR
-is required before public release, enable PITR and repeat a PITR-specific
-restore validation.
+Production PITR is not enabled and should not be represented as enabled. The
+release posture is daily physical backups with accepted RPO of up to 24 hours.
+If a customer, contract, security review, or revenue milestone requires tighter
+recovery, upgrade production to at least Small compute, enable the PITR add-on,
+capture fresh evidence, and update this note.
 
 The isolated restored project was deleted after validation.
