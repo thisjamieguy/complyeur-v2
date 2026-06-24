@@ -6,6 +6,8 @@ const REQUIRED_EVENTS: Stripe.WebhookEndpointCreateParams.EnabledEvent[] = [
   'customer.subscription.updated',
   'customer.subscription.deleted',
   'invoice.payment_failed',
+  'charge.refunded',
+  'charge.dispute.created',
 ]
 
 interface CliOptions {

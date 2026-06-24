@@ -54,12 +54,12 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'hidden lg:flex flex-col h-screen bg-brand-900 transition-[width] duration-200 ease-out',
+        'hidden lg:flex flex-col h-screen border-r border-brand-800/70 bg-brand-950 transition-[width] duration-200 ease-out shadow-sm',
         isOpen ? 'w-64' : 'w-[72px]'
       )}
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-brand-800">
+      <div className="flex h-16 items-center border-b border-white/10 px-4">
         <Link
           href="/dashboard"
           className={cn(
@@ -87,11 +87,11 @@ export function Sidebar({ user }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3">
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
         {visibleSections.map((section) => (
           <div key={section.title} className="mb-6">
             {isOpen && (
-              <h3 className="px-3 mb-2 text-xs font-semibold text-brand-300 uppercase tracking-wider">
+              <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-brand-200/80">
                 {section.title}
               </h3>
             )}
@@ -107,10 +107,10 @@ export function Sidebar({ user }: SidebarProps) {
                       href={item.href}
                       data-tour-id={item.tourId}
                       className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[44px] transition-colors duration-150',
+                        'flex min-h-[44px] items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-150',
                         isActive
-                          ? 'bg-brand-600 text-white'
-                          : 'text-brand-200 hover:bg-brand-800 hover:text-white',
+                          ? 'bg-white text-brand-900 shadow-sm'
+                          : 'text-brand-100/80 hover:bg-white/10 hover:text-white',
                         !isOpen && 'justify-center px-0'
                       )}
                       title={!isOpen ? item.label : undefined}
@@ -131,13 +131,13 @@ export function Sidebar({ user }: SidebarProps) {
       </nav>
 
       {/* Feedback (Beta) */}
-      <div className="px-3 py-2 border-t border-brand-800">
+      <div className="border-t border-white/10 px-3 py-2">
         <FeedbackDialog
           trigger={
             <button
               className={cn(
-                'flex items-center gap-3 w-full rounded-lg min-h-[44px]',
-                'text-brand-200 hover:bg-brand-800 hover:text-white transition-colors duration-150',
+                'flex min-h-[44px] w-full items-center gap-3 rounded-xl',
+                'text-brand-100/80 transition-colors duration-150 hover:bg-white/10 hover:text-white',
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
                 isOpen ? 'px-3 py-2.5' : 'justify-center px-0 py-2.5'
               )}
@@ -148,7 +148,7 @@ export function Sidebar({ user }: SidebarProps) {
               {isOpen && (
                 <>
                   <span className="text-sm font-medium truncate">Feedback</span>
-                  <span className="ml-auto rounded-full border border-brand-500 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-300">
+                  <span className="ml-auto rounded-full border border-white/20 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-100/70">
                     Beta
                   </span>
                 </>
@@ -159,12 +159,12 @@ export function Sidebar({ user }: SidebarProps) {
       </div>
 
       {/* Toggle Button */}
-      <div className="px-3 py-2 border-t border-brand-800">
+      <div className="border-t border-white/10 px-3 py-2">
         <button
           onClick={toggle}
           className={cn(
-            'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg min-h-[44px]',
-            'text-brand-300 hover:bg-brand-800 hover:text-white transition-colors duration-150',
+            'flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 py-2.5',
+            'text-brand-100/70 transition-colors duration-150 hover:bg-white/10 hover:text-white',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400',
             !isOpen && 'justify-center px-0'
           )}
@@ -182,7 +182,7 @@ export function Sidebar({ user }: SidebarProps) {
       </div>
 
       {/* User Menu */}
-      <div className="px-3 py-3 border-t border-brand-800">
+      <div className="border-t border-white/10 px-3 py-3">
         <UserMenu user={user} collapsed={!isOpen} />
       </div>
     </aside>

@@ -9,10 +9,10 @@ import { UnifiedAddEmployeeDialog } from '@/components/employees/unified-add-emp
  */
 export function EmptyState() {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-      <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="p-4 bg-slate-100 rounded-full">
-          <Users className="h-12 w-12 text-slate-400" />
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-col items-center justify-center px-4 py-16">
+        <div className="rounded-xl bg-slate-100 p-4">
+          <Users className="h-12 w-12 text-slate-500" />
         </div>
         <h3 className="mt-4 text-lg font-medium text-slate-900">
           No employees yet
@@ -21,12 +21,12 @@ export function EmptyState() {
           Add your first employee to start tracking Schengen compliance. You can
           also add their upcoming trips at the same time.
         </p>
-        <div className="flex flex-col gap-3 mt-6 sm:flex-row sm:items-center">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <UnifiedAddEmployeeDialog
-            trigger={<Button size="lg">Add your first employee</Button>}
+            trigger={<Button size="lg" className="rounded-xl bg-slate-900 text-white hover:bg-slate-800">Add your first employee</Button>}
             source="empty_state"
           />
-          <Button asChild variant="ghost">
+          <Button asChild variant="outline" className="rounded-xl border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-slate-900">
             <Link href="/import">
               <Upload className="mr-2 h-4 w-4" />
               Import a spreadsheet instead

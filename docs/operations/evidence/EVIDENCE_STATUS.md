@@ -1,6 +1,6 @@
 # Beta Evidence Status Dashboard
 
-Last updated: 2026-06-15
+Last updated: 2026-06-23
 
 ## Purpose
 
@@ -31,7 +31,7 @@ Before marking any beta blocker complete:
 | Non-Founder Onboarding | ⬜ Not Started | Founder simulation screenshots captured; non-founder evidence pending | `2026-06-05-founder-simulation-onboarding.md` founder simulation only | `docs/operations/evidence/beta-onboarding/` |
 | Sentry Alert Routing | 🚫 Blocked | `2026-06-04-sentry-project-settings-blocked.png`, `2026-06-04-sentry-alert-rules-blocked.png`, `2026-06-04-sentry-notification-routing-blocked.png` | `2026-06-04-sentry-alert-routing.md` | `docs/operations/evidence/sentry-alerts/` |
 | Support Ownership | 🟩 Complete | `2026-06-04-support-mailbox.png`, `2026-06-04-support-routing.png`, `2026-06-04-support-address-configuration.png` | `2026-06-04-support-ownership.md` | `docs/operations/evidence/support-ownership/` |
-| Stripe Verification | ⬜ Not Started | Pending | Pending | `docs/operations/evidence/stripe-verification/` |
+| Stripe Verification | 🟨 In Progress | API evidence captured; dashboard screenshots still optional/pending | `2026-06-23-live-stripe-payment-evidence.md` | `docs/operations/evidence/stripe-verification/` |
 | CodeQL And Dependency Security | 🟨 In Progress | Pending GitHub run evidence | `.github/workflows/codeql.yml`, `.github/workflows/security.yml`, and `.github/dependabot.yml` added locally; dashboard evidence pending | `docs/operations/evidence/branch-protection/` |
 | Public/Internal Health | 🟨 In Progress | Pending current production probe | Public health is now anon `ping()` only; internal deep health is CRON-protected | `docs/operations/evidence/` |
 | Supabase Backup/PITR Restore Drill | ⬜ Not Started | Pending | Must include isolated restore, row counts, RLS check, auth smoke, app smoke, and reviewer sign-off | `docs/operations/evidence/recovery-drills/` |
@@ -152,6 +152,17 @@ Before marking any beta blocker complete:
 - Sentry ownership is documented in `docs/operations/SENTRY_OWNERSHIP.md`, but routing evidence is incomplete.
 - Sentry Alert Routing remains a beta blocker until live Sentry screenshots or read-capable API evidence show alerts routed to a responsible recipient.
 
+### Stripe Verification
+
+- 2026-06-23 live Stripe API evidence confirms the account has charges and payouts enabled.
+- A live `GBP 1.00` discounted subscription checkout completed successfully in live mode.
+- Production Stripe price audit passed for all six configured price IDs, including amount, currency, interval, and active-status checks against the local plan catalog.
+- The live webhook endpoint for `https://complyeur.com/api/billing/webhook` is enabled and matches the repo-required event set, including refund and dispute events.
+- Production Supabase evidence confirms the checkout webhook was processed and provisioned the expected `professional` active entitlement.
+- Production reconciliation on 2026-06-23 refreshed two active Stripe subscriptions and filled the tested checkout entitlement `current_period_end`.
+- Code changes now retrieve `current_period_end` during checkout provisioning, source renewal-email amounts from Stripe invoice previews, alert billing/support on refunds and disputes, refresh entitlements when tier capabilities change, and provide a repeatable reconciliation script.
+- Stripe Verification remains in progress until the updated handler is deployed and replay, stale/out-of-order event, failed-payment, cancellation, failed-webhook monitoring, and post-deploy lifecycle evidence are closed.
+
 ## Release Progress Summary
 
 ### Critical Evidence Areas Complete
@@ -179,7 +190,7 @@ task rather than an operational evidence area.
 
 ### Paid/Public Beta Evidence Areas Remaining
 
-- Stripe Verification
+- Stripe lifecycle and failure-mode evidence
 - CodeQL And Dependency Security run evidence
 - Supabase Backup/PITR Restore Drill
 - GDPR/DSAR Lifecycle

@@ -47,9 +47,9 @@ export function ComplianceBriefing({ briefing }: ComplianceBriefingProps) {
   // All-compliant collapsed state
   if (briefing.attention_count === 0) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 px-6 py-4 flex items-center gap-2">
+      <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-4 shadow-sm">
         <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0" />
-        <p className="text-sm text-brand-600">
+        <p className="text-sm text-slate-600">
           All {briefing.total} employees compliant. No action needed.
         </p>
       </div>
@@ -57,8 +57,8 @@ export function ComplianceBriefing({ briefing }: ComplianceBriefingProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <p className="text-sm font-medium text-brand-500 mb-3">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <p className="mb-3 text-sm font-medium text-slate-600">
         {briefing.attention_count} {briefing.attention_count === 1 ? 'employee needs' : 'employees need'} attention
       </p>
 
@@ -71,12 +71,12 @@ export function ComplianceBriefing({ briefing }: ComplianceBriefingProps) {
           >
             <Link
               href={`/employee/${emp.id}`}
-              className="text-sm font-medium text-brand-900 hover:underline transition-colors duration-150 cursor-pointer shrink-0"
+              className="shrink-0 cursor-pointer text-sm font-medium text-slate-900 transition-colors duration-150 hover:underline"
             >
               {emp.name}
             </Link>
             <StatusBadge status={emp.risk_level} className="w-fit" />
-            <p className="text-sm text-brand-500">
+            <p className="text-sm text-slate-600">
               {getActionText(emp)}
             </p>
           </div>
@@ -92,7 +92,7 @@ export function ComplianceBriefing({ briefing }: ComplianceBriefingProps) {
  */
 export function ComplianceBriefingSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 animate-pulse">
+    <div className="animate-pulse rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="h-4 w-40 bg-slate-100 rounded mb-3" />
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (

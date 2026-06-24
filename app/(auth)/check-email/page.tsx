@@ -40,7 +40,7 @@ export default async function CheckEmailPage({ searchParams }: CheckEmailPagePro
         <div className="space-y-2">
           <p className="text-sm text-slate-600">
             We&apos;ve sent a confirmation link to your email address.
-            Click the link to verify your account, then sign in.
+            Click the link to verify your account and continue.
           </p>
           <p className="text-xs text-slate-500">
             Can&apos;t find it? Check your spam or junk folder.

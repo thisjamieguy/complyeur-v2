@@ -42,6 +42,19 @@ interface RawSeatUsage {
   available?: number | null
 }
 
+function isExpiredTrial(subscriptionStatus: string, trialEndsAt: string | null | undefined): boolean {
+  if (subscriptionStatus !== 'trialing') {
+    return false
+  }
+
+  if (!trialEndsAt) {
+    return true
+  }
+
+  const trialEndsAtMs = Date.parse(trialEndsAt)
+  return Number.isNaN(trialEndsAtMs) || trialEndsAtMs <= Date.now()
+}
+
 function normalizeSeatUsage(raw: RawSeatUsage | null | undefined): BillingSeatUsage | null {
   if (!raw || typeof raw !== 'object') {
     return null
@@ -84,7 +97,7 @@ export async function enforceBillingEntitlements(
 
   const { data: entitlements, error } = await supabase
     .from('company_entitlements')
-    .select('tier_slug, subscription_status')
+    .select('tier_slug, subscription_status, trial_ends_at')
     .eq('company_id', companyId)
     .single()
 
@@ -105,6 +118,14 @@ export async function enforceBillingEntitlements(
     return denyAccess(
       request,
       `Subscription is not active (status: ${subscriptionStatus}).`,
+      options.redirectToPortal === true
+    )
+  }
+
+  if (isExpiredTrial(subscriptionStatus, entitlements.trial_ends_at)) {
+    return denyAccess(
+      request,
+      'Trial has expired. Upgrade your subscription to continue.',
       options.redirectToPortal === true
     )
   }
