@@ -10,6 +10,7 @@ import {
   createFeedbackSubmission,
   createTrip,
   updateTrip,
+  updateTripAssignment,
   deleteTrip,
   createBulkTrips,
   reassignTrip,
@@ -74,6 +75,8 @@ function runAlertDetectionBackground(employeeId: string): void {
  */
 function revalidateTripData(employeeId?: string): void {
   revalidatePath('/dashboard')
+  revalidatePath('/calendar')
+  revalidatePath('/calendar-v2')
   if (employeeId) {
     revalidatePath(`/employee/${employeeId}`)
   }
@@ -375,6 +378,36 @@ export async function reassignTripAction(
 
   revalidateTripData(currentEmployeeId)
   revalidatePath(`/employee/${newEmployeeId}`)
+}
+
+export async function updateTripAssignmentAction(
+  tripId: string,
+  currentEmployeeId: string,
+  newEmployeeId: string,
+  formData: {
+    entry_date: string
+    exit_date: string
+  }
+) {
+  await enforceMutationAccess(PERMISSIONS.TRIPS_UPDATE, 'updateTripAssignmentAction')
+  const validated = tripUpdateSchema.parse(formData)
+
+  if (!validated.entry_date || !validated.exit_date) {
+    throw new Error('Entry and exit dates are required')
+  }
+
+  const trip = await updateTripAssignment(tripId, newEmployeeId, {
+    entry_date: validated.entry_date,
+    exit_date: validated.exit_date,
+  })
+
+  runAlertDetectionBackground(currentEmployeeId)
+  runAlertDetectionBackground(newEmployeeId)
+
+  revalidateTripData(currentEmployeeId)
+  revalidatePath(`/employee/${newEmployeeId}`)
+
+  return trip
 }
 
 // ============================================================================

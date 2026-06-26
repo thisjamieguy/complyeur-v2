@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
@@ -13,22 +13,20 @@ import {
   CALENDAR_HIDE_NO_SCHENGEN_COOKIE,
   parseHideNoSchengenCookie,
 } from '@/lib/calendar/filter-preferences'
+import { isInteractiveCalendarEnabled } from '@/lib/features'
 import type { CalendarLoadMode } from '@/lib/types/settings'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Calendar',
-  description: 'Visual timeline of employee Schengen travel',
+  title: 'Interactive Calendar',
+  description: 'Interactive timeline for creating and managing employee travel',
 }
 
 const DAYS_BACK = 200
 const MAX_WEEKS_FORWARD = 12
 const COMPLIANCE_LOOKBACK_DAYS = 180
 
-/**
- * Employee with trips for calendar view
- */
 interface EmployeeWithTrips {
   id: string
   name: string
@@ -92,10 +90,6 @@ function mapEmployeesWithTrips(
   }))
 }
 
-/**
- * Fetch all employees with their trips for the calendar view.
- * Uses request-scoped cache and limits trip payload to the calendar horizon.
- */
 const getEmployeesWithTrips = cache(async (
   calendarLoadMode: CalendarLoadMode,
   hideEmployeesWithoutSchengenTrips: boolean
@@ -121,7 +115,7 @@ const getEmployeesWithTrips = cache(async (
       .order('name')
 
     if (employeesError) {
-      console.error('Error fetching employees for calendar:', employeesError)
+      console.error('[CalendarV2] Error fetching employees:', employeesError)
       throw new Error('Failed to fetch employees')
     }
 
@@ -153,7 +147,7 @@ const getEmployeesWithTrips = cache(async (
       .order('entry_date', { ascending: true })
 
     if (tripsError) {
-      console.error('[Calendar] Error fetching trips:', tripsError)
+      console.error('[CalendarV2] Error fetching trips:', tripsError)
       throw new Error('Failed to fetch trips')
     }
 
@@ -170,7 +164,7 @@ const getEmployeesWithTrips = cache(async (
       .gte('exit_date', windowStartKey)
 
     if (schengenTripsError) {
-      console.error('[Calendar] Error fetching Schengen trip employees:', schengenTripsError)
+      console.error('[CalendarV2] Error fetching Schengen trip employees:', schengenTripsError)
       throw new Error('Failed to fetch trips')
     }
 
@@ -199,7 +193,7 @@ const getEmployeesWithTrips = cache(async (
       .gte('exit_date', windowStartKey)
 
     if (tripsError) {
-      console.error('[Calendar] Error fetching trips (employees_with_trips):', tripsError)
+      console.error('[CalendarV2] Error fetching trips:', tripsError)
       throw new Error('Failed to fetch trips')
     }
 
@@ -226,7 +220,7 @@ const getEmployeesWithTrips = cache(async (
     .order('name')
 
   if (employeesError) {
-    console.error('Error fetching employees for calendar:', employeesError)
+    console.error('[CalendarV2] Error fetching employees:', employeesError)
     throw new Error('Failed to fetch employees')
   }
 
@@ -240,9 +234,6 @@ const getEmployeesWithTrips = cache(async (
   return mapEmployeesWithTrips((employees ?? []) as EmployeeRow[], tripRows)
 })
 
-/**
- * Server component that fetches employee data for calendar
- */
 async function CalendarData({
   calendarLoadMode,
   hideEmployeesWithoutSchengenTrips,
@@ -259,14 +250,16 @@ async function CalendarData({
     <CalendarView
       employees={employees}
       initialHideEmployeesWithoutSchengenTrips={hideEmployeesWithoutSchengenTrips}
+      interactive
     />
   )
 }
 
-/**
- * Calendar page - horizontal Gantt-style timeline showing all employees and trips
- */
-export default async function CalendarPage() {
+export default async function InteractiveCalendarPage() {
+  if (!isInteractiveCalendarEnabled()) {
+    notFound()
+  }
+
   const supabase = await createClient()
   const {
     data: { user },
@@ -290,17 +283,15 @@ export default async function CalendarPage() {
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">
-          Travel Calendar
+          Interactive Travel Calendar
         </h1>
-        <p className="text-slate-600 mt-1">
-          Visual timeline of employee Schengen travel
+        <p className="mt-1 text-slate-600">
+          Create and manage employee travel directly from the timeline.
         </p>
       </div>
 
-      {/* Calendar with suspense for streaming */}
       <Suspense fallback={<CalendarSkeleton />}>
         <CalendarData
           calendarLoadMode={calendarLoadMode}

@@ -4,7 +4,14 @@ import { memo, useMemo } from 'react'
 import { toUTCMidnight } from '@/lib/compliance/date-utils'
 import { buildDayMap } from './calendar-view.utils'
 import { DayCell, GRID_ROW_HEIGHT } from './day-cell'
-import type { ProcessedEmployee } from './types'
+import type {
+  ProcessedEmployee,
+  TripDateShiftRequest,
+  TripDeleteRequest,
+  TripEditRequest,
+  TripMoveRequest,
+  TripResizeRequest,
+} from './types'
 import type { DateMeta } from './gantt-chart'
 
 interface EmployeeRowProps {
@@ -12,6 +19,19 @@ interface EmployeeRowProps {
   dateMeta: DateMeta[]
   dayWidth: number
   isHovered: boolean
+  isDropTarget?: boolean
+  interactive?: boolean
+  onCreateTrip?: (params: {
+    employeeId: string
+    employeeName: string
+    dateKey: string
+  }) => void
+  onEditTrip?: (params: TripEditRequest) => void
+  onDeleteTrip?: (params: TripDeleteRequest) => void
+  onResizeTrip?: (params: TripResizeRequest) => void
+  onShiftTripDates?: (params: TripDateShiftRequest) => void
+  onMoveTrip?: (params: TripMoveRequest) => void
+  onMoveTripTargetChange?: (employeeId: string | null) => void
 }
 
 /**
@@ -24,6 +44,15 @@ export const EmployeeRow = memo(function EmployeeRow({
   dateMeta,
   dayWidth,
   isHovered,
+  isDropTarget = false,
+  interactive = false,
+  onCreateTrip,
+  onEditTrip,
+  onDeleteTrip,
+  onResizeTrip,
+  onShiftTripDates,
+  onMoveTrip,
+  onMoveTripTargetChange,
 }: EmployeeRowProps) {
   const tripDayByDate = useMemo(() => {
     if (dateMeta.length === 0) {
@@ -63,6 +92,7 @@ export const EmployeeRow = memo(function EmployeeRow({
             key={dm.key}
             tripDay={tripDay}
             date={dm.date}
+            dateKey={dm.key}
             dayWidth={dayWidth}
             isRowHovered={isHovered}
             isWeekend={dm.isWeekend}
@@ -73,6 +103,67 @@ export const EmployeeRow = memo(function EmployeeRow({
             isRollingWindowEnd={dm.isRollingWindowEnd}
             isTripStart={isTripStart}
             isTripEnd={isTripEnd}
+            isDropTarget={isDropTarget}
+            interactive={interactive}
+            onCreateTrip={
+              onCreateTrip
+                ? (dateKey) =>
+                    onCreateTrip({
+                      employeeId: employee.id,
+                      employeeName: employee.name,
+                      dateKey,
+                    })
+                : undefined
+            }
+            onEditTrip={
+              onEditTrip
+                ? (trip) =>
+                    onEditTrip({
+                      employeeId: employee.id,
+                      employeeName: employee.name,
+                      trip,
+                    })
+                : undefined
+            }
+            onDeleteTrip={
+              onDeleteTrip
+                ? (trip) =>
+                    onDeleteTrip({
+                      employeeId: employee.id,
+                      employeeName: employee.name,
+                      trip,
+                    })
+                : undefined
+            }
+            onResizeTrip={
+              onResizeTrip
+                ? (params) =>
+                    onResizeTrip({
+                      ...params,
+                      employeeId: employee.id,
+                    })
+                : undefined
+            }
+            onShiftTripDates={
+              onShiftTripDates
+                ? (params) =>
+                    onShiftTripDates({
+                      ...params,
+                      employeeId: employee.id,
+                    })
+                : undefined
+            }
+            onMoveTrip={
+              onMoveTrip
+                ? (params) =>
+                    onMoveTrip({
+                      ...params,
+                      sourceEmployeeId: employee.id,
+                      sourceEmployeeName: employee.name,
+                    })
+                : undefined
+            }
+            onMoveTripTargetChange={onMoveTripTargetChange}
           />
         )
       })}

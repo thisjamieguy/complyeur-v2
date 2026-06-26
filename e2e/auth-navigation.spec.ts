@@ -38,6 +38,10 @@ test.describe('Authenticated navigation coverage', () => {
 
     await page.goto('/calendar', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText(/calendar filters/i).first()).toBeVisible();
+
+    await page.goto('/calendar-v2', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText(/calendar filters/i).first()).toBeVisible();
+    await expect(page.getByRole('group', { name: /calendar zoom/i })).toBeVisible();
   });
 
   test('sidebar links navigate between primary product areas', async ({ page }) => {

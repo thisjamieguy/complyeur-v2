@@ -1,15 +1,19 @@
 import type { DailyCompliance, RiskLevel } from '@/lib/compliance'
 
 export type TripDayDisplayMode = 'historical' | 'planning'
+export type TripResizeEdge = 'start' | 'end'
 
 export interface ProcessedTrip {
   id: string
   country: string
+  rawCountry: string
   entryDate: Date
   exitDate: Date
   duration: number
   purpose: string | null
+  jobRef: string | null
   isPrivate: boolean
+  ghosted: boolean
   isSchengen: boolean
 }
 
@@ -31,4 +35,47 @@ export interface ProcessedEmployee {
   currentDaysRemaining: number
   currentRiskLevel: RiskLevel
   tripsInRange: number
+}
+
+export interface TripResizeRequest {
+  tripId: string
+  employeeId: string
+  edge: TripResizeEdge
+  dateKey: string
+  originalEntryDateKey: string
+  originalExitDateKey: string
+}
+
+export interface TripDateShiftRequest {
+  tripId: string
+  employeeId: string
+  entryDateKey: string
+  exitDateKey: string
+  originalEntryDateKey: string
+  originalExitDateKey: string
+}
+
+export interface TripMoveRequest {
+  tripId: string
+  sourceEmployeeId: string
+  sourceEmployeeName: string
+  targetEmployeeId: string
+  targetEmployeeName: string
+  country: string
+  entryDateKey: string
+  exitDateKey: string
+  originalEntryDateKey: string
+  originalExitDateKey: string
+}
+
+export interface TripEditRequest {
+  employeeId: string
+  employeeName: string
+  trip: ProcessedTrip
+}
+
+export interface TripDeleteRequest {
+  employeeId: string
+  employeeName: string
+  trip: ProcessedTrip
 }

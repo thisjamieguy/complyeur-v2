@@ -3,10 +3,34 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
+import {
+  deleteTripAction,
+  reassignTripAction,
+  updateTripAssignmentAction,
+  updateTripAction,
+} from '@/app/(dashboard)/actions'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { showError, showSuccess } from '@/lib/toast'
 import {
   calculateCompliance,
   computeComplianceVectorOptimized,
@@ -19,6 +43,12 @@ import {
   differenceInUtcDays,
   toUTCMidnight,
 } from '@/lib/compliance/date-utils'
+import {
+  checkTripOverlap,
+  type TripOverlapResult,
+} from '@/lib/validations/trip-overlap'
+import { formatDateForDisplay } from '@/lib/validations/dates'
+import { getCountryName } from '@/lib/constants/schengen-countries'
 import { RangeSelector } from './range-selector'
 import {
   buildDateRange,
@@ -27,7 +57,24 @@ import {
 } from './calendar-view.utils'
 import { CalendarEmptyState } from './calendar-empty-state'
 import { serializeHideNoSchengenCookie } from '@/lib/calendar/filter-preferences'
-import type { ProcessedTrip, ProcessedEmployee } from './types'
+import {
+  CALENDAR_ZOOM_WIDTHS,
+  ZoomControls,
+  type CalendarZoomLevel,
+} from './zoom-controls'
+import {
+  InteractiveTripEditor,
+  type TripEditorDraft,
+} from './interactive-trip-editor'
+import type {
+  ProcessedTrip,
+  ProcessedEmployee,
+  TripDateShiftRequest,
+  TripDeleteRequest,
+  TripEditRequest,
+  TripMoveRequest,
+  TripResizeRequest,
+} from './types'
 
 const GanttChart = dynamic(
   () => import('./gantt-chart').then(m => m.GanttChart),
@@ -51,6 +98,7 @@ interface DbTrip {
   entry_date: string
   exit_date: string
   purpose: string | null
+  job_ref?: string | null
   is_private: boolean
   ghosted: boolean
 }
@@ -64,6 +112,7 @@ interface EmployeeWithTrips {
 interface CalendarViewProps {
   employees: EmployeeWithTrips[]
   initialHideEmployeesWithoutSchengenTrips?: boolean
+  interactive?: boolean
 }
 
 interface ParsedTrip extends DbTrip {
@@ -84,16 +133,41 @@ function toComplianceTrip(trip: ParsedTrip): ComplianceTrip {
   }
 }
 
+function getOverlapMessage(
+  overlapResult: TripOverlapResult,
+  employeeName?: string
+): string {
+  if (overlapResult.conflictingTrip) {
+    const { country, entry_date, exit_date } = overlapResult.conflictingTrip
+    const owner = employeeName ? `${employeeName}'s ` : ''
+
+    return `This overlaps ${owner}${country} trip (${formatDateForDisplay(entry_date)} - ${formatDateForDisplay(exit_date)}). Please adjust the dates.`
+  }
+
+  return overlapResult.message ?? 'This trip overlaps with an existing trip. Please adjust the dates.'
+}
+
 /**
  * Main calendar view component - orchestrates Gantt chart and mobile view
  */
 export function CalendarView({
   employees,
   initialHideEmployeesWithoutSchengenTrips = false,
+  interactive = false,
 }: CalendarViewProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [weeksForward, setWeeksForward] = useState(DEFAULT_WEEKS_FORWARD)
+  const [zoomLevel, setZoomLevel] = useState<CalendarZoomLevel>('month')
+  const [tripEditorDraft, setTripEditorDraft] = useState<TripEditorDraft | null>(null)
+  const [tripDeleteDraft, setTripDeleteDraft] = useState<TripDeleteRequest | null>(null)
+  const [isDeletingTrip, setIsDeletingTrip] = useState(false)
+  const [tripMoveDraft, setTripMoveDraft] = useState<TripMoveRequest | null>(null)
+  const [tripMoveError, setTripMoveError] = useState<string | null>(null)
+  const [isMovingTrip, setIsMovingTrip] = useState(false)
+  const [tripDateOverrides, setTripDateOverrides] = useState(
+    () => new Map<string, { entry_date: string; exit_date: string }>()
+  )
   const [hideEmployeesWithoutSchengenTrips, setHideEmployeesWithoutSchengenTrips] =
     useState(initialHideEmployeesWithoutSchengenTrips)
 
@@ -111,6 +185,278 @@ export function CalendarView({
     startTransition(() => {
       router.refresh()
     })
+  }
+
+  const openCreateTrip = ({
+    employeeId,
+    employeeName,
+    dateKey,
+  }: {
+    employeeId: string
+    employeeName: string
+    dateKey: string
+  }) => {
+    setTripEditorDraft({
+      mode: 'create',
+      employeeId,
+      employeeName,
+      entryDate: dateKey,
+      exitDate: dateKey,
+    })
+  }
+
+  const openEditTrip = ({ employeeId, employeeName, trip }: TripEditRequest) => {
+    setTripEditorDraft({
+      mode: 'edit',
+      employeeId,
+      employeeName,
+      tripId: trip.id,
+      country: trip.rawCountry,
+      entryDate: toDateKey(trip.entryDate),
+      exitDate: toDateKey(trip.exitDate),
+      purpose: trip.purpose,
+      jobRef: trip.jobRef,
+      isPrivate: trip.isPrivate,
+      ghosted: trip.ghosted,
+    })
+  }
+
+  const requestDeleteTrip = (request: TripDeleteRequest) => {
+    setTripDeleteDraft(request)
+  }
+
+  const confirmDeleteTrip = async () => {
+    if (!tripDeleteDraft) return
+
+    setIsDeletingTrip(true)
+
+    try {
+      await deleteTripAction(tripDeleteDraft.trip.id, tripDeleteDraft.employeeId)
+      setTripDateOverrides((current) => {
+        if (!current.has(tripDeleteDraft.trip.id)) {
+          return current
+        }
+
+        const next = new Map(current)
+        next.delete(tripDeleteDraft.trip.id)
+        return next
+      })
+      showSuccess('Trip deleted successfully')
+      setTripDeleteDraft(null)
+      router.refresh()
+    } catch (error) {
+      showError(
+        'Failed to delete trip',
+        error instanceof Error ? error.message : 'Please try again.'
+      )
+    } finally {
+      setIsDeletingTrip(false)
+    }
+  }
+
+  const resizeTrip = async ({
+    tripId,
+    employeeId,
+    edge,
+    dateKey,
+    originalEntryDateKey,
+    originalExitDateKey,
+  }: TripResizeRequest) => {
+    const nextEntryDate = edge === 'start' ? dateKey : originalEntryDateKey
+    const nextExitDate = edge === 'end' ? dateKey : originalExitDateKey
+
+    if (nextEntryDate > nextExitDate) {
+      showError('Invalid date range', 'Entry date must be on or before exit date.')
+      return
+    }
+
+    const overlapResult = await checkTripOverlap(
+      employeeId,
+      nextEntryDate,
+      nextExitDate,
+      tripId
+    )
+
+    if (overlapResult.hasOverlap) {
+      showError('Trip overlap detected', `Cannot resize trip. ${getOverlapMessage(overlapResult)}`)
+      return
+    }
+
+    setTripDateOverrides((current) => {
+      const next = new Map(current)
+      next.set(tripId, {
+        entry_date: nextEntryDate,
+        exit_date: nextExitDate,
+      })
+      return next
+    })
+
+    try {
+      await updateTripAction(tripId, employeeId, {
+        entry_date: edge === 'start' ? dateKey : undefined,
+        exit_date: edge === 'end' ? dateKey : undefined,
+      })
+      showSuccess('Trip dates updated')
+      router.refresh()
+    } catch (error) {
+      setTripDateOverrides((current) => {
+        const next = new Map(current)
+        next.set(tripId, {
+          entry_date: originalEntryDateKey,
+          exit_date: originalExitDateKey,
+        })
+        return next
+      })
+      showError(
+        'Failed to update trip',
+        error instanceof Error ? error.message : 'Please try again.'
+      )
+    }
+  }
+
+  const shiftTripDates = async ({
+    tripId,
+    employeeId,
+    entryDateKey,
+    exitDateKey,
+    originalEntryDateKey,
+    originalExitDateKey,
+  }: TripDateShiftRequest) => {
+    if (
+      entryDateKey === originalEntryDateKey &&
+      exitDateKey === originalExitDateKey
+    ) {
+      return
+    }
+
+    if (entryDateKey > exitDateKey) {
+      showError('Invalid date range', 'Entry date must be on or before exit date.')
+      return
+    }
+
+    const overlapResult = await checkTripOverlap(
+      employeeId,
+      entryDateKey,
+      exitDateKey,
+      tripId
+    )
+
+    if (overlapResult.hasOverlap) {
+      showError('Trip overlap detected', `Cannot shift trip. ${getOverlapMessage(overlapResult)}`)
+      return
+    }
+
+    setTripDateOverrides((current) => {
+      const next = new Map(current)
+      next.set(tripId, {
+        entry_date: entryDateKey,
+        exit_date: exitDateKey,
+      })
+      return next
+    })
+
+    try {
+      await updateTripAction(tripId, employeeId, {
+        entry_date: entryDateKey,
+        exit_date: exitDateKey,
+      })
+      showSuccess('Trip dates updated')
+      router.refresh()
+    } catch (error) {
+      setTripDateOverrides((current) => {
+        const next = new Map(current)
+        next.set(tripId, {
+          entry_date: originalEntryDateKey,
+          exit_date: originalExitDateKey,
+        })
+        return next
+      })
+      showError(
+        'Failed to update trip',
+        error instanceof Error ? error.message : 'Please try again.'
+      )
+    }
+  }
+
+  const requestMoveTrip = (request: TripMoveRequest) => {
+    if (request.sourceEmployeeId === request.targetEmployeeId) {
+      if (
+        request.entryDateKey !== request.originalEntryDateKey ||
+        request.exitDateKey !== request.originalExitDateKey
+      ) {
+        void shiftTripDates({
+          tripId: request.tripId,
+          employeeId: request.sourceEmployeeId,
+          entryDateKey: request.entryDateKey,
+          exitDateKey: request.exitDateKey,
+          originalEntryDateKey: request.originalEntryDateKey,
+          originalExitDateKey: request.originalExitDateKey,
+        })
+      }
+
+      return
+    }
+
+    setTripMoveError(null)
+    setTripMoveDraft(request)
+  }
+
+  const confirmMoveTrip = async () => {
+    if (!tripMoveDraft) return
+
+    setIsMovingTrip(true)
+    setTripMoveError(null)
+    try {
+      const overlapResult = await checkTripOverlap(
+        tripMoveDraft.targetEmployeeId,
+        tripMoveDraft.entryDateKey,
+        tripMoveDraft.exitDateKey,
+        tripMoveDraft.tripId
+      )
+
+      if (overlapResult.hasOverlap) {
+        const message = `Cannot move trip. ${getOverlapMessage(
+          overlapResult,
+          tripMoveDraft.targetEmployeeName
+        )}`
+        setTripMoveError(message)
+        showError('Trip overlap detected', message)
+        return
+      }
+
+      const datesChanged =
+        tripMoveDraft.entryDateKey !== tripMoveDraft.originalEntryDateKey ||
+        tripMoveDraft.exitDateKey !== tripMoveDraft.originalExitDateKey
+
+      if (datesChanged) {
+        await updateTripAssignmentAction(
+          tripMoveDraft.tripId,
+          tripMoveDraft.sourceEmployeeId,
+          tripMoveDraft.targetEmployeeId,
+          {
+            entry_date: tripMoveDraft.entryDateKey,
+            exit_date: tripMoveDraft.exitDateKey,
+          }
+        )
+      } else {
+        await reassignTripAction(
+          tripMoveDraft.tripId,
+          tripMoveDraft.sourceEmployeeId,
+          tripMoveDraft.targetEmployeeId
+        )
+      }
+
+      showSuccess(datesChanged ? 'Trip moved and dates updated' : 'Trip moved successfully')
+      setTripMoveDraft(null)
+      router.refresh()
+    } catch (error) {
+      showError(
+        'Failed to move trip',
+        error instanceof Error ? error.message : 'Please try again.'
+      )
+    } finally {
+      setIsMovingTrip(false)
+    }
   }
 
   // Calculate date range
@@ -156,10 +502,15 @@ export function CalendarView({
       const parsedTrips: ParsedTrip[] = employee.trips
         .filter((trip) => !trip.ghosted)
         .map((trip) => {
-          const entryDate = parseDateOnlyAsUTC(trip.entry_date)
-          const exitDate = parseDateOnlyAsUTC(trip.exit_date)
+          const override = tripDateOverrides.get(trip.id)
+          const entryDateKey = override?.entry_date ?? trip.entry_date
+          const exitDateKey = override?.exit_date ?? trip.exit_date
+          const entryDate = parseDateOnlyAsUTC(entryDateKey)
+          const exitDate = parseDateOnlyAsUTC(exitDateKey)
           return {
             ...trip,
+            entry_date: entryDateKey,
+            exit_date: exitDateKey,
             entryDate,
             exitDate,
             isSchengen: isSchengenCountry(trip.country),
@@ -196,11 +547,14 @@ export function CalendarView({
           return {
             id: trip.id,
             country: trip.is_private ? 'XX' : trip.country,
+            rawCountry: trip.country,
             entryDate: trip.entryDate,
             exitDate: trip.exitDate,
             duration,
             purpose: trip.purpose,
+            jobRef: trip.job_ref ?? null,
             isPrivate: trip.is_private,
+            ghosted: trip.ghosted,
             isSchengen: trip.isSchengen,
           }
         })
@@ -215,7 +569,7 @@ export function CalendarView({
         tripsInRange: processedTrips.length,
       }
     })
-  }, [filteredEmployees, startDate, endDate])
+  }, [filteredEmployees, startDate, endDate, tripDateOverrides])
 
   if (processedEmployees.length === 0) {
     if (!shouldApplySchengenFilter) {
@@ -277,6 +631,95 @@ export function CalendarView({
 
   return (
     <div className="space-y-4">
+      {interactive && (
+        <>
+          <InteractiveTripEditor
+            draft={tripEditorDraft}
+            onOpenChange={(open) => {
+              if (!open) {
+                setTripEditorDraft(null)
+              }
+            }}
+          />
+
+          <Dialog
+            open={tripMoveDraft !== null}
+            onOpenChange={(open) => {
+              if (!open && !isMovingTrip) {
+                setTripMoveError(null)
+                setTripMoveDraft(null)
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Move trip?</DialogTitle>
+                <DialogDescription>
+                  {tripMoveDraft
+                    ? `Move ${tripMoveDraft.country} trip (${tripMoveDraft.entryDateKey} to ${tripMoveDraft.exitDateKey}) from ${tripMoveDraft.sourceEmployeeName} to ${tripMoveDraft.targetEmployeeName}?`
+                    : 'Move this trip to another employee?'}
+                </DialogDescription>
+                {tripMoveError && (
+                  <p className="text-sm font-medium text-red-600">
+                    {tripMoveError}
+                  </p>
+                )}
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTripMoveDraft(null)}
+                  disabled={isMovingTrip}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={confirmMoveTrip}
+                  disabled={isMovingTrip}
+                >
+                  {isMovingTrip ? 'Moving...' : 'Move Trip'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <AlertDialog
+            open={tripDeleteDraft !== null}
+            onOpenChange={(open) => {
+              if (!open && !isDeletingTrip) {
+                setTripDeleteDraft(null)
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete trip?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {tripDeleteDraft
+                    ? `Delete ${getCountryName(tripDeleteDraft.trip.rawCountry)} trip (${formatDateForDisplay(toDateKey(tripDeleteDraft.trip.entryDate))} - ${formatDateForDisplay(toDateKey(tripDeleteDraft.trip.exitDate))}) for ${tripDeleteDraft.employeeName}? This cannot be undone.`
+                    : 'Delete this trip?'}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeletingTrip}>
+                  Cancel
+                </AlertDialogCancel>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={confirmDeleteTrip}
+                  disabled={isDeletingTrip}
+                >
+                  {isDeletingTrip ? 'Deleting...' : 'Delete Trip'}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
+
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
@@ -332,11 +775,22 @@ export function CalendarView({
               </div>
             </div>
             <RangeSelector value={weeksForward} onChange={setWeeksForward} />
+            {interactive && (
+              <ZoomControls value={zoomLevel} onChange={setZoomLevel} />
+            )}
           </CardHeader>
           <CardContent className="p-0">
             <GanttChart
               employees={processedEmployees}
               dates={dates}
+              dayWidth={CALENDAR_ZOOM_WIDTHS[zoomLevel]}
+              interactive={interactive}
+              onCreateTrip={interactive ? openCreateTrip : undefined}
+              onEditTrip={interactive ? openEditTrip : undefined}
+              onDeleteTrip={interactive ? requestDeleteTrip : undefined}
+              onResizeTrip={interactive ? resizeTrip : undefined}
+              onShiftTripDates={interactive ? shiftTripDates : undefined}
+              onMoveTrip={interactive ? requestMoveTrip : undefined}
             />
           </CardContent>
         </Card>

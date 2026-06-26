@@ -11,7 +11,14 @@ import { EmployeeRow } from './employee-row'
 import { GRID_ROW_HEIGHT } from './day-cell'
 import { syncVerticalScroll } from './scroll-sync'
 import { emitCalendarMetric } from './calendar-metrics'
-import type { ProcessedEmployee } from './types'
+import type {
+  ProcessedEmployee,
+  TripDateShiftRequest,
+  TripDeleteRequest,
+  TripEditRequest,
+  TripMoveRequest,
+  TripResizeRequest,
+} from './types'
 
 /** Pre-computed metadata for each date column — avoids O(employees x dates) calls */
 export interface DateMeta {
@@ -27,9 +34,6 @@ export interface DateMeta {
   dayOfWeek: string  // single letter (M, T, W, ...)
   dayOfMonth: string // 1-31
 }
-
-/** Width of each day column in pixels */
-const DAY_WIDTH = 32
 
 /** Width of employee name column */
 const NAME_COLUMN_WIDTH = 160
@@ -59,6 +63,18 @@ const SCROLL_METRIC_BATCH_SIZE = 10
 interface GanttChartProps {
   employees: ProcessedEmployee[]
   dates: Date[]
+  dayWidth: number
+  interactive?: boolean
+  onCreateTrip?: (params: {
+    employeeId: string
+    employeeName: string
+    dateKey: string
+  }) => void
+  onEditTrip?: (params: TripEditRequest) => void
+  onDeleteTrip?: (params: TripDeleteRequest) => void
+  onResizeTrip?: (params: TripResizeRequest) => void
+  onShiftTripDates?: (params: TripDateShiftRequest) => void
+  onMoveTrip?: (params: TripMoveRequest) => void
 }
 
 /**
@@ -69,9 +85,18 @@ interface GanttChartProps {
 export const GanttChart = memo(function GanttChart({
   employees,
   dates,
+  dayWidth,
+  interactive = false,
+  onCreateTrip,
+  onEditTrip,
+  onDeleteTrip,
+  onResizeTrip,
+  onShiftTripDates,
+  onMoveTrip,
 }: GanttChartProps) {
   const [overscan, setOverscan] = useState(BASE_OVERSCAN)
   const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(null)
+  const [dropTargetEmployeeId, setDropTargetEmployeeId] = useState<string | null>(null)
   const mountStartedAtRef = useRef<number>(
     typeof performance !== 'undefined' ? performance.now() : 0
   )
@@ -226,14 +251,14 @@ export const GanttChart = memo(function GanttChart({
           '[data-radix-scroll-area-viewport]'
         )
         if (scrollContainer) {
-          const todayOffset = todayIndex * DAY_WIDTH
+          const todayOffset = todayIndex * dayWidth
           const containerWidth = scrollContainer.clientWidth
           const scrollTo = Math.max(0, todayOffset - containerWidth / 2)
           scrollContainer.scrollLeft = scrollTo
         }
       }
     }
-  }, [dates])
+  }, [dates, dayWidth])
 
   // Pre-compute per-date flags once — O(dates) instead of O(employees x dates)
   const dateMeta: DateMeta[] = useMemo(
@@ -263,7 +288,7 @@ export const GanttChart = memo(function GanttChart({
     [dates]
   )
 
-  const totalWidth = dates.length * DAY_WIDTH
+  const totalWidth = dates.length * dayWidth
   const totalHeight = virtualizer.getTotalSize()
   const virtualRows = virtualizer.getVirtualItems()
   const visibleRows = virtualRows.length
@@ -326,9 +351,11 @@ export const GanttChart = memo(function GanttChart({
                   key={employee.id}
                   className={cn(
                     'absolute left-0 w-full px-3 border-b border-slate-100 flex items-center transition-colors',
-                    hoveredEmployeeId === employee.id
-                      ? 'bg-sky-50/60'
-                      : 'bg-slate-50/60 hover:bg-sky-50/60'
+                    dropTargetEmployeeId === employee.id
+                      ? 'bg-sky-100/70'
+                      : hoveredEmployeeId === employee.id
+                        ? 'bg-sky-50/60'
+                        : 'bg-slate-50/60 hover:bg-sky-50/60'
                   )}
                   onMouseEnter={() => setHoveredEmployeeId(employee.id)}
                   onMouseLeave={() => {
@@ -341,6 +368,9 @@ export const GanttChart = memo(function GanttChart({
                     transform: `translate3d(0, ${virtualRow.start}px, 0)`,
                     willChange: 'transform',
                   }}
+                  data-calendar-employee-row
+                  data-employee-id={employee.id}
+                  data-employee-name={employee.name}
                 >
                   <span className="text-sm font-medium text-slate-700 truncate">
                     {employee.name}
@@ -359,7 +389,7 @@ export const GanttChart = memo(function GanttChart({
             {/* 4-row date header */}
             <DateHeader
               dateMeta={dateMeta}
-              dayWidth={DAY_WIDTH}
+              dayWidth={dayWidth}
             />
 
             {/* Virtualized grid rows */}
@@ -375,7 +405,13 @@ export const GanttChart = memo(function GanttChart({
                   return (
                     <div
                       key={employee.id}
-                      className="absolute left-0 w-full border-b border-slate-100"
+                      className={cn(
+                        'absolute left-0 w-full border-b border-slate-100',
+                        dropTargetEmployeeId === employee.id && 'bg-sky-50/40'
+                      )}
+                      data-calendar-employee-row
+                      data-employee-id={employee.id}
+                      data-employee-name={employee.name}
                       onMouseEnter={() => setHoveredEmployeeId(employee.id)}
                       onMouseLeave={() => {
                         setHoveredEmployeeId((current) =>
@@ -391,8 +427,17 @@ export const GanttChart = memo(function GanttChart({
                       <EmployeeRow
                         employee={employee}
                         dateMeta={dateMeta}
-                        dayWidth={DAY_WIDTH}
+                        dayWidth={dayWidth}
                         isHovered={hoveredEmployeeId === employee.id}
+                        isDropTarget={dropTargetEmployeeId === employee.id}
+                        interactive={interactive}
+                        onCreateTrip={onCreateTrip}
+                        onEditTrip={onEditTrip}
+                        onDeleteTrip={onDeleteTrip}
+                        onResizeTrip={onResizeTrip}
+                        onShiftTripDates={onShiftTripDates}
+                        onMoveTrip={onMoveTrip}
+                        onMoveTripTargetChange={setDropTargetEmployeeId}
                       />
                     </div>
                   )

@@ -221,3 +221,16 @@ Use the smallest verification that proves the change:
 - Avoid generated/cache directories.
 - Stop and reassess if a small fix starts causing unrelated failures.
 - Commit only when explicitly asked.
+
+## Big Build Reporting
+
+For multi-part builds, finish each completed part with:
+
+- What changed
+- What passed or was verified
+- Current status
+- Recommended next step
+- Brief outline of what will be done next
+
+Keep the recommendation concrete, tied to the current build, and short enough
+that the user can decide whether to continue, pause, or redirect.

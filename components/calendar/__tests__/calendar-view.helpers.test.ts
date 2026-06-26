@@ -12,11 +12,14 @@ function makeTrip(overrides: Partial<ProcessedTrip> = {}): ProcessedTrip {
   return {
     id: 'trip-1',
     country: 'FR',
+    rawCountry: 'FR',
     entryDate: new Date('2026-02-01T00:00:00.000Z'),
     exitDate: new Date('2026-02-03T00:00:00.000Z'),
     duration: 3,
     purpose: null,
+    jobRef: null,
     isPrivate: false,
+    ghosted: false,
     isSchengen: true,
     ...overrides,
   }
