@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import {
@@ -121,6 +121,13 @@ interface ParsedTrip extends DbTrip {
   isSchengen: boolean
 }
 
+type TripDateOverride = { entry_date: string; exit_date: string }
+
+interface ProcessedEmployeeCacheEntry {
+  cacheKey: string
+  employee: ProcessedEmployee
+}
+
 /**
  * Convert parsed DB trip to compliance engine format
  */
@@ -147,6 +154,127 @@ function getOverlapMessage(
   return overlapResult.message ?? 'This trip overlaps with an existing trip. Please adjust the dates.'
 }
 
+function buildEmployeeProcessingCacheKey({
+  employee,
+  tripDateOverrides,
+  startDateKey,
+  endDateKey,
+  todayKey,
+}: {
+  employee: EmployeeWithTrips
+  tripDateOverrides: Map<string, TripDateOverride>
+  startDateKey: string
+  endDateKey: string
+  todayKey: string
+}): string {
+  return JSON.stringify({
+    employeeId: employee.id,
+    employeeName: employee.name,
+    startDateKey,
+    endDateKey,
+    todayKey,
+    trips: employee.trips.map((trip) => {
+      const override = tripDateOverrides.get(trip.id)
+
+      return [
+        trip.id,
+        trip.country,
+        override?.entry_date ?? trip.entry_date,
+        override?.exit_date ?? trip.exit_date,
+        trip.purpose,
+        trip.job_ref ?? null,
+        trip.is_private,
+        trip.ghosted,
+      ]
+    }),
+  })
+}
+
+function processCalendarEmployee({
+  employee,
+  tripDateOverrides,
+  startDate,
+  endDate,
+  today,
+}: {
+  employee: EmployeeWithTrips
+  tripDateOverrides: Map<string, TripDateOverride>
+  startDate: Date
+  endDate: Date
+  today: Date
+}): ProcessedEmployee {
+  const parsedTrips: ParsedTrip[] = employee.trips
+    .filter((trip) => !trip.ghosted)
+    .map((trip) => {
+      const override = tripDateOverrides.get(trip.id)
+      const entryDateKey = override?.entry_date ?? trip.entry_date
+      const exitDateKey = override?.exit_date ?? trip.exit_date
+      const entryDate = parseDateOnlyAsUTC(entryDateKey)
+      const exitDate = parseDateOnlyAsUTC(exitDateKey)
+
+      return {
+        ...trip,
+        entry_date: entryDateKey,
+        exit_date: exitDateKey,
+        entryDate,
+        exitDate,
+        isSchengen: isSchengenCountry(trip.country),
+      }
+    })
+
+  const complianceTrips = parsedTrips
+    .filter((trip) => trip.isSchengen)
+    .map(toComplianceTrip)
+
+  const currentCompliance = complianceTrips.length > 0
+    ? calculateCompliance(complianceTrips, {
+        mode: 'audit',
+        referenceDate: today,
+      })
+    : null
+
+  const complianceByDate = complianceTrips.length > 0
+    ? new Map(
+        computeComplianceVectorOptimized(complianceTrips, startDate, endDate, {
+          mode: 'audit',
+          referenceDate: endDate,
+        }).map((result) => [toDateKey(result.date), result])
+      )
+    : new Map()
+
+  const processedTrips: ProcessedTrip[] = parsedTrips
+    .filter((trip) =>
+      overlapsVisibleRange(trip.entryDate, trip.exitDate, startDate, endDate)
+    )
+    .map((trip) => {
+      const duration = differenceInUtcDays(trip.exitDate, trip.entryDate) + 1
+
+      return {
+        id: trip.id,
+        country: trip.is_private ? 'XX' : trip.country,
+        rawCountry: trip.country,
+        entryDate: trip.entryDate,
+        exitDate: trip.exitDate,
+        duration,
+        purpose: trip.purpose,
+        jobRef: trip.job_ref ?? null,
+        isPrivate: trip.is_private,
+        ghosted: trip.ghosted,
+        isSchengen: trip.isSchengen,
+      }
+    })
+
+  return {
+    id: employee.id,
+    name: employee.name,
+    trips: processedTrips,
+    complianceByDate,
+    currentDaysRemaining: currentCompliance?.daysRemaining ?? 90,
+    currentRiskLevel: currentCompliance?.riskLevel ?? 'green',
+    tripsInRange: processedTrips.length,
+  }
+}
+
 /**
  * Main calendar view component - orchestrates Gantt chart and mobile view
  */
@@ -166,10 +294,13 @@ export function CalendarView({
   const [tripMoveError, setTripMoveError] = useState<string | null>(null)
   const [isMovingTrip, setIsMovingTrip] = useState(false)
   const [tripDateOverrides, setTripDateOverrides] = useState(
-    () => new Map<string, { entry_date: string; exit_date: string }>()
+    () => new Map<string, TripDateOverride>()
   )
   const [hideEmployeesWithoutSchengenTrips, setHideEmployeesWithoutSchengenTrips] =
     useState(initialHideEmployeesWithoutSchengenTrips)
+  const processedEmployeeCacheRef = useRef(
+    new Map<string, ProcessedEmployeeCacheEntry>()
+  )
 
   useEffect(() => {
     setHideEmployeesWithoutSchengenTrips(initialHideEmployeesWithoutSchengenTrips)
@@ -531,79 +662,50 @@ export function CalendarView({
   // Process employees and their trips with per-employee batched compliance work.
   const processedEmployees = useMemo((): ProcessedEmployee[] => {
     const today = toUTCMidnight(new Date())
+    const todayKey = toDateKey(today)
+    const visibleEmployeeIds = new Set<string>()
+    const cache = processedEmployeeCacheRef.current
 
-    return filteredEmployees.map((employee) => {
-      const parsedTrips: ParsedTrip[] = employee.trips
-        .filter((trip) => !trip.ghosted)
-        .map((trip) => {
-          const override = tripDateOverrides.get(trip.id)
-          const entryDateKey = override?.entry_date ?? trip.entry_date
-          const exitDateKey = override?.exit_date ?? trip.exit_date
-          const entryDate = parseDateOnlyAsUTC(entryDateKey)
-          const exitDate = parseDateOnlyAsUTC(exitDateKey)
-          return {
-            ...trip,
-            entry_date: entryDateKey,
-            exit_date: exitDateKey,
-            entryDate,
-            exitDate,
-            isSchengen: isSchengenCountry(trip.country),
-          }
-        })
+    const nextEmployees = filteredEmployees.map((employee) => {
+      visibleEmployeeIds.add(employee.id)
 
-      const complianceTrips = parsedTrips
-        .filter((trip) => trip.isSchengen)
-        .map(toComplianceTrip)
+      const cacheKey = buildEmployeeProcessingCacheKey({
+        employee,
+        tripDateOverrides,
+        startDateKey,
+        endDateKey,
+        todayKey,
+      })
+      const cached = cache.get(employee.id)
 
-      const currentCompliance = complianceTrips.length > 0
-        ? calculateCompliance(complianceTrips, {
-            mode: 'audit',
-            referenceDate: today,
-          })
-        : null
-
-      const complianceByDate = complianceTrips.length > 0
-        ? new Map(
-            computeComplianceVectorOptimized(complianceTrips, startDate, endDate, {
-              mode: 'audit',
-              referenceDate: endDate,
-            }).map((result) => [toDateKey(result.date), result])
-          )
-        : new Map()
-
-      const processedTrips: ProcessedTrip[] = parsedTrips
-        .filter((trip) =>
-          overlapsVisibleRange(trip.entryDate, trip.exitDate, startDate, endDate)
-        )
-        .map((trip) => {
-          const duration = differenceInUtcDays(trip.exitDate, trip.entryDate) + 1
-
-          return {
-            id: trip.id,
-            country: trip.is_private ? 'XX' : trip.country,
-            rawCountry: trip.country,
-            entryDate: trip.entryDate,
-            exitDate: trip.exitDate,
-            duration,
-            purpose: trip.purpose,
-            jobRef: trip.job_ref ?? null,
-            isPrivate: trip.is_private,
-            ghosted: trip.ghosted,
-            isSchengen: trip.isSchengen,
-          }
-        })
-
-      return {
-        id: employee.id,
-        name: employee.name,
-        trips: processedTrips,
-        complianceByDate,
-        currentDaysRemaining: currentCompliance?.daysRemaining ?? 90,
-        currentRiskLevel: currentCompliance?.riskLevel ?? 'green',
-        tripsInRange: processedTrips.length,
+      if (cached?.cacheKey === cacheKey) {
+        return cached.employee
       }
+
+      const processedEmployee = processCalendarEmployee({
+        employee,
+        tripDateOverrides,
+        startDate,
+        endDate,
+        today,
+      })
+
+      cache.set(employee.id, {
+        cacheKey,
+        employee: processedEmployee,
+      })
+
+      return processedEmployee
     })
-  }, [filteredEmployees, startDate, endDate, tripDateOverrides])
+
+    for (const employeeId of cache.keys()) {
+      if (!visibleEmployeeIds.has(employeeId)) {
+        cache.delete(employeeId)
+      }
+    }
+
+    return nextEmployees
+  }, [filteredEmployees, startDate, endDate, startDateKey, endDateKey, tripDateOverrides])
 
   if (processedEmployees.length === 0) {
     if (!shouldApplySchengenFilter) {

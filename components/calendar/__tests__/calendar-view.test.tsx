@@ -620,6 +620,11 @@ describe('CalendarView', () => {
               },
             ],
           },
+          {
+            id: 'employee-2',
+            name: 'Emma Patel',
+            trips: [],
+          },
         ]}
       />
     )
@@ -627,6 +632,9 @@ describe('CalendarView', () => {
     const desktopProps = getLatestDesktopCalendarProps()
     const onShiftTripDates =
       desktopProps.onShiftTripDates as (params: TripDateShiftRequest) => void
+    const initialEmployees = desktopProps.employees as ProcessedEmployee[]
+    const initialAlice = initialEmployees[0]
+    const initialEmma = initialEmployees[1]
 
     await act(async () => {
       await onShiftTripDates({
@@ -651,7 +659,9 @@ describe('CalendarView', () => {
     })
     expect(showSuccessMock).toHaveBeenCalledWith('Trip dates updated')
 
-    const [employee] = getDesktopProps().employees
+    const [employee, unaffectedEmployee] = getDesktopProps().employees
+    expect(employee).not.toBe(initialAlice)
+    expect(unaffectedEmployee).toBe(initialEmma)
     expect(employee.trips[0]).toMatchObject({
       id: 'trip-1',
       entryDate: new Date('2026-03-14T00:00:00.000Z'),
