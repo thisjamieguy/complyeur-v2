@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { PlayCircle } from 'lucide-react'
 import {
   Card,
@@ -20,6 +21,22 @@ import type { NotificationPreferences } from '@/types/database-helpers'
 export const metadata = {
   title: 'Account',
   description: 'Manage your personal sign-in, notifications, and display preferences',
+}
+
+interface AccountSettingsPageProps {
+  searchParams: Promise<{ section?: string }>
+}
+
+/**
+ * Backward-compat for links created before the settings restructure. Billing
+ * and upgrade emails (and older Stripe portal return URLs) still point at
+ * `/settings?section=general`, which used to surface billing. Redirect those
+ * legacy section values to their new homes so already-sent links land correctly.
+ */
+const LEGACY_SECTION_REDIRECTS: Record<string, string> = {
+  general: '/settings/billing',
+  workspace: '/settings/team',
+  privacy: '/settings/privacy',
 }
 
 // Default user preferences when tables don't exist
@@ -45,7 +62,12 @@ async function getUserPreferencesWithFallback(): Promise<NotificationPreferences
   }
 }
 
-export default async function AccountSettingsPage() {
+export default async function AccountSettingsPage({ searchParams }: AccountSettingsPageProps) {
+  const { section } = await searchParams
+  if (section && LEGACY_SECTION_REDIRECTS[section]) {
+    redirect(LEGACY_SECTION_REDIRECTS[section])
+  }
+
   const [{ userId }, userPreferences] = await Promise.all([
     requireCompanyAccessCached(),
     getUserPreferencesWithFallback(),
