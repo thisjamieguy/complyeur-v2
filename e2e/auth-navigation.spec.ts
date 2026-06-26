@@ -33,7 +33,7 @@ test.describe('Authenticated navigation coverage', () => {
 
     await page.goto('/settings', { waitUntil: 'domcontentloaded' });
     await expect(
-      page.getByRole('heading', { name: /control how your workspace runs/i })
+      page.getByRole('heading', { name: /workspace & account/i })
     ).toBeVisible();
 
     await page.goto('/calendar', { waitUntil: 'domcontentloaded' });

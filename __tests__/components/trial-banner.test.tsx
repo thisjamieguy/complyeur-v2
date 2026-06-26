@@ -27,7 +27,7 @@ describe('TrialBanner', () => {
       'href',
       '/pricing?autostart=1&plan=starter&billingInterval=monthly'
     )
-    expect(screen.getByRole('link', { name: /billing settings/i })).toHaveAttribute('href', '/settings')
+    expect(screen.getByRole('link', { name: /billing settings/i })).toHaveAttribute('href', '/settings/billing')
   })
 
   it('does not render for active paid customers', () => {
