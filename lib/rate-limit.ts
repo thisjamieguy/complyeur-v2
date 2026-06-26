@@ -94,6 +94,25 @@ interface LocalRateLimitEntry {
 const localRateLimitStore = new Map<string, LocalRateLimitEntry>()
 let localFallbackNoticeLogged = false
 
+function isLocalSupabaseTarget(): boolean {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!supabaseUrl) return false
+
+  try {
+    const hostname = new URL(supabaseUrl).hostname
+    return hostname === '127.0.0.1' || hostname === 'localhost'
+  } catch {
+    return false
+  }
+}
+
+function shouldUseLocalE2ERateLimitFallback(): boolean {
+  return (
+    process.env.E2E_ALLOW_LOCAL_RATE_LIMIT_BYPASS === 'true' &&
+    isLocalSupabaseTarget()
+  )
+}
+
 function runLocalRateLimit(identifier: string, type: RateLimitType): RateLimitResult {
   const now = Date.now()
   const limit = LOCAL_LIMITS[type]
@@ -137,7 +156,8 @@ export async function rateLimit(
   identifier: string,
   type: RateLimitType = 'api'
 ): Promise<RateLimitResult> {
-  const isProduction = process.env.NODE_ENV === 'production'
+  const isProduction =
+    process.env.NODE_ENV === 'production' && !shouldUseLocalE2ERateLimitFallback()
 
   // FAIL-CLOSED in production: Reject requests if rate limiter is unavailable
   // Development/Test fallback: enforce in-memory local rate limits
@@ -317,7 +337,8 @@ export async function checkServerActionRateLimit(
   userId: string,
   actionName: string
 ): Promise<{ allowed: boolean; error?: string; limiterUnavailable?: boolean }> {
-  const isProduction = process.env.NODE_ENV === 'production'
+  const isProduction =
+    process.env.NODE_ENV === 'production' && !shouldUseLocalE2ERateLimitFallback()
 
   // FAIL-CLOSED in production: Reject if rate limiter is unavailable
   // FAIL-OPEN in development: Allow for local dev

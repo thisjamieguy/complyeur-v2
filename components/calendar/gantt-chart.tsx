@@ -3,7 +3,26 @@
 import { memo, useMemo, useRef, useEffect, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { format, isToday, isWeekend } from 'date-fns'
+import {
+  Briefcase,
+  CalendarPlus,
+  Clipboard,
+  Copy,
+  ExternalLink,
+  Lock,
+  Pencil,
+  Trash2,
+} from 'lucide-react'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { addUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 import { cn } from '@/lib/utils'
 import { DateHeader } from './date-header'
@@ -12,6 +31,9 @@ import { GRID_ROW_HEIGHT } from './day-cell'
 import { syncVerticalScroll } from './scroll-sync'
 import { emitCalendarMetric } from './calendar-metrics'
 import type {
+  CalendarEmployeeContextMenuRequest,
+  CalendarCopiedTrip,
+  CalendarPasteTripRequest,
   ProcessedEmployee,
   TripDateShiftRequest,
   TripDeleteRequest,
@@ -75,6 +97,193 @@ interface GanttChartProps {
   onResizeTrip?: (params: TripResizeRequest) => void
   onShiftTripDates?: (params: TripDateShiftRequest) => void
   onMoveTrip?: (params: TripMoveRequest) => void
+  copiedTrip?: CalendarCopiedTrip | null
+  onCopyTrip?: (params: TripEditRequest) => void
+  onPasteTrip?: (params: CalendarPasteTripRequest) => void
+  onToggleTripPrivacy?: (params: TripEditRequest) => void
+  onOpenEmployeeProfile?: (employeeId: string) => void
+}
+
+interface CalendarGridContextMenuProps {
+  contextMenu: CalendarEmployeeContextMenuRequest | null
+  copiedTrip?: CalendarCopiedTrip | null
+  onOpenChange: (open: boolean) => void
+  onCreateTrip?: GanttChartProps['onCreateTrip']
+  onEditTrip?: GanttChartProps['onEditTrip']
+  onDeleteTrip?: GanttChartProps['onDeleteTrip']
+  onCopyTrip?: GanttChartProps['onCopyTrip']
+  onPasteTrip?: GanttChartProps['onPasteTrip']
+  onToggleTripPrivacy?: GanttChartProps['onToggleTripPrivacy']
+  onOpenEmployeeProfile?: GanttChartProps['onOpenEmployeeProfile']
+}
+
+function CalendarGridContextMenu({
+  contextMenu,
+  copiedTrip,
+  onOpenChange,
+  onCreateTrip,
+  onEditTrip,
+  onDeleteTrip,
+  onCopyTrip,
+  onPasteTrip,
+  onToggleTripPrivacy,
+  onOpenEmployeeProfile,
+}: CalendarGridContextMenuProps) {
+  const trip = contextMenu?.trip
+  const hasCopiedTrip = copiedTrip !== null && copiedTrip !== undefined
+  const menuLabel = trip
+    ? `${trip.isPrivate ? 'Private' : trip.country} trip`
+    : contextMenu
+      ? `${contextMenu.employeeName} - ${contextMenu.dateKey}`
+      : 'Calendar menu'
+
+  return (
+    <DropdownMenu open={contextMenu !== null} onOpenChange={onOpenChange}>
+      <DropdownMenuTrigger asChild>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none fixed size-px opacity-0"
+          style={{
+            left: contextMenu?.x ?? -9999,
+            top: contextMenu?.y ?? -9999,
+          }}
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        side="right"
+        sideOffset={4}
+        collisionPadding={8}
+        className="w-44"
+      >
+        <DropdownMenuLabel className="truncate text-xs text-slate-500">
+          {menuLabel}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            disabled={!contextMenu || !onCreateTrip}
+            onSelect={() => {
+              if (!contextMenu || !onCreateTrip) return
+
+              onCreateTrip({
+                employeeId: contextMenu.employeeId,
+                employeeName: contextMenu.employeeName,
+                dateKey: contextMenu.dateKey,
+              })
+              onOpenChange(false)
+            }}
+          >
+            <CalendarPlus />
+            Add trip
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!contextMenu || !hasCopiedTrip || !onPasteTrip}
+            onSelect={() => {
+              if (!contextMenu || !hasCopiedTrip || !onPasteTrip) return
+
+              onPasteTrip({
+                employeeId: contextMenu.employeeId,
+                employeeName: contextMenu.employeeName,
+                dateKey: contextMenu.dateKey,
+              })
+              onOpenChange(false)
+            }}
+          >
+            <Clipboard />
+            Paste trip here
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        {trip && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                disabled={!contextMenu || !onEditTrip}
+                onSelect={() => {
+                  if (!contextMenu || !onEditTrip) return
+
+                  onEditTrip({
+                    employeeId: contextMenu.employeeId,
+                    employeeName: contextMenu.employeeName,
+                    trip,
+                  })
+                  onOpenChange(false)
+                }}
+              >
+                <Pencil />
+                Edit trip
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!contextMenu || !onCopyTrip}
+                onSelect={() => {
+                  if (!contextMenu || !onCopyTrip) return
+
+                  onCopyTrip({
+                    employeeId: contextMenu.employeeId,
+                    employeeName: contextMenu.employeeName,
+                    trip,
+                  })
+                  onOpenChange(false)
+                }}
+              >
+                <Copy />
+                Copy trip
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!contextMenu || !onToggleTripPrivacy}
+                onSelect={() => {
+                  if (!contextMenu || !onToggleTripPrivacy) return
+
+                  onToggleTripPrivacy({
+                    employeeId: contextMenu.employeeId,
+                    employeeName: contextMenu.employeeName,
+                    trip,
+                  })
+                  onOpenChange(false)
+                }}
+              >
+                {trip.isPrivate ? <Briefcase /> : <Lock />}
+                {trip.isPrivate ? 'Mark as work trip' : 'Mark as private'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={!contextMenu || !onDeleteTrip}
+                onSelect={() => {
+                  if (!contextMenu || !onDeleteTrip) return
+
+                  onDeleteTrip({
+                    employeeId: contextMenu.employeeId,
+                    employeeName: contextMenu.employeeName,
+                    trip,
+                  })
+                  onOpenChange(false)
+                }}
+              >
+                <Trash2 />
+                Delete trip
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            disabled={!contextMenu || !onOpenEmployeeProfile}
+            onSelect={() => {
+              if (!contextMenu || !onOpenEmployeeProfile) return
+
+              onOpenEmployeeProfile(contextMenu.employeeId)
+              onOpenChange(false)
+            }}
+          >
+            <ExternalLink />
+            Go to employee profile
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 /**
@@ -93,10 +302,17 @@ export const GanttChart = memo(function GanttChart({
   onResizeTrip,
   onShiftTripDates,
   onMoveTrip,
+  copiedTrip = null,
+  onCopyTrip,
+  onPasteTrip,
+  onToggleTripPrivacy,
+  onOpenEmployeeProfile,
 }: GanttChartProps) {
   const [overscan, setOverscan] = useState(BASE_OVERSCAN)
   const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(null)
   const [dropTargetEmployeeId, setDropTargetEmployeeId] = useState<string | null>(null)
+  const [contextMenu, setContextMenu] =
+    useState<CalendarEmployeeContextMenuRequest | null>(null)
   const mountStartedAtRef = useRef<number>(
     typeof performance !== 'undefined' ? performance.now() : 0
   )
@@ -292,6 +508,17 @@ export const GanttChart = memo(function GanttChart({
   const totalHeight = virtualizer.getTotalSize()
   const virtualRows = virtualizer.getVirtualItems()
   const visibleRows = virtualRows.length
+  const hasContextMenuActions =
+    interactive &&
+    Boolean(
+      onCreateTrip ||
+        onEditTrip ||
+        onDeleteTrip ||
+        onCopyTrip ||
+        onPasteTrip ||
+        onToggleTripPrivacy ||
+        onOpenEmployeeProfile
+    )
 
   useEffect(() => {
     emitCalendarMetric('calendar_mount', {
@@ -315,6 +542,25 @@ export const GanttChart = memo(function GanttChart({
 
   return (
     <div className="flex">
+      {hasContextMenuActions && (
+        <CalendarGridContextMenu
+          contextMenu={contextMenu}
+          copiedTrip={copiedTrip}
+          onOpenChange={(open) => {
+            if (!open) {
+              setContextMenu(null)
+            }
+          }}
+          onCreateTrip={onCreateTrip}
+          onEditTrip={onEditTrip}
+          onDeleteTrip={onDeleteTrip}
+          onCopyTrip={onCopyTrip}
+          onPasteTrip={onPasteTrip}
+          onToggleTripPrivacy={onToggleTripPrivacy}
+          onOpenEmployeeProfile={onOpenEmployeeProfile}
+        />
+      )}
+
       {/* Fixed left column — employee names (no horizontal scroll) */}
       <div
         className="shrink-0 bg-slate-50/80 border-r border-slate-200 z-20"
@@ -438,6 +684,9 @@ export const GanttChart = memo(function GanttChart({
                         onShiftTripDates={onShiftTripDates}
                         onMoveTrip={onMoveTrip}
                         onMoveTripTargetChange={setDropTargetEmployeeId}
+                        onOpenContextMenu={
+                          hasContextMenuActions ? setContextMenu : undefined
+                        }
                       />
                     </div>
                   )

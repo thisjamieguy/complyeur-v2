@@ -17,7 +17,12 @@ import {
 } from '@/components/ui/popover'
 import { TripPopover } from './trip-popover'
 import { toDateKey } from './calendar-view.utils'
-import type { ProcessedTrip, ProcessedTripDay, TripResizeEdge } from './types'
+import type {
+  CalendarCellContextMenuRequest,
+  ProcessedTrip,
+  ProcessedTripDay,
+  TripResizeEdge,
+} from './types'
 
 /** Fixed height for each grid row */
 export const GRID_ROW_HEIGHT = 32
@@ -67,6 +72,7 @@ interface DayCellProps {
     originalExitDateKey: string
   }) => void
   onMoveTripTargetChange?: (employeeId: string | null) => void
+  onOpenContextMenu?: (params: CalendarCellContextMenuRequest) => void
 }
 
 const schengenTripStyles = {
@@ -143,6 +149,7 @@ export const DayCell = memo(function DayCell({
   onShiftTripDates,
   onMoveTrip,
   onMoveTripTargetChange,
+  onOpenContextMenu,
 }: DayCellProps) {
   const suppressNextClickRef = useRef(false)
   const [resizePreview, setResizePreview] = useState<{
@@ -193,6 +200,22 @@ export const DayCell = memo(function DayCell({
       : nonSchengenTripStyles
     : null
 
+  const openContextMenu = (
+    event: ReactMouseEvent<HTMLButtonElement>,
+    menuTrip?: ProcessedTrip
+  ) => {
+    if (!interactive || !onOpenContextMenu) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    onOpenContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      dateKey,
+      ...(menuTrip ? { trip: menuTrip } : {}),
+    })
+  }
+
   if (!trip) {
     if (interactive && onCreateTrip) {
       return (
@@ -205,6 +228,7 @@ export const DayCell = memo(function DayCell({
           style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
           aria-label={`Add trip on ${format(date, 'MMM d')}`}
           onClick={() => onCreateTrip(dateKey)}
+          onContextMenu={(event) => openContextMenu(event)}
         />
       )
     }
@@ -497,6 +521,7 @@ export const DayCell = memo(function DayCell({
             aria-label={`${trip.country} trip on ${format(date, 'MMM d')}`}
             onPointerDown={startDrag}
             onClick={handleTripClick}
+            onContextMenu={(event) => openContextMenu(event, trip)}
           >
             <span
               className={cn(

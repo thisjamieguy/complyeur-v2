@@ -280,13 +280,26 @@ export async function resolveAlertsForEmployee(employeeId: string): Promise<numb
   const { companyId } = await getAuthenticatedUserCompany()
 
   // Verify employee belongs to company
-  const { data: employee } = await supabase
+  const { data: employee, error: employeeError } = await supabase
     .from('employees')
     .select('company_id')
     .eq('id', employeeId)
     .single()
 
-  if (!employee || employee.company_id !== companyId) {
+  if (employeeError) {
+    if (employeeError.code === 'PGRST116') {
+      return 0
+    }
+
+    console.error('Error fetching employee for alert resolution:', employeeError)
+    throw new DatabaseError('Failed to resolve alerts')
+  }
+
+  if (!employee) {
+    return 0
+  }
+
+  if (employee.company_id !== companyId) {
     throw new NotFoundError('Employee not found')
   }
 

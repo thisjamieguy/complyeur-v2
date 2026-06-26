@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import {
+  addTripAction,
   deleteTripAction,
   reassignTripAction,
   updateTripAssignmentAction,
@@ -67,8 +68,10 @@ import {
   type TripEditorDraft,
 } from './interactive-trip-editor'
 import type {
-  ProcessedTrip,
+  CalendarCopiedTrip,
+  CalendarPasteTripRequest,
   ProcessedEmployee,
+  ProcessedTrip,
   TripDateShiftRequest,
   TripDeleteRequest,
   TripEditRequest,
@@ -293,6 +296,7 @@ export function CalendarView({
   const [tripMoveDraft, setTripMoveDraft] = useState<TripMoveRequest | null>(null)
   const [tripMoveError, setTripMoveError] = useState<string | null>(null)
   const [isMovingTrip, setIsMovingTrip] = useState(false)
+  const [copiedTrip, setCopiedTrip] = useState<CalendarCopiedTrip | null>(null)
   const [tripDateOverrides, setTripDateOverrides] = useState(
     () => new Map<string, TripDateOverride>()
   )
@@ -388,6 +392,87 @@ export function CalendarView({
 
   const requestDeleteTrip = (request: TripDeleteRequest) => {
     setTripDeleteDraft(request)
+  }
+
+  const copyTrip = ({ trip }: TripEditRequest) => {
+    setCopiedTrip({
+      country: trip.rawCountry,
+      duration: trip.duration,
+      purpose: trip.purpose,
+      jobRef: trip.jobRef,
+      isPrivate: trip.isPrivate,
+      ghosted: trip.ghosted,
+    })
+    showSuccess('Trip copied')
+  }
+
+  const pasteTrip = async ({
+    employeeId,
+    employeeName,
+    dateKey,
+  }: CalendarPasteTripRequest) => {
+    if (!copiedTrip) {
+      showError('No copied trip', 'Copy a trip before pasting it into the calendar.')
+      return
+    }
+
+    const entryDate = parseDateOnlyAsUTC(dateKey)
+    const exitDate = addUtcDays(entryDate, copiedTrip.duration - 1)
+    const exitDateKey = toDateKey(exitDate)
+
+    const overlapResult = await checkTripOverlap(
+      employeeId,
+      dateKey,
+      exitDateKey
+    )
+
+    if (overlapResult.hasOverlap) {
+      showError(
+        'Trip overlap detected',
+        `Cannot paste trip. ${getOverlapMessage(overlapResult, employeeName)}`
+      )
+      return
+    }
+
+    try {
+      await addTripAction({
+        employee_id: employeeId,
+        country: copiedTrip.country,
+        entry_date: dateKey,
+        exit_date: exitDateKey,
+        ...(copiedTrip.purpose ? { purpose: copiedTrip.purpose } : {}),
+        ...(copiedTrip.jobRef ? { job_ref: copiedTrip.jobRef } : {}),
+        is_private: copiedTrip.isPrivate,
+        ghosted: copiedTrip.ghosted,
+      })
+      showSuccess('Trip pasted successfully')
+      router.refresh()
+    } catch (error) {
+      showError(
+        'Failed to paste trip',
+        error instanceof Error ? error.message : 'Please try again.'
+      )
+    }
+  }
+
+  const toggleTripPrivacy = async ({
+    employeeId,
+    trip,
+  }: TripEditRequest) => {
+    const nextIsPrivate = !trip.isPrivate
+
+    try {
+      await updateTripAction(trip.id, employeeId, {
+        is_private: nextIsPrivate,
+      })
+      showSuccess(nextIsPrivate ? 'Trip marked as private' : 'Trip marked as work trip')
+      router.refresh()
+    } catch (error) {
+      showError(
+        'Failed to update trip',
+        error instanceof Error ? error.message : 'Please try again.'
+      )
+    }
   }
 
   const confirmDeleteTrip = async () => {
@@ -927,6 +1012,15 @@ export function CalendarView({
               onResizeTrip={interactive ? resizeTrip : undefined}
               onShiftTripDates={interactive ? shiftTripDates : undefined}
               onMoveTrip={interactive ? requestMoveTrip : undefined}
+              copiedTrip={interactive ? copiedTrip : null}
+              onCopyTrip={interactive ? copyTrip : undefined}
+              onPasteTrip={interactive ? pasteTrip : undefined}
+              onToggleTripPrivacy={interactive ? toggleTripPrivacy : undefined}
+              onOpenEmployeeProfile={
+                interactive
+                  ? (employeeId) => router.push(`/employee/${employeeId}`)
+                  : undefined
+              }
             />
           </CardContent>
         </Card>

@@ -66,6 +66,12 @@ function renderCell(
       originalExitDateKey: string
     }) => void
     onMoveTripTargetChange?: (employeeId: string | null) => void
+    onOpenContextMenu?: (params: {
+      x: number
+      y: number
+      dateKey: string
+      trip?: ProcessedTripDay['trip']
+    }) => void
   } = {}
 ) {
   return render(
@@ -90,6 +96,7 @@ function renderCell(
       onShiftTripDates={options.onShiftTripDates}
       onMoveTrip={options.onMoveTrip}
       onMoveTripTargetChange={options.onMoveTripTargetChange}
+      onOpenContextMenu={options.onOpenContextMenu}
     />
   )
 }
@@ -144,6 +151,42 @@ describe('DayCell', () => {
     fireEvent.click(screen.getByRole('button', { name: /add trip on mar 10/i }))
 
     expect(onCreateTrip).toHaveBeenCalledWith('2026-03-10')
+  })
+
+  it('opens the empty-cell context menu from right click in interactive mode', () => {
+    const onOpenContextMenu = vi.fn()
+
+    render(
+      <DayCell
+        tripDay={undefined}
+        date={new Date('2026-03-10T00:00:00.000Z')}
+        dateKey="2026-03-10"
+        dayWidth={32}
+        isRowHovered={false}
+        isWeekend={false}
+        isToday={false}
+        isMonthStart={false}
+        isInRollingWindow={false}
+        isRollingWindowStart={false}
+        isRollingWindowEnd={false}
+        isTripStart={false}
+        isTripEnd={false}
+        interactive
+        onCreateTrip={vi.fn()}
+        onOpenContextMenu={onOpenContextMenu}
+      />
+    )
+
+    fireEvent.contextMenu(
+      screen.getByRole('button', { name: /add trip on mar 10/i }),
+      { clientX: 120, clientY: 80 }
+    )
+
+    expect(onOpenContextMenu).toHaveBeenCalledWith({
+      x: 120,
+      y: 80,
+      dateKey: '2026-03-10',
+    })
   })
 
   it('calculates a new exit date when the end resize handle is dragged', () => {
@@ -394,6 +437,28 @@ describe('DayCell', () => {
     expect(screen.getAllByText('Mar 10, 2026')).toHaveLength(2)
     expect(screen.getByText('Warning')).toBeInTheDocument()
     expect(screen.getByText('11')).toBeInTheDocument()
+  })
+
+  it('opens the trip context menu from right click in interactive mode', () => {
+    const onOpenContextMenu = vi.fn()
+    const tripDay = makeTripDay()
+
+    renderCell(tripDay, {
+      interactive: true,
+      onOpenContextMenu,
+    })
+
+    fireEvent.contextMenu(
+      screen.getByRole('button', { name: /FR trip on Mar 10/i }),
+      { clientX: 164, clientY: 96 }
+    )
+
+    expect(onOpenContextMenu).toHaveBeenCalledWith({
+      x: 164,
+      y: 96,
+      dateKey: '2026-03-10',
+      trip: tripDay.trip,
+    })
   })
 
   it('opens the edit flow from the trip popover in interactive mode', () => {

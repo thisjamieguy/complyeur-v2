@@ -953,4 +953,210 @@ describe('CalendarView', () => {
     expect(reassignTripActionMock).not.toHaveBeenCalled()
     expect(showSuccessMock).toHaveBeenCalledWith('Trip moved and dates updated')
   })
+
+  it('copies and pastes a trip from the calendar context menu callbacks', async () => {
+    render(
+      <CalendarView
+        interactive
+        employees={[
+          {
+            id: 'employee-1',
+            name: 'Alice Schengen',
+            trips: [
+              {
+                id: 'trip-1',
+                country: 'FR',
+                entry_date: '2026-03-12',
+                exit_date: '2026-03-16',
+                purpose: 'Client visit',
+                job_ref: 'JOB-1',
+                is_private: false,
+                ghosted: false,
+              },
+            ],
+          },
+          {
+            id: 'employee-2',
+            name: 'Emma Patel',
+            trips: [],
+          },
+        ]}
+      />
+    )
+
+    const desktopProps = getLatestDesktopCalendarProps()
+    const onCopyTrip = desktopProps.onCopyTrip as (params: TripEditRequest) => void
+    const [employee] = desktopProps.employees as ProcessedEmployee[]
+    const [trip] = employee.trips
+
+    await act(async () => {
+      onCopyTrip({
+        employeeId: employee.id,
+        employeeName: employee.name,
+        trip,
+      })
+      await Promise.resolve()
+    })
+
+    expect(showSuccessMock).toHaveBeenCalledWith('Trip copied')
+    expect(getLatestDesktopCalendarProps().copiedTrip).toEqual({
+      country: 'FR',
+      duration: 5,
+      purpose: 'Client visit',
+      jobRef: 'JOB-1',
+      isPrivate: false,
+      ghosted: false,
+    })
+
+    const afterCopyProps = getLatestDesktopCalendarProps()
+    const onPasteTrip = afterCopyProps.onPasteTrip as (params: {
+      employeeId: string
+      employeeName: string
+      dateKey: string
+    }) => Promise<void>
+
+    await act(async () => {
+      await onPasteTrip({
+        employeeId: 'employee-2',
+        employeeName: 'Emma Patel',
+        dateKey: '2026-03-20',
+      })
+    })
+
+    expect(checkTripOverlapMock).toHaveBeenCalledWith(
+      'employee-2',
+      '2026-03-20',
+      '2026-03-24'
+    )
+    expect(addTripActionMock).toHaveBeenCalledWith({
+      employee_id: 'employee-2',
+      country: 'FR',
+      entry_date: '2026-03-20',
+      exit_date: '2026-03-24',
+      purpose: 'Client visit',
+      job_ref: 'JOB-1',
+      is_private: false,
+      ghosted: false,
+    })
+    expect(showSuccessMock).toHaveBeenCalledWith('Trip pasted successfully')
+  })
+
+  it('blocks pasted trips that overlap the target employee', async () => {
+    checkTripOverlapMock.mockResolvedValueOnce({
+      hasOverlap: true,
+      conflictingTrip: {
+        id: 'trip-2',
+        country: 'BG',
+        entry_date: '2026-03-20',
+        exit_date: '2026-03-24',
+      },
+    })
+
+    render(
+      <CalendarView
+        interactive
+        employees={[
+          {
+            id: 'employee-1',
+            name: 'Alice Schengen',
+            trips: [
+              {
+                id: 'trip-1',
+                country: 'FR',
+                entry_date: '2026-03-12',
+                exit_date: '2026-03-16',
+                purpose: 'Client visit',
+                is_private: false,
+                ghosted: false,
+              },
+            ],
+          },
+          {
+            id: 'employee-2',
+            name: 'Emma Patel',
+            trips: [],
+          },
+        ]}
+      />
+    )
+
+    const desktopProps = getLatestDesktopCalendarProps()
+    const onCopyTrip = desktopProps.onCopyTrip as (params: TripEditRequest) => void
+    const [employee] = desktopProps.employees as ProcessedEmployee[]
+    const [trip] = employee.trips
+
+    await act(async () => {
+      onCopyTrip({
+        employeeId: employee.id,
+        employeeName: employee.name,
+        trip,
+      })
+      await Promise.resolve()
+    })
+
+    const onPasteTrip = getLatestDesktopCalendarProps().onPasteTrip as (params: {
+      employeeId: string
+      employeeName: string
+      dateKey: string
+    }) => Promise<void>
+
+    await act(async () => {
+      await onPasteTrip({
+        employeeId: 'employee-2',
+        employeeName: 'Emma Patel',
+        dateKey: '2026-03-20',
+      })
+    })
+
+    expect(addTripActionMock).not.toHaveBeenCalled()
+    expect(showErrorMock).toHaveBeenCalledWith(
+      'Trip overlap detected',
+      expect.stringContaining("Emma Patel's BG trip")
+    )
+  })
+
+  it('toggles a trip between work and private from the context menu callback', async () => {
+    render(
+      <CalendarView
+        interactive
+        employees={[
+          {
+            id: 'employee-1',
+            name: 'Alice Schengen',
+            trips: [
+              {
+                id: 'trip-1',
+                country: 'FR',
+                entry_date: '2026-03-12',
+                exit_date: '2026-03-16',
+                purpose: 'Client visit',
+                is_private: false,
+                ghosted: false,
+              },
+            ],
+          },
+        ]}
+      />
+    )
+
+    const desktopProps = getLatestDesktopCalendarProps()
+    const onToggleTripPrivacy = desktopProps.onToggleTripPrivacy as (
+      params: TripEditRequest
+    ) => Promise<void>
+    const [employee] = desktopProps.employees as ProcessedEmployee[]
+    const [trip] = employee.trips
+
+    await act(async () => {
+      await onToggleTripPrivacy({
+        employeeId: employee.id,
+        employeeName: employee.name,
+        trip,
+      })
+    })
+
+    expect(updateTripActionMock).toHaveBeenCalledWith('trip-1', 'employee-1', {
+      is_private: true,
+    })
+    expect(showSuccessMock).toHaveBeenCalledWith('Trip marked as private')
+  })
 })

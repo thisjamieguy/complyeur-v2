@@ -13,7 +13,8 @@ const authFileExists = fs.existsSync(authFile);
 const hasConfiguredAuthCredentials = Boolean(
   process.env.TEST_USER_EMAIL && process.env.TEST_USER_PASSWORD
 );
-const shouldUseAuthFile = authFileExists && hasConfiguredAuthCredentials;
+const shouldSkipGlobalAuth = process.env.PLAYWRIGHT_SKIP_GLOBAL_AUTH === 'true';
+const shouldUseAuthFile = authFileExists && hasConfiguredAuthCredentials && !shouldSkipGlobalAuth;
 
 export default defineConfig({
   testDir: './e2e',

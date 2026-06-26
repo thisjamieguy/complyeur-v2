@@ -66,9 +66,11 @@ async function hasAuthenticatedStorageState(page: Page): Promise<boolean> {
 
 async function gotoRestrictedRoute(page: Page, path: string): Promise<void> {
   const response = await page.context().request.get(path, { maxRedirects: 0 });
+  const location = response.headers().location ?? '';
 
   expect([302, 303, 307, 308]).toContain(response.status());
-  expect(response.headers().location).toMatch(/\/(dashboard|login)(?:[/?#]|$)/);
+  expect(location).not.toMatch(/\/admin(?:[/?#]|$)/);
+  expect(location).toMatch(/\/(dashboard|login|landing)(?:[/?#]|$)/);
 }
 
 test.describe('Route coverage matrix', () => {

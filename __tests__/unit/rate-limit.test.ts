@@ -115,4 +115,47 @@ describe('rateLimit local in-memory fallback', () => {
     expect(blocked.limit).toBe(5)
     expect(blocked.remaining).toBe(0)
   })
+
+  it('allows explicit local E2E fallback in production only for local Supabase', async () => {
+    process.env.NODE_ENV = 'production'
+    process.env.E2E_ALLOW_LOCAL_RATE_LIMIT_BYPASS = 'true'
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:54321'
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { checkServerActionRateLimit, rateLimit } = await import('@/lib/rate-limit')
+
+    await expect(rateLimit('local-e2e', 'api')).resolves.toMatchObject({
+      success: true,
+      limiterUnavailable: false,
+    })
+    await expect(
+      checkServerActionRateLimit('user-1', 'calendarV2E2E')
+    ).resolves.toMatchObject({ allowed: true })
+    expect(warnSpy).toHaveBeenCalled()
+    expect(errorSpy).not.toHaveBeenCalled()
+  })
+
+  it('keeps production fail-closed when the E2E fallback targets remote Supabase', async () => {
+    process.env.NODE_ENV = 'production'
+    process.env.E2E_ALLOW_LOCAL_RATE_LIMIT_BYPASS = 'true'
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { checkServerActionRateLimit, rateLimit } = await import('@/lib/rate-limit')
+
+    await expect(rateLimit('remote-e2e', 'api')).resolves.toMatchObject({
+      success: false,
+      limiterUnavailable: true,
+    })
+    await expect(
+      checkServerActionRateLimit('user-1', 'calendarV2E2E')
+    ).resolves.toMatchObject({
+      allowed: false,
+      limiterUnavailable: true,
+    })
+    expect(errorSpy).toHaveBeenCalled()
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
 })

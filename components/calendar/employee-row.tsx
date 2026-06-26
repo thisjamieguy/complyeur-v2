@@ -11,6 +11,7 @@ import type {
   TripEditRequest,
   TripMoveRequest,
   TripResizeRequest,
+  CalendarEmployeeContextMenuRequest,
 } from './types'
 import type { DateMeta } from './gantt-chart'
 
@@ -32,6 +33,7 @@ interface EmployeeRowProps {
   onShiftTripDates?: (params: TripDateShiftRequest) => void
   onMoveTrip?: (params: TripMoveRequest) => void
   onMoveTripTargetChange?: (employeeId: string | null) => void
+  onOpenContextMenu?: (params: CalendarEmployeeContextMenuRequest) => void
 }
 
 /**
@@ -53,6 +55,7 @@ export const EmployeeRow = memo(function EmployeeRow({
   onShiftTripDates,
   onMoveTrip,
   onMoveTripTargetChange,
+  onOpenContextMenu,
 }: EmployeeRowProps) {
   const tripDayByDate = useMemo(() => {
     if (dateMeta.length === 0) {
@@ -164,6 +167,16 @@ export const EmployeeRow = memo(function EmployeeRow({
                 : undefined
             }
             onMoveTripTargetChange={onMoveTripTargetChange}
+            onOpenContextMenu={
+              onOpenContextMenu
+                ? (params) =>
+                    onOpenContextMenu({
+                      ...params,
+                      employeeId: employee.id,
+                      employeeName: employee.name,
+                    })
+                : undefined
+            }
           />
         )
       })}

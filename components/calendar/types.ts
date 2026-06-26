@@ -79,3 +79,31 @@ export interface TripDeleteRequest {
   employeeName: string
   trip: ProcessedTrip
 }
+
+export interface CalendarCopiedTrip {
+  country: string
+  duration: number
+  purpose: string | null
+  jobRef: string | null
+  isPrivate: boolean
+  ghosted: boolean
+}
+
+export interface CalendarCellContextMenuRequest {
+  x: number
+  y: number
+  dateKey: string
+  trip?: ProcessedTrip
+}
+
+export interface CalendarEmployeeContextMenuRequest
+  extends CalendarCellContextMenuRequest {
+  employeeId: string
+  employeeName: string
+}
+
+export interface CalendarPasteTripRequest {
+  employeeId: string
+  employeeName: string
+  dateKey: string
+}
