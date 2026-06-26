@@ -1,10 +1,8 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import Link from 'next/link';
-import { ArrowLeft, History } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { getImportSessionsPaginated } from '../../import/actions';
 import { ImportHistoryList } from './import-history-list';
+import { SettingsSectionHeader } from '@/components/settings/settings-section-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,27 +47,12 @@ export default async function ImportHistoryPage({ searchParams }: PageProps) {
   const page = Number.isFinite(parsedPage) ? Math.max(1, parsedPage) : 1;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-slate-100 rounded-lg">
-              <History className="h-5 w-5 text-slate-600" aria-hidden="true" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">Import History</h1>
-          </div>
-          <p className="text-slate-600">
-            View your past import sessions and their results.
-          </p>
-        </div>
-        <Button variant="outline" className="w-full sm:w-auto" asChild>
-          <Link href="/settings">
-            <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true" />
-            Back to Settings
-          </Link>
-        </Button>
-      </div>
+    <div className="space-y-8">
+      <SettingsSectionHeader
+        eyebrow="Data & privacy"
+        title="Import history"
+        description="Review your past import sessions, their outcomes, and any follow-up issues."
+      />
 
       {/* History List */}
       <Suspense fallback={<LoadingSkeleton />}>

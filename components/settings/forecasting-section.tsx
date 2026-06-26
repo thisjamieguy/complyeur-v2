@@ -66,11 +66,11 @@ export function ForecastingSection({ disabled }: ForecastingSectionProps) {
         />
 
         {/* Info box */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>How it works:</strong> When creating or viewing future jobs, the system will check if
-            the cumulative days would exceed your threshold. A warning will appear on the Trip Forecast
-            and Future Job Alerts pages for any employee at risk.
+        <div className="mt-6 rounded-lg border border-brand-200 bg-brand-50 p-4">
+          <p className="text-sm text-brand-800">
+            <strong className="font-semibold">How it works:</strong> When creating or viewing future
+            jobs, the system checks whether the cumulative days would exceed your threshold. A warning
+            appears on the Trip Forecast and Future Job Alerts pages for any employee at risk.
           </p>
         </div>
       </CardContent>
