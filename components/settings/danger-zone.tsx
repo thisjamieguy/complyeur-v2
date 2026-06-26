@@ -500,8 +500,8 @@ export function DangerZone() {
                 <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-600">
                   <p>
                     Employees can be restored from{' '}
-                    <span className="font-medium">Settings &rarr; GDPR</span> within 30 days.
-                    All other items cannot be recovered.
+                    <span className="font-medium">Settings &rarr; Privacy &amp; data</span> within 30
+                    days. All other items cannot be recovered.
                   </p>
                 </div>
 
