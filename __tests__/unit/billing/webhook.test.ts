@@ -227,6 +227,7 @@ function createCheckoutSessionCompletedEvent() {
   return {
     id: 'evt_test_123',
     type: 'checkout.session.completed',
+    created: 1_700_000_000,
     data: {
       object: {
         client_reference_id: 'user-1',
@@ -335,6 +336,16 @@ function createCheckoutProvisioningTables(state: CheckoutProvisioningState) {
 
     if (table === 'company_entitlements') {
       return {
+        // Stale-event guard reads the last applied Stripe event timestamp before
+        // updating; null means no prior event, so the incoming event is applied.
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn(async () => ({
+              data: { last_stripe_event_created_at: null },
+              error: null,
+            })),
+          }),
+        }),
         update: vi.fn((payload: Record<string, unknown>) => {
           state.entitlementUpdatePayloads.push(payload)
           return {
