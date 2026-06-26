@@ -175,6 +175,40 @@ export function CalendarView({
     setHideEmployeesWithoutSchengenTrips(initialHideEmployeesWithoutSchengenTrips)
   }, [initialHideEmployeesWithoutSchengenTrips])
 
+  useEffect(() => {
+    setTripDateOverrides((current) => {
+      if (current.size === 0) {
+        return current
+      }
+
+      const sourceDatesByTrip = new Map<string, { entry_date: string; exit_date: string }>()
+      for (const employee of employees) {
+        for (const trip of employee.trips) {
+          sourceDatesByTrip.set(trip.id, {
+            entry_date: trip.entry_date,
+            exit_date: trip.exit_date,
+          })
+        }
+      }
+
+      let changed = false
+      const next = new Map(current)
+      for (const [tripId, override] of current) {
+        const sourceDates = sourceDatesByTrip.get(tripId)
+        if (
+          !sourceDates ||
+          (sourceDates.entry_date === override.entry_date &&
+            sourceDates.exit_date === override.exit_date)
+        ) {
+          next.delete(tripId)
+          changed = true
+        }
+      }
+
+      return changed ? next : current
+    })
+  }, [employees])
+
   const updateHideEmployeesWithoutSchengenTrips = (enabled: boolean) => {
     setHideEmployeesWithoutSchengenTrips(enabled)
 

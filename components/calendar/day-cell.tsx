@@ -335,8 +335,14 @@ export const DayCell = memo(function DayCell({
       exitDateKey: originalExitDateKey,
     }
     let latestTarget = getMoveTarget(startX, startY)
+    let latestPointer = { clientX: startX, clientY: startY }
+    let previewFrame: number | null = null
 
-    const updateDragPreview = (clientX: number, clientY: number) => {
+    const updateDragPreview = (
+      clientX: number,
+      clientY: number,
+      renderPreview = true
+    ) => {
       const deltaDays = Math.round((clientX - startX) / dayWidth)
       latestTarget = getMoveTarget(clientX, clientY)
       latestShift = {
@@ -344,6 +350,10 @@ export const DayCell = memo(function DayCell({
         exitDateKey: toDateKey(addUtcDays(originalExitDate, deltaDays)),
       }
       onMoveTripTargetChange?.(latestTarget?.employeeId ?? null)
+      if (!renderPreview) {
+        return
+      }
+
       setDragPreview({
         ...latestShift,
         left: sourceBlockLeft + deltaDays * dayWidth,
@@ -355,6 +365,35 @@ export const DayCell = memo(function DayCell({
       })
     }
 
+    const queueDragPreview = (clientX: number, clientY: number) => {
+      latestPointer = { clientX, clientY }
+
+      if (typeof window.requestAnimationFrame !== 'function') {
+        updateDragPreview(clientX, clientY)
+        return
+      }
+
+      if (previewFrame !== null) {
+        return
+      }
+
+      previewFrame = window.requestAnimationFrame(() => {
+        previewFrame = null
+        updateDragPreview(latestPointer.clientX, latestPointer.clientY)
+      })
+    }
+
+    const cancelQueuedPreview = () => {
+      if (
+        previewFrame !== null &&
+        typeof window.cancelAnimationFrame === 'function'
+      ) {
+        window.cancelAnimationFrame(previewFrame)
+      }
+
+      previewFrame = null
+    }
+
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const deltaX = moveEvent.clientX - startX
       const deltaY = moveEvent.clientY - startY
@@ -362,15 +401,22 @@ export const DayCell = memo(function DayCell({
 
       if (!isActive && distance < DRAG_ACTIVATION_DISTANCE) return
 
-      isActive = true
+      if (!isActive) {
+        isActive = true
+        suppressNextClickRef.current = true
+        updateDragPreview(moveEvent.clientX, moveEvent.clientY)
+        return
+      }
+
       suppressNextClickRef.current = true
-      updateDragPreview(moveEvent.clientX, moveEvent.clientY)
+      queueDragPreview(moveEvent.clientX, moveEvent.clientY)
     }
 
     const handlePointerUp = (upEvent: PointerEvent) => {
       window.removeEventListener('pointermove', handlePointerMove)
       window.removeEventListener('pointerup', handlePointerUp)
       window.removeEventListener('pointercancel', handlePointerUp)
+      cancelQueuedPreview()
       setDragPreview(null)
 
       if (!isActive) {
@@ -378,6 +424,7 @@ export const DayCell = memo(function DayCell({
         return
       }
 
+      updateDragPreview(upEvent.clientX, upEvent.clientY, false)
       const target = getMoveTarget(upEvent.clientX, upEvent.clientY) ?? latestTarget
       onMoveTripTargetChange?.(null)
 

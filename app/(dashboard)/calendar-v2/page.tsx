@@ -154,6 +154,33 @@ const getEmployeesWithTrips = cache(async (
     return (trips ?? []) as TripRow[]
   }
 
+  const getTripsInWindow = async (): Promise<TripRow[]> => {
+    const { data: trips, error: tripsError } = await supabase
+      .from('trips')
+      .select(`
+        id,
+        employee_id,
+        country,
+        entry_date,
+        exit_date,
+        purpose,
+        job_ref,
+        is_private,
+        ghosted
+      `)
+      .eq('ghosted', false)
+      .lte('entry_date', windowEndKey)
+      .gte('exit_date', windowStartKey)
+      .order('entry_date', { ascending: true })
+
+    if (tripsError) {
+      console.error('[CalendarV2] Error fetching trips:', tripsError)
+      throw new Error('Failed to fetch trips')
+    }
+
+    return (trips ?? []) as TripRow[]
+  }
+
   if (hideEmployeesWithoutSchengenTrips) {
     const { data: schengenTrips, error: schengenTripsError } = await supabase
       .from('trips')
@@ -228,8 +255,7 @@ const getEmployeesWithTrips = cache(async (
     return []
   }
 
-  const employeeIds = employees.map((employee) => employee.id)
-  const tripRows = await getTripsByEmployeeIds(employeeIds)
+  const tripRows = await getTripsInWindow()
 
   return mapEmployeesWithTrips((employees ?? []) as EmployeeRow[], tripRows)
 })
