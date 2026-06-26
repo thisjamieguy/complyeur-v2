@@ -80,8 +80,8 @@ export function SecuritySettings() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-blue-600" />
-            <CardTitle>Password & Authentication</CardTitle>
+            <Lock className="h-5 w-5 text-brand-500" aria-hidden="true" />
+            <CardTitle>Password &amp; authentication</CardTitle>
           </div>
           <CardDescription>
             Manage your password and sign-in methods
@@ -144,8 +144,8 @@ export function SecuritySettings() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-green-600" />
-            <CardTitle>Two-Factor Authentication (2FA)</CardTitle>
+            <Shield className="h-5 w-5 text-brand-500" aria-hidden="true" />
+            <CardTitle>Two-factor authentication (2FA)</CardTitle>
           </div>
           <CardDescription>
             Add an extra layer of security to your account

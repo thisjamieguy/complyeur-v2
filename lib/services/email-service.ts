@@ -874,7 +874,7 @@ export async function sendTrialExpiringEmail(data: TrialExpiringEmailData): Prom
   const { companyName, trialEndsAt, daysRemaining } = data
   const greeting = companyName ? `Hi ${companyName},` : 'Hi,'
   const expiryDate = trialEndsAt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
-  const upgradeUrl = `${APP_URL}/settings?section=general`
+  const upgradeUrl = `${APP_URL}/settings/billing`
   const daysLabel = daysRemaining === 1 ? 'tomorrow' : `in ${daysRemaining} days`
 
   const html = `
@@ -989,7 +989,7 @@ export async function sendUpcomingRenewalEmail(data: UpcomingRenewalEmailData): 
   const { companyName, planName, amountDue, renewsAt } = data
   const greeting = companyName ? `Hi ${companyName},` : 'Hi,'
   const renewalDate = renewsAt.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-  const billingUrl = `${APP_URL}/settings?section=general`
+  const billingUrl = `${APP_URL}/settings/billing`
 
   const html = `
 <!DOCTYPE html>
@@ -1124,7 +1124,7 @@ function getPaymentFailedPreviewText(attemptCount: number, amountDue: string): s
 
 function generatePaymentFailedEmailHtml(data: PaymentFailedEmailData): string {
   const { companyName, amountDue, attemptCount } = data
-  const billingUrl = `${APP_URL}/settings?section=general`
+  const billingUrl = `${APP_URL}/settings/billing`
   const previewText = getPaymentFailedPreviewText(attemptCount, amountDue)
 
   const isFinal = attemptCount >= 3
@@ -1194,7 +1194,7 @@ function generatePaymentFailedEmailHtml(data: PaymentFailedEmailData): string {
                 Update payment method
               </a>
               <p style="margin: 16px 0 0; color: #9ca3af; font-size: 13px;">
-                Or go to <a href="${billingUrl}" style="color: #6b7280;">${APP_URL}/settings</a> → Billing
+                Or go to <a href="${billingUrl}" style="color: #6b7280;">${APP_URL}/settings/billing</a>
               </p>
             </td>
           </tr>
@@ -1219,7 +1219,7 @@ function generatePaymentFailedEmailHtml(data: PaymentFailedEmailData): string {
 
 function generatePaymentFailedEmailText(data: PaymentFailedEmailData): string {
   const { companyName, amountDue, attemptCount } = data
-  const billingUrl = `${APP_URL}/settings?section=general`
+  const billingUrl = `${APP_URL}/settings/billing`
   const greeting = companyName ? `Hi ${companyName},` : 'Hi,'
 
   const bodyText = attemptCount >= 3

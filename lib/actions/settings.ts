@@ -138,7 +138,7 @@ export async function updateCompanySettings(
     return { success: false, error: 'Failed to save settings' }
   }
 
-  revalidatePath('/settings')
+  revalidatePath('/settings/company')
   revalidatePath('/dashboard')  // Revalidate dashboard to reflect new status thresholds
   revalidatePath('/calendar')
   return { success: true }
