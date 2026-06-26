@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
+import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
+import { validateRedirectUrl } from '@/lib/utils/redirect'
 
 /**
  * Auth callback route handler
@@ -12,7 +14,105 @@ import { createClient } from '@/lib/supabase/server'
  * For OAuth users, this also provisions their company/profile on first sign-in.
  */
 
-import { validateRedirectUrl } from '@/lib/utils/redirect'
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
+type CallbackOtpType = 'signup' | 'invite' | 'magiclink' | 'recovery' | 'email_change' | 'email'
+type CallbackSessionAttempt = (supabase: SupabaseServerClient) => Promise<string | undefined>
+
+const CALLBACK_OTP_TYPES = new Set<CallbackOtpType>([
+  'signup',
+  'invite',
+  'magiclink',
+  'recovery',
+  'email_change',
+  'email',
+])
+
+function parseCallbackOtpType(type: string | null): CallbackOtpType | null {
+  return CALLBACK_OTP_TYPES.has(type as CallbackOtpType)
+    ? (type as CallbackOtpType)
+    : null
+}
+
+function getAuthLinkErrorMessage(type: CallbackOtpType | null): string {
+  if (type === 'invite') {
+    return 'Invite link expired or invalid. Please ask your admin to resend the invitation.'
+  }
+
+  return 'Authentication link expired or invalid. Please request a new link.'
+}
+
+async function exchangeCallbackCode(
+  supabase: SupabaseServerClient,
+  code: string
+): Promise<string | undefined> {
+  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+  if (exchangeError) {
+    console.error('[auth/callback] Code exchange error:', exchangeError.message)
+
+    if (exchangeError.message?.includes('already registered')) {
+      return exchangeError.message
+    }
+
+    return 'Authentication failed. Please try again.'
+  }
+
+  return undefined
+}
+
+async function verifyCallbackToken(
+  supabase: SupabaseServerClient,
+  tokenHash: string,
+  otpType: CallbackOtpType
+): Promise<string | undefined> {
+  const { error: verifyError } = await supabase.auth.verifyOtp({
+    token_hash: tokenHash,
+    type: otpType,
+  })
+
+  if (verifyError) {
+    console.error('[auth/callback] Token verification error:', verifyError.message)
+    return getAuthLinkErrorMessage(otpType)
+  }
+
+  return undefined
+}
+
+function createCallbackSessionAttempt(
+  code: string | null,
+  tokenHash: string | null,
+  otpType: CallbackOtpType | null
+): CallbackSessionAttempt {
+  if (code) {
+    return (supabase) => exchangeCallbackCode(supabase, code)
+  }
+
+  if (tokenHash) {
+    if (!otpType) {
+      return async () => getAuthLinkErrorMessage(null)
+    }
+
+    return (supabase) => verifyCallbackToken(supabase, tokenHash, otpType)
+  }
+
+  return async () => undefined
+}
+
+async function resolveCallbackUser(
+  supabase: SupabaseServerClient,
+  establishCallbackSession: CallbackSessionAttempt
+): Promise<{ user: User | null; error?: string }> {
+  const authError = await establishCallbackSession(supabase)
+  if (authError) {
+    return { user: null, error: authError }
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  return { user }
+}
 
 /**
  * Extracts company name from email domain.
@@ -79,6 +179,8 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
 
   const code = searchParams.get('code')
+  const tokenHash = searchParams.get('token_hash')
+  const otpType = parseCallbackOtpType(searchParams.get('type'))
   const next = validateRedirectUrl(searchParams.get('next'))
 
   // Handle error responses from Supabase or OAuth provider
@@ -94,35 +196,26 @@ export async function GET(request: Request) {
     )
   }
 
-  if (!code) {
-    return NextResponse.redirect(`${origin}/login`)
-  }
-
   const supabase = await createClient()
+  const establishCallbackSession = createCallbackSessionAttempt(
+    code,
+    tokenHash,
+    otpType
+  )
 
-  // Exchange the code for a session
-  const { data: sessionData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+  const { user, error: authError } = await resolveCallbackUser(
+    supabase,
+    establishCallbackSession
+  )
 
-  if (exchangeError) {
-    console.error('[auth/callback] Code exchange error:', exchangeError.message)
-
-    // Check if this is an auth hook rejection
-    if (exchangeError.message?.includes('already registered')) {
-      return NextResponse.redirect(
-        `${origin}/login?error=${encodeURIComponent(exchangeError.message)}`
-      )
-    }
-
+  if (authError) {
     return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent('Authentication failed. Please try again.')}`
+      `${origin}/login?error=${encodeURIComponent(authError)}`
     )
   }
 
-  const user = sessionData?.user
   if (!user) {
-    return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent('Failed to authenticate. Please try again.')}`
-    )
+    return NextResponse.redirect(`${origin}/login`)
   }
 
   // Check if this is an OAuth user
