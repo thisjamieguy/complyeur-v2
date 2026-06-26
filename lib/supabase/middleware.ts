@@ -189,7 +189,7 @@ async function recoverProfileContextForAuthenticatedUser(
 
   return {
     companyId: createdCompanyId,
-    onboardingCompleted: false,
+    onboardingCompleted: true,
   }
 }
 

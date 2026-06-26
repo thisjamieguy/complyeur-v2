@@ -73,6 +73,39 @@ export function auditChangesForTierDelete(row: TierRow): TierFieldChange[] {
   return changes
 }
 
+export function entitlementUpdatesForTier(row: TierRow): Record<string, unknown> {
+  return {
+    max_employees: row.max_employees,
+    max_users: row.max_users,
+    can_export_csv: row.can_export_csv,
+    can_export_pdf: row.can_export_pdf,
+    can_forecast: row.can_forecast,
+    can_calendar: row.can_calendar,
+    can_bulk_import: row.can_bulk_import,
+    can_api_access: row.can_api_access,
+    can_sso: row.can_sso,
+    can_audit_logs: row.can_audit_logs,
+    updated_at: new Date().toISOString(),
+  }
+}
+
+export async function syncCompanyEntitlementsForTier(
+  supabase: SupabaseClient,
+  tier: TierRow
+): Promise<number> {
+  const { count, error } = await supabase
+    .from('company_entitlements')
+    .update(entitlementUpdatesForTier(tier), { count: 'exact' })
+    .eq('tier_slug', tier.slug)
+    .or('manual_override.is.null,manual_override.eq.false')
+
+  if (error) {
+    throw error
+  }
+
+  return count ?? 0
+}
+
 /**
  * Counts companies on a tier whose live usage exceeds proposed caps.
  * Skips each dimension when the proposed cap is {@link TIER_UNLIMITED_CAP}.

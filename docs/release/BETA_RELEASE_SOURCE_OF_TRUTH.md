@@ -11,6 +11,7 @@ private beta go/no-go decisions.
   only.
 
 Last updated: 2026-06-16
+Last updated: 2026-06-23
 Baseline commit reviewed: `08002bf chore: complete authenticated beta readiness checks`
 
 This is the single consolidated checklist for ComplyEur private beta launch
@@ -46,6 +47,10 @@ dashboard evidence is still required before claiming a 9/10 operational score.
 | Operations and recovery | Conditional for private beta | Recovery procedure is documented; public/internal production health is evidenced; no-PITR risk is accepted only for the initial private tester group. Restore-test evidence remains required before broader rollout. |
 | Legal and GDPR packaging | Conditional for private beta | DPA package is now repo-ready for legal/DPO review; approval and account-level provider evidence remain public-beta blockers. |
 | Monitoring and support | Conditional for private beta | Support ownership, public/internal health, private-beta Sentry issue-alert baseline, production monitoring first-run evidence, and production-like webhook alert-path evidence are now captured. |
+| Billing | In progress for paid/public beta | Live Stripe payment, price audit, webhook endpoint, and entitlement provisioning are evidenced; lifecycle failure-mode evidence still remains. |
+| Operations and recovery | Conditional for private beta | Recovery procedure is now documented; restore-test evidence still remains incomplete. |
+| Legal and GDPR packaging | Conditional for private beta | DPA remains draft; GDPR public release workplan still has public-release blockers. |
+| Monitoring and support | Conditional for private beta | Support ownership is evidenced; Sentry routing and public/internal health evidence remain open. Metrics ownership and zero-signup alert remain paid/public beta work. |
 
 ## 3. Final Go/No-Go Decision
 
@@ -152,6 +157,12 @@ Open checks:
 | Stripe price IDs and webhook endpoint | Complete for paid/public beta | Billing owner | Evidence stored in `docs/operations/evidence/stripe-verification/2026-06-16-stripe-price-webhook-verification.md`. |
 | Stripe lifecycle and replay evidence | Complete for paid/public beta | Billing owner | Evidence captured in `docs/operations/evidence/stripe-verification/2026-06-18-stripe-lifecycle-replay-reconciliation-testmode.md`. |
 | Billing support path | Important before paid/public beta | Support owner | Confirm payment-failure and subscription-question routing uses the monitored support path. |
+| Production Stripe price IDs | Complete for current production config | Billing owner | 2026-06-23 live audit passed for all six configured prices; re-run after any pricing change. |
+| Stripe webhook endpoint in target environment | Complete for current production endpoint | Billing owner | 2026-06-23 live check passed for `https://complyeur.com/api/billing/webhook`, including refund and dispute events; re-run after endpoint or event changes. |
+| Live successful checkout and entitlement provisioning | Complete for happy path | Billing owner | 2026-06-23 live GBP 1 discounted subscription payment processed and app entitlement provisioned. |
+| Stripe subscription reconciliation | Complete for current production subscriptions | Billing owner | 2026-06-23 reconciliation refreshed two active Stripe subscriptions and filled the tested checkout `current_period_end`; run `scripts/reconcileStripeSubscriptions.ts` after missed events. |
+| Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Deploy the updated handler, then capture webhook replay, stale-processing, out-of-order, failed-payment, cancellation, and post-deploy lifecycle evidence. |
+| Billing support path | Important before paid/public beta | Support owner | Refund and dispute alert code is in place; confirm delivery to the monitored billing/support mailbox after deploy. |
 
 ## 8. Auth And Account Checks
 
@@ -231,6 +242,8 @@ Release-critical known issues:
 
 - Stripe price IDs and the production webhook endpoint are verified.
 - Stripe lifecycle monitoring and reconciliation evidence are pending.
+- Stripe price IDs are synced and audited for current live billing.
+- Stripe lifecycle replay, failure-mode, cancellation, and post-deploy alert evidence remain pending.
 - Production signup email is evidenced for one tested path; multi-provider deliverability still needs Gmail, Outlook, and corporate inbox testing.
 - SPF/DKIM/DMARC setup is pending before paid/public launch.
 - Baseline branch protection is evidenced complete; expanded CodeQL/dependency-security workflow run evidence is pending.
@@ -282,6 +295,9 @@ deployed beta URL. The remaining manual checks include:
 | Stripe lifecycle and replay evidence | Complete for paid/public beta | Billing owner | Evidence captured in `docs/operations/evidence/stripe-verification/2026-06-18-stripe-lifecycle-replay-reconciliation-testmode.md`. |
 | DPA package legal approval | Critical before paid/public beta | Legal owner | Complete review of `docs/legal/DPA_TEMPLATE.md` and `docs/legal/DPA_READINESS.md`. |
 | SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure records, run `pnpm email:dns:check`, and verify delivered email headers. |
+| Stripe lifecycle and failure-mode evidence | Critical before paid/public beta | Billing owner | Capture replay, stale/out-of-order, failed-payment, cancellation, failed-webhook monitoring, reconciliation, and `current_period_end` evidence. |
+| DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review. |
+| SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure and verify DNS/email headers. |
 
 ## 16. High-Priority Non-Blockers
 

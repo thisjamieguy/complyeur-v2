@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { getAllBlogPosts } from '@/lib/blog'
+import { SITE_URL } from '@/lib/metadata'
 
 function formatDate(isoDate: string): string {
   return new Intl.DateTimeFormat('en-GB', {
@@ -30,9 +31,67 @@ export default async function BlogIndexPage() {
   const allKeywords = Array.from(
     new Set(posts.flatMap((post) => post.keywords.map((keyword) => keyword.toLowerCase())))
   )
+  const blogStructuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${SITE_URL}/blog#webpage`,
+        url: `${SITE_URL}/blog`,
+        name: 'Schengen compliance articles for office teams',
+        description:
+          'Practical articles about Schengen 90/180 compliance, EES border changes, and EU business travel risk management for UK companies.',
+        inLanguage: 'en-GB',
+        isPartOf: {
+          '@id': `${SITE_URL}/#website`,
+        },
+        about: allKeywords.slice(0, 12).map((keyword) => ({
+          '@type': 'Thing',
+          name: keyword,
+        })),
+        mainEntity: {
+          '@id': `${SITE_URL}/blog#article-list`,
+        },
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${SITE_URL}/blog#article-list`,
+        name: 'ComplyEur Schengen compliance articles',
+        itemListElement: posts.map((post, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          url: `${SITE_URL}/blog/${post.slug}`,
+          name: post.title,
+          description: post.description,
+        })),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': `${SITE_URL}/blog#breadcrumbs`,
+        itemListElement: [
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Home',
+            item: `${SITE_URL}/landing`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Blog',
+            item: `${SITE_URL}/blog`,
+          },
+        ],
+      },
+    ],
+  }
 
   return (
     <div className="bg-slate-50 py-12 sm:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogStructuredData) }}
+      />
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <header className="max-w-4xl">
           <p className="inline-flex rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-brand-700">Resources & insights</p>

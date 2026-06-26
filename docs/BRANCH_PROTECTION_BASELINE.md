@@ -19,6 +19,9 @@ Apply these settings in GitHub repository settings for `main`:
    - `validate` (from `.github/workflows/ci.yml`)
    - `tenant-isolation`
    - `e2e-baseline`
+   - Note: `tenant-isolation` and `e2e-baseline` remain required check names,
+     but the CI workflow may complete them as fast no-op checks when a pull
+     request does not touch files in their risk surface.
 3. Require branches to be up to date before merging.
 4. Require conversation resolution before merging.
 5. Enforce branch protection for administrators.

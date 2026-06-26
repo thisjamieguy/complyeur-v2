@@ -158,7 +158,7 @@ export async function GET(request: Request) {
     } else if (invitedCompanyId) {
       const refreshedProfile = await supabase
         .from('profiles')
-        .select('id, company_id')
+        .select('id, company_id, onboarding_completed_at')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -168,7 +168,10 @@ export async function GET(request: Request) {
         existingProfile = refreshedProfile.data
         // Sync to user_metadata so middleware can skip the profiles query
         await supabase.auth.updateUser({
-          data: { company_id: invitedCompanyId, onboarding_completed: false },
+          data: {
+            company_id: invitedCompanyId,
+            onboarding_completed: !!refreshedProfile.data?.onboarding_completed_at,
+          },
         })
       }
     }
@@ -210,7 +213,7 @@ export async function GET(request: Request) {
 
     // Sync to user_metadata so middleware can skip the profiles query
     await supabase.auth.updateUser({
-      data: { company_id: companyId, onboarding_completed: false },
+      data: { company_id: companyId, onboarding_completed: true },
     })
 
     isNewOAuthUser = true
@@ -227,9 +230,9 @@ export async function GET(request: Request) {
     console.warn('Failed to update last activity after auth callback:', activityError.message)
   }
 
-  // New OAuth users go to onboarding; returning users go to intended destination.
+  // New OAuth users now enter the product immediately on the default trial.
   const destination = isNewOAuthUser
-    ? '/onboarding'
+    ? '/dashboard'
     : next
   return NextResponse.redirect(`${origin}${destination}`)
 }

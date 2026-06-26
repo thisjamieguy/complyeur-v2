@@ -61,6 +61,15 @@ pnpm tsx scripts/auditStripePriceIds.ts --json
 
 ## 2) Configure/Validate Webhook Endpoint
 
+Required event set:
+
+- `checkout.session.completed`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.payment_failed`
+- `charge.refunded`
+- `charge.dispute.created`
+
 ### 2.1 Create or update endpoint
 ```bash
 pnpm tsx scripts/configureStripeWebhook.ts
@@ -141,3 +150,28 @@ This helper:
 
 If alert delivery is expected, attach the corresponding mailbox or dashboard
 proof to the generated evidence note.
+
+## 7) Reconcile Stripe Subscription State
+
+Use this after a webhook outage, missed event, or manual Stripe dashboard
+change. The script refreshes subscription status, current period end, and tier
+capabilities from Stripe for entitlements that still have a Stripe subscription
+ID. Cancelled subscriptions are downgraded to the free tier.
+
+Dry run:
+
+```bash
+pnpm tsx scripts/reconcileStripeSubscriptions.ts --dry-run
+```
+
+Apply:
+
+```bash
+pnpm tsx scripts/reconcileStripeSubscriptions.ts
+```
+
+Limit to one subscription:
+
+```bash
+pnpm tsx scripts/reconcileStripeSubscriptions.ts --subscription sub_...
+```

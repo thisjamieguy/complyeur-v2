@@ -2,6 +2,7 @@ import process from 'node:process'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database'
+import { getPlanBySlug } from '../lib/billing/plans'
 
 interface PriceAuditRecord {
   slug: string
@@ -29,6 +30,20 @@ function parseCliArgs(argv: string[]) {
 function formatMoney(amountMinor: number | null, currency: string | null): string {
   if (amountMinor === null || !currency) return 'n/a'
   return `${(amountMinor / 100).toFixed(2)} ${currency.toUpperCase()}`
+}
+
+function expectedPriceForTier(
+  slug: string,
+  interval: 'monthly' | 'annual'
+): { amountMinor: number; currency: 'gbp'; stripeInterval: 'month' | 'year' } | null {
+  const plan = getPlanBySlug(slug)
+  if (!plan) return null
+
+  return {
+    amountMinor: (interval === 'monthly' ? plan.monthlyPriceGbp : plan.annualPriceGbp) * 100,
+    currency: 'gbp',
+    stripeInterval: interval === 'monthly' ? 'month' : 'year',
+  }
 }
 
 async function auditStripePriceIds(): Promise<PriceAuditRecord[]> {
@@ -69,14 +84,53 @@ async function auditStripePriceIds(): Promise<PriceAuditRecord[]> {
 
       try {
         const price = await stripe.prices.retrieve(check.priceId)
+        const expected = expectedPriceForTier(tier.slug, check.interval)
+        if (!expected) {
+          records.push({
+            slug: tier.slug,
+            interval: check.interval,
+            priceId: check.priceId,
+            valid: false,
+            detail: 'No matching local plan catalog entry',
+          })
+          continue
+        }
+
         const recurringInterval = price.recurring?.interval ?? 'one_time'
-        const amount = formatMoney(price.unit_amount, price.currency)
+        const intervalCount = price.recurring?.interval_count ?? 0
+        const actualAmount = formatMoney(price.unit_amount, price.currency)
+        const expectedAmount = formatMoney(expected.amountMinor, expected.currency)
+        const issues: string[] = []
+
+        if (!price.active) {
+          issues.push('price is inactive')
+        }
+
+        if (price.unit_amount !== expected.amountMinor) {
+          issues.push(`amount expected ${expectedAmount}, got ${actualAmount}`)
+        }
+
+        if (price.currency !== expected.currency) {
+          issues.push(`currency expected ${expected.currency.toUpperCase()}, got ${price.currency.toUpperCase()}`)
+        }
+
+        if (recurringInterval !== expected.stripeInterval) {
+          issues.push(`interval expected ${expected.stripeInterval}, got ${recurringInterval}`)
+        }
+
+        if (intervalCount !== 1) {
+          issues.push(`interval_count expected 1, got ${intervalCount}`)
+        }
+
         records.push({
           slug: tier.slug,
           interval: check.interval,
           priceId: check.priceId,
-          valid: true,
-          detail: `ok (${amount}, ${recurringInterval}, active=${price.active})`,
+          valid: issues.length === 0,
+          detail:
+            issues.length > 0
+              ? issues.join('; ')
+              : `ok (${actualAmount}, ${recurringInterval}, active=${price.active})`,
         })
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown Stripe error'

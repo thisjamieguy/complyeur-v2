@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type Stripe from 'stripe'
-import { constructWebhookEvent } from '@/lib/billing/stripe'
+import { constructWebhookEvent, getStripe } from '@/lib/billing/stripe'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { sendPaymentFailedEmail } from '@/lib/services/email-service'
+import {
+  sendBillingIncidentEmail,
+  sendPaymentFailedEmail,
+} from '@/lib/services/email-service'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -13,6 +16,8 @@ const HANDLED_EVENT_TYPES = new Set<string>([
   'customer.subscription.updated',
   'customer.subscription.deleted',
   'invoice.payment_failed',
+  'charge.refunded',
+  'charge.dispute.created',
 ])
 
 type WebhookLogStatus = 'processing' | 'processed' | 'failed'
@@ -119,6 +124,12 @@ async function processWebhookEvent(admin: SupabaseClient, event: Stripe.Event) {
       return
     case 'invoice.payment_failed':
       await handlePaymentFailed(admin, event.data.object as Stripe.Invoice)
+      return
+    case 'charge.refunded':
+      await handleChargeRefunded(admin, event.id, event.data.object as Stripe.Charge)
+      return
+    case 'charge.dispute.created':
+      await handleDisputeCreated(admin, event.id, event.data.object as Stripe.Dispute)
       return
     default:
       return
@@ -234,6 +245,19 @@ async function findEntitlementForSubscriptionEvent(
         matchValue: company.id,
       }
     : null
+}
+
+function formatStripeAmount(amountMinor: number | null | undefined, currency: string | null | undefined): string {
+  if (amountMinor === null || amountMinor === undefined || !currency) {
+    return 'n/a'
+  }
+
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amountMinor / 100)
 }
 
 async function claimWebhookEvent(
@@ -491,6 +515,11 @@ async function handleCheckoutCompleted(admin: SupabaseClient, event: Stripe.Even
     throw new Error(`Unknown tier slug: ${planSlug}`)
   }
 
+  const subscription = await getStripe().subscriptions.retrieve(subscriptionId)
+  const currentPeriodEnd = subscription.items.data[0]?.current_period_end
+    ? new Date(subscription.items.data[0].current_period_end * 1000).toISOString()
+    : null
+
   const { error: updateError } = await admin
     .from('company_entitlements')
     .update({
@@ -499,6 +528,7 @@ async function handleCheckoutCompleted(admin: SupabaseClient, event: Stripe.Even
       trial_ends_at: null,
       stripe_subscription_id: subscriptionId,
       subscription_status: 'active',
+      current_period_end: currentPeriodEnd,
       max_employees: tier.max_employees,
       max_users: tier.max_users,
       can_export_csv: tier.can_export_csv,
@@ -729,5 +759,77 @@ async function handlePaymentFailed(admin: SupabaseClient, invoice: Stripe.Invoic
     companyName: company.name ?? undefined,
     amountDue,
     attemptCount,
+  })
+}
+
+async function findCompanyByStripeCustomerId(
+  admin: SupabaseClient,
+  customerId: string | null
+): Promise<{ name: string | null } | null> {
+  if (!customerId) return null
+
+  const { data: company, error } = await admin
+    .from('companies')
+    .select('name')
+    .eq('stripe_customer_id', customerId)
+    .maybeSingle()
+
+  if (error) {
+    console.error('[billing/webhook] Could not find company for billing incident', {
+      customerId,
+      error,
+    })
+    return null
+  }
+
+  return company ?? null
+}
+
+async function handleChargeRefunded(
+  admin: SupabaseClient,
+  stripeEventId: string,
+  charge: Stripe.Charge
+) {
+  const customerId =
+    typeof charge.customer === 'string'
+      ? charge.customer
+      : charge.customer?.id ?? null
+  const company = await findCompanyByStripeCustomerId(admin, customerId)
+
+  await sendBillingIncidentEmail({
+    incidentType: 'refund',
+    stripeEventId,
+    stripeObjectId: charge.id,
+    amount: formatStripeAmount(charge.amount_refunded, charge.currency),
+    customerId,
+    companyName: company?.name ?? null,
+  })
+}
+
+async function handleDisputeCreated(
+  admin: SupabaseClient,
+  stripeEventId: string,
+  dispute: Stripe.Dispute
+) {
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id
+  let customerId: string | null = null
+
+  if (chargeId) {
+    const charge = await getStripe().charges.retrieve(chargeId)
+    customerId =
+      typeof charge.customer === 'string'
+        ? charge.customer
+        : charge.customer?.id ?? null
+  }
+
+  const company = await findCompanyByStripeCustomerId(admin, customerId)
+
+  await sendBillingIncidentEmail({
+    incidentType: 'dispute',
+    stripeEventId,
+    stripeObjectId: dispute.id,
+    amount: formatStripeAmount(dispute.amount, dispute.currency),
+    customerId,
+    companyName: company?.name ?? null,
   })
 }
