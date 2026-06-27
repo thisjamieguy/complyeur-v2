@@ -27,3 +27,32 @@ Security work in ComplyEur must favor explicit boundaries, least privilege, and 
 - Prefer maintained packages already present in the repo.
 - Run the existing security checks before changing auth, billing, import, or compliance code.
 - Treat old audit findings as historical until verified against current dependencies and code.
+
+## Pre-Deploy Security Checklist
+
+- [ ] No `service_role` key in frontend code
+- [ ] RLS policies on all tables
+- [ ] Environment variables not in Git
+- [ ] TypeScript compiles without errors
+- [ ] No `console.log` with sensitive data
+
+## Content Security Policy
+
+When adding new third-party services, update CSP headers:
+
+```typescript
+// vercel.json or middleware
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net *.supabase.co; connect-src 'self' *.supabase.co"
+        }
+      ]
+    }
+  ]
+}
+```
