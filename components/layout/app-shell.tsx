@@ -22,7 +22,7 @@ interface AppShellProps {
 function AppShellContent({ children, user }: AppShellProps) {
   const { isOpen } = useSidebar()
   const pathname = usePathname()
-  const usesWideWorkspace = pathname === '/calendar-v2'
+  const usesWideWorkspace = pathname === '/calendar' || pathname === '/calendar-v2'
 
   return (
     <div className="flex min-h-screen bg-slate-50">

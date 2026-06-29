@@ -76,7 +76,6 @@ function runAlertDetectionBackground(employeeId: string): void {
 function revalidateTripData(employeeId?: string): void {
   revalidatePath('/dashboard')
   revalidatePath('/calendar')
-  revalidatePath('/calendar-v2')
   if (employeeId) {
     revalidatePath(`/employee/${employeeId}`)
   }

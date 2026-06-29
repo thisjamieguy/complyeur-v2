@@ -186,7 +186,7 @@ async function ensureAuthenticated(page: Page): Promise<boolean> {
   }
 
   await installSupabaseSessionCookie(page, supabaseUrl, data.session);
-  await page.goto('/calendar-v2', { waitUntil: 'domcontentloaded' });
+  await page.goto('/calendar', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle').catch(() => {});
 
   return !page.url().includes('/login');
