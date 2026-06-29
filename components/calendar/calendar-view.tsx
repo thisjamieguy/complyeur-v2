@@ -94,6 +94,7 @@ const DAYS_BACK = 200
 
 /** Default weeks forward */
 const DEFAULT_WEEKS_FORWARD = 6
+const COMPLIANCE_LIMIT_DAYS = 90
 
 interface DbTrip {
   id: string
@@ -129,6 +130,40 @@ type TripDateOverride = { entry_date: string; exit_date: string }
 interface ProcessedEmployeeCacheEntry {
   cacheKey: string
   employee: ProcessedEmployee
+}
+
+interface CalendarRiskSummary {
+  clear: number
+  warning: number
+  critical: number
+  breach: number
+}
+
+function getCalendarRiskSummary(
+  employees: ProcessedEmployee[]
+): CalendarRiskSummary {
+  return employees.reduce<CalendarRiskSummary>(
+    (summary, employee) => {
+      if (employee.currentDaysRemaining < 0) {
+        summary.breach += 1
+        return summary
+      }
+
+      if (employee.currentRiskLevel === 'red') {
+        summary.critical += 1
+        return summary
+      }
+
+      if (employee.currentRiskLevel === 'amber') {
+        summary.warning += 1
+        return summary
+      }
+
+      summary.clear += 1
+      return summary
+    },
+    { clear: 0, warning: 0, critical: 0, breach: 0 }
+  )
 }
 
 /**
@@ -791,6 +826,13 @@ export function CalendarView({
 
     return nextEmployees
   }, [filteredEmployees, startDate, endDate, startDateKey, endDateKey, tripDateOverrides])
+  const riskSummary = useMemo(
+    () => getCalendarRiskSummary(processedEmployees),
+    [processedEmployees]
+  )
+  const visibleEmployeeLabel = `${processedEmployees.length} ${
+    processedEmployees.length === 1 ? 'employee' : 'employees'
+  }`
 
   if (processedEmployees.length === 0) {
     if (!shouldApplySchengenFilter) {
@@ -851,7 +893,7 @@ export function CalendarView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {interactive && (
         <>
           <InteractiveTripEditor
@@ -941,70 +983,98 @@ export function CalendarView({
         </>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-slate-900">Calendar filters</p>
-            <p className="text-xs text-slate-500">
-              Showing {processedEmployees.length}{' '}
-              {processedEmployees.length === 1 ? 'employee' : 'employees'}
-              {isPending ? ' · refreshing…' : ' · saved for your next visit'}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Switch
-              id="calendar-hide-no-schengen"
-              checked={hideEmployeesWithoutSchengenTrips}
-              onCheckedChange={updateHideEmployeesWithoutSchengenTrips}
-              disabled={isPending}
-            />
-            <Label
-              htmlFor="calendar-hide-no-schengen"
-              className="cursor-pointer text-sm text-slate-700"
-            >
-              Only show employees with Schengen trips
-            </Label>
-          </div>
-        </div>
-      </div>
-
       {/* Desktop view - Gantt chart */}
       <div className="hidden md:block">
-        <Card className="rounded-xl overflow-hidden border-slate-200 shadow-sm">
-          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pb-4 bg-slate-50/70 border-b border-slate-100">
-            <div className="space-y-2">
-              <h2 className="text-sm font-semibold tracking-wide text-slate-700 uppercase">
-                Travel Timeline
-              </h2>
-              <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-sm border border-sky-300 bg-sky-50/70" />
-                  180-day window
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-sm border border-slate-300 bg-slate-100" />
-                  weekend
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-sm border border-blue-300 bg-blue-50" />
-                  today
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-3 w-px bg-slate-400" />
-                  month boundary
-                </span>
+        <Card className="h-[calc(100vh-13rem)] min-h-[560px] gap-0 overflow-hidden rounded-xl border-slate-200 py-0 shadow-sm">
+          <CardHeader className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/70 p-4">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0 space-y-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+                    Travel Timeline
+                  </h2>
+                  <span className="text-xs text-slate-500">
+                    Showing {visibleEmployeeLabel}
+                    {isPending ? ' · refreshing…' : ' · saved for your next visit'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-emerald-800 ring-1 ring-emerald-200">
+                    <span className="size-2 rounded-full bg-emerald-500" />
+                    {riskSummary.clear} clear
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-1 text-amber-900 ring-1 ring-amber-200">
+                    <span className="size-2 rounded-full bg-amber-500" />
+                    {riskSummary.warning} warning
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2 py-1 text-rose-800 ring-1 ring-rose-200">
+                    <span className="size-2 rounded-full bg-rose-500" />
+                    {riskSummary.critical} critical
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-700 px-2 py-1 text-white ring-1 ring-rose-800">
+                    <span className="size-2 rounded-full bg-white/90" />
+                    {riskSummary.breach} breach
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+                <RangeSelector value={weeksForward} onChange={setWeeksForward} />
+                {interactive && (
+                  <ZoomControls value={zoomLevel} onChange={setZoomLevel} />
+                )}
+                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                  <Switch
+                    id="calendar-hide-no-schengen"
+                    checked={hideEmployeesWithoutSchengenTrips}
+                    onCheckedChange={updateHideEmployeesWithoutSchengenTrips}
+                    disabled={isPending}
+                  />
+                  <Label
+                    htmlFor="calendar-hide-no-schengen"
+                    className="cursor-pointer whitespace-nowrap text-xs font-medium text-slate-700"
+                  >
+                    Only show employees with Schengen trips
+                  </Label>
+                </div>
               </div>
             </div>
-            <RangeSelector value={weeksForward} onChange={setWeeksForward} />
-            {interactive && (
-              <ZoomControls value={zoomLevel} onChange={setZoomLevel} />
-            )}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-slate-600">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-6 rounded-full bg-sky-100 ring-1 ring-sky-300" />
+                180-day window
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-6 rounded-full bg-slate-200 ring-1 ring-slate-300" />
+                weekend
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-6 rounded-full bg-blue-100 ring-1 ring-blue-300" />
+                today
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-3 w-px bg-slate-500" />
+                month boundary
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-6 rounded-full bg-emerald-100 ring-1 ring-emerald-300" />
+                {COMPLIANCE_LIMIT_DAYS}-day risk clear
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-6 rounded-full bg-amber-100 ring-1 ring-amber-300" />
+                warning
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-6 rounded-full bg-rose-100 ring-1 ring-rose-300" />
+                critical
+              </span>
+            </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="min-h-0 flex-1 p-0">
             <GanttChart
               employees={processedEmployees}
               dates={dates}
               dayWidth={CALENDAR_ZOOM_WIDTHS[zoomLevel]}
+              className="h-full"
               interactive={interactive}
               onCreateTrip={interactive ? openCreateTrip : undefined}
               onEditTrip={interactive ? openEditTrip : undefined}
@@ -1027,7 +1097,34 @@ export function CalendarView({
       </div>
 
       {/* Mobile view - simplified list */}
-      <div className="md:hidden">
+      <div className="space-y-3 md:hidden">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-900">
+                Showing {visibleEmployeeLabel}
+              </p>
+              <p className="text-xs text-slate-500">
+                {riskSummary.warning + riskSummary.critical + riskSummary.breach} employees need review
+                {isPending ? ' · refreshing…' : ' · saved for your next visit'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <Label
+                htmlFor="calendar-hide-no-schengen-mobile"
+                className="cursor-pointer text-sm text-slate-700"
+              >
+                Schengen trips only
+              </Label>
+              <Switch
+                id="calendar-hide-no-schengen-mobile"
+                checked={hideEmployeesWithoutSchengenTrips}
+                onCheckedChange={updateHideEmployeesWithoutSchengenTrips}
+                disabled={isPending}
+              />
+            </div>
+          </div>
+        </div>
         <MobileCalendarView employees={processedEmployees} />
       </div>
     </div>

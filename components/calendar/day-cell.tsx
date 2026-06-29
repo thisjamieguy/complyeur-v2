@@ -10,6 +10,7 @@ import {
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { addUtcDays, differenceInUtcDays } from '@/lib/compliance/date-utils'
+import { getCountryName } from '@/lib/constants/schengen-countries'
 import {
   Popover,
   PopoverContent,
@@ -25,7 +26,7 @@ import type {
 } from './types'
 
 /** Fixed height for each grid row */
-export const GRID_ROW_HEIGHT = 32
+export const GRID_ROW_HEIGHT = 40
 const DRAG_ACTIVATION_DISTANCE = 6
 
 interface DayCellProps {
@@ -77,49 +78,49 @@ interface DayCellProps {
 
 const schengenTripStyles = {
   green: {
-    base: 'bg-green-100',
-    weekend: 'bg-green-200/70',
-    text: 'text-green-800',
-    hover: 'hover:bg-green-200/80',
-    border: 'border-green-300',
+    base: 'bg-emerald-100',
+    weekend: 'bg-emerald-200/70',
+    text: 'text-emerald-900',
+    hover: 'hover:bg-emerald-200/80',
+    border: 'border-emerald-300',
   },
   amber: {
     base: 'bg-amber-100',
     weekend: 'bg-amber-200/70',
-    text: 'text-amber-800',
+    text: 'text-amber-900',
     hover: 'hover:bg-amber-200/80',
     border: 'border-amber-300',
   },
   red: {
-    base: 'bg-red-100',
-    weekend: 'bg-red-200/70',
-    text: 'text-red-800',
-    hover: 'hover:bg-red-200/80',
-    border: 'border-red-300',
+    base: 'bg-rose-100',
+    weekend: 'bg-rose-200/70',
+    text: 'text-rose-900',
+    hover: 'hover:bg-rose-200/80',
+    border: 'border-rose-300',
   },
   breach: {
-    base: 'bg-slate-700',
-    weekend: 'bg-slate-800/90',
+    base: 'bg-rose-700',
+    weekend: 'bg-rose-800/90',
     text: 'text-white',
-    hover: 'hover:bg-slate-800',
-    border: 'border-slate-500',
+    hover: 'hover:bg-rose-800',
+    border: 'border-rose-800',
   },
 } as const
 
 const historicalTripStyles = {
-  base: 'bg-slate-100',
-  weekend: 'bg-slate-200/60',
-  text: 'text-slate-600',
-  hover: 'hover:bg-slate-200/80',
+  base: 'bg-slate-200/75',
+  weekend: 'bg-slate-300/60',
+  text: 'text-slate-700',
+  hover: 'hover:bg-slate-300/75',
   border: 'border-slate-300',
 } as const
 
 const nonSchengenTripStyles = {
-  base: 'bg-slate-100',
-  weekend: 'bg-slate-200/60',
-  text: 'text-slate-600',
-  hover: 'hover:bg-slate-200/80',
-  border: 'border-slate-300',
+  base: 'bg-indigo-50',
+  weekend: 'bg-indigo-100/70',
+  text: 'text-indigo-800',
+  hover: 'hover:bg-indigo-100/80',
+  border: 'border-indigo-200',
 } as const
 
 /**
@@ -165,11 +166,14 @@ export const DayCell = memo(function DayCell({
     width: number
   } | null>(null)
   const trip = tripDay?.trip
-  const showCountryLabel = Boolean(tripDay && isTripStart && dayWidth >= 24)
+  const showCountryLabel = Boolean(tripDay && isTripStart && dayWidth >= 16)
   const cellContent = showCountryLabel
     ? trip?.isPrivate
-      ? '--'
+      ? 'PR'
       : trip?.country
+    : null
+  const tripTitle = trip
+    ? `${trip.isPrivate ? 'Private' : getCountryName(trip.rawCountry)} trip`
     : null
 
   const baseCls = cn(
@@ -177,13 +181,13 @@ export const DayCell = memo(function DayCell({
     // Empty cells
     !trip && !isToday && !isWeekend && !isInRollingWindow && 'bg-white',
     !trip && !isToday && !isWeekend && isInRollingWindow && 'bg-sky-50/40',
-    !trip && isWeekend && !isToday && !isInRollingWindow && 'bg-slate-50',
-    !trip && isWeekend && !isToday && isInRollingWindow && 'bg-sky-50/55',
-    !trip && isToday && 'bg-blue-50',
+    !trip && isWeekend && !isToday && !isInRollingWindow && 'bg-slate-100/70',
+    !trip && isWeekend && !isToday && isInRollingWindow && 'bg-sky-100/55',
+    !trip && isToday && 'bg-blue-100/80',
     !trip && isRowHovered && 'bg-slate-100/70',
-    isMonthStart && !(trip && !isTripStart) && 'border-l border-l-slate-300/80',
+    isMonthStart && !(trip && !isTripStart) && 'border-l border-l-slate-400/80',
     // Today's travel cells should preserve trip color while still standing out
-    trip && isToday && 'ring-1 ring-inset ring-blue-300',
+    trip && isToday && 'ring-2 ring-inset ring-blue-300',
     trip && isRowHovered && 'ring-1 ring-inset ring-slate-200/80',
     // Make trip bars solid — no internal borders
     trip && !isTripEnd && 'border-r-0',
@@ -196,7 +200,9 @@ export const DayCell = memo(function DayCell({
     ? tripDay?.displayMode === 'historical'
       ? historicalTripStyles
       : trip.isSchengen
-      ? schengenTripStyles[tripDay?.riskLevel ?? 'green']
+      ? tripDay?.isBreachDay
+        ? schengenTripStyles.breach
+        : schengenTripStyles[tripDay?.riskLevel ?? 'green']
       : nonSchengenTripStyles
     : null
 
@@ -519,13 +525,14 @@ export const DayCell = memo(function DayCell({
             )}
             style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
             aria-label={`${trip.country} trip on ${format(date, 'MMM d')}`}
+            title={tripTitle ?? undefined}
             onPointerDown={startDrag}
             onClick={handleTripClick}
             onContextMenu={(event) => openContextMenu(event, trip)}
           >
             <span
               className={cn(
-                'text-[10px] font-semibold leading-none tracking-wide',
+                'max-w-full truncate px-1 text-[10px] font-semibold leading-none',
                 tripStyles?.text ?? (isToday ? 'text-blue-700' : 'text-slate-600')
               )}
             >
@@ -578,7 +585,7 @@ export const DayCell = memo(function DayCell({
         <div
           aria-hidden="true"
           data-testid="trip-drag-preview"
-          className="pointer-events-none fixed z-50 flex items-center rounded-md border border-sky-400 bg-sky-100/65 px-2 text-[10px] font-semibold tracking-wide text-sky-900 shadow-lg ring-2 ring-sky-300/50 backdrop-blur-[1px]"
+          className="pointer-events-none fixed z-50 flex items-center rounded-md border border-sky-400 bg-white/80 px-2 text-[10px] font-semibold text-sky-900 shadow-xl ring-2 ring-sky-300/60 backdrop-blur-[2px]"
           style={{
             left: dragPreview.left,
             top: dragPreview.top,

@@ -104,7 +104,7 @@ export const DateHeader = memo(function DateHeader({
       <div className="relative border-b border-slate-100" style={{ height: WINDOW_INDICATOR_HEIGHT }}>
         {rollingWindowBounds && (
           <div
-            className="absolute top-[2px] bottom-[2px] rounded-md bg-sky-100/70 border border-sky-300/80 flex items-center justify-center"
+            className="absolute top-[2px] bottom-[2px] rounded-md border border-sky-300/80 bg-sky-100/80 flex items-center justify-center"
             style={{
               left: rollingWindowBounds.startIndex * dayWidth,
               width: rollingWindowBounds.span * dayWidth,
@@ -163,10 +163,10 @@ export const DateHeader = memo(function DateHeader({
             key={dm.key}
             className={cn(
               'shrink-0 flex items-center justify-center bg-slate-50/70',
-              dm.isWeekend && 'bg-slate-100/80',
+              dm.isWeekend && 'bg-slate-100',
               dm.isInRollingWindow && !dm.isWeekend && 'bg-sky-50/45',
-              dm.isInRollingWindow && dm.isWeekend && 'bg-sky-50/60',
-              dm.isMonthStart && 'border-l border-l-slate-300/80'
+              dm.isInRollingWindow && dm.isWeekend && 'bg-sky-100/55',
+              dm.isMonthStart && 'border-l border-l-slate-400/80'
             )}
             style={{ width: dayWidth, height: 20 }}
           >
@@ -191,10 +191,10 @@ export const DateHeader = memo(function DateHeader({
               'shrink-0 flex items-center justify-center',
               !dm.isToday && !dm.isWeekend && 'bg-white',
               !dm.isToday && dm.isInRollingWindow && !dm.isWeekend && 'bg-sky-50/40',
-              !dm.isToday && dm.isWeekend && 'bg-slate-50/80',
-              !dm.isToday && dm.isWeekend && dm.isInRollingWindow && 'bg-sky-50/55',
-              dm.isMonthStart && 'border-l border-l-slate-300/80',
-              dm.isToday && 'bg-blue-50',
+              !dm.isToday && dm.isWeekend && 'bg-slate-100/70',
+              !dm.isToday && dm.isWeekend && dm.isInRollingWindow && 'bg-sky-100/55',
+              dm.isMonthStart && 'border-l border-l-slate-400/80',
+              dm.isToday && 'bg-blue-100/80 ring-1 ring-inset ring-blue-300',
               dm.isRollingWindowStart && 'border-l border-l-sky-400',
               dm.isRollingWindowEnd && 'border-r border-r-sky-400'
             )}

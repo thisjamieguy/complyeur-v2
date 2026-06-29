@@ -309,6 +309,10 @@ describe('CalendarView', () => {
     )
 
     expect(screen.getByRole('group', { name: /calendar zoom/i })).toBeInTheDocument()
+    expect(screen.queryByText('Calendar filters')).not.toBeInTheDocument()
+    expect(screen.getAllByText(/showing 1 employee/i)).toHaveLength(2)
+    expect(screen.getByText(/1 clear/i)).toBeInTheDocument()
+    expect(screen.getByRole('switch', { name: /schengen trips only/i })).toBeInTheDocument()
     expect(getDesktopProps()).toMatchObject({
       employees: [
         expect.objectContaining({

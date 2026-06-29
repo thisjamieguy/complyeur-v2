@@ -503,8 +503,8 @@ describe('DayCell', () => {
     renderCell(tripDay)
 
     const trigger = screen.getByRole('button', { name: /FR trip on Mar 8/i })
-    expect(trigger).toHaveClass('bg-slate-100')
-    expect(trigger).not.toHaveClass('bg-red-100')
+    expect(trigger).toHaveClass('bg-slate-200/75')
+    expect(trigger).not.toHaveClass('bg-rose-100')
 
     fireEvent.click(trigger)
 

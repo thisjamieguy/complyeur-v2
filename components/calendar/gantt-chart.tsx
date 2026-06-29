@@ -58,13 +58,10 @@ export interface DateMeta {
 }
 
 /** Width of employee name column */
-const NAME_COLUMN_WIDTH = 160
+const NAME_COLUMN_WIDTH = 224
 
 /** Height of 180-day window indicator row */
 const WINDOW_INDICATOR_HEIGHT = 18
-
-/** Max height of the scrollable area */
-const MAX_HEIGHT = 600
 
 /** Baseline extra rows to render above/below viewport */
 const BASE_OVERSCAN = 12
@@ -81,12 +78,60 @@ const FAST_SCROLL_VELOCITY_THRESHOLD = 1.1
 
 /** Emit scroll metrics in smaller batches so short-but-real scroll sessions are captured. */
 const SCROLL_METRIC_BATCH_SIZE = 10
+const COMPLIANCE_LIMIT_DAYS = 90
+
+const employeeRiskStyles: Record<
+  ProcessedEmployee['currentRiskLevel'],
+  { dot: string; badge: string; avatar: string }
+> = {
+  green: {
+    dot: 'bg-emerald-500',
+    badge: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+    avatar: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  },
+  amber: {
+    dot: 'bg-amber-500',
+    badge: 'bg-amber-50 text-amber-900 ring-amber-200',
+    avatar: 'border-amber-200 bg-amber-50 text-amber-900',
+  },
+  red: {
+    dot: 'bg-rose-500',
+    badge: 'bg-rose-50 text-rose-800 ring-rose-200',
+    avatar: 'border-rose-200 bg-rose-50 text-rose-800',
+  },
+  breach: {
+    dot: 'bg-rose-700',
+    badge: 'bg-rose-700 text-white ring-rose-800',
+    avatar: 'border-rose-700 bg-rose-700 text-white',
+  },
+}
+
+function getEmployeeInitials(name: string): string {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (parts.length === 0) {
+    return '?'
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('')
+}
+
+function getDaysUsed(employee: ProcessedEmployee): number {
+  return Math.max(0, COMPLIANCE_LIMIT_DAYS - employee.currentDaysRemaining)
+}
 
 interface GanttChartProps {
   employees: ProcessedEmployee[]
   dates: Date[]
   dayWidth: number
   interactive?: boolean
+  className?: string
   onCreateTrip?: (params: {
     employeeId: string
     employeeName: string
@@ -307,6 +352,7 @@ export const GanttChart = memo(function GanttChart({
   onPasteTrip,
   onToggleTripPrivacy,
   onOpenEmployeeProfile,
+  className,
 }: GanttChartProps) {
   const [overscan, setOverscan] = useState(BASE_OVERSCAN)
   const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(null)
@@ -541,7 +587,7 @@ export const GanttChart = memo(function GanttChart({
   }, [visibleRows, dates.length, employees.length])
 
   return (
-    <div className="flex">
+    <div className={cn('flex h-full min-h-[420px]', className)}>
       {hasContextMenuActions && (
         <CalendarGridContextMenu
           contextMenu={contextMenu}
@@ -563,7 +609,7 @@ export const GanttChart = memo(function GanttChart({
 
       {/* Fixed left column — employee names (no horizontal scroll) */}
       <div
-        className="shrink-0 bg-slate-50/80 border-r border-slate-200 z-20"
+        className="z-20 flex h-full shrink-0 flex-col border-r border-slate-200 bg-slate-50/80"
         style={{ width: NAME_COLUMN_WIDTH }}
       >
         {/* Header placeholder — must match 4-row DateHeader height */}
@@ -586,8 +632,8 @@ export const GanttChart = memo(function GanttChart({
         <div
           ref={namesScrollRef}
           data-testid="calendar-names-viewport"
-          className="overflow-y-hidden overflow-x-hidden"
-          style={{ maxHeight: MAX_HEIGHT, contain: 'layout paint' }}
+          className="min-h-0 flex-1 overflow-x-hidden overflow-y-hidden"
+          style={{ contain: 'layout paint' }}
         >
           <div className="relative" style={{ height: totalHeight }}>
             {virtualRows.map((virtualRow) => {
@@ -596,7 +642,7 @@ export const GanttChart = memo(function GanttChart({
                 <div
                   key={employee.id}
                   className={cn(
-                    'absolute left-0 w-full px-3 border-b border-slate-100 flex items-center transition-colors',
+                    'absolute left-0 flex w-full items-center border-b border-slate-100 px-3 transition-colors',
                     dropTargetEmployeeId === employee.id
                       ? 'bg-sky-100/70'
                       : hoveredEmployeeId === employee.id
@@ -618,9 +664,40 @@ export const GanttChart = memo(function GanttChart({
                   data-employee-id={employee.id}
                   data-employee-name={employee.name}
                 >
-                  <span className="text-sm font-medium text-slate-700 truncate">
-                    {employee.name}
-                  </span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold',
+                        employeeRiskStyles[employee.currentRiskLevel].avatar
+                      )}
+                    >
+                      {getEmployeeInitials(employee.name)}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'size-2 shrink-0 rounded-full',
+                            employeeRiskStyles[employee.currentRiskLevel].dot
+                          )}
+                        />
+                        <span className="truncate text-sm font-medium text-slate-800">
+                          {employee.name}
+                        </span>
+                      </div>
+                      <span
+                        className={cn(
+                          'mt-0.5 inline-flex rounded-full px-1.5 py-px text-[10px] font-semibold leading-none ring-1',
+                          employeeRiskStyles[employee.currentRiskLevel].badge
+                        )}
+                        title={`${getDaysUsed(employee)} of ${COMPLIANCE_LIMIT_DAYS} Schengen days used`}
+                      >
+                        {getDaysUsed(employee)}/{COMPLIANCE_LIMIT_DAYS}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )
             })}
@@ -629,9 +706,9 @@ export const GanttChart = memo(function GanttChart({
       </div>
 
       {/* Right column — horizontally scrollable timeline grid */}
-      <div ref={scrollContainerRef} className="flex-1 min-w-0">
-        <ScrollArea className="w-full whitespace-nowrap rounded-br-xl">
-          <div style={{ width: totalWidth }}>
+      <div ref={scrollContainerRef} className="h-full min-w-0 flex-1">
+        <ScrollArea className="h-full w-full whitespace-nowrap rounded-br-xl">
+          <div className="flex h-full flex-col" style={{ width: totalWidth }}>
             {/* 4-row date header */}
             <DateHeader
               dateMeta={dateMeta}
@@ -642,8 +719,8 @@ export const GanttChart = memo(function GanttChart({
             <div
               ref={timelineScrollRef}
               data-testid="calendar-timeline-viewport"
-              className="overflow-y-auto bg-white"
-              style={{ maxHeight: MAX_HEIGHT, contain: 'layout paint' }}
+              className="min-h-0 flex-1 overflow-y-auto bg-white"
+              style={{ contain: 'layout paint' }}
             >
               <div className="relative" style={{ height: totalHeight }}>
                 {virtualRows.map((virtualRow) => {

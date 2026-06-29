@@ -9,13 +9,13 @@ import type { ProcessedEmployee, ProcessedTrip } from '../types'
 
 vi.mock('@tanstack/react-virtual', () => ({
   useVirtualizer: ({ count }: { count: number }) => ({
-    getTotalSize: () => count * 32,
+    getTotalSize: () => count * 40,
     getVirtualItems: () =>
       Array.from({ length: count }, (_, index) => ({
         index,
         key: index,
-        start: index * 32,
-        size: 32,
+        start: index * 40,
+        size: 40,
       })),
   }),
 }))
@@ -63,6 +63,25 @@ describe('GanttChart context menu', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+  })
+
+  it('shows employee compliance status in the frozen name column', () => {
+    render(
+      <GanttChart
+        employees={[
+          makeEmployee({
+            currentDaysRemaining: 28,
+            currentRiskLevel: 'amber',
+          }),
+        ]}
+        dates={[new Date('2026-03-10T00:00:00.000Z')]}
+        dayWidth={32}
+      />
+    )
+
+    expect(screen.getByText('AM')).toBeInTheDocument()
+    expect(screen.getByText('Alice Morgan')).toBeInTheDocument()
+    expect(screen.getByText('62/90')).toHaveClass('bg-amber-50')
   })
 
   it('adds a trip from an empty-cell right-click menu', () => {
