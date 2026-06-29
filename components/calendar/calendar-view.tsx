@@ -3,14 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import {
-  addTripAction,
-  deleteTripAction,
-  reassignTripAction,
-  updateTripAssignmentAction,
-  updateTripAction,
-} from '@/app/(dashboard)/actions'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -31,53 +24,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { showError, showSuccess } from '@/lib/toast'
-import {
-  calculateCompliance,
-  computeComplianceVectorOptimized,
-  isSchengenCountry,
-  parseDateOnlyAsUTC,
-  type Trip as ComplianceTrip,
-} from '@/lib/compliance'
-import {
-  addUtcDays,
-  differenceInUtcDays,
-  toUTCMidnight,
-} from '@/lib/compliance/date-utils'
-import {
-  checkTripOverlap,
-  type TripOverlapResult,
-} from '@/lib/validations/trip-overlap'
+import { isSchengenCountry } from '@/lib/compliance'
+import { addUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 import { formatDateForDisplay } from '@/lib/validations/dates'
 import { getCountryName } from '@/lib/constants/schengen-countries'
-import { RangeSelector } from './range-selector'
-import {
-  buildDateRange,
-  overlapsVisibleRange,
-  toDateKey,
-} from './calendar-view.utils'
-import { CalendarEmptyState } from './calendar-empty-state'
 import { serializeHideNoSchengenCookie } from '@/lib/calendar/filter-preferences'
+import { buildDateRange, toDateKey } from './calendar-view.utils'
 import {
-  CALENDAR_ZOOM_WIDTHS,
-  ZoomControls,
-  type CalendarZoomLevel,
-} from './zoom-controls'
-import {
-  InteractiveTripEditor,
-  type TripEditorDraft,
-} from './interactive-trip-editor'
-import type {
-  CalendarCopiedTrip,
-  CalendarPasteTripRequest,
-  ProcessedEmployee,
-  ProcessedTrip,
-  TripDateShiftRequest,
-  TripDeleteRequest,
-  TripEditRequest,
-  TripMoveRequest,
-  TripResizeRequest,
-} from './types'
+  buildEmployeeProcessingCacheKey,
+  getCalendarRiskSummary,
+  processCalendarEmployee,
+  type EmployeeWithTrips,
+  type ProcessedEmployeeCacheEntry,
+} from './calendar-view.helpers'
+import { useCalendarTripActions } from './use-calendar-trip-actions'
+import { CalendarToolbar } from './calendar-toolbar'
+import { CalendarEmptyState } from './calendar-empty-state'
+import { CALENDAR_ZOOM_WIDTHS, type CalendarZoomLevel } from './zoom-controls'
+import { InteractiveTripEditor } from './interactive-trip-editor'
+import type { ProcessedEmployee } from './types'
 
 const GanttChart = dynamic(
   () => import('./gantt-chart').then(m => m.GanttChart),
@@ -94,24 +59,6 @@ const DAYS_BACK = 200
 
 /** Default weeks forward */
 const DEFAULT_WEEKS_FORWARD = 6
-const COMPLIANCE_LIMIT_DAYS = 90
-
-interface DbTrip {
-  id: string
-  country: string
-  entry_date: string
-  exit_date: string
-  purpose: string | null
-  job_ref?: string | null
-  is_private: boolean
-  ghosted: boolean
-}
-
-interface EmployeeWithTrips {
-  id: string
-  name: string
-  trips: DbTrip[]
-}
 
 interface CalendarViewProps {
   employees: EmployeeWithTrips[]
@@ -119,202 +66,12 @@ interface CalendarViewProps {
   interactive?: boolean
 }
 
-interface ParsedTrip extends DbTrip {
-  entryDate: Date
-  exitDate: Date
-  isSchengen: boolean
-}
-
-type TripDateOverride = { entry_date: string; exit_date: string }
-
-interface ProcessedEmployeeCacheEntry {
-  cacheKey: string
-  employee: ProcessedEmployee
-}
-
-interface CalendarRiskSummary {
-  clear: number
-  warning: number
-  critical: number
-  breach: number
-}
-
-function getCalendarRiskSummary(
-  employees: ProcessedEmployee[]
-): CalendarRiskSummary {
-  return employees.reduce<CalendarRiskSummary>(
-    (summary, employee) => {
-      if (employee.currentDaysRemaining < 0) {
-        summary.breach += 1
-        return summary
-      }
-
-      if (employee.currentRiskLevel === 'red') {
-        summary.critical += 1
-        return summary
-      }
-
-      if (employee.currentRiskLevel === 'amber') {
-        summary.warning += 1
-        return summary
-      }
-
-      summary.clear += 1
-      return summary
-    },
-    { clear: 0, warning: 0, critical: 0, breach: 0 }
-  )
-}
-
 /**
- * Convert parsed DB trip to compliance engine format
- */
-function toComplianceTrip(trip: ParsedTrip): ComplianceTrip {
-  return {
-    id: trip.id,
-    country: trip.country,
-    entryDate: trip.entryDate,
-    exitDate: trip.exitDate,
-  }
-}
-
-function getOverlapMessage(
-  overlapResult: TripOverlapResult,
-  employeeName?: string
-): string {
-  if (overlapResult.conflictingTrip) {
-    const { country, entry_date, exit_date } = overlapResult.conflictingTrip
-    const owner = employeeName ? `${employeeName}'s ` : ''
-
-    return `This overlaps ${owner}${country} trip (${formatDateForDisplay(entry_date)} - ${formatDateForDisplay(exit_date)}). Please adjust the dates.`
-  }
-
-  return overlapResult.message ?? 'This trip overlaps with an existing trip. Please adjust the dates.'
-}
-
-function buildEmployeeProcessingCacheKey({
-  employee,
-  tripDateOverrides,
-  startDateKey,
-  endDateKey,
-  todayKey,
-}: {
-  employee: EmployeeWithTrips
-  tripDateOverrides: Map<string, TripDateOverride>
-  startDateKey: string
-  endDateKey: string
-  todayKey: string
-}): string {
-  return JSON.stringify({
-    employeeId: employee.id,
-    employeeName: employee.name,
-    startDateKey,
-    endDateKey,
-    todayKey,
-    trips: employee.trips.map((trip) => {
-      const override = tripDateOverrides.get(trip.id)
-
-      return [
-        trip.id,
-        trip.country,
-        override?.entry_date ?? trip.entry_date,
-        override?.exit_date ?? trip.exit_date,
-        trip.purpose,
-        trip.job_ref ?? null,
-        trip.is_private,
-        trip.ghosted,
-      ]
-    }),
-  })
-}
-
-function processCalendarEmployee({
-  employee,
-  tripDateOverrides,
-  startDate,
-  endDate,
-  today,
-}: {
-  employee: EmployeeWithTrips
-  tripDateOverrides: Map<string, TripDateOverride>
-  startDate: Date
-  endDate: Date
-  today: Date
-}): ProcessedEmployee {
-  const parsedTrips: ParsedTrip[] = employee.trips
-    .filter((trip) => !trip.ghosted)
-    .map((trip) => {
-      const override = tripDateOverrides.get(trip.id)
-      const entryDateKey = override?.entry_date ?? trip.entry_date
-      const exitDateKey = override?.exit_date ?? trip.exit_date
-      const entryDate = parseDateOnlyAsUTC(entryDateKey)
-      const exitDate = parseDateOnlyAsUTC(exitDateKey)
-
-      return {
-        ...trip,
-        entry_date: entryDateKey,
-        exit_date: exitDateKey,
-        entryDate,
-        exitDate,
-        isSchengen: isSchengenCountry(trip.country),
-      }
-    })
-
-  const complianceTrips = parsedTrips
-    .filter((trip) => trip.isSchengen)
-    .map(toComplianceTrip)
-
-  const currentCompliance = complianceTrips.length > 0
-    ? calculateCompliance(complianceTrips, {
-        mode: 'audit',
-        referenceDate: today,
-      })
-    : null
-
-  const complianceByDate = complianceTrips.length > 0
-    ? new Map(
-        computeComplianceVectorOptimized(complianceTrips, startDate, endDate, {
-          mode: 'audit',
-          referenceDate: endDate,
-        }).map((result) => [toDateKey(result.date), result])
-      )
-    : new Map()
-
-  const processedTrips: ProcessedTrip[] = parsedTrips
-    .filter((trip) =>
-      overlapsVisibleRange(trip.entryDate, trip.exitDate, startDate, endDate)
-    )
-    .map((trip) => {
-      const duration = differenceInUtcDays(trip.exitDate, trip.entryDate) + 1
-
-      return {
-        id: trip.id,
-        country: trip.is_private ? 'XX' : trip.country,
-        rawCountry: trip.country,
-        entryDate: trip.entryDate,
-        exitDate: trip.exitDate,
-        duration,
-        purpose: trip.purpose,
-        jobRef: trip.job_ref ?? null,
-        isPrivate: trip.is_private,
-        ghosted: trip.ghosted,
-        isSchengen: trip.isSchengen,
-      }
-    })
-
-  return {
-    id: employee.id,
-    name: employee.name,
-    trips: processedTrips,
-    complianceByDate,
-    currentDaysRemaining: currentCompliance?.daysRemaining ?? 90,
-    currentRiskLevel: currentCompliance?.riskLevel ?? 'green',
-    tripsInRange: processedTrips.length,
-  }
-}
-
-/**
- * Main calendar view component - orchestrates Gantt chart and mobile view
+ * Main calendar view — orchestrates the Gantt chart and mobile list.
+ *
+ * Trip mutations live in {@link useCalendarTripActions}; compliance processing
+ * lives in calendar-view.helpers.ts. This component wires data shaping, the
+ * filter/range/zoom controls, and rendering together.
  */
 export function CalendarView({
   employees,
@@ -325,59 +82,17 @@ export function CalendarView({
   const [isPending, startTransition] = useTransition()
   const [weeksForward, setWeeksForward] = useState(DEFAULT_WEEKS_FORWARD)
   const [zoomLevel, setZoomLevel] = useState<CalendarZoomLevel>('month')
-  const [tripEditorDraft, setTripEditorDraft] = useState<TripEditorDraft | null>(null)
-  const [tripDeleteDraft, setTripDeleteDraft] = useState<TripDeleteRequest | null>(null)
-  const [isDeletingTrip, setIsDeletingTrip] = useState(false)
-  const [tripMoveDraft, setTripMoveDraft] = useState<TripMoveRequest | null>(null)
-  const [tripMoveError, setTripMoveError] = useState<string | null>(null)
-  const [isMovingTrip, setIsMovingTrip] = useState(false)
-  const [copiedTrip, setCopiedTrip] = useState<CalendarCopiedTrip | null>(null)
-  const [tripDateOverrides, setTripDateOverrides] = useState(
-    () => new Map<string, TripDateOverride>()
-  )
   const [hideEmployeesWithoutSchengenTrips, setHideEmployeesWithoutSchengenTrips] =
     useState(initialHideEmployeesWithoutSchengenTrips)
   const processedEmployeeCacheRef = useRef(
     new Map<string, ProcessedEmployeeCacheEntry>()
   )
 
+  const tripActions = useCalendarTripActions(employees)
+
   useEffect(() => {
     setHideEmployeesWithoutSchengenTrips(initialHideEmployeesWithoutSchengenTrips)
   }, [initialHideEmployeesWithoutSchengenTrips])
-
-  useEffect(() => {
-    setTripDateOverrides((current) => {
-      if (current.size === 0) {
-        return current
-      }
-
-      const sourceDatesByTrip = new Map<string, { entry_date: string; exit_date: string }>()
-      for (const employee of employees) {
-        for (const trip of employee.trips) {
-          sourceDatesByTrip.set(trip.id, {
-            entry_date: trip.entry_date,
-            exit_date: trip.exit_date,
-          })
-        }
-      }
-
-      let changed = false
-      const next = new Map(current)
-      for (const [tripId, override] of current) {
-        const sourceDates = sourceDatesByTrip.get(tripId)
-        if (
-          !sourceDates ||
-          (sourceDates.entry_date === override.entry_date &&
-            sourceDates.exit_date === override.exit_date)
-        ) {
-          next.delete(tripId)
-          changed = true
-        }
-      }
-
-      return changed ? next : current
-    })
-  }, [employees])
 
   const updateHideEmployeesWithoutSchengenTrips = (enabled: boolean) => {
     setHideEmployeesWithoutSchengenTrips(enabled)
@@ -389,359 +104,6 @@ export function CalendarView({
     startTransition(() => {
       router.refresh()
     })
-  }
-
-  const openCreateTrip = ({
-    employeeId,
-    employeeName,
-    dateKey,
-  }: {
-    employeeId: string
-    employeeName: string
-    dateKey: string
-  }) => {
-    setTripEditorDraft({
-      mode: 'create',
-      employeeId,
-      employeeName,
-      entryDate: dateKey,
-      exitDate: dateKey,
-    })
-  }
-
-  const openEditTrip = ({ employeeId, employeeName, trip }: TripEditRequest) => {
-    setTripEditorDraft({
-      mode: 'edit',
-      employeeId,
-      employeeName,
-      tripId: trip.id,
-      country: trip.rawCountry,
-      entryDate: toDateKey(trip.entryDate),
-      exitDate: toDateKey(trip.exitDate),
-      purpose: trip.purpose,
-      jobRef: trip.jobRef,
-      isPrivate: trip.isPrivate,
-      ghosted: trip.ghosted,
-    })
-  }
-
-  const requestDeleteTrip = (request: TripDeleteRequest) => {
-    setTripDeleteDraft(request)
-  }
-
-  const copyTrip = ({ trip }: TripEditRequest) => {
-    setCopiedTrip({
-      country: trip.rawCountry,
-      duration: trip.duration,
-      purpose: trip.purpose,
-      jobRef: trip.jobRef,
-      isPrivate: trip.isPrivate,
-      ghosted: trip.ghosted,
-    })
-    showSuccess('Trip copied')
-  }
-
-  const pasteTrip = async ({
-    employeeId,
-    employeeName,
-    dateKey,
-  }: CalendarPasteTripRequest) => {
-    if (!copiedTrip) {
-      showError('No copied trip', 'Copy a trip before pasting it into the calendar.')
-      return
-    }
-
-    const entryDate = parseDateOnlyAsUTC(dateKey)
-    const exitDate = addUtcDays(entryDate, copiedTrip.duration - 1)
-    const exitDateKey = toDateKey(exitDate)
-
-    const overlapResult = await checkTripOverlap(
-      employeeId,
-      dateKey,
-      exitDateKey
-    )
-
-    if (overlapResult.hasOverlap) {
-      showError(
-        'Trip overlap detected',
-        `Cannot paste trip. ${getOverlapMessage(overlapResult, employeeName)}`
-      )
-      return
-    }
-
-    try {
-      await addTripAction({
-        employee_id: employeeId,
-        country: copiedTrip.country,
-        entry_date: dateKey,
-        exit_date: exitDateKey,
-        ...(copiedTrip.purpose ? { purpose: copiedTrip.purpose } : {}),
-        ...(copiedTrip.jobRef ? { job_ref: copiedTrip.jobRef } : {}),
-        is_private: copiedTrip.isPrivate,
-        ghosted: copiedTrip.ghosted,
-      })
-      showSuccess('Trip pasted successfully')
-      router.refresh()
-    } catch (error) {
-      showError(
-        'Failed to paste trip',
-        error instanceof Error ? error.message : 'Please try again.'
-      )
-    }
-  }
-
-  const toggleTripPrivacy = async ({
-    employeeId,
-    trip,
-  }: TripEditRequest) => {
-    const nextIsPrivate = !trip.isPrivate
-
-    try {
-      await updateTripAction(trip.id, employeeId, {
-        is_private: nextIsPrivate,
-      })
-      showSuccess(nextIsPrivate ? 'Trip marked as private' : 'Trip marked as work trip')
-      router.refresh()
-    } catch (error) {
-      showError(
-        'Failed to update trip',
-        error instanceof Error ? error.message : 'Please try again.'
-      )
-    }
-  }
-
-  const confirmDeleteTrip = async () => {
-    if (!tripDeleteDraft) return
-
-    setIsDeletingTrip(true)
-
-    try {
-      await deleteTripAction(tripDeleteDraft.trip.id, tripDeleteDraft.employeeId)
-      setTripDateOverrides((current) => {
-        if (!current.has(tripDeleteDraft.trip.id)) {
-          return current
-        }
-
-        const next = new Map(current)
-        next.delete(tripDeleteDraft.trip.id)
-        return next
-      })
-      showSuccess('Trip deleted successfully')
-      setTripDeleteDraft(null)
-      router.refresh()
-    } catch (error) {
-      showError(
-        'Failed to delete trip',
-        error instanceof Error ? error.message : 'Please try again.'
-      )
-    } finally {
-      setIsDeletingTrip(false)
-    }
-  }
-
-  const resizeTrip = async ({
-    tripId,
-    employeeId,
-    edge,
-    dateKey,
-    originalEntryDateKey,
-    originalExitDateKey,
-  }: TripResizeRequest) => {
-    const nextEntryDate = edge === 'start' ? dateKey : originalEntryDateKey
-    const nextExitDate = edge === 'end' ? dateKey : originalExitDateKey
-
-    if (nextEntryDate > nextExitDate) {
-      showError('Invalid date range', 'Entry date must be on or before exit date.')
-      return
-    }
-
-    const overlapResult = await checkTripOverlap(
-      employeeId,
-      nextEntryDate,
-      nextExitDate,
-      tripId
-    )
-
-    if (overlapResult.hasOverlap) {
-      showError('Trip overlap detected', `Cannot resize trip. ${getOverlapMessage(overlapResult)}`)
-      return
-    }
-
-    setTripDateOverrides((current) => {
-      const next = new Map(current)
-      next.set(tripId, {
-        entry_date: nextEntryDate,
-        exit_date: nextExitDate,
-      })
-      return next
-    })
-
-    try {
-      await updateTripAction(tripId, employeeId, {
-        entry_date: edge === 'start' ? dateKey : undefined,
-        exit_date: edge === 'end' ? dateKey : undefined,
-      })
-      showSuccess('Trip dates updated')
-      router.refresh()
-    } catch (error) {
-      setTripDateOverrides((current) => {
-        const next = new Map(current)
-        next.set(tripId, {
-          entry_date: originalEntryDateKey,
-          exit_date: originalExitDateKey,
-        })
-        return next
-      })
-      showError(
-        'Failed to update trip',
-        error instanceof Error ? error.message : 'Please try again.'
-      )
-    }
-  }
-
-  const shiftTripDates = async ({
-    tripId,
-    employeeId,
-    entryDateKey,
-    exitDateKey,
-    originalEntryDateKey,
-    originalExitDateKey,
-  }: TripDateShiftRequest) => {
-    if (
-      entryDateKey === originalEntryDateKey &&
-      exitDateKey === originalExitDateKey
-    ) {
-      return
-    }
-
-    if (entryDateKey > exitDateKey) {
-      showError('Invalid date range', 'Entry date must be on or before exit date.')
-      return
-    }
-
-    const overlapResult = await checkTripOverlap(
-      employeeId,
-      entryDateKey,
-      exitDateKey,
-      tripId
-    )
-
-    if (overlapResult.hasOverlap) {
-      showError('Trip overlap detected', `Cannot shift trip. ${getOverlapMessage(overlapResult)}`)
-      return
-    }
-
-    setTripDateOverrides((current) => {
-      const next = new Map(current)
-      next.set(tripId, {
-        entry_date: entryDateKey,
-        exit_date: exitDateKey,
-      })
-      return next
-    })
-
-    try {
-      await updateTripAction(tripId, employeeId, {
-        entry_date: entryDateKey,
-        exit_date: exitDateKey,
-      })
-      showSuccess('Trip dates updated')
-      router.refresh()
-    } catch (error) {
-      setTripDateOverrides((current) => {
-        const next = new Map(current)
-        next.set(tripId, {
-          entry_date: originalEntryDateKey,
-          exit_date: originalExitDateKey,
-        })
-        return next
-      })
-      showError(
-        'Failed to update trip',
-        error instanceof Error ? error.message : 'Please try again.'
-      )
-    }
-  }
-
-  const requestMoveTrip = (request: TripMoveRequest) => {
-    if (request.sourceEmployeeId === request.targetEmployeeId) {
-      if (
-        request.entryDateKey !== request.originalEntryDateKey ||
-        request.exitDateKey !== request.originalExitDateKey
-      ) {
-        void shiftTripDates({
-          tripId: request.tripId,
-          employeeId: request.sourceEmployeeId,
-          entryDateKey: request.entryDateKey,
-          exitDateKey: request.exitDateKey,
-          originalEntryDateKey: request.originalEntryDateKey,
-          originalExitDateKey: request.originalExitDateKey,
-        })
-      }
-
-      return
-    }
-
-    setTripMoveError(null)
-    setTripMoveDraft(request)
-  }
-
-  const confirmMoveTrip = async () => {
-    if (!tripMoveDraft) return
-
-    setIsMovingTrip(true)
-    setTripMoveError(null)
-    try {
-      const overlapResult = await checkTripOverlap(
-        tripMoveDraft.targetEmployeeId,
-        tripMoveDraft.entryDateKey,
-        tripMoveDraft.exitDateKey,
-        tripMoveDraft.tripId
-      )
-
-      if (overlapResult.hasOverlap) {
-        const message = `Cannot move trip. ${getOverlapMessage(
-          overlapResult,
-          tripMoveDraft.targetEmployeeName
-        )}`
-        setTripMoveError(message)
-        showError('Trip overlap detected', message)
-        return
-      }
-
-      const datesChanged =
-        tripMoveDraft.entryDateKey !== tripMoveDraft.originalEntryDateKey ||
-        tripMoveDraft.exitDateKey !== tripMoveDraft.originalExitDateKey
-
-      if (datesChanged) {
-        await updateTripAssignmentAction(
-          tripMoveDraft.tripId,
-          tripMoveDraft.sourceEmployeeId,
-          tripMoveDraft.targetEmployeeId,
-          {
-            entry_date: tripMoveDraft.entryDateKey,
-            exit_date: tripMoveDraft.exitDateKey,
-          }
-        )
-      } else {
-        await reassignTripAction(
-          tripMoveDraft.tripId,
-          tripMoveDraft.sourceEmployeeId,
-          tripMoveDraft.targetEmployeeId
-        )
-      }
-
-      showSuccess(datesChanged ? 'Trip moved and dates updated' : 'Trip moved successfully')
-      setTripMoveDraft(null)
-      router.refresh()
-    } catch (error) {
-      showError(
-        'Failed to move trip',
-        error instanceof Error ? error.message : 'Please try again.'
-      )
-    } finally {
-      setIsMovingTrip(false)
-    }
   }
 
   // Calculate date range
@@ -784,6 +146,10 @@ export function CalendarView({
     const today = toUTCMidnight(new Date())
     const todayKey = toDateKey(today)
     const visibleEmployeeIds = new Set<string>()
+    /* eslint-disable react-hooks/refs --
+       Intentional per-employee memoization cache keyed by cacheKey. Reading and
+       writing this ref during render is a pure recompute-skip: it never changes
+       what is rendered, only avoids reprocessing unchanged employees. */
     const cache = processedEmployeeCacheRef.current
 
     const nextEmployees = filteredEmployees.map((employee) => {
@@ -791,7 +157,7 @@ export function CalendarView({
 
       const cacheKey = buildEmployeeProcessingCacheKey({
         employee,
-        tripDateOverrides,
+        tripDateOverrides: tripActions.tripDateOverrides,
         startDateKey,
         endDateKey,
         todayKey,
@@ -804,7 +170,7 @@ export function CalendarView({
 
       const processedEmployee = processCalendarEmployee({
         employee,
-        tripDateOverrides,
+        tripDateOverrides: tripActions.tripDateOverrides,
         startDate,
         endDate,
         today,
@@ -823,9 +189,11 @@ export function CalendarView({
         cache.delete(employeeId)
       }
     }
+    /* eslint-enable react-hooks/refs */
 
     return nextEmployees
-  }, [filteredEmployees, startDate, endDate, startDateKey, endDateKey, tripDateOverrides])
+  }, [filteredEmployees, startDate, endDate, startDateKey, endDateKey, tripActions.tripDateOverrides])
+
   const riskSummary = useMemo(
     () => getCalendarRiskSummary(processedEmployees),
     [processedEmployees]
@@ -897,20 +265,19 @@ export function CalendarView({
       {interactive && (
         <>
           <InteractiveTripEditor
-            draft={tripEditorDraft}
+            draft={tripActions.tripEditorDraft}
             onOpenChange={(open) => {
               if (!open) {
-                setTripEditorDraft(null)
+                tripActions.closeTripEditor()
               }
             }}
           />
 
           <Dialog
-            open={tripMoveDraft !== null}
+            open={tripActions.tripMoveDraft !== null}
             onOpenChange={(open) => {
-              if (!open && !isMovingTrip) {
-                setTripMoveError(null)
-                setTripMoveDraft(null)
+              if (!open && !tripActions.isMovingTrip) {
+                tripActions.closeTripMove()
               }
             }}
           >
@@ -918,13 +285,13 @@ export function CalendarView({
               <DialogHeader>
                 <DialogTitle>Move trip?</DialogTitle>
                 <DialogDescription>
-                  {tripMoveDraft
-                    ? `Move ${tripMoveDraft.country} trip (${tripMoveDraft.entryDateKey} to ${tripMoveDraft.exitDateKey}) from ${tripMoveDraft.sourceEmployeeName} to ${tripMoveDraft.targetEmployeeName}?`
+                  {tripActions.tripMoveDraft
+                    ? `Move ${tripActions.tripMoveDraft.country} trip (${tripActions.tripMoveDraft.entryDateKey} to ${tripActions.tripMoveDraft.exitDateKey}) from ${tripActions.tripMoveDraft.sourceEmployeeName} to ${tripActions.tripMoveDraft.targetEmployeeName}?`
                     : 'Move this trip to another employee?'}
                 </DialogDescription>
-                {tripMoveError && (
+                {tripActions.tripMoveError && (
                   <p className="text-sm font-medium text-red-600">
-                    {tripMoveError}
+                    {tripActions.tripMoveError}
                   </p>
                 )}
               </DialogHeader>
@@ -932,27 +299,27 @@ export function CalendarView({
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setTripMoveDraft(null)}
-                  disabled={isMovingTrip}
+                  onClick={tripActions.closeTripMove}
+                  disabled={tripActions.isMovingTrip}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="button"
-                  onClick={confirmMoveTrip}
-                  disabled={isMovingTrip}
+                  onClick={tripActions.confirmMoveTrip}
+                  disabled={tripActions.isMovingTrip}
                 >
-                  {isMovingTrip ? 'Moving...' : 'Move Trip'}
+                  {tripActions.isMovingTrip ? 'Moving...' : 'Move Trip'}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
 
           <AlertDialog
-            open={tripDeleteDraft !== null}
+            open={tripActions.tripDeleteDraft !== null}
             onOpenChange={(open) => {
-              if (!open && !isDeletingTrip) {
-                setTripDeleteDraft(null)
+              if (!open && !tripActions.isDeletingTrip) {
+                tripActions.closeTripDelete()
               }
             }}
           >
@@ -960,22 +327,22 @@ export function CalendarView({
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete trip?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  {tripDeleteDraft
-                    ? `Delete ${getCountryName(tripDeleteDraft.trip.rawCountry)} trip (${formatDateForDisplay(toDateKey(tripDeleteDraft.trip.entryDate))} - ${formatDateForDisplay(toDateKey(tripDeleteDraft.trip.exitDate))}) for ${tripDeleteDraft.employeeName}? This cannot be undone.`
+                  {tripActions.tripDeleteDraft
+                    ? `Delete ${getCountryName(tripActions.tripDeleteDraft.trip.rawCountry)} trip (${formatDateForDisplay(toDateKey(tripActions.tripDeleteDraft.trip.entryDate))} - ${formatDateForDisplay(toDateKey(tripActions.tripDeleteDraft.trip.exitDate))}) for ${tripActions.tripDeleteDraft.employeeName}? This cannot be undone.`
                     : 'Delete this trip?'}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeletingTrip}>
+                <AlertDialogCancel disabled={tripActions.isDeletingTrip}>
                   Cancel
                 </AlertDialogCancel>
                 <Button
                   type="button"
                   variant="destructive"
-                  onClick={confirmDeleteTrip}
-                  disabled={isDeletingTrip}
+                  onClick={tripActions.confirmDeleteTrip}
+                  disabled={tripActions.isDeletingTrip}
                 >
-                  {isDeletingTrip ? 'Deleting...' : 'Delete Trip'}
+                  {tripActions.isDeletingTrip ? 'Deleting...' : 'Delete Trip'}
                 </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -986,89 +353,18 @@ export function CalendarView({
       {/* Desktop view - Gantt chart */}
       <div className="hidden md:block">
         <Card className="h-[calc(100vh-13rem)] min-h-[560px] gap-0 overflow-hidden rounded-xl border-slate-200 py-0 shadow-sm">
-          <CardHeader className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/70 p-4">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-              <div className="min-w-0 space-y-2">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
-                    Travel Timeline
-                  </h2>
-                  <span className="text-xs text-slate-500">
-                    Showing {visibleEmployeeLabel}
-                    {isPending ? ' · refreshing…' : ' · saved for your next visit'}
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-emerald-800 ring-1 ring-emerald-200">
-                    <span className="size-2 rounded-full bg-emerald-500" />
-                    {riskSummary.clear} clear
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-1 text-amber-900 ring-1 ring-amber-200">
-                    <span className="size-2 rounded-full bg-amber-500" />
-                    {riskSummary.warning} warning
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2 py-1 text-rose-800 ring-1 ring-rose-200">
-                    <span className="size-2 rounded-full bg-rose-500" />
-                    {riskSummary.critical} critical
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-700 px-2 py-1 text-white ring-1 ring-rose-800">
-                    <span className="size-2 rounded-full bg-white/90" />
-                    {riskSummary.breach} breach
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 xl:justify-end">
-                <RangeSelector value={weeksForward} onChange={setWeeksForward} />
-                {interactive && (
-                  <ZoomControls value={zoomLevel} onChange={setZoomLevel} />
-                )}
-                <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                  <Switch
-                    id="calendar-hide-no-schengen"
-                    checked={hideEmployeesWithoutSchengenTrips}
-                    onCheckedChange={updateHideEmployeesWithoutSchengenTrips}
-                    disabled={isPending}
-                  />
-                  <Label
-                    htmlFor="calendar-hide-no-schengen"
-                    className="cursor-pointer whitespace-nowrap text-xs font-medium text-slate-700"
-                  >
-                    Only show employees with Schengen trips
-                  </Label>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-slate-600">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-6 rounded-full bg-sky-100 ring-1 ring-sky-300" />
-                180-day window
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-6 rounded-full bg-slate-200 ring-1 ring-slate-300" />
-                weekend
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-6 rounded-full bg-blue-100 ring-1 ring-blue-300" />
-                today
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-3 w-px bg-slate-500" />
-                month boundary
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-6 rounded-full bg-emerald-100 ring-1 ring-emerald-300" />
-                {COMPLIANCE_LIMIT_DAYS}-day risk clear
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-6 rounded-full bg-amber-100 ring-1 ring-amber-300" />
-                warning
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="h-2 w-6 rounded-full bg-rose-100 ring-1 ring-rose-300" />
-                critical
-              </span>
-            </div>
-          </CardHeader>
+          <CalendarToolbar
+            visibleEmployeeLabel={visibleEmployeeLabel}
+            isPending={isPending}
+            riskSummary={riskSummary}
+            weeksForward={weeksForward}
+            onWeeksForwardChange={setWeeksForward}
+            interactive={interactive}
+            zoomLevel={zoomLevel}
+            onZoomLevelChange={setZoomLevel}
+            hideEmployeesWithoutSchengenTrips={hideEmployeesWithoutSchengenTrips}
+            onHideChange={updateHideEmployeesWithoutSchengenTrips}
+          />
           <CardContent className="min-h-0 flex-1 p-0">
             <GanttChart
               employees={processedEmployees}
@@ -1076,16 +372,16 @@ export function CalendarView({
               dayWidth={CALENDAR_ZOOM_WIDTHS[zoomLevel]}
               className="h-full"
               interactive={interactive}
-              onCreateTrip={interactive ? openCreateTrip : undefined}
-              onEditTrip={interactive ? openEditTrip : undefined}
-              onDeleteTrip={interactive ? requestDeleteTrip : undefined}
-              onResizeTrip={interactive ? resizeTrip : undefined}
-              onShiftTripDates={interactive ? shiftTripDates : undefined}
-              onMoveTrip={interactive ? requestMoveTrip : undefined}
-              copiedTrip={interactive ? copiedTrip : null}
-              onCopyTrip={interactive ? copyTrip : undefined}
-              onPasteTrip={interactive ? pasteTrip : undefined}
-              onToggleTripPrivacy={interactive ? toggleTripPrivacy : undefined}
+              onCreateTrip={interactive ? tripActions.openCreateTrip : undefined}
+              onEditTrip={interactive ? tripActions.openEditTrip : undefined}
+              onDeleteTrip={interactive ? tripActions.requestDeleteTrip : undefined}
+              onResizeTrip={interactive ? tripActions.resizeTrip : undefined}
+              onShiftTripDates={interactive ? tripActions.shiftTripDates : undefined}
+              onMoveTrip={interactive ? tripActions.requestMoveTrip : undefined}
+              copiedTrip={interactive ? tripActions.copiedTrip : null}
+              onCopyTrip={interactive ? tripActions.copyTrip : undefined}
+              onPasteTrip={interactive ? tripActions.pasteTrip : undefined}
+              onToggleTripPrivacy={interactive ? tripActions.toggleTripPrivacy : undefined}
               onOpenEmployeeProfile={
                 interactive
                   ? (employeeId) => router.push(`/employee/${employeeId}`)
