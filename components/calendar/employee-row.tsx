@@ -15,13 +15,23 @@ import type {
 } from './types'
 import type { DateMeta } from './gantt-chart'
 
+const RISK_LABELS: Record<ProcessedEmployee['currentRiskLevel'], string> = {
+  green: 'compliant',
+  amber: 'at risk',
+  red: 'high risk',
+  breach: 'in breach',
+}
+
 interface EmployeeRowProps {
   employee: ProcessedEmployee
+  /** Zero-based row position; used for the grid's aria-rowindex (header is row 1). */
+  rowIndex: number
   dateMeta: DateMeta[]
   dayWidth: number
   isHovered: boolean
   isDropTarget?: boolean
   interactive?: boolean
+  onAnnounce?: (message: string) => void
   onCreateTrip?: (params: {
     employeeId: string
     employeeName: string
@@ -43,11 +53,13 @@ interface EmployeeRowProps {
  */
 export const EmployeeRow = memo(function EmployeeRow({
   employee,
+  rowIndex,
   dateMeta,
   dayWidth,
   isHovered,
   isDropTarget = false,
   interactive = false,
+  onAnnounce,
   onCreateTrip,
   onEditTrip,
   onDeleteTrip,
@@ -76,8 +88,17 @@ export const EmployeeRow = memo(function EmployeeRow({
     return dateMeta.map((dm) => dayMap.get(dm.key))
   }, [dateMeta, employee.complianceByDate, employee.trips])
 
+  const daysUsed = Math.max(0, 90 - employee.currentDaysRemaining)
+  const rowLabel = `${employee.name}, ${daysUsed} of 90 Schengen days used, ${RISK_LABELS[employee.currentRiskLevel]}`
+
   return (
-    <div className="flex" style={{ height: GRID_ROW_HEIGHT }}>
+    <div
+      role="row"
+      aria-rowindex={rowIndex + 2}
+      aria-label={rowLabel}
+      className="flex"
+      style={{ height: GRID_ROW_HEIGHT }}
+    >
       {dateMeta.map((dm, index) => {
         const tripDay = tripDayByDate[index]
         const prevTripDay = index > 0 ? tripDayByDate[index - 1] : undefined
@@ -96,7 +117,9 @@ export const EmployeeRow = memo(function EmployeeRow({
             tripDay={tripDay}
             date={dm.date}
             dateKey={dm.key}
+            colIndex={index}
             dayWidth={dayWidth}
+            onAnnounce={onAnnounce}
             isRowHovered={isHovered}
             isWeekend={dm.isWeekend}
             isToday={dm.isToday}

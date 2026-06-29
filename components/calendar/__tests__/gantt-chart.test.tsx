@@ -232,7 +232,7 @@ describe('GanttChart context menu', () => {
     )
 
     fireEvent.contextMenu(
-      screen.getByRole('button', { name: /XX trip on Mar 10/i }),
+      screen.getByRole('button', { name: /Private trip on Mar 10/i }),
       { clientX: 140, clientY: 96 }
     )
     fireEvent.click(screen.getByRole('menuitem', { name: /mark as work trip/i }))

@@ -4,6 +4,7 @@ import {
   memo,
   useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react'
@@ -33,6 +34,8 @@ interface DayCellProps {
   tripDay: ProcessedTripDay | undefined
   date: Date
   dateKey: string
+  /** Zero-based column position, used for the grid's aria-colindex. */
+  colIndex: number
   dayWidth: number
   isRowHovered: boolean
   isWeekend: boolean
@@ -74,6 +77,8 @@ interface DayCellProps {
   }) => void
   onMoveTripTargetChange?: (employeeId: string | null) => void
   onOpenContextMenu?: (params: CalendarCellContextMenuRequest) => void
+  /** Announce keyboard move/resize progress to assistive tech via a live region. */
+  onAnnounce?: (message: string) => void
 }
 
 const schengenTripStyles = {
@@ -131,6 +136,7 @@ export const DayCell = memo(function DayCell({
   tripDay,
   date,
   dateKey,
+  colIndex,
   dayWidth,
   isRowHovered,
   isWeekend,
@@ -151,8 +157,11 @@ export const DayCell = memo(function DayCell({
   onMoveTrip,
   onMoveTripTargetChange,
   onOpenContextMenu,
+  onAnnounce,
 }: DayCellProps) {
   const suppressNextClickRef = useRef(false)
+  const [keyboardMode, setKeyboardMode] = useState<'idle' | 'move' | 'resize'>('idle')
+  const [keyboardDelta, setKeyboardDelta] = useState(0)
   const [resizePreview, setResizePreview] = useState<{
     edge: TripResizeEdge
     dateKey: string
@@ -225,22 +234,31 @@ export const DayCell = memo(function DayCell({
   if (!trip) {
     if (interactive && onCreateTrip) {
       return (
-        <button
-          type="button"
-          className={cn(
-            baseCls,
-            'cursor-cell transition-colors hover:bg-sky-100/80 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-inset'
-          )}
+        <div
+          role="gridcell"
+          aria-colindex={colIndex + 1}
+          className="shrink-0"
           style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
-          aria-label={`Add trip on ${format(date, 'MMM d')}`}
-          onClick={() => onCreateTrip(dateKey)}
-          onContextMenu={(event) => openContextMenu(event)}
-        />
+        >
+          <button
+            type="button"
+            className={cn(
+              baseCls,
+              'cursor-cell transition-colors hover:bg-sky-100/80 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-inset'
+            )}
+            style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
+            aria-label={`Add trip on ${format(date, 'MMM d')}`}
+            onClick={() => onCreateTrip(dateKey)}
+            onContextMenu={(event) => openContextMenu(event)}
+          />
+        </div>
       )
     }
 
     return (
       <div
+        role="gridcell"
+        aria-colindex={colIndex + 1}
         className={baseCls}
         style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
       />
@@ -503,9 +521,107 @@ export const DayCell = memo(function DayCell({
     suppressNextClickRef.current = false
   }
 
+  const tripCountryLabel = trip
+    ? trip.isPrivate
+      ? 'private'
+      : getCountryName(trip.rawCountry)
+    : ''
+
+  const canKeyboardMove = interactive && Boolean(onShiftTripDates)
+  const canKeyboardResize = interactive && Boolean(onResizeTrip)
+
+  // Keyboard alternative to drag/resize: press "m" to move or "r" to resize,
+  // then arrow keys to choose dates, Enter to confirm, Escape to cancel.
+  const handleTripKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (!trip) return
+    const key = event.key
+
+    if (keyboardMode === 'idle') {
+      if ((key === 'm' || key === 'M') && canKeyboardMove) {
+        event.preventDefault()
+        setKeyboardMode('move')
+        setKeyboardDelta(0)
+        onAnnounce?.(
+          `Moving ${tripCountryLabel} trip. Use left and right arrow keys to choose new dates, Enter to confirm, Escape to cancel.`
+        )
+      } else if ((key === 'r' || key === 'R') && canKeyboardResize) {
+        event.preventDefault()
+        setKeyboardMode('resize')
+        setKeyboardDelta(0)
+        onAnnounce?.(
+          `Resizing ${tripCountryLabel} trip. Use left and right arrow keys to change the end date, Enter to confirm, Escape to cancel.`
+        )
+      }
+      return
+    }
+
+    if (key === 'Escape') {
+      event.preventDefault()
+      event.stopPropagation()
+      setKeyboardMode('idle')
+      setKeyboardDelta(0)
+      onAnnounce?.('Cancelled. Trip unchanged.')
+      return
+    }
+
+    if (key === 'ArrowLeft' || key === 'ArrowRight') {
+      event.preventDefault()
+      const dir = key === 'ArrowRight' ? 1 : -1
+      let next = keyboardDelta + dir
+      if (keyboardMode === 'resize') {
+        // Keep the end date on or after the entry date.
+        next = Math.max(next, -(trip.duration - 1))
+      }
+      setKeyboardDelta(next)
+      if (keyboardMode === 'move') {
+        const ns = addUtcDays(trip.entryDate, next)
+        const ne = addUtcDays(trip.exitDate, next)
+        onAnnounce?.(`${format(ns, 'MMM d')} to ${format(ne, 'MMM d')}`)
+      } else {
+        const ne = addUtcDays(trip.exitDate, next)
+        onAnnounce?.(`Ends ${format(ne, 'MMM d')}`)
+      }
+      return
+    }
+
+    if (key === 'Enter' || key === ' ') {
+      event.preventDefault()
+      event.stopPropagation()
+      const originalEntryDateKey = toDateKey(trip.entryDate)
+      const originalExitDateKey = toDateKey(trip.exitDate)
+
+      if (keyboardMode === 'move' && onShiftTripDates && keyboardDelta !== 0) {
+        onShiftTripDates({
+          tripId: trip.id,
+          entryDateKey: toDateKey(addUtcDays(trip.entryDate, keyboardDelta)),
+          exitDateKey: toDateKey(addUtcDays(trip.exitDate, keyboardDelta)),
+          originalEntryDateKey,
+          originalExitDateKey,
+        })
+        onAnnounce?.(`${tripCountryLabel} trip moved.`)
+      } else if (keyboardMode === 'resize' && onResizeTrip && keyboardDelta !== 0) {
+        onResizeTrip({
+          tripId: trip.id,
+          edge: 'end',
+          dateKey: toDateKey(addUtcDays(trip.exitDate, keyboardDelta)),
+          originalEntryDateKey,
+          originalExitDateKey,
+        })
+        onAnnounce?.(`${tripCountryLabel} trip resized.`)
+      } else {
+        onAnnounce?.('No change.')
+      }
+
+      setKeyboardMode('idle')
+      setKeyboardDelta(0)
+    }
+  }
+
   // Travel cell — clickable with popover
   return (
     <div
+      role="gridcell"
+      aria-colindex={colIndex + 1}
       className="relative shrink-0"
       style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
     >
@@ -521,13 +637,24 @@ export const DayCell = memo(function DayCell({
               tripStyles && tripStyles.border,
               isTripStart && 'border-l rounded-l-md',
               isTripEnd && 'border-r rounded-r-md',
+              keyboardMode !== 'idle' && 'ring-2 ring-inset ring-slate-900',
               'cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-inset'
             )}
             style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
-            aria-label={`${trip.country} trip on ${format(date, 'MMM d')}`}
+            aria-label={`${trip.isPrivate ? 'Private' : trip.country} trip on ${format(date, 'MMM d')}${
+              canKeyboardMove || canKeyboardResize
+                ? '. Press M to move or R to resize.'
+                : ''
+            }`}
+            aria-keyshortcuts={
+              [canKeyboardMove && 'M', canKeyboardResize && 'R']
+                .filter(Boolean)
+                .join(' ') || undefined
+            }
             title={tripTitle ?? undefined}
             onPointerDown={startDrag}
             onClick={handleTripClick}
+            onKeyDown={interactive ? handleTripKeyDown : undefined}
             onContextMenu={(event) => openContextMenu(event, trip)}
           >
             <span
@@ -594,6 +721,14 @@ export const DayCell = memo(function DayCell({
           }}
         >
           {dragPreview.width >= 24 && (trip.isPrivate ? '--' : trip.country)}
+        </div>
+      )}
+
+      {keyboardMode !== 'idle' && (
+        <div className="pointer-events-none absolute -top-7 left-0 z-30 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[11px] font-medium text-white shadow-sm">
+          {keyboardMode === 'move'
+            ? `Move → ${format(addUtcDays(trip.entryDate, keyboardDelta), 'MMM d')}–${format(addUtcDays(trip.exitDate, keyboardDelta), 'MMM d')}`
+            : `End → ${format(addUtcDays(trip.exitDate, keyboardDelta), 'MMM d')}`}
         </div>
       )}
     </div>

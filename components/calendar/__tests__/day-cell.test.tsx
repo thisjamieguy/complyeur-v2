@@ -80,6 +80,7 @@ function renderCell(
       date={tripDay.referenceDate}
       dateKey="2026-03-10"
       dayWidth={32}
+      colIndex={0}
       isRowHovered={options.isRowHovered ?? false}
       isWeekend={false}
       isToday={false}
@@ -109,6 +110,7 @@ describe('DayCell', () => {
         date={new Date('2026-03-10T00:00:00.000Z')}
         dateKey="2026-03-10"
         dayWidth={32}
+        colIndex={0}
         isRowHovered={false}
         isWeekend={false}
         isToday={false}
@@ -134,6 +136,7 @@ describe('DayCell', () => {
         date={new Date('2026-03-10T00:00:00.000Z')}
         dateKey="2026-03-10"
         dayWidth={32}
+        colIndex={0}
         isRowHovered={false}
         isWeekend={false}
         isToday={false}
@@ -162,6 +165,7 @@ describe('DayCell', () => {
         date={new Date('2026-03-10T00:00:00.000Z')}
         dateKey="2026-03-10"
         dayWidth={32}
+        colIndex={0}
         isRowHovered={false}
         isWeekend={false}
         isToday={false}
@@ -187,6 +191,58 @@ describe('DayCell', () => {
       y: 80,
       dateKey: '2026-03-10',
     })
+  })
+
+  it('moves a trip with the keyboard: m, arrow, Enter', () => {
+    const onShiftTripDates = vi.fn()
+
+    renderCell(makeTripDay(), { interactive: true, onShiftTripDates })
+
+    const tripButton = screen.getByRole('button', { name: /FR trip on Mar 10/i })
+    fireEvent.keyDown(tripButton, { key: 'm' })
+    fireEvent.keyDown(tripButton, { key: 'ArrowRight' })
+    fireEvent.keyDown(tripButton, { key: 'Enter' })
+
+    expect(onShiftTripDates).toHaveBeenCalledWith({
+      tripId: 'trip-1',
+      entryDateKey: '2026-03-11',
+      exitDateKey: '2026-03-22',
+      originalEntryDateKey: '2026-03-10',
+      originalExitDateKey: '2026-03-21',
+    })
+  })
+
+  it('resizes a trip end with the keyboard: r, arrow, Enter', () => {
+    const onResizeTrip = vi.fn()
+
+    renderCell(makeTripDay(), { interactive: true, onResizeTrip })
+
+    const tripButton = screen.getByRole('button', { name: /FR trip on Mar 10/i })
+    fireEvent.keyDown(tripButton, { key: 'r' })
+    fireEvent.keyDown(tripButton, { key: 'ArrowRight' })
+    fireEvent.keyDown(tripButton, { key: 'Enter' })
+
+    expect(onResizeTrip).toHaveBeenCalledWith({
+      tripId: 'trip-1',
+      edge: 'end',
+      dateKey: '2026-03-22',
+      originalEntryDateKey: '2026-03-10',
+      originalExitDateKey: '2026-03-21',
+    })
+  })
+
+  it('cancels a keyboard move with Escape and makes no change', () => {
+    const onShiftTripDates = vi.fn()
+
+    renderCell(makeTripDay(), { interactive: true, onShiftTripDates })
+
+    const tripButton = screen.getByRole('button', { name: /FR trip on Mar 10/i })
+    fireEvent.keyDown(tripButton, { key: 'm' })
+    fireEvent.keyDown(tripButton, { key: 'ArrowRight' })
+    fireEvent.keyDown(tripButton, { key: 'Escape' })
+    fireEvent.keyDown(tripButton, { key: 'Enter' })
+
+    expect(onShiftTripDates).not.toHaveBeenCalled()
   })
 
   it('calculates a new exit date when the end resize handle is dragged', () => {
@@ -408,6 +464,7 @@ describe('DayCell', () => {
         date={new Date('2026-03-10T00:00:00.000Z')}
         dateKey="2026-03-10"
         dayWidth={32}
+        colIndex={0}
         isRowHovered={false}
         isWeekend={false}
         isToday={false}

@@ -359,6 +359,7 @@ export const GanttChart = memo(function GanttChart({
   const [dropTargetEmployeeId, setDropTargetEmployeeId] = useState<string | null>(null)
   const [contextMenu, setContextMenu] =
     useState<CalendarEmployeeContextMenuRequest | null>(null)
+  const [announcement, setAnnouncement] = useState('')
   const mountStartedAtRef = useRef<number>(
     typeof performance !== 'undefined' ? performance.now() : 0
   )
@@ -588,6 +589,17 @@ export const GanttChart = memo(function GanttChart({
 
   return (
     <div className={cn('flex h-full min-h-[420px]', className)}>
+      {/* Live region: announces keyboard move/resize progress to screen readers */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </div>
+      {interactive && (
+        <p id="calendar-grid-help" className="sr-only">
+          To change a trip with the keyboard, move focus to it and press M to move
+          or R to resize, then use the left and right arrow keys and press Enter to
+          confirm or Escape to cancel.
+        </p>
+      )}
       {hasContextMenuActions && (
         <CalendarGridContextMenu
           contextMenu={contextMenu}
@@ -607,8 +619,11 @@ export const GanttChart = memo(function GanttChart({
         />
       )}
 
-      {/* Fixed left column — employee names (no horizontal scroll) */}
+      {/* Fixed left column — employee names (no horizontal scroll).
+          Hidden from assistive tech: each grid row carries the employee name and
+          status in its aria-label, so announcing this column too would duplicate. */}
       <div
+        aria-hidden="true"
         className="z-20 flex h-full shrink-0 flex-col border-r border-slate-200 bg-slate-50/80"
         style={{ width: NAME_COLUMN_WIDTH }}
       >
@@ -708,7 +723,15 @@ export const GanttChart = memo(function GanttChart({
       {/* Right column — horizontally scrollable timeline grid */}
       <div ref={scrollContainerRef} className="h-full min-w-0 flex-1">
         <ScrollArea className="h-full w-full whitespace-nowrap rounded-br-xl">
-          <div className="flex h-full flex-col" style={{ width: totalWidth }}>
+          <div
+            role="grid"
+            aria-label="Employee travel timeline"
+            aria-rowcount={employees.length + 1}
+            aria-colcount={dates.length}
+            aria-describedby={interactive ? 'calendar-grid-help' : undefined}
+            className="flex h-full flex-col"
+            style={{ width: totalWidth }}
+          >
             {/* 4-row date header */}
             <DateHeader
               dateMeta={dateMeta}
@@ -718,16 +741,18 @@ export const GanttChart = memo(function GanttChart({
             {/* Virtualized grid rows */}
             <div
               ref={timelineScrollRef}
+              role="rowgroup"
               data-testid="calendar-timeline-viewport"
               className="min-h-0 flex-1 overflow-y-auto bg-white"
               style={{ contain: 'layout paint' }}
             >
-              <div className="relative" style={{ height: totalHeight }}>
+              <div role="presentation" className="relative" style={{ height: totalHeight }}>
                 {virtualRows.map((virtualRow) => {
                   const employee = employees[virtualRow.index]
                   return (
                     <div
                       key={employee.id}
+                      role="presentation"
                       className={cn(
                         'absolute left-0 w-full border-b border-slate-100',
                         dropTargetEmployeeId === employee.id && 'bg-sky-50/40'
@@ -749,11 +774,13 @@ export const GanttChart = memo(function GanttChart({
                     >
                       <EmployeeRow
                         employee={employee}
+                        rowIndex={virtualRow.index}
                         dateMeta={dateMeta}
                         dayWidth={dayWidth}
                         isHovered={hoveredEmployeeId === employee.id}
                         isDropTarget={dropTargetEmployeeId === employee.id}
                         interactive={interactive}
+                        onAnnounce={setAnnouncement}
                         onCreateTrip={onCreateTrip}
                         onEditTrip={onEditTrip}
                         onDeleteTrip={onDeleteTrip}

@@ -99,9 +99,9 @@ export const DateHeader = memo(function DateHeader({
   }, [dateMeta])
 
   return (
-    <div className="sticky top-0 z-20 relative bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-[0_1px_0_rgba(148,163,184,0.15)]">
-      {/* Row 1: Rolling 180-day window indicator */}
-      <div className="relative border-b border-slate-100" style={{ height: WINDOW_INDICATOR_HEIGHT }}>
+    <div role="rowgroup" className="sticky top-0 z-20 relative bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-[0_1px_0_rgba(148,163,184,0.15)]">
+      {/* Row 1: Rolling 180-day window indicator (decorative) */}
+      <div aria-hidden="true" className="relative border-b border-slate-100" style={{ height: WINDOW_INDICATOR_HEIGHT }}>
         {rollingWindowBounds && (
           <div
             className="absolute top-[2px] bottom-[2px] rounded-md border border-sky-300/80 bg-sky-100/80 flex items-center justify-center"
@@ -126,6 +126,7 @@ export const DateHeader = memo(function DateHeader({
       {monthMarkers.map((marker) => (
         <div
           key={`month-marker-${marker.key}`}
+          aria-hidden="true"
           className={cn(
             'absolute z-30 pointer-events-none',
             marker.index === 0 ? 'translate-x-0' : '-translate-x-1/2'
@@ -141,8 +142,8 @@ export const DateHeader = memo(function DateHeader({
         </div>
       ))}
 
-      {/* Row 2: Week numbers */}
-      <div className="flex">
+      {/* Row 2: Week numbers (decorative) */}
+      <div aria-hidden="true" className="flex">
         {weekSpans.map((span) => (
           <div
             key={`${span.weekLabel}-${span.startIndex}`}
@@ -156,8 +157,8 @@ export const DateHeader = memo(function DateHeader({
         ))}
       </div>
 
-      {/* Row 3: Day-of-week single letters */}
-      <div className="flex border-t border-slate-100">
+      {/* Row 3: Day-of-week single letters (decorative) */}
+      <div aria-hidden="true" className="flex border-t border-slate-100">
         {dateMeta.map((dm) => (
           <div
             key={dm.key}
@@ -182,11 +183,14 @@ export const DateHeader = memo(function DateHeader({
         ))}
       </div>
 
-      {/* Row 4: Date numbers */}
-      <div className="flex border-t border-slate-100">
-        {dateMeta.map((dm) => (
+      {/* Row 4: Date numbers — the accessible column header row */}
+      <div role="row" aria-rowindex={1} className="flex border-t border-slate-100">
+        {dateMeta.map((dm, index) => (
           <div
             key={dm.key}
+            role="columnheader"
+            aria-colindex={index + 1}
+            aria-label={`${dm.monthLabel} ${dm.dayOfMonth}${dm.isToday ? ', today' : ''}`}
             className={cn(
               'shrink-0 flex items-center justify-center',
               !dm.isToday && !dm.isWeekend && 'bg-white',
