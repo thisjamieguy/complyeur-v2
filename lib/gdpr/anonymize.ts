@@ -24,6 +24,11 @@ import {
 } from './audit'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import { requireOwnerOrAdminMutation } from '@/lib/security/authorization'
+import type {
+  AlertUpdate,
+  EmployeeUpdate,
+  NotificationLogUpdate,
+} from '@/types/database-helpers'
 
 /**
  * Result type for anonymization
@@ -158,14 +163,16 @@ export async function anonymizeEmployee(
 
     // Update employee with anonymized data. Email is a direct identifier and
     // must be removed for the anonymized record to be meaningful.
+    const employeeUpdate: EmployeeUpdate = {
+      name: anonymizedName,
+      email: null,
+      anonymized_at: anonymizedAt,
+      anonymized_by: access.user.id,
+    }
+
     const { error: updateError } = await supabase
       .from('employees')
-      .update({
-        name: anonymizedName,
-        email: null,
-        anonymized_at: anonymizedAt,
-        anonymized_by: access.user.id,
-      } as Record<string, unknown>)
+      .update(employeeUpdate)
       .eq('id', employeeId)
 
     if (updateError) {
@@ -177,9 +184,11 @@ export async function anonymizeEmployee(
       }
     }
 
+    const alertUpdate: AlertUpdate = { message: REDACTED_ALERT_MESSAGE }
+
     const { error: alertScrubError } = await supabase
       .from('alerts')
-      .update({ message: REDACTED_ALERT_MESSAGE } as Record<string, unknown>)
+      .update(alertUpdate)
       .eq('employee_id', employeeId)
       .eq('company_id', access.companyId)
 
@@ -192,12 +201,14 @@ export async function anonymizeEmployee(
       }
     }
 
+    const notificationUpdate: NotificationLogUpdate = {
+      recipient_email: REDACTED_NOTIFICATION_RECIPIENT,
+      subject: REDACTED_NOTIFICATION_SUBJECT,
+    }
+
     const { error: notificationScrubError } = await supabase
       .from('notification_log')
-      .update({
-        recipient_email: REDACTED_NOTIFICATION_RECIPIENT,
-        subject: REDACTED_NOTIFICATION_SUBJECT,
-      } as Record<string, unknown>)
+      .update(notificationUpdate)
       .eq('employee_id', employeeId)
       .eq('company_id', access.companyId)
 

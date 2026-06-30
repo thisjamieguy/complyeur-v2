@@ -76,10 +76,11 @@ describe('proxy: Content-Security-Policy header', () => {
 
 describe('proxy: sensitive query param stripping', () => {
   it('strips ?password= from login GET requests', async () => {
-    const req = makeRequest('/login?password=secret123')
+    const req = makeRequest('/login?email=user%40example.com&password=secret123')
     const res = await proxy(req)
     expect(res.status).toBe(302)
     const location = res.headers.get('location') ?? ''
+    expect(location).not.toContain('email=')
     expect(location).not.toContain('password')
   })
 

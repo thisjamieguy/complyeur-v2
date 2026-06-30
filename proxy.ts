@@ -61,7 +61,7 @@ export async function proxy(request: NextRequest) {
   // Strip sensitive query parameters from auth pages to prevent credential leakage in URLs.
   // ZAP flagged: "Information Disclosure - Sensitive Information in URL" when GET params
   // like ?password=... appear. Forms already use POST, but this hardens against bookmarks/logs.
-  const sensitiveParams = ['password', 'confirmPassword']
+  const sensitiveParams = ['email', 'password', 'confirmPassword']
   const authPaths = ['/login', '/signup', '/forgot-password', '/reset-password']
   if (authPaths.includes(pathname) && request.method === 'GET') {
     const url = request.nextUrl.clone()

@@ -1,7 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/errors'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
-import type { Employee, EmployeeCreateInput, EmployeeUpdate } from '@/types/database-helpers'
+import type {
+  Employee,
+  EmployeeCreateInput,
+  EmployeeInput,
+  EmployeeUpdate,
+} from '@/types/database-helpers'
 
 interface SupabaseQueryErrorLike {
   code?: string | null
@@ -17,10 +22,16 @@ function isMissingNationalityTypeColumnError(
   return message.includes('nationality_type') && message.includes('does not exist')
 }
 
-function omitNationalityType<T extends Record<string, unknown>>(input: T): Omit<T, 'nationality_type'> {
+function omitNationalityType(input: EmployeeUpdate): EmployeeUpdate {
   const copy = { ...input }
   delete (copy as { nationality_type?: unknown }).nationality_type
-  return copy as Omit<T, 'nationality_type'>
+  return copy
+}
+
+function omitNationalityTypeFromInsert(input: EmployeeInput): EmployeeInput {
+  const copy = { ...input }
+  delete (copy as { nationality_type?: unknown }).nationality_type
+  return copy
 }
 
 function normalizeEmployeeName(name: string): string {
@@ -137,7 +148,7 @@ export async function createEmployee(employee: EmployeeCreateInput): Promise<Emp
     )
   }
 
-  const payload = { ...employee, company_id: companyId }
+  const payload: EmployeeInput = { ...employee, company_id: companyId }
 
   let { data, error } = await supabase
     .from('employees')
@@ -151,7 +162,7 @@ export async function createEmployee(employee: EmployeeCreateInput): Promise<Emp
     )
     const fallback = await supabase
       .from('employees')
-      .insert(omitNationalityType(payload))
+      .insert(omitNationalityTypeFromInsert(payload))
       .select()
       .single()
 
@@ -201,7 +212,7 @@ export async function updateEmployee(id: string, updates: EmployeeUpdate): Promi
     console.warn(
       '[Employees] employees.nationality_type is missing; retrying update without nationality_type'
     )
-    const legacyUpdates = omitNationalityType(updates as Record<string, unknown>)
+    const legacyUpdates = omitNationalityType(updates)
 
     if (Object.keys(legacyUpdates).length === 0) {
       const currentEmployee = await getEmployeeById(id)

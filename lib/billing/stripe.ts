@@ -2,7 +2,7 @@ import Stripe from 'stripe'
 
 let _stripe: Stripe | null = null
 
-export const STRIPE_API_VERSION = '2026-01-28.clover'
+export const STRIPE_API_VERSION = '2026-06-24.dahlia'
 
 /**
  * Get a singleton Stripe client instance.

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
-import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -41,17 +40,9 @@ import { CalendarToolbar } from './calendar-toolbar'
 import { CalendarEmptyState } from './calendar-empty-state'
 import { CALENDAR_ZOOM_WIDTHS, type CalendarZoomLevel } from './zoom-controls'
 import { InteractiveTripEditor } from './interactive-trip-editor'
+import { GanttChart } from './gantt-chart'
+import { MobileCalendarView } from './mobile-calendar-view'
 import type { EmployeeWithTrips, ProcessedEmployee } from './types'
-
-const GanttChart = dynamic(
-  () => import('./gantt-chart').then(m => m.GanttChart),
-  { ssr: false, loading: () => <div className="h-96 animate-pulse bg-slate-100 rounded-lg" /> }
-)
-
-const MobileCalendarView = dynamic(
-  () => import('./mobile-calendar-view').then(m => m.MobileCalendarView),
-  { ssr: false, loading: () => <div className="h-64 animate-pulse bg-slate-100 rounded-lg" /> }
-)
 
 /** Days to look back from today */
 const DAYS_BACK = 200
@@ -145,10 +136,6 @@ export function CalendarView({
     const today = toUTCMidnight(new Date())
     const todayKey = toDateKey(today)
     const visibleEmployeeIds = new Set<string>()
-    /* eslint-disable react-hooks/refs --
-       Intentional per-employee memoization cache keyed by cacheKey. Reading and
-       writing this ref during render is a pure recompute-skip: it never changes
-       what is rendered, only avoids reprocessing unchanged employees. */
     const cache = processedEmployeeCacheRef.current
 
     const nextEmployees = filteredEmployees.map((employee) => {
@@ -188,7 +175,6 @@ export function CalendarView({
         cache.delete(employeeId)
       }
     }
-    /* eslint-enable react-hooks/refs */
 
     return nextEmployees
   }, [filteredEmployees, startDate, endDate, startDateKey, endDateKey, tripActions.tripOverrides])

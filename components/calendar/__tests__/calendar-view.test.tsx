@@ -17,6 +17,8 @@ const {
   showSuccessMock,
   updateTripAssignmentActionMock,
   updateTripActionMock,
+  ganttChartProps,
+  mobileCalendarProps,
 } = vi.hoisted(() => ({
   addTripActionMock: vi.fn(),
   checkTripOverlapMock: vi.fn(),
@@ -26,16 +28,21 @@ const {
   showSuccessMock: vi.fn(),
   updateTripAssignmentActionMock: vi.fn(),
   updateTripActionMock: vi.fn(),
+  ganttChartProps: [] as Array<Record<string, unknown>>,
+  mobileCalendarProps: [] as Array<Record<string, unknown>>,
 }))
 
-const dynamicProps: Array<Record<string, unknown>> = []
+vi.mock('../gantt-chart', () => ({
+  GanttChart: (props: Record<string, unknown>) => {
+    ganttChartProps.push(props)
+    return null
+  },
+}))
 
-vi.mock('next/dynamic', () => ({
-  default: () => {
-    return function DynamicMock(props: Record<string, unknown>) {
-      dynamicProps.push(props)
-      return null
-    }
+vi.mock('../mobile-calendar-view', () => ({
+  MobileCalendarView: (props: Record<string, unknown>) => {
+    mobileCalendarProps.push(props)
+    return null
   },
 }))
 
@@ -73,7 +80,7 @@ class ResizeObserverMock {
 }
 
 function getLatestDesktopCalendarProps(): Record<string, unknown> {
-  const desktopProps = [...dynamicProps]
+  const desktopProps = [...ganttChartProps]
     .reverse()
     .find((props) => Array.isArray(props.dates))
 
@@ -95,7 +102,8 @@ function getDesktopProps(): { employees: ProcessedEmployee[]; dates: Date[] } {
 
 describe('CalendarView', () => {
   beforeEach(() => {
-    dynamicProps.length = 0
+    ganttChartProps.length = 0
+    mobileCalendarProps.length = 0
     addTripActionMock.mockReset()
     checkTripOverlapMock.mockReset()
     deleteTripActionMock.mockReset()
@@ -325,7 +333,7 @@ describe('CalendarView', () => {
       ],
     })
 
-    const initialProps = [...dynamicProps]
+    const initialProps = [...ganttChartProps]
       .reverse()
       .find((props) => Array.isArray(props.dates))
     expect(initialProps).toMatchObject({
@@ -343,7 +351,7 @@ describe('CalendarView', () => {
       await Promise.resolve()
     })
 
-    const zoomedProps = [...dynamicProps]
+    const zoomedProps = [...ganttChartProps]
       .reverse()
       .find((props) => Array.isArray(props.dates))
     expect(zoomedProps).toMatchObject({

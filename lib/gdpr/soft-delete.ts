@@ -29,6 +29,7 @@ import {
 import { RECOVERY_PERIOD_DAYS } from './constants'
 import { requireCompanyAccess, requireCompanyAccessCached } from '@/lib/security/tenant-access'
 import { requireOwnerOrAdminMutation } from '@/lib/security/authorization'
+import type { EmployeeUpdate, NotificationLogUpdate } from '@/types/database-helpers'
 
 // Re-export for convenience
 export { RECOVERY_PERIOD_DAYS }
@@ -140,9 +141,11 @@ export async function softDeleteEmployee(
     const scheduledHardDelete = addDays(now, RECOVERY_PERIOD_DAYS)
 
     // Update employee with deleted_at
+    const employeeUpdate: EmployeeUpdate = { deleted_at: deletedAt }
+
     const { error: updateError } = await supabase
       .from('employees')
-      .update({ deleted_at: deletedAt } as Record<string, unknown>)
+      .update(employeeUpdate)
       .eq('id', employeeId)
 
     if (updateError) {
@@ -297,9 +300,11 @@ export async function restoreEmployee(
     const daysUntilHardDelete = RECOVERY_PERIOD_DAYS - daysSinceDelete
 
     // Clear deleted_at to restore
+    const employeeUpdate: EmployeeUpdate = { deleted_at: null }
+
     const { error: updateError } = await supabase
       .from('employees')
-      .update({ deleted_at: null } as Record<string, unknown>)
+      .update(employeeUpdate)
       .eq('id', employeeId)
 
     if (updateError) {
@@ -442,12 +447,14 @@ export async function hardDeleteEmployee(
 
     // Notification logs retain delivery evidence after employee deletion, so
     // scrub any direct recipient and subject identifiers first.
+    const notificationUpdate: NotificationLogUpdate = {
+      recipient_email: REDACTED_NOTIFICATION_RECIPIENT,
+      subject: REDACTED_NOTIFICATION_SUBJECT,
+    }
+
     const { error: notificationScrubError } = await supabase
       .from('notification_log')
-      .update({
-        recipient_email: REDACTED_NOTIFICATION_RECIPIENT,
-        subject: REDACTED_NOTIFICATION_SUBJECT,
-      } as Record<string, unknown>)
+      .update(notificationUpdate)
       .eq('employee_id', employeeId)
       .eq('company_id', companyId)
 

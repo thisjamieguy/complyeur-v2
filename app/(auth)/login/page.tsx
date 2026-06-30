@@ -1,24 +1,19 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useActionState, useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { login, signInWithGoogle } from '../actions'
-import { loginSchema, type LoginInput } from '@/lib/validations/auth'
+import { loginWithFormState, signInWithGoogle, type LoginActionState } from '../actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
 import { toast } from 'sonner'
+
+const initialLoginActionState: LoginActionState = {
+  error: null,
+  email: '',
+}
 
 /**
  * Google Icon component
@@ -41,7 +36,10 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false)
+  const [state, formAction, isLoginPending] = useActionState(
+    loginWithFormState,
+    initialLoginActionState
+  )
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('next') || '/dashboard'
@@ -49,14 +47,6 @@ function LoginForm() {
     redirectTo === '/dashboard'
       ? '/signup'
       : `/signup?next=${encodeURIComponent(redirectTo)}`
-
-  const form = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  })
 
   // Show error from URL params (e.g., from OAuth callback failures)
   useEffect(() => {
@@ -72,27 +62,11 @@ function LoginForm() {
     }
   }, [searchParams])
 
-  async function onSubmit(data: LoginInput) {
-    setIsLoading(true)
-    try {
-      const formData = new FormData()
-      formData.append('email', data.email)
-      formData.append('password', data.password)
-      formData.append('redirectTo', redirectTo)
-      const result = await login(formData)
-      if (result?.success === false) {
-        toast.error(result.error)
-      }
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Sign-in failed. Check your credentials or reset your password.'
-      )
-    } finally {
-      setIsLoading(false)
+  useEffect(() => {
+    if (state.error) {
+      toast.error(state.error)
     }
-  }
+  }, [state.error])
 
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true)
@@ -105,7 +79,7 @@ function LoginForm() {
     // Note: Don't set loading to false on success - the redirect will unmount the component
   }
 
-  const isAnyLoading = isLoading || isGoogleLoading
+  const isAnyLoading = isLoginPending || isGoogleLoading
 
   return (
     <Card className="overflow-hidden border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/10">
@@ -150,53 +124,42 @@ function LoginForm() {
           </div>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
+        <form action={formAction} className="space-y-4">
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+          <div className="grid gap-2">
+            <Label htmlFor="login-email">Email</Label>
+            <Input
+              id="login-email"
               name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="Enter your email"
-                      autoComplete="email"
-                      required
-                      disabled={isAnyLoading}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              type="email"
+              placeholder="Enter your email"
+              autoComplete="email"
+              required
+              disabled={isAnyLoading}
+              defaultValue={state.email}
             />
-            <FormField
-              control={form.control}
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="login-password">Password</Label>
+            <Input
+              id="login-password"
               name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter your password"
-                      autoComplete="current-password"
-                      required
-                      disabled={isAnyLoading}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              type="password"
+              placeholder="Enter your password"
+              autoComplete="current-password"
+              required
+              disabled={isAnyLoading}
             />
-            <Button type="submit" className="w-full" disabled={isAnyLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in with email'}
-            </Button>
-          </form>
-        </Form>
+          </div>
+          {state.error ? (
+            <p className="text-sm font-medium text-destructive" role="alert">
+              {state.error}
+            </p>
+          ) : null}
+          <Button type="submit" className="w-full" disabled={isAnyLoading}>
+            {isLoginPending ? 'Signing in...' : 'Sign in with email'}
+          </Button>
+        </form>
 
         <div className="text-center space-y-3">
           <Link

@@ -13,6 +13,12 @@ export type MfaStatus = {
   backupSessionValid: boolean
 }
 
+function normalizeAssuranceLevel(
+  level: string | null | undefined
+): MfaStatus['currentLevel'] {
+  return level === 'aal1' || level === 'aal2' ? level : null
+}
+
 export type MfaEnforcementResult =
   | { ok: true }
   | { ok: false; reason: 'enroll' | 'verify' | 'backup_codes' }
@@ -57,8 +63,8 @@ export async function getMfaStatusForUser(
   const backupSessionValid = await hasValidBackupSession(supabase, userId, hasVerifiedFactor)
 
   return {
-    currentLevel: assurance.currentLevel ?? null,
-    nextLevel: assurance.nextLevel ?? null,
+    currentLevel: normalizeAssuranceLevel(assurance.currentLevel),
+    nextLevel: normalizeAssuranceLevel(assurance.nextLevel),
     hasVerifiedFactor,
     backupSessionValid,
   }

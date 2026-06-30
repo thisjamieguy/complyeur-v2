@@ -30,6 +30,16 @@ type SignupActionResult =
 
 type LoginActionResult = { success: false; error: string }
 
+export type LoginActionState = {
+  error: string | null
+  email: string
+}
+
+const INITIAL_LOGIN_ACTION_STATE: LoginActionState = {
+  error: null,
+  email: '',
+}
+
 function getSignupRedirectPath(redirectTo: string | null | undefined): string {
   const validatedRedirect = validateRedirectUrl(redirectTo)
 
@@ -129,6 +139,23 @@ export async function login(formData: FormData) {
   }
   revalidatePath('/', 'layout')
   redirect(redirectTo)
+}
+
+export async function loginWithFormState(
+  _previousState: LoginActionState,
+  formData: FormData
+): Promise<LoginActionState> {
+  const submittedEmail = formData.get('email')
+  const result = await login(formData)
+
+  if (result?.success === false) {
+    return {
+      error: result.error,
+      email: typeof submittedEmail === 'string' ? submittedEmail : '',
+    }
+  }
+
+  return INITIAL_LOGIN_ACTION_STATE
 }
 
 export async function signup(formData: FormData) {

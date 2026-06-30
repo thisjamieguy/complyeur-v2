@@ -85,6 +85,9 @@ export function getAuthErrorMessage(supabaseError: { message: string; status?: n
   if (message.includes('Invalid login credentials')) {
     return 'Invalid email or password'
   }
+  if (message.includes('fetch failed')) {
+    return 'Authentication service is unavailable. Please check that Supabase is running and try again.'
+  }
   if (message.includes('Email not confirmed')) {
     return 'Please verify your email address before signing in'
   }

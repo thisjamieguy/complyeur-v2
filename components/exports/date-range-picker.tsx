@@ -136,7 +136,7 @@ export function DateRangePicker({
                 onSelect={(date) =>
                   onChange({ from: date, to: value?.to || new Date() })
                 }
-                initialFocus
+                autoFocus
               />
             </PopoverContent>
           </Popover>
@@ -163,7 +163,7 @@ export function DateRangePicker({
                     to: date,
                   })
                 }
-                initialFocus
+                autoFocus
               />
             </PopoverContent>
           </Popover>

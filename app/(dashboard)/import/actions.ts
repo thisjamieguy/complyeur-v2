@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { Json } from '@/types/database';
+import type { ImportSessionUpdate } from '@/types/database-helpers';
 import { checkEntitlement } from '@/lib/billing/entitlements'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { enforceMfaForPrivilegedUser } from '@/lib/security/mfa'
@@ -480,10 +481,24 @@ export async function updateSessionStatus(
 
     await requireCompanyAccess(supabase, session.company_id)
 
-    const updateData: Record<string, unknown> = {
+    const updateData: ImportSessionUpdate = {
       status,
-      ...additionalData,
     };
+
+    if (additionalData) {
+      if (additionalData.total_rows !== undefined) updateData.total_rows = additionalData.total_rows
+      if (additionalData.valid_rows !== undefined) updateData.valid_rows = additionalData.valid_rows
+      if (additionalData.error_rows !== undefined) updateData.error_rows = additionalData.error_rows
+      if (additionalData.parsed_data !== undefined) {
+        updateData.parsed_data = additionalData.parsed_data as unknown as Json | null
+      }
+      if (additionalData.validation_errors !== undefined) {
+        updateData.validation_errors = additionalData.validation_errors as unknown as Json
+      }
+      if (additionalData.result !== undefined) {
+        updateData.result = additionalData.result as unknown as Json | null
+      }
+    }
 
     if (status === 'completed' || status === 'failed') {
       updateData.completed_at = new Date().toISOString();
