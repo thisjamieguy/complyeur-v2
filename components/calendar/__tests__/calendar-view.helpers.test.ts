@@ -101,7 +101,7 @@ describe('calendar-view helpers', () => {
       makeComplianceMap([
         makeCompliance('2026-02-01', { daysUsed: 79, daysRemaining: 11, riskLevel: 'amber' }),
         makeCompliance('2026-02-02', { daysUsed: 80, daysRemaining: 10, riskLevel: 'amber' }),
-        makeCompliance('2026-02-03', { daysUsed: 90, daysRemaining: 0, riskLevel: 'red' }),
+        makeCompliance('2026-02-03', { daysUsed: 91, daysRemaining: -1, riskLevel: 'red' }),
       ]),
       makeDayMapContext()
     )
@@ -167,5 +167,6 @@ describe('calendar-view helpers', () => {
     expect(dayMap.get('2026-02-10')?.riskLevel).toBe('green')
     expect(dayMap.get('2026-02-11')?.riskLevel).toBe('amber')
     expect(dayMap.get('2026-02-12')?.riskLevel).toBe('red')
+    expect(dayMap.get('2026-02-12')?.isBreachDay).toBe(false)
   })
 })

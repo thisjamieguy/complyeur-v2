@@ -8,6 +8,7 @@ import {
   countCompaniesExceedingTierLimits,
   countCompaniesOnTier,
   diffTierRows,
+  syncCompanyEntitlementsForTier,
   type TierRow,
 } from '@/lib/admin/tier-admin'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
@@ -178,6 +179,18 @@ export async function updateTier(slug: string, data: UpdateTierFormData) {
     return { success: false as const, error: error?.message ?? 'Update failed' }
   }
 
+  let syncedEntitlements = 0
+  try {
+    syncedEntitlements = await syncCompanyEntitlementsForTier(supabase, after as TierRow)
+  } catch (syncError) {
+    console.error('[updateTier] entitlement sync failed', syncError)
+    return {
+      success: false as const,
+      error:
+        'Tier saved, but existing company entitlements could not be refreshed. Retry the save or run subscription reconciliation.',
+    }
+  }
+
   const changes = diffTierRows(before as TierRow, after as TierRow)
   if (changes.length > 0) {
     await logAdminAction({
@@ -186,6 +199,7 @@ export async function updateTier(slug: string, data: UpdateTierFormData) {
       details: {
         tier_slug: tierSlug,
         changes,
+        synced_entitlements: syncedEntitlements,
       },
     })
   }

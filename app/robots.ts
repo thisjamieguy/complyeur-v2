@@ -80,20 +80,41 @@ const PREVIEW_ROUTE_PATTERNS = [
   '/landing/sandbox/*',
 ]
 
+const DISALLOWED_ROUTE_PATTERNS = [
+  ...PRIVATE_ROUTE_PATTERNS,
+  ...NON_INDEXABLE_UTILITY_ROUTES,
+  ...PREVIEW_ROUTE_PATTERNS,
+]
+
+const AI_DISCOVERY_USER_AGENTS = [
+  'OAI-SearchBot',
+  'GPTBot',
+  'ChatGPT-User',
+  'ClaudeBot',
+  'Claude-SearchBot',
+  'Claude-User',
+  'Google-Extended',
+  'PerplexityBot',
+  'Perplexity-User',
+]
+
 export default function robots(): MetadataRoute.Robots {
   const siteOrigin = getSiteOrigin()
+  const publicDiscoveryRule = {
+    allow: '/',
+    disallow: DISALLOWED_ROUTE_PATTERNS,
+  }
 
   return {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
-        disallow: [
-          ...PRIVATE_ROUTE_PATTERNS,
-          ...NON_INDEXABLE_UTILITY_ROUTES,
-          ...PREVIEW_ROUTE_PATTERNS,
-        ],
+        ...publicDiscoveryRule,
       },
+      ...AI_DISCOVERY_USER_AGENTS.map((userAgent) => ({
+        userAgent,
+        ...publicDiscoveryRule,
+      })),
     ],
     sitemap: [`${siteOrigin}/sitemap.xml`],
     host: siteOrigin,

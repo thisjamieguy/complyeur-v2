@@ -187,7 +187,10 @@ export function CompaniesTable({
                       : '-'}
                   </TableCell>
                   <TableCell>
-                    <Link href={`/admin/companies/${company.id}`}>
+                    <Link
+                      href={`/admin/companies/${company.id}`}
+                      aria-label={`View ${company.name} company details`}
+                    >
                       <Button variant="ghost" size="icon">
                         <ExternalLink className="h-4 w-4" />
                       </Button>

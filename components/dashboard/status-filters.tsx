@@ -30,8 +30,8 @@ const FilterButton = memo(function FilterButton({ filter, label, count, isActive
         'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2',
         isActive
-          ? 'bg-brand-700 text-white shadow-sm'
-          : 'bg-white text-brand-600 border border-slate-200 hover:bg-brand-50 hover:border-brand-300 shadow-sm'
+          ? 'bg-slate-900 text-white shadow-sm'
+          : 'border border-slate-200 bg-white text-slate-600 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900'
       )}
       aria-pressed={isActive}
       aria-label={`Filter by ${label}, ${count} employees`}

@@ -46,12 +46,18 @@ Status: Draft template for legal review before external use.
 - Backup and recovery procedures per `docs/RUNBOOK.md`.
 
 ## 8. Sub-Processors
-ComplyEur uses the following sub-processors:
+ComplyEur uses the following sub-processors. The current review register is
+maintained in `docs/legal/PROCESSOR_SUBPROCESSOR_REGISTER.md`.
+
 - Supabase (database/auth/infrastructure)
 - Vercel (application hosting and delivery)
 - Stripe (billing and payment processing)
 - Resend (transactional email delivery)
 - Sentry (error monitoring)
+- Google Analytics 4 (consent-gated analytics)
+- CookieYes (cookie consent management)
+- Cloudflare Turnstile (bot protection)
+- Upstash Redis (distributed rate limiting)
 
 Processor will maintain and update this list and notify Controller of material changes where contractually required.
 

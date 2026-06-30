@@ -42,9 +42,10 @@ export function DataPrivacySection({ disabled }: DataPrivacySectionProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Data & Privacy</CardTitle>
+        <CardTitle>Data retention &amp; security</CardTitle>
         <CardDescription>
-          Configure data retention and session security settings for your organization.
+          Configure how long trip data is kept and when inactive sessions time out for your
+          organisation.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

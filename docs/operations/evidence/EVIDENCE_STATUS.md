@@ -1,6 +1,6 @@
 # Beta Evidence Status Dashboard
 
-Last updated: 2026-06-15
+Last updated: 2026-06-24
 
 ## Purpose
 
@@ -27,14 +27,16 @@ Before marking any beta blocker complete:
 | Signup Email Verification | 🟩 Complete | `2026-06-05-check-email-page.png`, `2026-06-05-confirmation-email-received.png`, `2026-06-05-confirmation-link-login.png`, `2026-06-05-dashboard-access.png`; prior signup-fix evidence preserved | `2026-06-04-email-verification.md`, `2026-06-04-me-user-removal-before.md`, `2026-06-04-me-user-removal-after.md` | `docs/operations/evidence/email-verification/` |
 | Multi-Provider Email Deliverability | 🟨 In Progress | One production signup path evidenced; Gmail, Outlook, and corporate inbox evidence pending | Pending provider-specific note | `docs/operations/evidence/email-verification/` |
 | Password Reset | ⬜ Not Started | Pending | Pending | `docs/operations/evidence/password-reset/` |
-| Recovery Drill | ⬜ Not Started | Pending | Pending | `docs/operations/evidence/recovery-drills/` |
+| Recovery Drill | 🟩 Complete | Backup tab and restored project screenshots captured; row-count, RLS, auth, app smoke, and tenant-isolation validation passed | `2026-06-24-supabase-backup-pitr-precheck.md` | `docs/operations/evidence/recovery-drills/` |
 | Non-Founder Onboarding | ⬜ Not Started | Founder simulation screenshots captured; non-founder evidence pending | `2026-06-05-founder-simulation-onboarding.md` founder simulation only | `docs/operations/evidence/beta-onboarding/` |
 | Sentry Alert Routing | 🚫 Blocked | `2026-06-04-sentry-project-settings-blocked.png`, `2026-06-04-sentry-alert-rules-blocked.png`, `2026-06-04-sentry-notification-routing-blocked.png` | `2026-06-04-sentry-alert-routing.md` | `docs/operations/evidence/sentry-alerts/` |
 | Support Ownership | 🟩 Complete | `2026-06-04-support-mailbox.png`, `2026-06-04-support-routing.png`, `2026-06-04-support-address-configuration.png` | `2026-06-04-support-ownership.md` | `docs/operations/evidence/support-ownership/` |
-| Stripe Verification | ⬜ Not Started | Pending | Pending | `docs/operations/evidence/stripe-verification/` |
+| Stripe Verification | 🟨 In Progress | API evidence captured; dashboard screenshots still optional/pending | `2026-06-23-live-stripe-payment-evidence.md` | `docs/operations/evidence/stripe-verification/` |
+| Local Multi-User E2E | 🟩 Complete | Command output recorded in note | `2026-06-24-local-multi-user-e2e.md` | `docs/operations/evidence/multi-user-e2e/` |
+| Production RLS/RPC Attack Probe | 🟩 Complete | Command output recorded in note | `2026-06-24-production-rls-rpc-attack-probe.md` | `docs/operations/evidence/multi-user-e2e/` |
 | CodeQL And Dependency Security | 🟨 In Progress | Pending GitHub run evidence | `.github/workflows/codeql.yml`, `.github/workflows/security.yml`, and `.github/dependabot.yml` added locally; dashboard evidence pending | `docs/operations/evidence/branch-protection/` |
 | Public/Internal Health | 🟨 In Progress | Pending current production probe | Public health is now anon `ping()` only; internal deep health is CRON-protected | `docs/operations/evidence/` |
-| Supabase Backup/PITR Restore Drill | ⬜ Not Started | Pending | Must include isolated restore, row counts, RLS check, auth smoke, app smoke, and reviewer sign-off | `docs/operations/evidence/recovery-drills/` |
+| Supabase Backup/PITR Restore Drill | 🟩 Complete | Daily-backup restore drill passed; PITR is intentionally deferred by owner-approved daily-backup-only RPO/cost decision | `2026-06-24-supabase-backup-pitr-precheck.md` | `docs/operations/evidence/recovery-drills/` |
 | GDPR/DSAR Lifecycle | 🟨 In Progress | Pending reviewer sign-off | Import raw PII retention was broadened in code; full DSAR and backup limitation evidence pending | `docs/operations/evidence/` |
 
 ## Status Legend
@@ -80,6 +82,24 @@ Before marking any beta blocker complete:
 - Required screenshots: Backup or restore control panel, recovery drill execution record, restore verification result, and any incident or follow-up tracker used during the drill.
 - Required note must include restore target, restore point, critical-table row counts, RLS validation, auth smoke, app smoke, executor, reviewer, and residual risk.
 - Folder: `docs/operations/evidence/recovery-drills/`
+- 2026-06-24 production daily physical backups were verified and the latest
+  backup was restored into isolated project
+  `complyeur-restore-drill-2026-06-24` (`ubpztqbdkyesfpcqrohe`).
+- Restored target validation passed: row counts matched production baseline,
+  RLS remained enabled on critical tables, latest migration matched, restored
+  target RLS/RPC probe passed 13 checks, local app auth/dashboard smoke passed,
+  and disposable probe/smoke data was cleaned up.
+- The isolated restored project was deleted after validation; follow-up project
+  list showed only prod/staging/dev.
+- Backup/restore dashboard tab screenshot captured as
+  `2026-06-24-supabase-backups-restore-tab.png`; restored active project
+  screenshot captured as `2026-06-24-supabase-restored-project-active.png`.
+- PITR remains disabled. Owner accepted daily-backup-only RPO for beta/public
+  readiness because the PITR add-on cost is not sustainable before revenue.
+- Production compute was moved to Micro for cost control; screenshot captured as
+  `2026-06-24-supabase-compute-micro-selection.png`. Micro does not satisfy the
+  PITR prerequisite, so PITR must be revisited after first paying customer,
+  customer/security requirement, or materially higher production data value.
 
 ### Non-Founder Onboarding
 
@@ -152,23 +172,51 @@ Before marking any beta blocker complete:
 - Sentry ownership is documented in `docs/operations/SENTRY_OWNERSHIP.md`, but routing evidence is incomplete.
 - Sentry Alert Routing remains a beta blocker until live Sentry screenshots or read-capable API evidence show alerts routed to a responsible recipient.
 
+### Stripe Verification
+
+- 2026-06-23 live Stripe API evidence confirms the account has charges and payouts enabled.
+- A live `GBP 1.00` discounted subscription checkout completed successfully in live mode.
+- Production Stripe price audit passed for all six configured price IDs, including amount, currency, interval, and active-status checks against the local plan catalog.
+- The live webhook endpoint for `https://complyeur.com/api/billing/webhook` is enabled and matches the repo-required event set, including refund and dispute events.
+- Production Supabase evidence confirms the checkout webhook was processed and provisioned the expected `professional` active entitlement.
+- Production reconciliation on 2026-06-23 refreshed two active Stripe subscriptions and filled the tested checkout entitlement `current_period_end`.
+- Code changes now retrieve `current_period_end` during checkout provisioning, source renewal-email amounts from Stripe invoice previews, alert billing/support on refunds and disputes, refresh entitlements when tier capabilities change, and provide a repeatable reconciliation script.
+- Stripe Verification remains in progress until the updated handler is deployed and replay, stale/out-of-order event, failed-payment, cancellation, failed-webhook monitoring, and post-deploy lifecycle evidence are closed.
+
+### Local Multi-User E2E
+
+- 2026-06-24 local Supabase was running at `http://127.0.0.1:54321`.
+- `pnpm test:e2e:multi-user` completed with `2 passed (1.1m)`.
+- Evidence note stored as `docs/operations/evidence/multi-user-e2e/2026-06-24-local-multi-user-e2e.md`.
+- This closes local tenant-isolation E2E evidence only. Staging or production-like RLS/RPC attack evidence remains required before paid/public release.
+
+### Production RLS/RPC Attack Probe
+
+- 2026-06-24 production Supabase project `bewydxxynjtfpytunlcq.supabase.co` was tested with disposable `codex-rls-*` users and companies.
+- `scripts/security/production-rls-attack-probe.ts` passed 13 cross-tenant RLS and direct-RPC misuse checks.
+- The probe confirmed cross-tenant employee/trip reads returned zero rows, cross-tenant writes were blocked, viewer invite access was blocked, and direct RPC misuse for seat usage, user limit, and ownership transfer was denied.
+- Main run cleanup reported no errors, and cleanup-only verification for run id `mqsfpgw4-9od9t7` found no remaining disposable users or companies.
+- Evidence note stored as `docs/operations/evidence/multi-user-e2e/2026-06-24-production-rls-rpc-attack-probe.md`.
+
 ## Release Progress Summary
 
 ### Critical Evidence Areas Complete
 
-3 complete:
+6 complete:
 
 - Branch Protection
 - Signup Email Verification
+- Local Multi-User E2E
+- Production RLS/RPC Attack Probe
+- Recovery Drill
 - Support Ownership
 
 ### Private Beta Evidence Blockers Remaining
 
-6 remaining:
+5 remaining:
 
 - Multi-Provider Email Deliverability
 - Password Reset
-- Recovery Drill
 - Non-Founder Onboarding
 - Sentry Alert Routing
 - Public/Internal Health
@@ -179,10 +227,14 @@ task rather than an operational evidence area.
 
 ### Paid/Public Beta Evidence Areas Remaining
 
-- Stripe Verification
+- Stripe lifecycle and failure-mode evidence
 - CodeQL And Dependency Security run evidence
-- Supabase Backup/PITR Restore Drill
 - GDPR/DSAR Lifecycle
+
+Supabase Backup/PITR Restore Drill is complete for the current budget posture:
+daily-backup restore was validated and daily-backup-only RPO was explicitly
+accepted. PITR remains a deferred enhancement, not a completed technical
+control.
 
 ## Recommendations
 

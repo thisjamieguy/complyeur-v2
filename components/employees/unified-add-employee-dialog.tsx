@@ -253,9 +253,9 @@ export function UnifiedAddEmployeeDialog({
 
                   {/* Employee details section */}
                   <div className="space-y-4">
-                    <h4 className="text-sm font-medium text-slate-500 uppercase tracking-wide">
+                    <h3 className="text-sm font-medium text-slate-600 uppercase tracking-wide">
                       Employee Details
-                    </h4>
+                    </h3>
 
                     <FormField
                       control={form.control}
@@ -313,7 +313,7 @@ export function UnifiedAddEmployeeDialog({
                               ))}
                             </RadioGroup>
                           </FormControl>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-slate-600">
                             EU/Schengen citizens are exempt from 90/180-day
                             compliance tracking.
                           </p>
@@ -326,14 +326,14 @@ export function UnifiedAddEmployeeDialog({
                   {/* Trips section */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-slate-500 uppercase tracking-wide">
+                      <h3 className="text-sm font-medium text-slate-600 uppercase tracking-wide">
                         Trips{' '}
                         <span className="normal-case font-normal">(optional)</span>
-                      </h4>
+                      </h3>
                     </div>
 
                     {fields.length === 0 && (
-                      <p className="text-sm text-slate-400 py-2">
+                      <p className="text-sm text-slate-600 py-2">
                         No trips added yet. You can add trips now or later from
                         the employee&apos;s profile.
                       </p>

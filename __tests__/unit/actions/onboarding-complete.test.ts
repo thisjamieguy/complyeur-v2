@@ -12,9 +12,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
 import { completeOnboarding, completeOnboardingForImport } from '@/app/(onboarding)/onboarding/actions'
-import { ValidationError } from '@/lib/errors'
 
-function mockSupabase(subscriptionStatus: string) {
+function mockSupabase() {
   const profileSingle = vi.fn().mockResolvedValue({
     data: { company_id: 'company-1' },
   })
@@ -23,23 +22,12 @@ function mockSupabase(subscriptionStatus: string) {
   const profileUpdateEq = vi.fn().mockResolvedValue({ error: null })
   const profileUpdate = vi.fn().mockReturnValue({ eq: profileUpdateEq })
 
-  const entitlementSingle = vi.fn().mockResolvedValue({
-    data: { subscription_status: subscriptionStatus },
-    error: null,
-  })
-  const entitlementEq = vi.fn().mockReturnValue({ single: entitlementSingle })
-  const entitlementSelect = vi.fn().mockReturnValue({ eq: entitlementEq })
-
   const from = vi.fn((table: string) => {
     if (table === 'profiles') {
       return {
         select: profileSelect,
         update: profileUpdate,
       }
-    }
-
-    if (table === 'company_entitlements') {
-      return { select: entitlementSelect }
     }
 
     throw new Error(`Unexpected table ${table}`)
@@ -62,26 +50,17 @@ describe('onboarding completion', () => {
     vi.mocked(checkServerActionRateLimit).mockResolvedValue({ allowed: true } as never)
   })
 
-  it('blocks completion when the company is not paid or trialing', async () => {
-    mockSupabase('past_due')
-
-    await expect(completeOnboarding()).rejects.toBeInstanceOf(ValidationError)
-
-    expect(revalidatePath).not.toHaveBeenCalled()
-    expect(redirect).not.toHaveBeenCalled()
-  })
-
-  it('redirects regular completion to the dashboard tour', async () => {
-    mockSupabase('active')
+  it('redirects regular completion to the dashboard without requiring checkout', async () => {
+    mockSupabase()
 
     await completeOnboarding()
 
     expect(revalidatePath).toHaveBeenCalledWith('/', 'layout')
-    expect(redirect).toHaveBeenCalledWith('/dashboard?tour=1')
+    expect(redirect).toHaveBeenCalledWith('/dashboard')
   })
 
   it('redirects import completion to the import workflow', async () => {
-    mockSupabase('trialing')
+    mockSupabase()
 
     await completeOnboardingForImport()
 

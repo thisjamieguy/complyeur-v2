@@ -10,7 +10,7 @@ private beta go/no-go decisions.
 - Treat older launch checklists and audit summaries as historical reference
   only.
 
-Last updated: 2026-06-15
+Last updated: 2026-06-24
 Baseline commit reviewed: `08002bf chore: complete authenticated beta readiness checks`
 
 This is the single consolidated checklist for ComplyEur private beta launch
@@ -42,9 +42,9 @@ dashboard evidence is still required before claiming a 9/10 operational score.
 | Authenticated baseline flows | Ready for private beta | Auth E2E baseline recorded as 49 passed. |
 | Accessibility baseline | Ready for private beta | A11y E2E recorded as 17 passed. |
 | Mobile baseline | Ready for private beta | Mobile E2E recorded as 15 passed. |
-| Billing | Blocked for paid/public beta | Placeholder Stripe price IDs still need live/test-live replacement and audit. |
-| Operations and recovery | Conditional for private beta | Recovery procedure is now documented; restore-test evidence still remains incomplete. |
-| Legal and GDPR packaging | Conditional for private beta | DPA remains draft; GDPR public release workplan still has public-release blockers. |
+| Billing | In progress for paid/public beta | Live Stripe payment, price audit, webhook endpoint, and entitlement provisioning are evidenced; lifecycle failure-mode evidence still remains. |
+| Operations and recovery | Accepted for current beta posture | Daily-backup restore drill is evidenced complete; PITR is intentionally deferred by owner-approved daily-backup-only RPO/cost decision. |
+| Legal and GDPR packaging | Conditional for private beta | Engineering GDPR package is drafted; DPA/provider terms/legal review and live evidence remain before paid/public beta. |
 | Monitoring and support | Conditional for private beta | Support ownership is evidenced; Sentry routing and public/internal health evidence remain open. Metrics ownership and zero-signup alert remain paid/public beta work. |
 
 ## 3. Final Go/No-Go Decision
@@ -52,8 +52,8 @@ dashboard evidence is still required before claiming a 9/10 operational score.
 **Private beta recommendation:** Conditional GO after critical private-beta
 items below are closed or explicitly risk-accepted by the owner.
 
-**Paid/public beta recommendation:** NO-GO until billing, legal, DNS, recovery,
-and monitoring ownership blockers are closed.
+**Paid/public beta recommendation:** NO-GO until billing, legal, DNS, and
+monitoring ownership blockers are closed.
 
 ## 4. Automated Verification Results
 
@@ -79,6 +79,14 @@ Latest known verification results from the beta hardening pass:
 | Lint | Passed |
 | Build | Passed, 44 static pages |
 | Security check | No known vulnerabilities |
+| Focused multi-user/GDPR/security suite, 2026-06-24 | 15 files passed, 160 tests passed |
+| Full Vitest suite, 2026-06-24 | 147 files passed, 2144 tests passed |
+| Typecheck, 2026-06-24 | Passed |
+| Lint, 2026-06-24 | Passed |
+| Build, 2026-06-24 | Passed, 48 static pages |
+| Security check, 2026-06-24 | No known vulnerabilities |
+| Multi-user E2E, 2026-06-24 | Passed, 2 Playwright tests |
+| Production RLS/RPC attack probe, 2026-06-24 | Passed, 13 checks; cleanup verified |
 | Whitespace diff check | Clean |
 | Baseline commit | `08002bf chore: complete authenticated beta readiness checks` |
 
@@ -127,9 +135,9 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Recovery tabletop and evidence | Critical before private beta | Engineering owner | Execute the `docs/RUNBOOK.md` recovery procedure against an isolated restore target and file evidence. |
-| Supabase production backups and PITR | Important before paid/public beta | Engineering owner | Verify Supabase plan, backups, PITR, and restore target from the dashboard. |
-| Fresh staging or production-like RLS attack-test evidence | Important before paid/public beta | Security owner | Run attack plan and file evidence under compliance or security docs. |
+| Recovery tabletop and evidence | Complete for daily-backup restore | Engineering owner | 2026-06-24 dashboard restore-to-new-project drill passed: row counts matched, RLS/migrations matched, restored-target RLS/RPC probe passed 13 checks, local auth/dashboard smoke passed, and disposable data was cleaned up. |
+| Supabase production backups and PITR | Complete with accepted PITR deferral | Engineering owner | Daily physical backups and restore validation are complete. Owner accepted daily-backup-only RPO for beta/public readiness because PITR cost is not sustainable before revenue; production compute moved to Micro for cost control. Revisit PITR after first paying customer, customer/security requirement, or materially higher production data value. |
+| Fresh staging or production-like RLS attack-test evidence | Complete for current production schema | Security owner | 2026-06-24 production probe passed 13 RLS/RPC checks and cleanup verification; re-run after any Supabase migration or tenant-isolation change. |
 
 ## 7. Stripe And Billing Checks
 
@@ -143,10 +151,12 @@ Open checks:
 
 | Item | Classification | Owner | Next action |
 | --- | --- | --- | --- |
-| Placeholder Stripe price IDs | Critical before paid/public beta | Billing owner | Create products/prices, sync IDs into `tiers`, and audit with the existing Stripe scripts. |
-| Stripe webhook endpoint in target environment | Critical before paid/public beta | Billing owner | Configure or validate webhook endpoint for the deployed beta URL. |
-| Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Capture webhook replay, stale-processing, out-of-order, failed-payment, cancellation, and reconciliation evidence. |
-| Billing support path | Important before paid/public beta | Support owner | Confirm payment-failure and subscription-question routing uses the monitored support path. |
+| Production Stripe price IDs | Complete for current production config | Billing owner | 2026-06-23 live audit passed for all six configured prices; re-run after any pricing change. |
+| Stripe webhook endpoint in target environment | Complete for current production endpoint | Billing owner | 2026-06-23 live check passed for `https://complyeur.com/api/billing/webhook`, including refund and dispute events; re-run after endpoint or event changes. |
+| Live successful checkout and entitlement provisioning | Complete for happy path | Billing owner | 2026-06-23 live GBP 1 discounted subscription payment processed and app entitlement provisioned. |
+| Stripe subscription reconciliation | Complete for current production subscriptions | Billing owner | 2026-06-23 reconciliation refreshed two active Stripe subscriptions and filled the tested checkout `current_period_end`; run `scripts/reconcileStripeSubscriptions.ts` after missed events. |
+| Stripe lifecycle and replay evidence | Critical before paid/public beta | Billing owner | Deploy the updated handler, then capture webhook replay, stale-processing, out-of-order, failed-payment, cancellation, and post-deploy lifecycle evidence. |
+| Billing support path | Important before paid/public beta | Support owner | Refund and dispute alert code is in place; confirm delivery to the monitored billing/support mailbox after deploy. |
 
 ## 8. Auth And Account Checks
 
@@ -170,6 +180,12 @@ Supporting docs:
 
 - `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`
 - `docs/legal/DPA_TEMPLATE.md`
+- `docs/legal/PROCESSOR_SUBPROCESSOR_REGISTER.md`
+- `docs/legal/ARTICLE_30_RECORD_OF_PROCESSING.md`
+- `docs/legal/DATA_SUBJECT_RIGHTS_PROCESS.md`
+- `docs/legal/RETENTION_SCHEDULE.md`
+- `docs/legal/DPIA_TRIGGER_CHECKLIST.md`
+- `docs/legal/LEGITIMATE_INTEREST_ASSESSMENT_TEMPLATE.md`
 - `docs/INCIDENT_RESPONSE.md`
 - `docs/DATA_CLASSIFICATION.md`
 - `docs/DATA_DELETION_WORKFLOW.md`
@@ -180,8 +196,9 @@ Open checks:
 | --- | --- | --- | --- |
 | DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review and remove draft status before sharing as final. |
 | ICO registration evidence | Important before paid/public beta | Legal owner | Confirm registration status and file release evidence. |
-| Processor/subprocessor register review | Important before paid/public beta | Legal owner | Confirm DPA/SCC status for analytics, consent, anti-abuse, and support tooling. |
-| Public GDPR release workplan P0/P1 items | Critical before paid/public beta | Privacy owner | Work through `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`. |
+| Processor/subprocessor register legal confirmation | Important before paid/public beta | Legal owner | Register now exists; confirm provider roles, DPA/SCC/UK transfer terms, and account-region settings for Supabase, Vercel, Stripe, Resend, Sentry, GA4, CookieYes, Cloudflare Turnstile, and Upstash. |
+| Public GDPR release workplan remaining P0/P1 items | Critical before paid/public beta | Privacy owner | Close remaining erasure/anonymisation evidence, lawful-basis legal review, transfer confirmation, and security evidence links in `docs/legal/GDPR_PUBLIC_RELEASE_WORKPLAN.md`. |
+| Live privacy and cookie evidence | Important before paid/public beta | Privacy owner | Run production cookie scan and confirm CookieYes reject/withdraw paths prevent GA cookies/scripts/events. |
 
 ## 10. Monitoring And Support Checks
 
@@ -223,13 +240,14 @@ Tester onboarding package is prepared in `docs/beta/BETA_TESTER_BRIEF.md`.
 
 Release-critical known issues:
 
-- Stripe price IDs must be synced and audited before live billing.
-- Stripe lifecycle monitoring and reconciliation evidence are pending.
+- Stripe price IDs are synced and audited for current live billing.
+- Stripe lifecycle replay, failure-mode, cancellation, and post-deploy alert evidence remain pending.
 - Production signup email is evidenced for one tested path; multi-provider deliverability still needs Gmail, Outlook, and corporate inbox testing.
 - SPF/DKIM/DMARC setup is pending before paid/public launch.
 - Baseline branch protection is evidenced complete; expanded CodeQL/dependency-security workflow run evidence is pending.
-- Disaster-recovery testing and evidence are pending.
-- DPA and processor/subprocessor materials need legal review.
+- Disaster-recovery daily-backup restore testing is complete; PITR remains
+  intentionally deferred with accepted daily-backup-only RPO.
+- DPA, processor/subprocessor, transfer, and lawful-basis materials need legal review.
 - Real-device iOS Safari and Android Chrome checks are pending.
 
 ## 13. Beta Success Metrics
@@ -267,12 +285,11 @@ deployed beta URL. The remaining manual checks include:
 | --- | --- | --- | --- |
 | Multi-provider auth email delivery | Critical before private beta | QA owner | Test Gmail, Outlook, and one corporate provider. |
 | Password reset link behavior | Critical before private beta | QA owner | Verify reset delivery, single-use behavior, expiry, and post-reset sessions. |
-| Recovery tabletop and evidence | Critical before private beta | Engineering owner | Execute the documented restore and validation flow and store evidence. |
 | Non-founder full journey | Critical before private beta | Product owner | Run signup through logout with a tester who has not seen the app. |
 | Sentry alert routing evidence | Critical before private beta | Engineering owner | Capture Sentry alert rules, notification destinations, recipients, and test alert delivery. |
 | Public/internal health evidence | Critical before private beta | Engineering owner | Capture public `/api/health` and protected `/api/internal/health` evidence for the deployed environment. |
 | Tester brief and known issues must be distributed | Critical before private beta | Product owner | Send `docs/beta/BETA_TESTER_BRIEF.md` and `docs/beta/BETA_KNOWN_ISSUES.md` to testers. |
-| Placeholder Stripe price IDs | Critical before paid/public beta | Billing owner | Replace and audit IDs. |
+| Stripe lifecycle and failure-mode evidence | Critical before paid/public beta | Billing owner | Capture replay, stale/out-of-order, failed-payment, cancellation, failed-webhook monitoring, reconciliation, and `current_period_end` evidence. |
 | DPA template still marked draft | Critical before paid/public beta | Legal owner | Complete legal review. |
 | SPF/DKIM/DMARC DNS records | Critical before paid/public beta | Engineering owner | Configure and verify DNS/email headers. |
 
@@ -283,7 +300,7 @@ deployed beta URL. The remaining manual checks include:
 | Beta metrics ownership/tracking pending | Important before paid/public beta | Product owner | Assign dashboard owner and review cadence. |
 | Zero-signup alert not implemented | Important before paid/public beta | Growth/analytics owner | Implement alert or documented manual review. |
 | CodeQL and dependency-security workflow run evidence pending | Important before paid/public beta | Engineering owner | Capture GitHub run evidence after workflows are active. |
-| Supabase backup/PITR dashboard verification | Important before paid/public beta | Engineering owner | Verify and store evidence. |
+| Supabase PITR revisit trigger | Important after revenue/customer requirement | Engineering owner | Daily backups and restore validation are evidenced; daily-backup-only RPO is formally accepted for the current budget posture. Revisit PITR after first paying customer, customer/security requirement, or materially higher production data value. |
 
 ## 17. Nice-To-Have Items
 
@@ -298,7 +315,7 @@ deployed beta URL. The remaining manual checks include:
 
 | Owner | Next action |
 | --- | --- |
-| Engineering owner | Capture CodeQL/security workflow evidence, run the recovery tabletop, confirm Sentry alerts, capture health evidence, and verify Supabase backup/PITR plus production dashboard settings. |
+| Engineering owner | Capture CodeQL/security workflow evidence, confirm Sentry alerts, capture health evidence, and keep Supabase recovery evidence current after any backup or database posture change. |
 | Billing owner | Replace Stripe price IDs, validate webhook endpoint, confirm billing support path. |
 | Legal owner | Complete DPA review, processor/subprocessor register review, ICO evidence. |
 | Product owner | Distribute tester brief/known issues, run non-founder journey, assign metrics dashboard owner. |

@@ -597,7 +597,7 @@ describe('billing routes', () => {
       expect(payload.url).toBe('https://billing.stripe.test/session/bps_123')
       expect(createPortalSessionMock).toHaveBeenCalledWith({
         customer: 'cus_123',
-        return_url: 'https://app.test/settings?section=general',
+        return_url: 'https://app.test/settings/billing',
       })
     })
   })

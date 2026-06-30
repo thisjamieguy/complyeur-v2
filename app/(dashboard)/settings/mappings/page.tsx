@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { loadSavedMappings } from '@/app/(dashboard)/import/actions';
 import { MappingsList } from './mappings-list';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SettingsSectionHeader } from '@/components/settings/settings-section-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,14 +19,12 @@ async function MappingsContent() {
 
 export default function MappingsSettingsPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Column Mappings</h1>
-        <p className="text-slate-600 mt-1">
-          Manage saved column mappings for your data imports. Saved mappings are automatically
-          applied when you upload files with matching column names.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <SettingsSectionHeader
+        eyebrow="Data & privacy"
+        title="Column mappings"
+        description="Saved column mappings are automatically applied when you upload files with matching column names."
+      />
 
       <Suspense
         fallback={

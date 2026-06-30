@@ -26,7 +26,7 @@ const authenticatedDirectPages = [
   { path: '/import/upload?format=employees', text: /upload|drag.*drop|choose file/i },
   { path: '/exports', heading: /^export compliance data$/i },
   { path: '/future-job-alerts', heading: /^future job alerts$/i },
-  { path: '/settings', heading: /control how your workspace runs/i },
+  { path: '/settings', heading: /workspace & account/i },
   { path: '/settings/import-history', heading: /import history/i },
   { path: '/settings/mappings', heading: /column mappings/i },
   { path: '/settings/team', heading: /^team$/i },
