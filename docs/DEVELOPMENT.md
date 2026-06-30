@@ -59,8 +59,16 @@ supabase db reset     # Reset local database to migrations
 - Studio: `http://localhost:54323`
 
 **Generate types after schema changes:**
+
+The `npm run db:types` script in `package.json` is currently pinned to the
+**legacy/inactive** project ref (`sheqtawytsidyhzpzefk` — see
+[Legacy/Inactive Projects](./ENVIRONMENTS.md#legacyinactive-projects)
+below). Running it as-is regenerates `types/database.ts` from the wrong
+schema. Until that script is updated, generate types explicitly against the
+active project you're targeting instead:
 ```bash
-npm run db:types      # Uses project ID from package.json script
+npx supabase gen types typescript --project-id ympwgavzlvyklkucskcj > types/database.ts   # Test/Preview
+npx supabase gen types typescript --project-id bewydxxynjtfpytunlcq > types/database.ts   # Production
 ```
 
 ---

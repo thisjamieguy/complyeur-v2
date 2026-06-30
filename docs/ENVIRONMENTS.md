@@ -117,7 +117,10 @@ SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --dry-run --db-url "postgresq
 # 4. Push to Test/Preview
 SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --db-url "postgresql://postgres.ympwgavzlvyklkucskcj:<PASSWORD>@aws-1-eu-central-1.pooler.supabase.com:5432/postgres"
 
-# 5. Test on preview — only when approved, push to production
+# 5. Test on preview — only when approved, dry-run against Production
+SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --dry-run --db-url "postgresql://postgres.bewydxxynjtfpytunlcq:<PASSWORD>@aws-1-eu-west-2.pooler.supabase.com:5432/postgres"
+
+# 6. Push to Production
 SUPABASE_DB_PASSWORD="<PASSWORD>" supabase db push --db-url "postgresql://postgres.bewydxxynjtfpytunlcq:<PASSWORD>@aws-1-eu-west-2.pooler.supabase.com:5432/postgres"
 ```
 
