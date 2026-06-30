@@ -169,6 +169,18 @@ export async function ensureTestUser(params: {
     }
   }
 
+  const { error: activityError } = await supabase
+    .from('profiles')
+    .update({ last_activity_at: new Date().toISOString() })
+    .eq('id', userId)
+
+  if (activityError) {
+    return {
+      ok: false,
+      reason: `Failed to refresh test user activity timestamp: ${activityError.message}`,
+    }
+  }
+
   return { ok: true, userId }
 }
 

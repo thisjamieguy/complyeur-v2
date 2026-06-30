@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { SidebarProvider, useSidebar } from '@/contexts/sidebar-context'
 import { Sidebar } from './sidebar'
 import { MobileNav } from '@/components/navigation/mobile-nav'
@@ -20,6 +21,8 @@ interface AppShellProps {
 
 function AppShellContent({ children, user }: AppShellProps) {
   const { isOpen } = useSidebar()
+  const pathname = usePathname()
+  const usesWideWorkspace = pathname === '/calendar' || pathname === '/calendar-v2'
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -54,7 +57,12 @@ function AppShellContent({ children, user }: AppShellProps) {
         )}
       >
         {/* Content container with max-width and responsive padding */}
-        <div className="mx-auto flex-1 w-full max-w-[1280px] px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <div
+          className={cn(
+            'mx-auto flex-1 w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8',
+            usesWideWorkspace ? 'max-w-[1680px]' : 'max-w-[1280px]'
+          )}
+        >
           {children}
         </div>
 

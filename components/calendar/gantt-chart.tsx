@@ -3,7 +3,26 @@
 import { memo, useMemo, useRef, useEffect, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { format, isToday, isWeekend } from 'date-fns'
+import {
+  Briefcase,
+  CalendarPlus,
+  Clipboard,
+  Copy,
+  ExternalLink,
+  Lock,
+  Pencil,
+  Trash2,
+} from 'lucide-react'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { addUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 import { cn } from '@/lib/utils'
 import { DateHeader } from './date-header'
@@ -11,7 +30,17 @@ import { EmployeeRow } from './employee-row'
 import { GRID_ROW_HEIGHT } from './day-cell'
 import { syncVerticalScroll } from './scroll-sync'
 import { emitCalendarMetric } from './calendar-metrics'
-import type { ProcessedEmployee } from './types'
+import type {
+  CalendarEmployeeContextMenuRequest,
+  CalendarCopiedTrip,
+  CalendarPasteTripRequest,
+  ProcessedEmployee,
+  TripDateShiftRequest,
+  TripDeleteRequest,
+  TripEditRequest,
+  TripMoveRequest,
+  TripResizeRequest,
+} from './types'
 
 /** Pre-computed metadata for each date column — avoids O(employees x dates) calls */
 export interface DateMeta {
@@ -28,17 +57,11 @@ export interface DateMeta {
   dayOfMonth: string // 1-31
 }
 
-/** Width of each day column in pixels */
-const DAY_WIDTH = 32
-
 /** Width of employee name column */
-const NAME_COLUMN_WIDTH = 160
+const NAME_COLUMN_WIDTH = 224
 
 /** Height of 180-day window indicator row */
 const WINDOW_INDICATOR_HEIGHT = 18
-
-/** Max height of the scrollable area */
-const MAX_HEIGHT = 600
 
 /** Baseline extra rows to render above/below viewport */
 const BASE_OVERSCAN = 12
@@ -55,10 +78,257 @@ const FAST_SCROLL_VELOCITY_THRESHOLD = 1.1
 
 /** Emit scroll metrics in smaller batches so short-but-real scroll sessions are captured. */
 const SCROLL_METRIC_BATCH_SIZE = 10
+const COMPLIANCE_LIMIT_DAYS = 90
+
+const employeeRiskStyles: Record<
+  ProcessedEmployee['currentRiskLevel'],
+  { dot: string; badge: string; avatar: string }
+> = {
+  green: {
+    dot: 'bg-emerald-500',
+    badge: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
+    avatar: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  },
+  amber: {
+    dot: 'bg-amber-500',
+    badge: 'bg-amber-50 text-amber-900 ring-amber-200',
+    avatar: 'border-amber-200 bg-amber-50 text-amber-900',
+  },
+  red: {
+    dot: 'bg-rose-500',
+    badge: 'bg-rose-50 text-rose-800 ring-rose-200',
+    avatar: 'border-rose-200 bg-rose-50 text-rose-800',
+  },
+  breach: {
+    dot: 'bg-rose-700',
+    badge: 'bg-rose-700 text-white ring-rose-800',
+    avatar: 'border-rose-700 bg-rose-700 text-white',
+  },
+}
+
+function getEmployeeInitials(name: string): string {
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  if (parts.length === 0) {
+    return '?'
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('')
+}
+
+function getDaysUsed(employee: ProcessedEmployee): number {
+  return Math.max(0, COMPLIANCE_LIMIT_DAYS - employee.currentDaysRemaining)
+}
 
 interface GanttChartProps {
   employees: ProcessedEmployee[]
   dates: Date[]
+  dayWidth: number
+  interactive?: boolean
+  className?: string
+  onCreateTrip?: (params: {
+    employeeId: string
+    employeeName: string
+    dateKey: string
+  }) => void
+  onEditTrip?: (params: TripEditRequest) => void
+  onDeleteTrip?: (params: TripDeleteRequest) => void
+  onResizeTrip?: (params: TripResizeRequest) => void
+  onShiftTripDates?: (params: TripDateShiftRequest) => void
+  onMoveTrip?: (params: TripMoveRequest) => void
+  copiedTrip?: CalendarCopiedTrip | null
+  onCopyTrip?: (params: TripEditRequest) => void
+  onPasteTrip?: (params: CalendarPasteTripRequest) => void
+  onToggleTripPrivacy?: (params: TripEditRequest) => void
+  onOpenEmployeeProfile?: (employeeId: string) => void
+}
+
+interface CalendarGridContextMenuProps {
+  contextMenu: CalendarEmployeeContextMenuRequest | null
+  copiedTrip?: CalendarCopiedTrip | null
+  onOpenChange: (open: boolean) => void
+  onCreateTrip?: GanttChartProps['onCreateTrip']
+  onEditTrip?: GanttChartProps['onEditTrip']
+  onDeleteTrip?: GanttChartProps['onDeleteTrip']
+  onCopyTrip?: GanttChartProps['onCopyTrip']
+  onPasteTrip?: GanttChartProps['onPasteTrip']
+  onToggleTripPrivacy?: GanttChartProps['onToggleTripPrivacy']
+  onOpenEmployeeProfile?: GanttChartProps['onOpenEmployeeProfile']
+}
+
+function CalendarGridContextMenu({
+  contextMenu,
+  copiedTrip,
+  onOpenChange,
+  onCreateTrip,
+  onEditTrip,
+  onDeleteTrip,
+  onCopyTrip,
+  onPasteTrip,
+  onToggleTripPrivacy,
+  onOpenEmployeeProfile,
+}: CalendarGridContextMenuProps) {
+  const trip = contextMenu?.trip
+  const hasCopiedTrip = copiedTrip !== null && copiedTrip !== undefined
+  const menuLabel = trip
+    ? `${trip.isPrivate ? 'Private' : trip.country} trip`
+    : contextMenu
+      ? `${contextMenu.employeeName} - ${contextMenu.dateKey}`
+      : 'Calendar menu'
+
+  return (
+    <DropdownMenu open={contextMenu !== null} onOpenChange={onOpenChange}>
+      <DropdownMenuTrigger asChild>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none fixed size-px opacity-0"
+          style={{
+            left: contextMenu?.x ?? -9999,
+            top: contextMenu?.y ?? -9999,
+          }}
+        />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        side="right"
+        sideOffset={4}
+        collisionPadding={8}
+        className="w-44"
+      >
+        <DropdownMenuLabel className="truncate text-xs text-slate-500">
+          {menuLabel}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            disabled={!contextMenu || !onCreateTrip}
+            onSelect={() => {
+              if (!contextMenu || !onCreateTrip) return
+
+              onCreateTrip({
+                employeeId: contextMenu.employeeId,
+                employeeName: contextMenu.employeeName,
+                dateKey: contextMenu.dateKey,
+              })
+              onOpenChange(false)
+            }}
+          >
+            <CalendarPlus />
+            Add trip
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!contextMenu || !hasCopiedTrip || !onPasteTrip}
+            onSelect={() => {
+              if (!contextMenu || !hasCopiedTrip || !onPasteTrip) return
+
+              onPasteTrip({
+                employeeId: contextMenu.employeeId,
+                employeeName: contextMenu.employeeName,
+                dateKey: contextMenu.dateKey,
+              })
+              onOpenChange(false)
+            }}
+          >
+            <Clipboard />
+            Paste trip here
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        {trip && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                disabled={!contextMenu || !onEditTrip}
+                onSelect={() => {
+                  if (!contextMenu || !onEditTrip) return
+
+                  onEditTrip({
+                    employeeId: contextMenu.employeeId,
+                    employeeName: contextMenu.employeeName,
+                    trip,
+                  })
+                  onOpenChange(false)
+                }}
+              >
+                <Pencil />
+                Edit trip
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!contextMenu || !onCopyTrip}
+                onSelect={() => {
+                  if (!contextMenu || !onCopyTrip) return
+
+                  onCopyTrip({
+                    employeeId: contextMenu.employeeId,
+                    employeeName: contextMenu.employeeName,
+                    trip,
+                  })
+                  onOpenChange(false)
+                }}
+              >
+                <Copy />
+                Copy trip
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!contextMenu || !onToggleTripPrivacy}
+                onSelect={() => {
+                  if (!contextMenu || !onToggleTripPrivacy) return
+
+                  onToggleTripPrivacy({
+                    employeeId: contextMenu.employeeId,
+                    employeeName: contextMenu.employeeName,
+                    trip,
+                  })
+                  onOpenChange(false)
+                }}
+              >
+                {trip.isPrivate ? <Briefcase /> : <Lock />}
+                {trip.isPrivate ? 'Mark as work trip' : 'Mark as private'}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={!contextMenu || !onDeleteTrip}
+                onSelect={() => {
+                  if (!contextMenu || !onDeleteTrip) return
+
+                  onDeleteTrip({
+                    employeeId: contextMenu.employeeId,
+                    employeeName: contextMenu.employeeName,
+                    trip,
+                  })
+                  onOpenChange(false)
+                }}
+              >
+                <Trash2 />
+                Delete trip
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            disabled={!contextMenu || !onOpenEmployeeProfile}
+            onSelect={() => {
+              if (!contextMenu || !onOpenEmployeeProfile) return
+
+              onOpenEmployeeProfile(contextMenu.employeeId)
+              onOpenChange(false)
+            }}
+          >
+            <ExternalLink />
+            Go to employee profile
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 /**
@@ -69,9 +339,27 @@ interface GanttChartProps {
 export const GanttChart = memo(function GanttChart({
   employees,
   dates,
+  dayWidth,
+  interactive = false,
+  onCreateTrip,
+  onEditTrip,
+  onDeleteTrip,
+  onResizeTrip,
+  onShiftTripDates,
+  onMoveTrip,
+  copiedTrip = null,
+  onCopyTrip,
+  onPasteTrip,
+  onToggleTripPrivacy,
+  onOpenEmployeeProfile,
+  className,
 }: GanttChartProps) {
   const [overscan, setOverscan] = useState(BASE_OVERSCAN)
   const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(null)
+  const [dropTargetEmployeeId, setDropTargetEmployeeId] = useState<string | null>(null)
+  const [contextMenu, setContextMenu] =
+    useState<CalendarEmployeeContextMenuRequest | null>(null)
+  const [announcement, setAnnouncement] = useState('')
   const mountStartedAtRef = useRef<number>(
     typeof performance !== 'undefined' ? performance.now() : 0
   )
@@ -226,14 +514,14 @@ export const GanttChart = memo(function GanttChart({
           '[data-radix-scroll-area-viewport]'
         )
         if (scrollContainer) {
-          const todayOffset = todayIndex * DAY_WIDTH
+          const todayOffset = todayIndex * dayWidth
           const containerWidth = scrollContainer.clientWidth
           const scrollTo = Math.max(0, todayOffset - containerWidth / 2)
           scrollContainer.scrollLeft = scrollTo
         }
       }
     }
-  }, [dates])
+  }, [dates, dayWidth])
 
   // Pre-compute per-date flags once — O(dates) instead of O(employees x dates)
   const dateMeta: DateMeta[] = useMemo(
@@ -263,10 +551,21 @@ export const GanttChart = memo(function GanttChart({
     [dates]
   )
 
-  const totalWidth = dates.length * DAY_WIDTH
+  const totalWidth = dates.length * dayWidth
   const totalHeight = virtualizer.getTotalSize()
   const virtualRows = virtualizer.getVirtualItems()
   const visibleRows = virtualRows.length
+  const hasContextMenuActions =
+    interactive &&
+    Boolean(
+      onCreateTrip ||
+        onEditTrip ||
+        onDeleteTrip ||
+        onCopyTrip ||
+        onPasteTrip ||
+        onToggleTripPrivacy ||
+        onOpenEmployeeProfile
+    )
 
   useEffect(() => {
     emitCalendarMetric('calendar_mount', {
@@ -289,10 +588,43 @@ export const GanttChart = memo(function GanttChart({
   }, [visibleRows, dates.length, employees.length])
 
   return (
-    <div className="flex">
-      {/* Fixed left column — employee names (no horizontal scroll) */}
+    <div className={cn('flex h-full min-h-[420px]', className)}>
+      {/* Live region: announces keyboard move/resize progress to screen readers */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {announcement}
+      </div>
+      {interactive && (
+        <p id="calendar-grid-help" className="sr-only">
+          To change a trip with the keyboard, move focus to it and press M to move
+          or R to resize, then use the left and right arrow keys and press Enter to
+          confirm or Escape to cancel.
+        </p>
+      )}
+      {hasContextMenuActions && (
+        <CalendarGridContextMenu
+          contextMenu={contextMenu}
+          copiedTrip={copiedTrip}
+          onOpenChange={(open) => {
+            if (!open) {
+              setContextMenu(null)
+            }
+          }}
+          onCreateTrip={onCreateTrip}
+          onEditTrip={onEditTrip}
+          onDeleteTrip={onDeleteTrip}
+          onCopyTrip={onCopyTrip}
+          onPasteTrip={onPasteTrip}
+          onToggleTripPrivacy={onToggleTripPrivacy}
+          onOpenEmployeeProfile={onOpenEmployeeProfile}
+        />
+      )}
+
+      {/* Fixed left column — employee names (no horizontal scroll).
+          Hidden from assistive tech: each grid row carries the employee name and
+          status in its aria-label, so announcing this column too would duplicate. */}
       <div
-        className="shrink-0 bg-slate-50/80 border-r border-slate-200 z-20"
+        aria-hidden="true"
+        className="z-20 flex h-full shrink-0 flex-col border-r border-slate-200 bg-slate-50/80"
         style={{ width: NAME_COLUMN_WIDTH }}
       >
         {/* Header placeholder — must match 4-row DateHeader height */}
@@ -315,8 +647,8 @@ export const GanttChart = memo(function GanttChart({
         <div
           ref={namesScrollRef}
           data-testid="calendar-names-viewport"
-          className="overflow-y-hidden overflow-x-hidden"
-          style={{ maxHeight: MAX_HEIGHT, contain: 'layout paint' }}
+          className="min-h-0 flex-1 overflow-x-hidden overflow-y-hidden"
+          style={{ contain: 'layout paint' }}
         >
           <div className="relative" style={{ height: totalHeight }}>
             {virtualRows.map((virtualRow) => {
@@ -325,10 +657,12 @@ export const GanttChart = memo(function GanttChart({
                 <div
                   key={employee.id}
                   className={cn(
-                    'absolute left-0 w-full px-3 border-b border-slate-100 flex items-center transition-colors',
-                    hoveredEmployeeId === employee.id
-                      ? 'bg-sky-50/60'
-                      : 'bg-slate-50/60 hover:bg-sky-50/60'
+                    'absolute left-0 flex w-full items-center border-b border-slate-100 px-3 transition-colors',
+                    dropTargetEmployeeId === employee.id
+                      ? 'bg-sky-100/70'
+                      : hoveredEmployeeId === employee.id
+                        ? 'bg-sky-50/60'
+                        : 'bg-slate-50/60 hover:bg-sky-50/60'
                   )}
                   onMouseEnter={() => setHoveredEmployeeId(employee.id)}
                   onMouseLeave={() => {
@@ -341,10 +675,44 @@ export const GanttChart = memo(function GanttChart({
                     transform: `translate3d(0, ${virtualRow.start}px, 0)`,
                     willChange: 'transform',
                   }}
+                  data-calendar-employee-row
+                  data-employee-id={employee.id}
+                  data-employee-name={employee.name}
                 >
-                  <span className="text-sm font-medium text-slate-700 truncate">
-                    {employee.name}
-                  </span>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold',
+                        employeeRiskStyles[employee.currentRiskLevel].avatar
+                      )}
+                    >
+                      {getEmployeeInitials(employee.name)}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'size-2 shrink-0 rounded-full',
+                            employeeRiskStyles[employee.currentRiskLevel].dot
+                          )}
+                        />
+                        <span className="truncate text-sm font-medium text-slate-800">
+                          {employee.name}
+                        </span>
+                      </div>
+                      <span
+                        className={cn(
+                          'mt-0.5 inline-flex rounded-full px-1.5 py-px text-[10px] font-semibold leading-none ring-1',
+                          employeeRiskStyles[employee.currentRiskLevel].badge
+                        )}
+                        title={`${getDaysUsed(employee)} of ${COMPLIANCE_LIMIT_DAYS} Schengen days used`}
+                      >
+                        {getDaysUsed(employee)}/{COMPLIANCE_LIMIT_DAYS}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )
             })}
@@ -353,29 +721,45 @@ export const GanttChart = memo(function GanttChart({
       </div>
 
       {/* Right column — horizontally scrollable timeline grid */}
-      <div ref={scrollContainerRef} className="flex-1 min-w-0">
-        <ScrollArea className="w-full whitespace-nowrap rounded-br-xl">
-          <div style={{ width: totalWidth }}>
+      <div ref={scrollContainerRef} className="h-full min-w-0 flex-1">
+        <ScrollArea className="h-full w-full whitespace-nowrap rounded-br-xl">
+          <div
+            role="grid"
+            aria-label="Employee travel timeline"
+            aria-rowcount={employees.length + 1}
+            aria-colcount={dates.length}
+            aria-describedby={interactive ? 'calendar-grid-help' : undefined}
+            className="flex h-full flex-col"
+            style={{ width: totalWidth }}
+          >
             {/* 4-row date header */}
             <DateHeader
               dateMeta={dateMeta}
-              dayWidth={DAY_WIDTH}
+              dayWidth={dayWidth}
             />
 
             {/* Virtualized grid rows */}
             <div
               ref={timelineScrollRef}
+              role="rowgroup"
               data-testid="calendar-timeline-viewport"
-              className="overflow-y-auto bg-white"
-              style={{ maxHeight: MAX_HEIGHT, contain: 'layout paint' }}
+              className="min-h-0 flex-1 overflow-y-auto bg-white"
+              style={{ contain: 'layout paint' }}
             >
-              <div className="relative" style={{ height: totalHeight }}>
+              <div role="presentation" className="relative" style={{ height: totalHeight }}>
                 {virtualRows.map((virtualRow) => {
                   const employee = employees[virtualRow.index]
                   return (
                     <div
                       key={employee.id}
-                      className="absolute left-0 w-full border-b border-slate-100"
+                      role="presentation"
+                      className={cn(
+                        'absolute left-0 w-full border-b border-slate-100',
+                        dropTargetEmployeeId === employee.id && 'bg-sky-50/40'
+                      )}
+                      data-calendar-employee-row
+                      data-employee-id={employee.id}
+                      data-employee-name={employee.name}
                       onMouseEnter={() => setHoveredEmployeeId(employee.id)}
                       onMouseLeave={() => {
                         setHoveredEmployeeId((current) =>
@@ -390,9 +774,23 @@ export const GanttChart = memo(function GanttChart({
                     >
                       <EmployeeRow
                         employee={employee}
+                        rowIndex={virtualRow.index}
                         dateMeta={dateMeta}
-                        dayWidth={DAY_WIDTH}
+                        dayWidth={dayWidth}
                         isHovered={hoveredEmployeeId === employee.id}
+                        isDropTarget={dropTargetEmployeeId === employee.id}
+                        interactive={interactive}
+                        onAnnounce={setAnnouncement}
+                        onCreateTrip={onCreateTrip}
+                        onEditTrip={onEditTrip}
+                        onDeleteTrip={onDeleteTrip}
+                        onResizeTrip={onResizeTrip}
+                        onShiftTripDates={onShiftTripDates}
+                        onMoveTrip={onMoveTrip}
+                        onMoveTripTargetChange={setDropTargetEmployeeId}
+                        onOpenContextMenu={
+                          hasContextMenuActions ? setContextMenu : undefined
+                        }
                       />
                     </div>
                   )

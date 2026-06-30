@@ -1,12 +1,16 @@
 'use client'
 
 import { format } from 'date-fns'
+import { Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import type { RiskLevel } from '@/lib/compliance'
-import type { ProcessedTripDay } from './types'
+import type { ProcessedTrip, ProcessedTripDay } from './types'
 
 interface TripPopoverProps {
   tripDay: ProcessedTripDay
+  onEditTrip?: (trip: ProcessedTrip) => void
+  onDeleteTrip?: (trip: ProcessedTrip) => void
 }
 
 const historicalConfig = {
@@ -61,7 +65,11 @@ function getCountryFlag(countryCode: string): string {
 /**
  * Popover content showing trip details
  */
-export function TripPopover({ tripDay }: TripPopoverProps) {
+export function TripPopover({
+  tripDay,
+  onEditTrip,
+  onDeleteTrip,
+}: TripPopoverProps) {
   const trip = tripDay.trip
   const isHistorical = tripDay.displayMode === 'historical'
   const planningRiskLevel = getDisplayRiskLevel(
@@ -153,6 +161,37 @@ export function TripPopover({ tripDay }: TripPopoverProps) {
             <span className="text-slate-500">Purpose: </span>
             <span className="text-slate-700">{trip.purpose}</span>
           </div>
+        </div>
+      )}
+
+      {(onEditTrip || onDeleteTrip) && (
+        <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3">
+          {onEditTrip && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-label="Edit trip"
+              className="flex-1"
+              onClick={() => onEditTrip(trip)}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </Button>
+          )}
+          {onDeleteTrip && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-label="Delete trip"
+              className="flex-1 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+              onClick={() => onDeleteTrip(trip)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </Button>
+          )}
         </div>
       )}
     </div>

@@ -1,33 +1,48 @@
 'use client'
 
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import {
-  calculateCompliance,
-  computeComplianceVectorOptimized,
-  isSchengenCountry,
-  parseDateOnlyAsUTC,
-  type Trip as ComplianceTrip,
-} from '@/lib/compliance'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
-  addUtcDays,
-  differenceInUtcDays,
-  toUTCMidnight,
-} from '@/lib/compliance/date-utils'
-import { RangeSelector } from './range-selector'
-import {
-  buildDateRange,
-  overlapsVisibleRange,
-  toDateKey,
-} from './calendar-view.utils'
-import { CalendarEmptyState } from './calendar-empty-state'
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { isSchengenCountry } from '@/lib/compliance'
+import { addUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
+import { formatDateForDisplay } from '@/lib/validations/dates'
+import { getCountryName } from '@/lib/constants/schengen-countries'
 import { serializeHideNoSchengenCookie } from '@/lib/calendar/filter-preferences'
-import type { ProcessedTrip, ProcessedEmployee } from './types'
+import { buildDateRange, toDateKey } from './calendar-view.utils'
+import {
+  buildEmployeeProcessingCacheKey,
+  getCalendarRiskSummary,
+  processCalendarEmployee,
+  type EmployeeWithTrips,
+  type ProcessedEmployeeCacheEntry,
+} from './calendar-view.helpers'
+import { useCalendarTripActions } from './use-calendar-trip-actions'
+import { CalendarToolbar } from './calendar-toolbar'
+import { CalendarEmptyState } from './calendar-empty-state'
+import { CALENDAR_ZOOM_WIDTHS, type CalendarZoomLevel } from './zoom-controls'
+import { InteractiveTripEditor } from './interactive-trip-editor'
+import type { ProcessedEmployee } from './types'
 
 const GanttChart = dynamic(
   () => import('./gantt-chart').then(m => m.GanttChart),
@@ -45,57 +60,35 @@ const DAYS_BACK = 200
 /** Default weeks forward */
 const DEFAULT_WEEKS_FORWARD = 6
 
-interface DbTrip {
-  id: string
-  country: string
-  entry_date: string
-  exit_date: string
-  purpose: string | null
-  is_private: boolean
-  ghosted: boolean
-}
-
-interface EmployeeWithTrips {
-  id: string
-  name: string
-  trips: DbTrip[]
-}
-
 interface CalendarViewProps {
   employees: EmployeeWithTrips[]
   initialHideEmployeesWithoutSchengenTrips?: boolean
-}
-
-interface ParsedTrip extends DbTrip {
-  entryDate: Date
-  exitDate: Date
-  isSchengen: boolean
+  interactive?: boolean
 }
 
 /**
- * Convert parsed DB trip to compliance engine format
- */
-function toComplianceTrip(trip: ParsedTrip): ComplianceTrip {
-  return {
-    id: trip.id,
-    country: trip.country,
-    entryDate: trip.entryDate,
-    exitDate: trip.exitDate,
-  }
-}
-
-/**
- * Main calendar view component - orchestrates Gantt chart and mobile view
+ * Main calendar view — orchestrates the Gantt chart and mobile list.
+ *
+ * Trip mutations live in {@link useCalendarTripActions}; compliance processing
+ * lives in calendar-view.helpers.ts. This component wires data shaping, the
+ * filter/range/zoom controls, and rendering together.
  */
 export function CalendarView({
   employees,
   initialHideEmployeesWithoutSchengenTrips = false,
+  interactive = false,
 }: CalendarViewProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [weeksForward, setWeeksForward] = useState(DEFAULT_WEEKS_FORWARD)
+  const [zoomLevel, setZoomLevel] = useState<CalendarZoomLevel>('month')
   const [hideEmployeesWithoutSchengenTrips, setHideEmployeesWithoutSchengenTrips] =
     useState(initialHideEmployeesWithoutSchengenTrips)
+  const processedEmployeeCacheRef = useRef(
+    new Map<string, ProcessedEmployeeCacheEntry>()
+  )
+
+  const tripActions = useCalendarTripActions(employees)
 
   useEffect(() => {
     setHideEmployeesWithoutSchengenTrips(initialHideEmployeesWithoutSchengenTrips)
@@ -151,71 +144,63 @@ export function CalendarView({
   // Process employees and their trips with per-employee batched compliance work.
   const processedEmployees = useMemo((): ProcessedEmployee[] => {
     const today = toUTCMidnight(new Date())
+    const todayKey = toDateKey(today)
+    const visibleEmployeeIds = new Set<string>()
+    /* eslint-disable react-hooks/refs --
+       Intentional per-employee memoization cache keyed by cacheKey. Reading and
+       writing this ref during render is a pure recompute-skip: it never changes
+       what is rendered, only avoids reprocessing unchanged employees. */
+    const cache = processedEmployeeCacheRef.current
 
-    return filteredEmployees.map((employee) => {
-      const parsedTrips: ParsedTrip[] = employee.trips
-        .filter((trip) => !trip.ghosted)
-        .map((trip) => {
-          const entryDate = parseDateOnlyAsUTC(trip.entry_date)
-          const exitDate = parseDateOnlyAsUTC(trip.exit_date)
-          return {
-            ...trip,
-            entryDate,
-            exitDate,
-            isSchengen: isSchengenCountry(trip.country),
-          }
-        })
+    const nextEmployees = filteredEmployees.map((employee) => {
+      visibleEmployeeIds.add(employee.id)
 
-      const complianceTrips = parsedTrips
-        .filter((trip) => trip.isSchengen)
-        .map(toComplianceTrip)
+      const cacheKey = buildEmployeeProcessingCacheKey({
+        employee,
+        tripDateOverrides: tripActions.tripDateOverrides,
+        startDateKey,
+        endDateKey,
+        todayKey,
+      })
+      const cached = cache.get(employee.id)
 
-      const currentCompliance = complianceTrips.length > 0
-        ? calculateCompliance(complianceTrips, {
-            mode: 'audit',
-            referenceDate: today,
-          })
-        : null
-
-      const complianceByDate = complianceTrips.length > 0
-        ? new Map(
-            computeComplianceVectorOptimized(complianceTrips, startDate, endDate, {
-              mode: 'audit',
-              referenceDate: endDate,
-            }).map((result) => [toDateKey(result.date), result])
-          )
-        : new Map()
-
-      const processedTrips: ProcessedTrip[] = parsedTrips
-        .filter((trip) =>
-          overlapsVisibleRange(trip.entryDate, trip.exitDate, startDate, endDate)
-        )
-        .map((trip) => {
-          const duration = differenceInUtcDays(trip.exitDate, trip.entryDate) + 1
-
-          return {
-            id: trip.id,
-            country: trip.is_private ? 'XX' : trip.country,
-            entryDate: trip.entryDate,
-            exitDate: trip.exitDate,
-            duration,
-            purpose: trip.purpose,
-            isPrivate: trip.is_private,
-            isSchengen: trip.isSchengen,
-          }
-        })
-
-      return {
-        id: employee.id,
-        name: employee.name,
-        trips: processedTrips,
-        complianceByDate,
-        currentDaysRemaining: currentCompliance?.daysRemaining ?? 90,
-        currentRiskLevel: currentCompliance?.riskLevel ?? 'green',
-        tripsInRange: processedTrips.length,
+      if (cached?.cacheKey === cacheKey) {
+        return cached.employee
       }
+
+      const processedEmployee = processCalendarEmployee({
+        employee,
+        tripDateOverrides: tripActions.tripDateOverrides,
+        startDate,
+        endDate,
+        today,
+      })
+
+      cache.set(employee.id, {
+        cacheKey,
+        employee: processedEmployee,
+      })
+
+      return processedEmployee
     })
-  }, [filteredEmployees, startDate, endDate])
+
+    for (const employeeId of cache.keys()) {
+      if (!visibleEmployeeIds.has(employeeId)) {
+        cache.delete(employeeId)
+      }
+    }
+    /* eslint-enable react-hooks/refs */
+
+    return nextEmployees
+  }, [filteredEmployees, startDate, endDate, startDateKey, endDateKey, tripActions.tripDateOverrides])
+
+  const riskSummary = useMemo(
+    () => getCalendarRiskSummary(processedEmployees),
+    [processedEmployees]
+  )
+  const visibleEmployeeLabel = `${processedEmployees.length} ${
+    processedEmployees.length === 1 ? 'employee' : 'employees'
+  }`
 
   if (processedEmployees.length === 0) {
     if (!shouldApplySchengenFilter) {
@@ -276,74 +261,166 @@ export function CalendarView({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-slate-900">Calendar filters</p>
-            <p className="text-xs text-slate-500">
-              Showing {processedEmployees.length}{' '}
-              {processedEmployees.length === 1 ? 'employee' : 'employees'}
-              {isPending ? ' · refreshing…' : ' · saved for your next visit'}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Switch
-              id="calendar-hide-no-schengen"
-              checked={hideEmployeesWithoutSchengenTrips}
-              onCheckedChange={updateHideEmployeesWithoutSchengenTrips}
-              disabled={isPending}
-            />
-            <Label
-              htmlFor="calendar-hide-no-schengen"
-              className="cursor-pointer text-sm text-slate-700"
-            >
-              Only show employees with Schengen trips
-            </Label>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-3">
+      {interactive && (
+        <>
+          <InteractiveTripEditor
+            draft={tripActions.tripEditorDraft}
+            onOpenChange={(open) => {
+              if (!open) {
+                tripActions.closeTripEditor()
+              }
+            }}
+          />
+
+          <Dialog
+            open={tripActions.tripMoveDraft !== null}
+            onOpenChange={(open) => {
+              if (!open && !tripActions.isMovingTrip) {
+                tripActions.closeTripMove()
+              }
+            }}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Move trip?</DialogTitle>
+                <DialogDescription>
+                  {tripActions.tripMoveDraft
+                    ? `Move ${tripActions.tripMoveDraft.country} trip (${tripActions.tripMoveDraft.entryDateKey} to ${tripActions.tripMoveDraft.exitDateKey}) from ${tripActions.tripMoveDraft.sourceEmployeeName} to ${tripActions.tripMoveDraft.targetEmployeeName}?`
+                    : 'Move this trip to another employee?'}
+                </DialogDescription>
+                {tripActions.tripMoveError && (
+                  <p className="text-sm font-medium text-red-600">
+                    {tripActions.tripMoveError}
+                  </p>
+                )}
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={tripActions.closeTripMove}
+                  disabled={tripActions.isMovingTrip}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={tripActions.confirmMoveTrip}
+                  disabled={tripActions.isMovingTrip}
+                >
+                  {tripActions.isMovingTrip ? 'Moving...' : 'Move Trip'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <AlertDialog
+            open={tripActions.tripDeleteDraft !== null}
+            onOpenChange={(open) => {
+              if (!open && !tripActions.isDeletingTrip) {
+                tripActions.closeTripDelete()
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete trip?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {tripActions.tripDeleteDraft
+                    ? `Delete ${getCountryName(tripActions.tripDeleteDraft.trip.rawCountry)} trip (${formatDateForDisplay(toDateKey(tripActions.tripDeleteDraft.trip.entryDate))} - ${formatDateForDisplay(toDateKey(tripActions.tripDeleteDraft.trip.exitDate))}) for ${tripActions.tripDeleteDraft.employeeName}? This cannot be undone.`
+                    : 'Delete this trip?'}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={tripActions.isDeletingTrip}>
+                  Cancel
+                </AlertDialogCancel>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={tripActions.confirmDeleteTrip}
+                  disabled={tripActions.isDeletingTrip}
+                >
+                  {tripActions.isDeletingTrip ? 'Deleting...' : 'Delete Trip'}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
 
       {/* Desktop view - Gantt chart */}
       <div className="hidden md:block">
-        <Card className="rounded-xl overflow-hidden border-slate-200 shadow-sm">
-          <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between pb-4 bg-slate-50/70 border-b border-slate-100">
-            <div className="space-y-2">
-              <h2 className="text-sm font-semibold tracking-wide text-slate-700 uppercase">
-                Travel Timeline
-              </h2>
-              <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600">
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-sm border border-sky-300 bg-sky-50/70" />
-                  180-day window
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-sm border border-slate-300 bg-slate-100" />
-                  weekend
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-sm border border-blue-300 bg-blue-50" />
-                  today
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="h-3 w-px bg-slate-400" />
-                  month boundary
-                </span>
-              </div>
-            </div>
-            <RangeSelector value={weeksForward} onChange={setWeeksForward} />
-          </CardHeader>
-          <CardContent className="p-0">
+        <Card className="h-[calc(100vh-13rem)] min-h-[560px] gap-0 overflow-hidden rounded-xl border-slate-200 py-0 shadow-sm">
+          <CalendarToolbar
+            visibleEmployeeLabel={visibleEmployeeLabel}
+            isPending={isPending}
+            riskSummary={riskSummary}
+            weeksForward={weeksForward}
+            onWeeksForwardChange={setWeeksForward}
+            interactive={interactive}
+            zoomLevel={zoomLevel}
+            onZoomLevelChange={setZoomLevel}
+            hideEmployeesWithoutSchengenTrips={hideEmployeesWithoutSchengenTrips}
+            onHideChange={updateHideEmployeesWithoutSchengenTrips}
+          />
+          <CardContent className="min-h-0 flex-1 p-0">
             <GanttChart
               employees={processedEmployees}
               dates={dates}
+              dayWidth={CALENDAR_ZOOM_WIDTHS[zoomLevel]}
+              className="h-full"
+              interactive={interactive}
+              onCreateTrip={interactive ? tripActions.openCreateTrip : undefined}
+              onEditTrip={interactive ? tripActions.openEditTrip : undefined}
+              onDeleteTrip={interactive ? tripActions.requestDeleteTrip : undefined}
+              onResizeTrip={interactive ? tripActions.resizeTrip : undefined}
+              onShiftTripDates={interactive ? tripActions.shiftTripDates : undefined}
+              onMoveTrip={interactive ? tripActions.requestMoveTrip : undefined}
+              copiedTrip={interactive ? tripActions.copiedTrip : null}
+              onCopyTrip={interactive ? tripActions.copyTrip : undefined}
+              onPasteTrip={interactive ? tripActions.pasteTrip : undefined}
+              onToggleTripPrivacy={interactive ? tripActions.toggleTripPrivacy : undefined}
+              onOpenEmployeeProfile={
+                interactive
+                  ? (employeeId) => router.push(`/employee/${employeeId}`)
+                  : undefined
+              }
             />
           </CardContent>
         </Card>
       </div>
 
       {/* Mobile view - simplified list */}
-      <div className="md:hidden">
+      <div className="space-y-3 md:hidden">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-slate-900">
+                Showing {visibleEmployeeLabel}
+              </p>
+              <p className="text-xs text-slate-500">
+                {riskSummary.warning + riskSummary.critical + riskSummary.breach} employees need review
+                {isPending ? ' · refreshing…' : ' · saved for your next visit'}
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <Label
+                htmlFor="calendar-hide-no-schengen-mobile"
+                className="cursor-pointer text-sm text-slate-700"
+              >
+                Schengen trips only
+              </Label>
+              <Switch
+                id="calendar-hide-no-schengen-mobile"
+                checked={hideEmployeesWithoutSchengenTrips}
+                onCheckedChange={updateHideEmployeesWithoutSchengenTrips}
+                disabled={isPending}
+              />
+            </div>
+          </div>
+        </div>
         <MobileCalendarView employees={processedEmployees} />
       </div>
     </div>

@@ -41,7 +41,7 @@ interface TripListProps {
 
 type SortField = 'entry_date' | 'travel_days'
 type SortDirection = 'asc' | 'desc'
-type TripFilter = '180' | 'all'
+type TripFilter = 'current' | 'all'
 
 export function TripList({ trips, employeeId, employeeName, employees = [] }: TripListProps) {
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null)
@@ -49,7 +49,7 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
   const [reassigningTrip, setReassigningTrip] = useState<Trip | null>(null)
   const [sortField, setSortField] = useState<SortField>('entry_date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
-  const [tripFilter, setTripFilter] = useState<TripFilter>('180')
+  const [tripFilter, setTripFilter] = useState<TripFilter>('current')
   const [inlineMessage, setInlineMessage] = useState<string | null>(null)
 
   useEffect(() => {
@@ -69,11 +69,9 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
 
   const filteredTrips = useMemo(() => {
     if (tripFilter === 'all') return trips
-    const { windowStart, windowEnd } = getWindowBounds(new Date())
+    const { windowStart } = getWindowBounds(new Date())
     return trips.filter(
-      (trip) =>
-        parseDateOnlyAsUTC(trip.exit_date) >= windowStart &&
-        parseDateOnlyAsUTC(trip.entry_date) <= windowEnd
+      (trip) => parseDateOnlyAsUTC(trip.exit_date) >= windowStart
     )
   }, [trips, tripFilter])
 
@@ -161,7 +159,7 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              setTripFilter('180')
+              setTripFilter('current')
               setSortField('entry_date')
               setSortDirection('desc')
             }}
@@ -171,14 +169,14 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
           </button>
           <div className="inline-flex rounded-lg border border-gray-200 p-0.5">
           <button
-            onClick={() => setTripFilter('180')}
+            onClick={() => setTripFilter('current')}
             className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-              tripFilter === '180'
+              tripFilter === 'current'
                 ? 'bg-gray-900 text-white'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Last 180 days
+            Recent + upcoming
           </button>
           <button
             onClick={() => setTripFilter('all')}
@@ -218,7 +216,7 @@ export function TripList({ trips, employeeId, employeeName, employees = [] }: Tr
 
       {sortedTrips.length === 0 && (
         <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-slate-50">
-          <p className="text-sm text-gray-500">No trips in the last 180 days</p>
+          <p className="text-sm text-gray-500">No recent or upcoming trips</p>
           <button
             onClick={() => setTripFilter('all')}
             className="text-xs text-blue-600 hover:text-blue-700 mt-1"

@@ -27,6 +27,7 @@
     "test:e2e:baseline": "playwright test e2e/public-smoke.spec.ts e2e/auth-smoke.spec.ts e2e/auth-navigation.spec.ts e2e/page-coverage.spec.ts e2e/import-happy-path.spec.ts",
     "test:e2e:import": "playwright test e2e/import-workflow.spec.ts",
     "test:e2e:dashboard": "playwright test e2e/dashboard-verification.spec.ts",
+    "test:e2e:calendar-v2": "PLAYWRIGHT_SKIP_GLOBAL_AUTH=true ENABLE_INTERACTIVE_CALENDAR=true E2E_ALLOW_LOCAL_RATE_LIMIT_BYPASS=true playwright test e2e/calendar-v2-interactive.spec.ts",
     "test:e2e:multi-user": "playwright test e2e/multi-user-isolation.spec.ts",
     "test:e2e:stress": "playwright test e2e/stress-test.spec.ts --timeout=300000",
     "test:e2e:calendar-performance": "playwright test e2e/performance/calendar-performance.spec.ts",

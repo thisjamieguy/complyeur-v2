@@ -55,6 +55,11 @@ async function markOnboardingComplete(userId: string): Promise<boolean> {
 async function globalSetup(config: FullConfig) {
   loadLocalEnv();
 
+  if (process.env.PLAYWRIGHT_SKIP_GLOBAL_AUTH === 'true') {
+    console.log('⚠️  Playwright global auth setup skipped by PLAYWRIGHT_SKIP_GLOBAL_AUTH');
+    return;
+  }
+
   const testEmail = process.env.TEST_USER_EMAIL;
   const testPassword = process.env.TEST_USER_PASSWORD;
   const configuredBaseUrl = config.projects[0]?.use?.baseURL;

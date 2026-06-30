@@ -38,6 +38,8 @@ test.describe('Authenticated navigation coverage', () => {
 
     await page.goto('/calendar', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText(/calendar filters/i).first()).toBeVisible();
+    // With the interactive flag enabled in CI, /calendar exposes zoom controls.
+    await expect(page.getByRole('group', { name: /calendar zoom/i })).toBeVisible();
   });
 
   test('sidebar links navigate between primary product areas', async ({ page }) => {

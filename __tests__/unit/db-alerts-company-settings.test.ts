@@ -19,7 +19,7 @@ vi.mock('@/lib/security/tenant-access', () => ({
 
 import { createClient } from '@/lib/supabase/server'
 import { requireCompanyAccessCached } from '@/lib/security/tenant-access'
-import { getCompanySettings } from '@/lib/db/alerts'
+import { getCompanySettings, resolveAlertsForEmployee } from '@/lib/db/alerts'
 
 describe('lib/db/alerts getCompanySettings', () => {
   beforeEach(() => {
@@ -109,5 +109,31 @@ describe('lib/db/alerts getCompanySettings', () => {
     vi.mocked(createClient).mockResolvedValue({ from } as never)
 
     await expect(getCompanySettings()).rejects.toThrow('Failed to create settings')
+  })
+})
+
+describe('lib/db/alerts resolveAlertsForEmployee', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(requireCompanyAccessCached).mockResolvedValue({
+      userId: 'user-1',
+      companyId: 'company-1',
+    } as never)
+  })
+
+  it('treats an already-deleted employee as having no alerts to resolve', async () => {
+    const employeeSingle = vi.fn().mockResolvedValue({
+      data: null,
+      error: { code: 'PGRST116' },
+    })
+    const employeeEqId = vi.fn().mockReturnValue({ single: employeeSingle })
+    const employeeSelect = vi.fn().mockReturnValue({ eq: employeeEqId })
+    const from = vi.fn().mockReturnValue({ select: employeeSelect })
+
+    vi.mocked(createClient).mockResolvedValue({ from } as never)
+
+    await expect(resolveAlertsForEmployee('deleted-employee')).resolves.toBe(0)
+    expect(from).toHaveBeenCalledTimes(1)
+    expect(from).toHaveBeenCalledWith('employees')
   })
 })

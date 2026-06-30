@@ -231,6 +231,90 @@ export async function updateTrip(id: string, updates: TripUpdate): Promise<Trip>
 }
 
 /**
+ * Move a trip to another employee and date range in one update.
+ */
+export async function updateTripAssignment(
+  tripId: string,
+  newEmployeeId: string,
+  dates: { entry_date: string; exit_date: string }
+): Promise<Trip> {
+  const supabase = await createClient()
+
+  const { companyId } = await getAuthenticatedUserCompany(supabase)
+
+  if (dates.entry_date > dates.exit_date) {
+    throw new ValidationError('Invalid trip data. Exit date must be on or after entry date.')
+  }
+
+  const { data: trip, error: tripError } = await supabase
+    .from('trips')
+    .select('id, company_id')
+    .eq('id', tripId)
+    .eq('company_id', companyId)
+    .single()
+
+  if (tripError || !trip) {
+    throw new NotFoundError('Trip not found')
+  }
+
+  const { data: newEmployee, error: employeeError } = await supabase
+    .from('employees')
+    .select('id, company_id')
+    .eq('id', newEmployeeId)
+    .eq('company_id', companyId)
+    .single()
+
+  if (employeeError || !newEmployee) {
+    throw new NotFoundError('Employee not found')
+  }
+
+  const { data: existingTrips, error: tripsError } = await supabase
+    .from('trips')
+    .select('id, company_id, entry_date, exit_date')
+    .eq('employee_id', newEmployeeId)
+    .eq('company_id', companyId)
+    .neq('id', tripId)
+
+  if (tripsError) {
+    console.error('Error checking for overlapping trips:', tripsError)
+    throw new DatabaseError('Failed to validate trip dates')
+  }
+
+  const relevantTrips = (existingTrips ?? []).filter((existingTrip) =>
+    existingTrip.entry_date <= dates.exit_date &&
+    existingTrip.exit_date >= dates.entry_date
+  )
+
+  const overlap = checkOverlap(dates.entry_date, dates.exit_date, relevantTrips)
+  if (overlap) {
+    throw new ValidationError(overlap.message)
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from('trips')
+    .update({
+      employee_id: newEmployeeId,
+      entry_date: dates.entry_date,
+      exit_date: dates.exit_date,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', tripId)
+    .eq('company_id', companyId)
+    .select()
+    .single()
+
+  if (updateError) {
+    console.error('Error updating trip assignment:', updateError)
+    if (updateError.code === '23514') {
+      throw new ValidationError('Invalid trip data. Exit date must be on or after entry date.')
+    }
+    throw new DatabaseError('Failed to update trip assignment')
+  }
+
+  return updated
+}
+
+/**
  * Delete a trip
  */
 export async function deleteTrip(id: string): Promise<void> {

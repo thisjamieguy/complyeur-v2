@@ -4,14 +4,46 @@ import { memo, useMemo } from 'react'
 import { toUTCMidnight } from '@/lib/compliance/date-utils'
 import { buildDayMap } from './calendar-view.utils'
 import { DayCell, GRID_ROW_HEIGHT } from './day-cell'
-import type { ProcessedEmployee } from './types'
+import type {
+  ProcessedEmployee,
+  TripDateShiftRequest,
+  TripDeleteRequest,
+  TripEditRequest,
+  TripMoveRequest,
+  TripResizeRequest,
+  CalendarEmployeeContextMenuRequest,
+} from './types'
 import type { DateMeta } from './gantt-chart'
+
+const RISK_LABELS: Record<ProcessedEmployee['currentRiskLevel'], string> = {
+  green: 'compliant',
+  amber: 'at risk',
+  red: 'high risk',
+  breach: 'in breach',
+}
 
 interface EmployeeRowProps {
   employee: ProcessedEmployee
+  /** Zero-based row position; used for the grid's aria-rowindex (header is row 1). */
+  rowIndex: number
   dateMeta: DateMeta[]
   dayWidth: number
   isHovered: boolean
+  isDropTarget?: boolean
+  interactive?: boolean
+  onAnnounce?: (message: string) => void
+  onCreateTrip?: (params: {
+    employeeId: string
+    employeeName: string
+    dateKey: string
+  }) => void
+  onEditTrip?: (params: TripEditRequest) => void
+  onDeleteTrip?: (params: TripDeleteRequest) => void
+  onResizeTrip?: (params: TripResizeRequest) => void
+  onShiftTripDates?: (params: TripDateShiftRequest) => void
+  onMoveTrip?: (params: TripMoveRequest) => void
+  onMoveTripTargetChange?: (employeeId: string | null) => void
+  onOpenContextMenu?: (params: CalendarEmployeeContextMenuRequest) => void
 }
 
 /**
@@ -21,9 +53,21 @@ interface EmployeeRowProps {
  */
 export const EmployeeRow = memo(function EmployeeRow({
   employee,
+  rowIndex,
   dateMeta,
   dayWidth,
   isHovered,
+  isDropTarget = false,
+  interactive = false,
+  onAnnounce,
+  onCreateTrip,
+  onEditTrip,
+  onDeleteTrip,
+  onResizeTrip,
+  onShiftTripDates,
+  onMoveTrip,
+  onMoveTripTargetChange,
+  onOpenContextMenu,
 }: EmployeeRowProps) {
   const tripDayByDate = useMemo(() => {
     if (dateMeta.length === 0) {
@@ -44,8 +88,17 @@ export const EmployeeRow = memo(function EmployeeRow({
     return dateMeta.map((dm) => dayMap.get(dm.key))
   }, [dateMeta, employee.complianceByDate, employee.trips])
 
+  const daysUsed = Math.max(0, 90 - employee.currentDaysRemaining)
+  const rowLabel = `${employee.name}, ${daysUsed} of 90 Schengen days used, ${RISK_LABELS[employee.currentRiskLevel]}`
+
   return (
-    <div className="flex" style={{ height: GRID_ROW_HEIGHT }}>
+    <div
+      role="row"
+      aria-rowindex={rowIndex + 2}
+      aria-label={rowLabel}
+      className="flex"
+      style={{ height: GRID_ROW_HEIGHT }}
+    >
       {dateMeta.map((dm, index) => {
         const tripDay = tripDayByDate[index]
         const prevTripDay = index > 0 ? tripDayByDate[index - 1] : undefined
@@ -63,7 +116,10 @@ export const EmployeeRow = memo(function EmployeeRow({
             key={dm.key}
             tripDay={tripDay}
             date={dm.date}
+            dateKey={dm.key}
+            colIndex={index}
             dayWidth={dayWidth}
+            onAnnounce={onAnnounce}
             isRowHovered={isHovered}
             isWeekend={dm.isWeekend}
             isToday={dm.isToday}
@@ -73,6 +129,77 @@ export const EmployeeRow = memo(function EmployeeRow({
             isRollingWindowEnd={dm.isRollingWindowEnd}
             isTripStart={isTripStart}
             isTripEnd={isTripEnd}
+            isDropTarget={isDropTarget}
+            interactive={interactive}
+            onCreateTrip={
+              onCreateTrip
+                ? (dateKey) =>
+                    onCreateTrip({
+                      employeeId: employee.id,
+                      employeeName: employee.name,
+                      dateKey,
+                    })
+                : undefined
+            }
+            onEditTrip={
+              onEditTrip
+                ? (trip) =>
+                    onEditTrip({
+                      employeeId: employee.id,
+                      employeeName: employee.name,
+                      trip,
+                    })
+                : undefined
+            }
+            onDeleteTrip={
+              onDeleteTrip
+                ? (trip) =>
+                    onDeleteTrip({
+                      employeeId: employee.id,
+                      employeeName: employee.name,
+                      trip,
+                    })
+                : undefined
+            }
+            onResizeTrip={
+              onResizeTrip
+                ? (params) =>
+                    onResizeTrip({
+                      ...params,
+                      employeeId: employee.id,
+                    })
+                : undefined
+            }
+            onShiftTripDates={
+              onShiftTripDates
+                ? (params) =>
+                    onShiftTripDates({
+                      ...params,
+                      employeeId: employee.id,
+                    })
+                : undefined
+            }
+            onMoveTrip={
+              onMoveTrip
+                ? (params) =>
+                    onMoveTrip({
+                      ...params,
+                      sourceEmployeeId: employee.id,
+                      sourceEmployeeName: employee.name,
+                    })
+                : undefined
+            }
+            onMoveTripTargetChange={onMoveTripTargetChange}
+            onOpenContextMenu={
+              onOpenContextMenu
+                ? (params) =>
+                    onOpenContextMenu({
+                      ...params,
+                      employeeId: employee.id,
+                      employeeName: employee.name,
+                    })
+                : undefined
+            }
           />
         )
       })}
