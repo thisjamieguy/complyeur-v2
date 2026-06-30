@@ -139,7 +139,7 @@ export function TripForecastForm({
                 <SelectItem key={c.code} value={c.code}>
                   {c.name}
                   {c.isMicrostate && (
-                    <span className="ml-1 text-xs text-slate-400">
+                    <span className="ml-1 text-xs text-slate-600">
                       (microstate)
                     </span>
                   )}
