@@ -158,6 +158,7 @@ export function MappingsList({ initialMappings }: MappingsListProps) {
                   size="icon"
                   className="text-slate-400 hover:text-red-600 hover:bg-red-50"
                   onClick={() => setDeleteId(mapping.id)}
+                  aria-label={`Delete mapping ${mapping.name}`}
                 >
                   <Trash2 className="h-5 w-5" />
                 </Button>
