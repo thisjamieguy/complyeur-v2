@@ -178,7 +178,7 @@ export function ImportSummary({ result, format }: ImportSummaryProps) {
         <Button variant="ghost" asChild>
           <Link href="/import">Import More Data</Link>
         </Button>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-600">
           View your updated dashboard →
         </p>
       </div>

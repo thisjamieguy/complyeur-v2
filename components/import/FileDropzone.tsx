@@ -167,6 +167,7 @@ export function FileDropzone({ format, onFileSelect, isProcessing }: FileDropzon
               onClick={handleRemoveFile}
               disabled={isProcessing}
               className="text-slate-400 hover:text-slate-600"
+              aria-label="Remove selected file"
             >
               <X className="h-5 w-5" />
             </Button>
