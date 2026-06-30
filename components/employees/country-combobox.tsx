@@ -27,6 +27,9 @@ interface CountryComboboxProps {
   onValueChange: (value: string) => void
   disabled?: boolean
   placeholder?: string
+  /** id for the trigger so an external <label htmlFor> can associate with it */
+  id?: string
+  'aria-label'?: string
 }
 
 interface CountryOption {
@@ -51,6 +54,8 @@ export function CountryCombobox({
   onValueChange,
   disabled = false,
   placeholder = 'Select country...',
+  id,
+  'aria-label': ariaLabel = 'Select country',
 }: CountryComboboxProps) {
   const [open, setOpen] = useState(false)
 
@@ -62,6 +67,8 @@ export function CountryCombobox({
         <Button
           variant="outline"
           role="combobox"
+          id={id}
+          aria-label={ariaLabel}
           aria-expanded={open}
           disabled={disabled}
           className={cn(
@@ -73,7 +80,7 @@ export function CountryCombobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0" align="start">
+      <PopoverContent className="w-[280px] p-0" align="start" aria-label="Country search">
         <Command>
           <CommandInput placeholder="Search countries..." />
           <CommandList>
@@ -95,7 +102,7 @@ export function CountryCombobox({
                     )}
                   />
                   {country.name}
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="ml-auto text-xs text-slate-600">
                     {country.code}
                   </span>
                 </CommandItem>
@@ -118,7 +125,7 @@ export function CountryCombobox({
                     )}
                   />
                   {country.name}
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="ml-auto text-xs text-slate-600">
                     {country.code}
                   </span>
                 </CommandItem>

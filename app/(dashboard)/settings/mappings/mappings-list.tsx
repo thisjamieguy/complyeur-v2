@@ -126,7 +126,7 @@ export function MappingsList({ initialMappings }: MappingsListProps) {
                     </div>
 
                     {mapping.times_used > 0 && (
-                      <span className="text-slate-400">
+                      <span className="text-slate-600">
                         {mapping.times_used} time{mapping.times_used !== 1 ? 's' : ''}
                       </span>
                     )}
