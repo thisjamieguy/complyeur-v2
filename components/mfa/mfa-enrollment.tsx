@@ -316,7 +316,7 @@ export function MfaEnrollmentPanel({ required = false }: { required?: boolean })
                     {enrollData.secret}
                   </div>
                 ) : (
-                  <div className="rounded border bg-slate-50 px-2 py-1 font-mono text-xs text-slate-400">
+                  <div className="rounded border bg-slate-50 px-2 py-1 font-mono text-xs text-slate-600">
                     Hidden until needed
                   </div>
                 )}

@@ -80,7 +80,7 @@ export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
                   <span className="text-lg" aria-hidden="true">{forecast.countryFlag}</span>
                   <span className="text-slate-700">{forecast.countryName}</span>
                   {!forecast.isSchengen && (
-                    <span className="text-xs text-slate-400">(non-Schengen)</span>
+                    <span className="text-xs text-slate-600">(non-Schengen)</span>
                   )}
                 </span>
               </TableCell>
@@ -115,7 +115,7 @@ export function FutureAlertsTable({ forecasts }: FutureAlertsTableProps) {
                 ) : forecast.isCompliant ? (
                   <span className="font-medium text-green-700">Already compliant</span>
                 ) : (
-                  <span className="text-slate-400">-</span>
+                  <span className="text-slate-500">-</span>
                 )}
               </TableCell>
             </TableRow>

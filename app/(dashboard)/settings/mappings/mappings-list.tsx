@@ -126,7 +126,7 @@ export function MappingsList({ initialMappings }: MappingsListProps) {
                     </div>
 
                     {mapping.times_used > 0 && (
-                      <span className="text-slate-400">
+                      <span className="text-slate-600">
                         {mapping.times_used} time{mapping.times_used !== 1 ? 's' : ''}
                       </span>
                     )}
@@ -158,6 +158,7 @@ export function MappingsList({ initialMappings }: MappingsListProps) {
                   size="icon"
                   className="text-slate-400 hover:text-red-600 hover:bg-red-50"
                   onClick={() => setDeleteId(mapping.id)}
+                  aria-label={`Delete mapping ${mapping.name}`}
                 >
                   <Trash2 className="h-5 w-5" />
                 </Button>
