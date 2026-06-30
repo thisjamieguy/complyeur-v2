@@ -36,6 +36,12 @@ interface CountrySelectProps {
   onValueChange: (value: string) => void
   disabled?: boolean
   placeholder?: string
+  /** id for the trigger so an external <label htmlFor> can associate with it */
+  id?: string
+  'aria-label'?: string
+  'aria-labelledby'?: string
+  'aria-describedby'?: string
+  'aria-invalid'?: boolean
 }
 
 export function CountrySelect({
@@ -43,6 +49,11 @@ export function CountrySelect({
   onValueChange,
   disabled = false,
   placeholder = 'Select country...',
+  id,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledby,
+  'aria-describedby': ariaDescribedby,
+  'aria-invalid': ariaInvalid,
 }: CountrySelectProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -56,7 +67,12 @@ export function CountrySelect({
         <Button
           variant="outline"
           role="combobox"
+          id={id}
           aria-expanded={open}
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledby}
+          aria-describedby={ariaDescribedby}
+          aria-invalid={ariaInvalid}
           className="w-full justify-between overflow-hidden"
           disabled={disabled}
         >
@@ -70,7 +86,7 @@ export function CountrySelect({
           <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent className="w-[400px] p-0" align="start" aria-label="Country search">
         <Command>
           <CommandInput placeholder="Search country..." />
           <CommandList>
