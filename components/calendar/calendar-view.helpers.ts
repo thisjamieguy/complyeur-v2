@@ -104,6 +104,22 @@ export function getOverlapMessage(
   return overlapResult.message ?? 'This trip overlaps with an existing trip. Please adjust the dates.'
 }
 
+export function isSameCalendarTrip(first: DbTrip, second: DbTrip): boolean {
+  if (first.id === second.id) {
+    return true
+  }
+
+  return (
+    first.country === second.country &&
+    first.entry_date === second.entry_date &&
+    first.exit_date === second.exit_date &&
+    (first.purpose ?? null) === (second.purpose ?? null) &&
+    (first.job_ref ?? null) === (second.job_ref ?? null) &&
+    first.is_private === second.is_private &&
+    first.ghosted === second.ghosted
+  )
+}
+
 export function buildEmployeeProcessingCacheKey({
   employee,
   tripOverrides,

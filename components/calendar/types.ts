@@ -108,6 +108,11 @@ export interface CalendarCopiedTrip {
   ghosted: boolean
 }
 
+export interface CalendarPendingTrip {
+  employeeId: string
+  trip: DbTrip
+}
+
 export interface CalendarCellContextMenuRequest {
   x: number
   y: number

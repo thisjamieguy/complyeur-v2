@@ -108,6 +108,173 @@ describe('useCalendarTripActions', () => {
     checkTripOverlapMock.mockResolvedValue({ hasOverlap: false })
   })
 
+  describe('pasteTrip', () => {
+    it('shows a pending pasted trip immediately, then swaps in the created trip id', async () => {
+      const overlap = createDeferred<{ hasOverlap: false }>()
+      const created = createDeferred<{
+        id: string
+        country: string
+        entry_date: string
+        exit_date: string
+        purpose: string | null
+        job_ref: string | null
+        is_private: boolean
+        ghosted: boolean
+      }>()
+      checkTripOverlapMock.mockReturnValueOnce(overlap.promise)
+      addTripActionMock.mockReturnValueOnce(created.promise)
+
+      const { result, rerender } = renderHook(
+        ({ employees }: { employees: EmployeeWithTrips[] }) => useCalendarTripActions(employees),
+        { initialProps: { employees: [makeEmployee()] } }
+      )
+
+      act(() => {
+        result.current.copyTrip({
+          employeeId: 'emp-1',
+          employeeName: 'Alex Doe',
+          trip: makeProcessedTrip({
+            duration: 3,
+            purpose: 'Client visit',
+            jobRef: 'JOB-123',
+          }),
+        })
+      })
+
+      let pastePromise!: Promise<void>
+      act(() => {
+        pastePromise = result.current.pasteTrip({
+          employeeId: 'emp-1',
+          employeeName: 'Alex Doe',
+          dateKey: '2026-02-10',
+        })
+      })
+
+      expect(result.current.pendingCreatedTrips.size).toBe(1)
+      const [pending] = Array.from(result.current.pendingCreatedTrips.values())
+      expect(pending).toMatchObject({
+        employeeId: 'emp-1',
+        trip: {
+          country: 'FR',
+          entry_date: '2026-02-10',
+          exit_date: '2026-02-12',
+          purpose: 'Client visit',
+          job_ref: 'JOB-123',
+          is_private: false,
+          ghosted: false,
+        },
+      })
+      expect(showSuccessMock).not.toHaveBeenCalledWith('Trip pasted successfully')
+
+      await act(async () => {
+        overlap.resolve({ hasOverlap: false })
+        await Promise.resolve()
+      })
+
+      expect(addTripActionMock).toHaveBeenCalledWith({
+        employee_id: 'emp-1',
+        country: 'FR',
+        entry_date: '2026-02-10',
+        exit_date: '2026-02-12',
+        purpose: 'Client visit',
+        job_ref: 'JOB-123',
+        is_private: false,
+        ghosted: false,
+      })
+
+      await act(async () => {
+        created.resolve({
+          id: 'trip-created',
+          country: 'FR',
+          entry_date: '2026-02-10',
+          exit_date: '2026-02-12',
+          purpose: 'Client visit',
+          job_ref: 'JOB-123',
+          is_private: false,
+          ghosted: false,
+        })
+        await pastePromise
+      })
+
+      expect(showSuccessMock).toHaveBeenCalledWith('Trip pasted successfully')
+      expect(Array.from(result.current.pendingCreatedTrips.values())[0].trip.id).toBe(
+        'trip-created'
+      )
+
+      rerender({
+        employees: [
+          makeEmployee({
+            trips: [
+              makeDbTrip({
+                id: 'trip-created',
+                entry_date: '2026-02-10',
+                exit_date: '2026-02-12',
+                purpose: 'Client visit',
+                job_ref: 'JOB-123',
+              }),
+            ],
+          }),
+        ],
+      })
+
+      expect(result.current.pendingCreatedTrips.size).toBe(0)
+    })
+
+    it('removes the pending pasted trip when overlap validation rejects it', async () => {
+      const overlap = createDeferred<{
+        hasOverlap: true
+        conflictingTrip: {
+          id: string
+          country: string
+          entry_date: string
+          exit_date: string
+        }
+      }>()
+      checkTripOverlapMock.mockReturnValueOnce(overlap.promise)
+
+      const { result } = renderHook(() => useCalendarTripActions([makeEmployee()]))
+
+      act(() => {
+        result.current.copyTrip({
+          employeeId: 'emp-1',
+          employeeName: 'Alex Doe',
+          trip: makeProcessedTrip({ duration: 3 }),
+        })
+      })
+
+      let pastePromise!: Promise<void>
+      act(() => {
+        pastePromise = result.current.pasteTrip({
+          employeeId: 'emp-1',
+          employeeName: 'Alex Doe',
+          dateKey: '2026-02-10',
+        })
+      })
+
+      expect(result.current.pendingCreatedTrips.size).toBe(1)
+
+      await act(async () => {
+        overlap.resolve({
+          hasOverlap: true,
+          conflictingTrip: {
+            id: 'trip-2',
+            country: 'DE',
+            entry_date: '2026-02-11',
+            exit_date: '2026-02-13',
+          },
+        })
+        await pastePromise
+      })
+
+      expect(result.current.pendingCreatedTrips.size).toBe(0)
+      expect(addTripActionMock).not.toHaveBeenCalled()
+      expect(showErrorMock).toHaveBeenCalledWith(
+        'Trip overlap detected',
+        expect.stringContaining("Alex Doe's DE trip")
+      )
+    })
+  })
+
   describe('toggleTripPrivacy', () => {
     it('flips is_private optimistically, then clears the override once the server confirms it', async () => {
       const employee = makeEmployee()

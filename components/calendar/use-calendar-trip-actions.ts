@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   addTripAction,
@@ -14,12 +14,14 @@ import { showError, showSuccess } from '@/lib/toast'
 import { parseDateOnlyAsUTC } from '@/lib/compliance'
 import { addUtcDays } from '@/lib/compliance/date-utils'
 import { toDateKey } from './calendar-view.utils'
-import { getOverlapMessage } from './calendar-view.helpers'
+import { getOverlapMessage, isSameCalendarTrip } from './calendar-view.helpers'
 import type { TripOverride } from './calendar-view.helpers'
 import type { TripEditorDraft } from './interactive-trip-editor'
 import type {
   CalendarCopiedTrip,
+  CalendarPendingTrip,
   CalendarPasteTripRequest,
+  DbTrip,
   EmployeeWithTrips,
   TripDateShiftRequest,
   TripDeleteRequest,
@@ -27,6 +29,33 @@ import type {
   TripMoveRequest,
   TripResizeRequest,
 } from './types'
+
+function getCreatedTripFromActionResult(value: unknown): DbTrip | null {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const trip = value as Record<string, unknown>
+  if (
+    typeof trip.id !== 'string' ||
+    typeof trip.country !== 'string' ||
+    typeof trip.entry_date !== 'string' ||
+    typeof trip.exit_date !== 'string'
+  ) {
+    return null
+  }
+
+  return {
+    id: trip.id,
+    country: trip.country,
+    entry_date: trip.entry_date,
+    exit_date: trip.exit_date,
+    purpose: typeof trip.purpose === 'string' ? trip.purpose : null,
+    job_ref: typeof trip.job_ref === 'string' ? trip.job_ref : null,
+    is_private: trip.is_private === true,
+    ghosted: trip.ghosted === true,
+  }
+}
 
 /**
  * Owns all trip-mutation state and handlers for the calendar: the editor /
@@ -39,6 +68,7 @@ import type {
  */
 export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
   const router = useRouter()
+  const optimisticTripSequence = useRef(0)
   const [tripEditorDraft, setTripEditorDraft] = useState<TripEditorDraft | null>(null)
   const [tripDeleteDraft, setTripDeleteDraft] = useState<TripDeleteRequest | null>(null)
   const [isDeletingTrip, setIsDeletingTrip] = useState(false)
@@ -48,6 +78,9 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
   const [copiedTrip, setCopiedTrip] = useState<CalendarCopiedTrip | null>(null)
   const [tripOverrides, setTripOverrides] = useState(
     () => new Map<string, TripOverride>()
+  )
+  const [pendingCreatedTrips, setPendingCreatedTrips] = useState(
+    () => new Map<string, CalendarPendingTrip>()
   )
 
   // Drop optimistic overrides once the server data confirms them (or, for a
@@ -104,6 +137,32 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
       return changed ? next : current
     })
   }, [employees])
+
+  // Hide optimistic pasted trips once refreshed server data contains the same
+  // trip. The action usually gives us the real id, but matching on trip details
+  // keeps this robust in tests and stale refresh edge cases.
+  const visiblePendingCreatedTrips = useMemo(() => {
+    if (pendingCreatedTrips.size === 0) {
+      return pendingCreatedTrips
+    }
+
+    const serverTripsByEmployee = new Map<string, DbTrip[]>()
+    for (const employee of employees) {
+      serverTripsByEmployee.set(employee.id, employee.trips)
+    }
+
+    let changed = false
+    const next = new Map(pendingCreatedTrips)
+    for (const [pendingId, pending] of pendingCreatedTrips) {
+      const serverTrips = serverTripsByEmployee.get(pending.employeeId) ?? []
+      if (serverTrips.some((trip) => isSameCalendarTrip(pending.trip, trip))) {
+        next.delete(pendingId)
+        changed = true
+      }
+    }
+
+    return changed ? next : pendingCreatedTrips
+  }, [employees, pendingCreatedTrips])
 
   const openCreateTrip = ({
     employeeId,
@@ -168,10 +227,33 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
     const entryDate = parseDateOnlyAsUTC(dateKey)
     const exitDate = addUtcDays(entryDate, copiedTrip.duration - 1)
     const exitDateKey = toDateKey(exitDate)
+    optimisticTripSequence.current += 1
+    const pendingTripId = `pending-paste-${Date.now()}-${optimisticTripSequence.current}`
+    const pendingTrip: DbTrip = {
+      id: pendingTripId,
+      country: copiedTrip.country,
+      entry_date: dateKey,
+      exit_date: exitDateKey,
+      purpose: copiedTrip.purpose,
+      job_ref: copiedTrip.jobRef,
+      is_private: copiedTrip.isPrivate,
+      ghosted: copiedTrip.ghosted,
+    }
+
+    setPendingCreatedTrips((current) => {
+      const next = new Map(current)
+      next.set(pendingTripId, { employeeId, trip: pendingTrip })
+      return next
+    })
 
     const overlapResult = await checkTripOverlap(employeeId, dateKey, exitDateKey)
 
     if (overlapResult.hasOverlap) {
+      setPendingCreatedTrips((current) => {
+        const next = new Map(current)
+        next.delete(pendingTripId)
+        return next
+      })
       showError(
         'Trip overlap detected',
         `Cannot paste trip. ${getOverlapMessage(overlapResult, employeeName)}`
@@ -180,7 +262,7 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
     }
 
     try {
-      await addTripAction({
+      const createdTrip = getCreatedTripFromActionResult(await addTripAction({
         employee_id: employeeId,
         country: copiedTrip.country,
         entry_date: dateKey,
@@ -189,10 +271,23 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
         ...(copiedTrip.jobRef ? { job_ref: copiedTrip.jobRef } : {}),
         is_private: copiedTrip.isPrivate,
         ghosted: copiedTrip.ghosted,
-      })
+      }))
+      if (createdTrip) {
+        setPendingCreatedTrips((current) => {
+          const next = new Map(current)
+          next.delete(pendingTripId)
+          next.set(createdTrip.id, { employeeId, trip: createdTrip })
+          return next
+        })
+      }
       showSuccess('Trip pasted successfully')
       router.refresh()
     } catch (error) {
+      setPendingCreatedTrips((current) => {
+        const next = new Map(current)
+        next.delete(pendingTripId)
+        return next
+      })
       showError(
         'Failed to paste trip',
         error instanceof Error ? error.message : 'Please try again.'
@@ -478,6 +573,7 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
   return {
     // optimistic state consumed by the processing memo
     tripOverrides,
+    pendingCreatedTrips: visiblePendingCreatedTrips,
     copiedTrip,
     // editor dialog
     tripEditorDraft,

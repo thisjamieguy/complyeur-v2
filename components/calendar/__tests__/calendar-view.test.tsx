@@ -79,6 +79,16 @@ class ResizeObserverMock {
   disconnect() {}
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+  return { promise, resolve, reject }
+}
+
 function getLatestDesktopCalendarProps(): Record<string, unknown> {
   const desktopProps = [...ganttChartProps]
     .reverse()
@@ -970,6 +980,18 @@ describe('CalendarView', () => {
   })
 
   it('copies and pastes a trip from the calendar context menu callbacks', async () => {
+    const createTrip = createDeferred<{
+      id: string
+      country: string
+      entry_date: string
+      exit_date: string
+      purpose: string | null
+      job_ref: string | null
+      is_private: boolean
+      ghosted: boolean
+    }>()
+    addTripActionMock.mockReturnValueOnce(createTrip.promise)
+
     render(
       <CalendarView
         interactive
@@ -1030,13 +1052,53 @@ describe('CalendarView', () => {
       dateKey: string
     }) => Promise<void>
 
+    let pastePromise!: Promise<void>
     await act(async () => {
-      await onPasteTrip({
+      pastePromise = onPasteTrip({
         employeeId: 'employee-2',
         employeeName: 'Emma Patel',
         dateKey: '2026-03-20',
       })
+      await Promise.resolve()
     })
+
+    const pendingTargetEmployee = (
+      getLatestDesktopCalendarProps().employees as ProcessedEmployee[]
+    ).find((employee) => employee.id === 'employee-2')
+    expect(pendingTargetEmployee?.trips).toHaveLength(1)
+    expect(pendingTargetEmployee?.trips[0]).toMatchObject({
+      rawCountry: 'FR',
+      purpose: 'Client visit',
+      jobRef: 'JOB-1',
+      isPrivate: false,
+      ghosted: false,
+    })
+    expect(pendingTargetEmployee?.trips[0].entryDate.toISOString().slice(0, 10)).toBe(
+      '2026-03-20'
+    )
+    expect(pendingTargetEmployee?.trips[0].exitDate.toISOString().slice(0, 10)).toBe(
+      '2026-03-24'
+    )
+    expect(showSuccessMock).not.toHaveBeenCalledWith('Trip pasted successfully')
+
+    createTrip.resolve({
+      id: 'trip-pasted',
+      country: 'FR',
+      entry_date: '2026-03-20',
+      exit_date: '2026-03-24',
+      purpose: 'Client visit',
+      job_ref: 'JOB-1',
+      is_private: false,
+      ghosted: false,
+    })
+    await act(async () => {
+      await pastePromise
+    })
+
+    const confirmedTargetEmployee = (
+      getLatestDesktopCalendarProps().employees as ProcessedEmployee[]
+    ).find((employee) => employee.id === 'employee-2')
+    expect(confirmedTargetEmployee?.trips[0].id).toBe('trip-pasted')
 
     expect(checkTripOverlapMock).toHaveBeenCalledWith(
       'employee-2',

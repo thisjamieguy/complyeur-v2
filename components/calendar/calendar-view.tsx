@@ -32,6 +32,7 @@ import { buildDateRange, toDateKey } from './calendar-view.utils'
 import {
   buildEmployeeProcessingCacheKey,
   getCalendarRiskSummary,
+  isSameCalendarTrip,
   processCalendarEmployee,
   type ProcessedEmployeeCacheEntry,
 } from './calendar-view.helpers'
@@ -42,7 +43,7 @@ import { CALENDAR_ZOOM_WIDTHS, type CalendarZoomLevel } from './zoom-controls'
 import { InteractiveTripEditor } from './interactive-trip-editor'
 import { GanttChart } from './gantt-chart'
 import { MobileCalendarView } from './mobile-calendar-view'
-import type { EmployeeWithTrips, ProcessedEmployee } from './types'
+import type { DbTrip, EmployeeWithTrips, ProcessedEmployee } from './types'
 
 /** Days to look back from today */
 const DAYS_BACK = 200
@@ -114,12 +115,53 @@ export function CalendarView({
   const shouldApplySchengenFilter =
     initialHideEmployeesWithoutSchengenTrips || hideEmployeesWithoutSchengenTrips
 
-  const filteredEmployees = useMemo(() => {
-    if (!shouldApplySchengenFilter) {
+  const employeesWithPendingTrips = useMemo(() => {
+    if (tripActions.pendingCreatedTrips.size === 0) {
       return employees
     }
 
-    return employees.filter((employee) =>
+    const pendingTripsByEmployee = new Map<string, DbTrip[]>()
+    for (const pending of tripActions.pendingCreatedTrips.values()) {
+      const trips = pendingTripsByEmployee.get(pending.employeeId)
+      if (trips) {
+        trips.push(pending.trip)
+      } else {
+        pendingTripsByEmployee.set(pending.employeeId, [pending.trip])
+      }
+    }
+
+    let changed = false
+    const nextEmployees = employees.map((employee) => {
+      const pendingTrips = pendingTripsByEmployee.get(employee.id)
+      if (!pendingTrips || pendingTrips.length === 0) {
+        return employee
+      }
+
+      const tripsToAdd = pendingTrips.filter(
+        (pendingTrip) =>
+          !employee.trips.some((trip) => isSameCalendarTrip(pendingTrip, trip))
+      )
+
+      if (tripsToAdd.length === 0) {
+        return employee
+      }
+
+      changed = true
+      return {
+        ...employee,
+        trips: [...employee.trips, ...tripsToAdd],
+      }
+    })
+
+    return changed ? nextEmployees : employees
+  }, [employees, tripActions.pendingCreatedTrips])
+
+  const filteredEmployees = useMemo(() => {
+    if (!shouldApplySchengenFilter) {
+      return employeesWithPendingTrips
+    }
+
+    return employeesWithPendingTrips.filter((employee) =>
       employee.trips.some((trip) => {
         if (trip.ghosted || !isSchengenCountry(trip.country)) {
           return false
@@ -129,7 +171,7 @@ export function CalendarView({
         return trip.entry_date <= endDateKey && trip.exit_date >= startDateKey
       })
     )
-  }, [employees, endDateKey, shouldApplySchengenFilter, startDateKey])
+  }, [employeesWithPendingTrips, endDateKey, shouldApplySchengenFilter, startDateKey])
 
   // Process employees and their trips with per-employee batched compliance work.
   const processedEmployees = useMemo((): ProcessedEmployee[] => {
