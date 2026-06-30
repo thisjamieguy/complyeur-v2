@@ -143,7 +143,7 @@ export function NotificationSettingsForm({ settings, disabled = false }: Notific
       {/* Breach Threshold (Locked) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium text-slate-400">
+          <Label className="text-sm font-medium text-slate-500">
             Breach Threshold
           </Label>
           <span className="text-sm font-mono bg-red-100 text-red-800 px-2 py-0.5 rounded">

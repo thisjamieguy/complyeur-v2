@@ -128,7 +128,7 @@ export function ValidationTable({
                     <TableCell>{getStatusIcon(row)}</TableCell>
                     {getRowData(row).map((value, idx) => (
                       <TableCell key={`${row.row_number}-col-${idx}`} className="max-w-[200px] truncate">
-                        {value || <span className="text-slate-400 italic">Empty</span>}
+                        {value || <span className="text-slate-600 italic">Empty</span>}
                       </TableCell>
                     ))}
                     <TableCell>
