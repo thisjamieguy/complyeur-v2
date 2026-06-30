@@ -11,7 +11,6 @@ import { getEmployeesForSelect, getAllTripsGroupedByEmployee } from '@/lib/db';
 import { checkEntitlement } from '@/lib/billing/entitlements';
 import { TripForecastCalculator } from './trip-forecast-calculator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ForecastRiskLegend } from '@/components/compliance/risk-legends';
 
 export const metadata = {
   title: 'Trip Forecast',
@@ -52,8 +51,6 @@ export default async function TripForecastPage() {
           Test hypothetical trips to check compliance before scheduling.
         </p>
       </div>
-
-      <ForecastRiskLegend />
 
       <details className="rounded-lg border border-slate-200 bg-white p-4">
         <summary className="cursor-pointer text-sm font-medium text-slate-800">
