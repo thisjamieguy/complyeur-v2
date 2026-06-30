@@ -182,10 +182,14 @@ export function BulkAddTripsForm({
           >
             <div className="flex flex-wrap gap-3 items-end">
               <div className="w-full sm:w-36">
-                <Label className="text-xs text-muted-foreground mb-1 block">
+                <Label
+                  htmlFor={`${row.id}-country`}
+                  className="text-xs text-muted-foreground mb-1 block"
+                >
                   Country *
                 </Label>
                 <CountrySelect
+                  id={`${row.id}-country`}
                   value={row.country}
                   onValueChange={(value) => updateRow(row.id, 'country', value)}
                   disabled={isSubmitting}
@@ -194,8 +198,14 @@ export function BulkAddTripsForm({
               </div>
 
               <div className="w-[calc(50%-6px)] sm:w-32">
-                <Label className="text-xs text-muted-foreground mb-1 block">Entry *</Label>
+                <Label
+                  htmlFor={`${row.id}-entry`}
+                  className="text-xs text-muted-foreground mb-1 block"
+                >
+                  Entry *
+                </Label>
                 <Input
+                  id={`${row.id}-entry`}
                   type="date"
                   value={row.entryDate}
                   onChange={(e) => updateRow(row.id, 'entryDate', e.target.value)}
@@ -205,8 +215,14 @@ export function BulkAddTripsForm({
               </div>
 
               <div className="w-[calc(50%-6px)] sm:w-32">
-                <Label className="text-xs text-muted-foreground mb-1 block">Exit *</Label>
+                <Label
+                  htmlFor={`${row.id}-exit`}
+                  className="text-xs text-muted-foreground mb-1 block"
+                >
+                  Exit *
+                </Label>
                 <Input
+                  id={`${row.id}-exit`}
                   type="date"
                   value={row.exitDate}
                   onChange={(e) => updateRow(row.id, 'exitDate', e.target.value)}
@@ -216,8 +232,14 @@ export function BulkAddTripsForm({
               </div>
 
               <div className="w-[calc(50%-6px)] sm:w-28 sm:flex-1">
-                <Label className="text-xs text-muted-foreground mb-1 block">Purpose</Label>
+                <Label
+                  htmlFor={`${row.id}-purpose`}
+                  className="text-xs text-muted-foreground mb-1 block"
+                >
+                  Purpose
+                </Label>
                 <Input
+                  id={`${row.id}-purpose`}
                   placeholder="Optional"
                   value={row.purpose}
                   onChange={(e) => updateRow(row.id, 'purpose', e.target.value)}
@@ -226,8 +248,14 @@ export function BulkAddTripsForm({
               </div>
 
               <div className="w-[calc(50%-6px)] sm:w-28 sm:flex-1">
-                <Label className="text-xs text-muted-foreground mb-1 block">Job Ref</Label>
+                <Label
+                  htmlFor={`${row.id}-job-ref`}
+                  className="text-xs text-muted-foreground mb-1 block"
+                >
+                  Job Ref
+                </Label>
                 <Input
+                  id={`${row.id}-job-ref`}
                   placeholder="Optional"
                   value={row.jobRef}
                   onChange={(e) => updateRow(row.id, 'jobRef', e.target.value)}
@@ -242,6 +270,7 @@ export function BulkAddTripsForm({
                 onClick={() => removeRow(row.id)}
                 disabled={rows.length === 1 || isSubmitting}
                 className="text-muted-foreground hover:text-destructive shrink-0"
+                aria-label="Remove this trip row"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
