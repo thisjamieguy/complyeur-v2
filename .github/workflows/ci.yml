@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
           fetch-depth: 0
@@ -173,6 +173,28 @@ jobs:
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         with:
           name: playwright-report-baseline
+          path: |
+            .test-output/playwright-report
+            .test-output/test-results
+          if-no-files-found: ignore
+
+      # Accessibility gate (axe-core + Playwright). Introduced non-blocking so
+      # the first runs inventory any remaining serious/critical violations on
+      # pages not yet hand-audited. To enforce, remove `continue-on-error: true`.
+      - name: Run accessibility audit (axe + Playwright)
+        if: needs.changes.outputs.e2e_baseline == 'true'
+        continue-on-error: true
+        run: pnpm test:e2e:a11y
+        env:
+          TEST_USER_EMAIL: e2e-test@complyeur.test
+          TEST_USER_PASSWORD: E2ETestPassword123!
+          TEST_USER_COMPANY: Playwright Test Company
+
+      - name: Upload accessibility Playwright report
+        if: always() && needs.changes.outputs.e2e_baseline == 'true'
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: playwright-report-a11y
           path: |
             .test-output/playwright-report
             .test-output/test-results

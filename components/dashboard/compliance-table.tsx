@@ -223,7 +223,7 @@ function ComplianceCalculationTrace({ employee }: { employee: EmployeeCompliance
     <div className="space-y-3 py-1">
       <div className="border-b border-slate-100 pb-1.5">
         <h4 className="font-semibold text-slate-900 text-sm leading-none">Calculation Trace</h4>
-        <p className="text-[10px] text-slate-400 uppercase font-medium mt-1">Schengen 90/180-day rule</p>
+        <p className="text-[10px] text-slate-600 uppercase font-medium mt-1">Schengen 90/180-day rule</p>
       </div>
 
       <div className="space-y-2">

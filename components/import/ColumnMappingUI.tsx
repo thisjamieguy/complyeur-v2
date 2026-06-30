@@ -114,7 +114,7 @@ function ConfidenceBadge({
 
 function SampleDataDisplay({ samples }: { samples: string[] }) {
   if (samples.length === 0) {
-    return <span className="text-slate-400 italic">No data</span>;
+    return <span className="text-slate-600 italic">No data</span>;
   }
 
   return (
@@ -129,7 +129,7 @@ function SampleDataDisplay({ samples }: { samples: string[] }) {
         </div>
       ))}
       {samples.length > 3 && (
-        <div className="text-xs text-slate-400">+{samples.length - 3} more</div>
+        <div className="text-xs text-slate-600">+{samples.length - 3} more</div>
       )}
     </div>
   );

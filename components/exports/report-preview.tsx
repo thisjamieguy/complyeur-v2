@@ -65,7 +65,7 @@ export function ReportPreview({
               </>
             ) : (
               <>
-                <p className="text-xl font-bold text-slate-400">—</p>
+                <p className="text-xl font-bold text-slate-500">—</p>
                 <p className="text-xs text-slate-500 mt-0.5">future trips</p>
               </>
             )}

@@ -104,7 +104,7 @@ export function MobileCalendarView({ employees }: MobileCalendarViewProps) {
                       >
                         {config.label}
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-slate-600">
                         {' '}
                         — {employee.currentDaysRemaining} days remaining
                       </span>
