@@ -5,6 +5,7 @@ import { addUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 import { ALL_SCHENGEN_COUNTRIES } from '@/lib/constants/schengen-countries'
 import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { CalendarLoadMode } from '@/lib/types/settings'
+import type { DbTrip, EmployeeWithTrips } from '@/components/calendar/types'
 
 /**
  * @fileoverview Shared, request-cached data access for the calendar.
@@ -12,6 +13,10 @@ import type { CalendarLoadMode } from '@/lib/types/settings'
  * The calendar lives at a single route (`/calendar`); `/calendar-v2` redirects
  * to it. Keeping the fetch here (rather than inline in the page) means it has
  * one tested home and the page component stays thin.
+ *
+ * Returns `EmployeeWithTrips` (from components/calendar/types) rather than a
+ * locally-declared shape, so this layer and the client-side calendar code
+ * can't silently drift apart on what an "employee with trips" looks like.
  */
 
 /** Days of history to load before today. */
@@ -21,23 +26,7 @@ const MAX_WEEKS_FORWARD = 12
 /** Extra lookback so the 180-day rolling window is fully covered. */
 const COMPLIANCE_LOOKBACK_DAYS = 180
 
-/** An employee plus the trips that fall inside the calendar's date window. */
-export interface CalendarEmployee {
-  id: string
-  name: string
-  trips: Array<{
-    id: string
-    country: string
-    entry_date: string
-    exit_date: string
-    purpose: string | null
-    job_ref: string | null
-    is_private: boolean
-    ghosted: boolean
-  }>
-}
-
-type TripRow = CalendarEmployee['trips'][number] & {
+type TripRow = DbTrip & {
   employee_id: string
 }
 
@@ -46,8 +35,8 @@ interface EmployeeRow {
   name: string
 }
 
-function buildTripsByEmployee(trips: TripRow[]): Map<string, CalendarEmployee['trips']> {
-  const tripsByEmployee = new Map<string, CalendarEmployee['trips']>()
+function buildTripsByEmployee(trips: TripRow[]): Map<string, DbTrip[]> {
+  const tripsByEmployee = new Map<string, DbTrip[]>()
 
   for (const trip of trips) {
     const tripData = {
@@ -75,7 +64,7 @@ function buildTripsByEmployee(trips: TripRow[]): Map<string, CalendarEmployee['t
 function mapEmployeesWithTrips(
   employees: EmployeeRow[],
   trips: TripRow[]
-): CalendarEmployee[] {
+): EmployeeWithTrips[] {
   const tripsByEmployee = buildTripsByEmployee(trips)
 
   return employees.map((employee) => ({
@@ -96,7 +85,7 @@ function mapEmployeesWithTrips(
 export const getCalendarEmployees = cache(async (
   calendarLoadMode: CalendarLoadMode,
   hideEmployeesWithoutSchengenTrips: boolean
-): Promise<CalendarEmployee[]> => {
+): Promise<EmployeeWithTrips[]> => {
   const supabase = await createClient()
   const { companyId } = await requireCompanyAccess(supabase)
   const today = toUTCMidnight(new Date())
@@ -237,13 +226,19 @@ export const getCalendarEmployees = cache(async (
     return mapEmployeesWithTrips(employees, tripRows)
   }
 
-  // Default: all employees, with their trips in the window.
-  const { data: employees, error } = await supabase
-    .from('employees')
-    .select('id, name')
-    .eq('company_id', companyId)
-    .is('deleted_at', null)
-    .order('name')
+  // Default: all employees, with their trips in the window. getTripsInWindow()
+  // doesn't filter by employee IDs, so it has no dependency on the employees
+  // query below — run both concurrently instead of paying two round trips.
+  const [employeesResult, tripRows] = await Promise.all([
+    supabase
+      .from('employees')
+      .select('id, name')
+      .eq('company_id', companyId)
+      .is('deleted_at', null)
+      .order('name'),
+    getTripsInWindow(),
+  ])
+  const { data: employees, error } = employeesResult
 
   if (error) {
     console.error('[Calendar] Error fetching employees:', error)
@@ -252,6 +247,5 @@ export const getCalendarEmployees = cache(async (
 
   if (!employees || employees.length === 0) return []
 
-  const tripRows = await getTripsInWindow()
   return mapEmployeesWithTrips(employees as EmployeeRow[], tripRows)
 })

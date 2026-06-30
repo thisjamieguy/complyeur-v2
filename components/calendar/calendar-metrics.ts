@@ -3,7 +3,7 @@ const MAX_STORED_METRICS = 500
 
 type CalendarMetricName = 'calendar_mount' | 'scroll_sync' | 'viewport_rows'
 
-export interface CalendarMetricDetail {
+interface CalendarMetricDetail {
   name: CalendarMetricName
   timestampMs: number
   data: Record<string, number | string | boolean>

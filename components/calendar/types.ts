@@ -3,6 +3,25 @@ import type { DailyCompliance, RiskLevel } from '@/lib/compliance'
 export type TripDayDisplayMode = 'historical' | 'planning'
 export type TripResizeEdge = 'start' | 'end'
 
+/** Raw trip shape as read from the database (and from lib/data/calendar.ts). */
+export interface DbTrip {
+  id: string
+  country: string
+  entry_date: string
+  exit_date: string
+  purpose: string | null
+  job_ref?: string | null
+  is_private: boolean
+  ghosted: boolean
+}
+
+/** An employee plus their raw (unprocessed) trips, as loaded for the calendar. */
+export interface EmployeeWithTrips {
+  id: string
+  name: string
+  trips: DbTrip[]
+}
+
 export interface ProcessedTrip {
   id: string
   country: string

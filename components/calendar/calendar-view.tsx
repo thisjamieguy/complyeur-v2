@@ -34,7 +34,6 @@ import {
   buildEmployeeProcessingCacheKey,
   getCalendarRiskSummary,
   processCalendarEmployee,
-  type EmployeeWithTrips,
   type ProcessedEmployeeCacheEntry,
 } from './calendar-view.helpers'
 import { useCalendarTripActions } from './use-calendar-trip-actions'
@@ -42,7 +41,7 @@ import { CalendarToolbar } from './calendar-toolbar'
 import { CalendarEmptyState } from './calendar-empty-state'
 import { CALENDAR_ZOOM_WIDTHS, type CalendarZoomLevel } from './zoom-controls'
 import { InteractiveTripEditor } from './interactive-trip-editor'
-import type { ProcessedEmployee } from './types'
+import type { EmployeeWithTrips, ProcessedEmployee } from './types'
 
 const GanttChart = dynamic(
   () => import('./gantt-chart').then(m => m.GanttChart),
@@ -157,7 +156,7 @@ export function CalendarView({
 
       const cacheKey = buildEmployeeProcessingCacheKey({
         employee,
-        tripDateOverrides: tripActions.tripDateOverrides,
+        tripOverrides: tripActions.tripOverrides,
         startDateKey,
         endDateKey,
         todayKey,
@@ -170,7 +169,7 @@ export function CalendarView({
 
       const processedEmployee = processCalendarEmployee({
         employee,
-        tripDateOverrides: tripActions.tripDateOverrides,
+        tripOverrides: tripActions.tripOverrides,
         startDate,
         endDate,
         today,
@@ -192,7 +191,7 @@ export function CalendarView({
     /* eslint-enable react-hooks/refs */
 
     return nextEmployees
-  }, [filteredEmployees, startDate, endDate, startDateKey, endDateKey, tripActions.tripDateOverrides])
+  }, [filteredEmployees, startDate, endDate, startDateKey, endDateKey, tripActions.tripOverrides])
 
   const riskSummary = useMemo(
     () => getCalendarRiskSummary(processedEmployees),

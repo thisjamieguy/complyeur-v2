@@ -15,11 +15,12 @@ import { parseDateOnlyAsUTC } from '@/lib/compliance'
 import { addUtcDays } from '@/lib/compliance/date-utils'
 import { toDateKey } from './calendar-view.utils'
 import { getOverlapMessage } from './calendar-view.helpers'
-import type { EmployeeWithTrips, TripDateOverride } from './calendar-view.helpers'
+import type { TripOverride } from './calendar-view.helpers'
 import type { TripEditorDraft } from './interactive-trip-editor'
 import type {
   CalendarCopiedTrip,
   CalendarPasteTripRequest,
+  EmployeeWithTrips,
   TripDateShiftRequest,
   TripDeleteRequest,
   TripEditRequest,
@@ -30,7 +31,8 @@ import type {
 /**
  * Owns all trip-mutation state and handlers for the calendar: the editor /
  * delete / move dialog drafts, the clipboard, and the optimistic
- * `tripDateOverrides` used to preview drag/resize before the server confirms.
+ * `tripOverrides` used to preview a change (resize, move, privacy toggle,
+ * delete) before the server confirms it.
  *
  * Extracted from calendar-view.tsx to keep that component focused on layout and
  * data shaping.
@@ -44,23 +46,28 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
   const [tripMoveError, setTripMoveError] = useState<string | null>(null)
   const [isMovingTrip, setIsMovingTrip] = useState(false)
   const [copiedTrip, setCopiedTrip] = useState<CalendarCopiedTrip | null>(null)
-  const [tripDateOverrides, setTripDateOverrides] = useState(
-    () => new Map<string, TripDateOverride>()
+  const [tripOverrides, setTripOverrides] = useState(
+    () => new Map<string, TripOverride>()
   )
 
-  // Drop optimistic overrides once the server data matches (or the trip is gone).
+  // Drop optimistic overrides once the server data confirms them (or, for a
+  // delete override, once the trip is actually gone from `employees`).
   useEffect(() => {
-    setTripDateOverrides((current) => {
+    setTripOverrides((current) => {
       if (current.size === 0) {
         return current
       }
 
-      const sourceDatesByTrip = new Map<string, { entry_date: string; exit_date: string }>()
+      const sourceByTrip = new Map<
+        string,
+        { entry_date: string; exit_date: string; is_private: boolean }
+      >()
       for (const employee of employees) {
         for (const trip of employee.trips) {
-          sourceDatesByTrip.set(trip.id, {
+          sourceByTrip.set(trip.id, {
             entry_date: trip.entry_date,
             exit_date: trip.exit_date,
+            is_private: trip.is_private,
           })
         }
       }
@@ -68,12 +75,27 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
       let changed = false
       const next = new Map(current)
       for (const [tripId, override] of current) {
-        const sourceDates = sourceDatesByTrip.get(tripId)
-        if (
-          !sourceDates ||
-          (sourceDates.entry_date === override.entry_date &&
-            sourceDates.exit_date === override.exit_date)
-        ) {
+        const source = sourceByTrip.get(tripId)
+
+        if (!source) {
+          // Trip is gone server-side: nothing left for any override to do.
+          next.delete(tripId)
+          changed = true
+          continue
+        }
+
+        if (override.deleted) {
+          // Server still has the trip — keep hiding it until refresh confirms.
+          continue
+        }
+
+        const datesSettled =
+          (override.entry_date === undefined || override.entry_date === source.entry_date) &&
+          (override.exit_date === undefined || override.exit_date === source.exit_date)
+        const privacySettled =
+          override.is_private === undefined || override.is_private === source.is_private
+
+        if (datesSettled && privacySettled) {
           next.delete(tripId)
           changed = true
         }
@@ -181,6 +203,14 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
   const toggleTripPrivacy = async ({ employeeId, trip }: TripEditRequest) => {
     const nextIsPrivate = !trip.isPrivate
 
+    // Optimistic flip so the grid updates the instant this is clicked, instead
+    // of sitting unchanged until the mutation + refresh round trip completes.
+    setTripOverrides((current) => {
+      const next = new Map(current)
+      next.set(trip.id, { ...next.get(trip.id), is_private: nextIsPrivate })
+      return next
+    })
+
     try {
       await updateTripAction(trip.id, employeeId, {
         is_private: nextIsPrivate,
@@ -188,6 +218,11 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
       showSuccess(nextIsPrivate ? 'Trip marked as private' : 'Trip marked as work trip')
       router.refresh()
     } catch (error) {
+      setTripOverrides((current) => {
+        const next = new Map(current)
+        next.set(trip.id, { ...next.get(trip.id), is_private: trip.isPrivate })
+        return next
+      })
       showError(
         'Failed to update trip',
         error instanceof Error ? error.message : 'Please try again.'
@@ -198,23 +233,34 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
   const confirmDeleteTrip = async () => {
     if (!tripDeleteDraft) return
 
+    const { trip, employeeId } = tripDeleteDraft
     setIsDeletingTrip(true)
 
-    try {
-      await deleteTripAction(tripDeleteDraft.trip.id, tripDeleteDraft.employeeId)
-      setTripDateOverrides((current) => {
-        if (!current.has(tripDeleteDraft.trip.id)) {
-          return current
-        }
+    // Optimistic hide: the trip drops off the grid as soon as the user
+    // confirms, rather than staying visible through the delete + refresh
+    // round trip. Rolled back below if the delete fails.
+    setTripOverrides((current) => {
+      const next = new Map(current)
+      next.set(trip.id, { ...next.get(trip.id), deleted: true })
+      return next
+    })
 
-        const next = new Map(current)
-        next.delete(tripDeleteDraft.trip.id)
-        return next
-      })
+    try {
+      await deleteTripAction(trip.id, employeeId)
       showSuccess('Trip deleted successfully')
       setTripDeleteDraft(null)
       router.refresh()
     } catch (error) {
+      setTripOverrides((current) => {
+        const next = new Map(current)
+        const { deleted: _deleted, ...rest } = next.get(trip.id) ?? {}
+        if (Object.keys(rest).length === 0) {
+          next.delete(trip.id)
+        } else {
+          next.set(trip.id, rest)
+        }
+        return next
+      })
       showError(
         'Failed to delete trip',
         error instanceof Error ? error.message : 'Please try again.'
@@ -252,7 +298,7 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
       return
     }
 
-    setTripDateOverrides((current) => {
+    setTripOverrides((current) => {
       const next = new Map(current)
       next.set(tripId, {
         entry_date: nextEntryDate,
@@ -269,7 +315,7 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
       showSuccess('Trip dates updated')
       router.refresh()
     } catch (error) {
-      setTripDateOverrides((current) => {
+      setTripOverrides((current) => {
         const next = new Map(current)
         next.set(tripId, {
           entry_date: originalEntryDateKey,
@@ -316,7 +362,7 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
       return
     }
 
-    setTripDateOverrides((current) => {
+    setTripOverrides((current) => {
       const next = new Map(current)
       next.set(tripId, {
         entry_date: entryDateKey,
@@ -333,7 +379,7 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
       showSuccess('Trip dates updated')
       router.refresh()
     } catch (error) {
-      setTripDateOverrides((current) => {
+      setTripOverrides((current) => {
         const next = new Map(current)
         next.set(tripId, {
           entry_date: originalEntryDateKey,
@@ -431,7 +477,7 @@ export function useCalendarTripActions(employees: EmployeeWithTrips[]) {
 
   return {
     // optimistic state consumed by the processing memo
-    tripDateOverrides,
+    tripOverrides,
     copiedTrip,
     // editor dialog
     tripEditorDraft,

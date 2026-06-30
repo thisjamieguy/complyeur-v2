@@ -17,39 +17,34 @@ import { differenceInUtcDays } from '@/lib/compliance/date-utils'
 import { formatDateForDisplay } from '@/lib/validations/dates'
 import type { TripOverlapResult } from '@/lib/validations/trip-overlap'
 import { overlapsVisibleRange, toDateKey } from './calendar-view.utils'
-import type { ProcessedEmployee, ProcessedTrip } from './types'
+import type { DbTrip, EmployeeWithTrips, ProcessedEmployee, ProcessedTrip } from './types'
 
-export interface DbTrip {
-  id: string
-  country: string
-  entry_date: string
-  exit_date: string
-  purpose: string | null
-  job_ref?: string | null
-  is_private: boolean
-  ghosted: boolean
-}
-
-export interface EmployeeWithTrips {
-  id: string
-  name: string
-  trips: DbTrip[]
-}
-
-export interface ParsedTrip extends DbTrip {
+interface ParsedTrip extends DbTrip {
   entryDate: Date
   exitDate: Date
   isSchengen: boolean
 }
 
-export type TripDateOverride = { entry_date: string; exit_date: string }
+/**
+ * Optimistic, not-yet-server-confirmed change to a trip. Each field is
+ * independent: a resize sets only dates, a privacy toggle sets only
+ * `is_private`, a delete sets only `deleted`. Cleared once the server's
+ * `employees` data confirms the change (or, for `deleted`, once the trip is
+ * actually gone) — see the cleanup effect in useCalendarTripActions.
+ */
+export interface TripOverride {
+  entry_date?: string
+  exit_date?: string
+  is_private?: boolean
+  deleted?: boolean
+}
 
 export interface ProcessedEmployeeCacheEntry {
   cacheKey: string
   employee: ProcessedEmployee
 }
 
-export interface CalendarRiskSummary {
+interface CalendarRiskSummary {
   clear: number
   warning: number
   critical: number
@@ -86,7 +81,7 @@ export function getCalendarRiskSummary(
 /**
  * Convert parsed DB trip to compliance engine format
  */
-export function toComplianceTrip(trip: ParsedTrip): ComplianceTrip {
+function toComplianceTrip(trip: ParsedTrip): ComplianceTrip {
   return {
     id: trip.id,
     country: trip.country,
@@ -111,13 +106,13 @@ export function getOverlapMessage(
 
 export function buildEmployeeProcessingCacheKey({
   employee,
-  tripDateOverrides,
+  tripOverrides,
   startDateKey,
   endDateKey,
   todayKey,
 }: {
   employee: EmployeeWithTrips
-  tripDateOverrides: Map<string, TripDateOverride>
+  tripOverrides: Map<string, TripOverride>
   startDateKey: string
   endDateKey: string
   todayKey: string
@@ -128,40 +123,42 @@ export function buildEmployeeProcessingCacheKey({
     startDateKey,
     endDateKey,
     todayKey,
-    trips: employee.trips.map((trip) => {
-      const override = tripDateOverrides.get(trip.id)
+    trips: employee.trips
+      .filter((trip) => !tripOverrides.get(trip.id)?.deleted)
+      .map((trip) => {
+        const override = tripOverrides.get(trip.id)
 
-      return [
-        trip.id,
-        trip.country,
-        override?.entry_date ?? trip.entry_date,
-        override?.exit_date ?? trip.exit_date,
-        trip.purpose,
-        trip.job_ref ?? null,
-        trip.is_private,
-        trip.ghosted,
-      ]
-    }),
+        return [
+          trip.id,
+          trip.country,
+          override?.entry_date ?? trip.entry_date,
+          override?.exit_date ?? trip.exit_date,
+          trip.purpose,
+          trip.job_ref ?? null,
+          override?.is_private ?? trip.is_private,
+          trip.ghosted,
+        ]
+      }),
   })
 }
 
 export function processCalendarEmployee({
   employee,
-  tripDateOverrides,
+  tripOverrides,
   startDate,
   endDate,
   today,
 }: {
   employee: EmployeeWithTrips
-  tripDateOverrides: Map<string, TripDateOverride>
+  tripOverrides: Map<string, TripOverride>
   startDate: Date
   endDate: Date
   today: Date
 }): ProcessedEmployee {
   const parsedTrips: ParsedTrip[] = employee.trips
-    .filter((trip) => !trip.ghosted)
+    .filter((trip) => !trip.ghosted && !tripOverrides.get(trip.id)?.deleted)
     .map((trip) => {
-      const override = tripDateOverrides.get(trip.id)
+      const override = tripOverrides.get(trip.id)
       const entryDateKey = override?.entry_date ?? trip.entry_date
       const exitDateKey = override?.exit_date ?? trip.exit_date
       const entryDate = parseDateOnlyAsUTC(entryDateKey)
@@ -171,6 +168,7 @@ export function processCalendarEmployee({
         ...trip,
         entry_date: entryDateKey,
         exit_date: exitDateKey,
+        is_private: override?.is_private ?? trip.is_private,
         entryDate,
         exitDate,
         isSchengen: isSchengenCountry(trip.country),
