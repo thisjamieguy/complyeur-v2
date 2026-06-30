@@ -77,7 +77,7 @@ export default async function CalendarPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-semibold text-slate-900">Travel Calendar</h1>

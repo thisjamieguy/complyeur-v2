@@ -84,6 +84,36 @@ describe('GanttChart context menu', () => {
     expect(screen.getByText('62/90')).toHaveClass('bg-amber-50')
   })
 
+  it('keeps frozen employee names aligned when the timeline scrolls vertically', () => {
+    render(
+      <GanttChart
+        employees={Array.from({ length: 8 }, (_, index) =>
+          makeEmployee({
+            id: `employee-${index}`,
+            name: `Employee ${index + 1}`,
+          })
+        )}
+        dates={[new Date('2026-03-10T00:00:00.000Z')]}
+        dayWidth={32}
+      />
+    )
+
+    const timeline = screen.getByTestId('calendar-timeline-viewport')
+    const gantt = screen.getByTestId('calendar-gantt')
+    const horizontalViewport = screen.getByTestId('calendar-horizontal-viewport')
+    const namesRows = screen.getByTestId('calendar-names-rows')
+
+    expect(gantt).toHaveClass('min-w-0')
+    expect(gantt).toHaveClass('overflow-hidden')
+    expect(horizontalViewport).toHaveClass('overflow-x-auto')
+    expect(horizontalViewport).toHaveClass('overflow-y-hidden')
+    expect(timeline).toHaveClass('overflow-y-auto')
+
+    fireEvent.scroll(timeline, { target: { scrollTop: 120 } })
+
+    expect(namesRows.style.transform).toBe('translate3d(0, -120px, 0)')
+  })
+
   it('adds a trip from an empty-cell right-click menu', () => {
     const onCreateTrip = vi.fn()
     const onPasteTrip = vi.fn()

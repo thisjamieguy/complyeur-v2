@@ -3,6 +3,7 @@ import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { addUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
 import { ALL_SCHENGEN_COUNTRIES } from '@/lib/constants/schengen-countries'
+import { requireCompanyAccess } from '@/lib/security/tenant-access'
 import type { CalendarLoadMode } from '@/lib/types/settings'
 
 /**
@@ -97,6 +98,7 @@ export const getCalendarEmployees = cache(async (
   hideEmployeesWithoutSchengenTrips: boolean
 ): Promise<CalendarEmployee[]> => {
   const supabase = await createClient()
+  const { companyId } = await requireCompanyAccess(supabase)
   const today = toUTCMidnight(new Date())
   const windowStart = addUtcDays(today, -(DAYS_BACK + COMPLIANCE_LOOKBACK_DAYS))
   const windowEnd = addUtcDays(today, MAX_WEEKS_FORWARD * 7)
@@ -110,6 +112,7 @@ export const getCalendarEmployees = cache(async (
     const { data: employees, error } = await supabase
       .from('employees')
       .select('id, name')
+      .eq('company_id', companyId)
       .is('deleted_at', null)
       .in('id', employeeIds)
       .order('name')
@@ -138,6 +141,7 @@ export const getCalendarEmployees = cache(async (
         is_private,
         ghosted
       `)
+      .eq('company_id', companyId)
       .in('employee_id', employeeIds)
       .eq('ghosted', false)
       .lte('entry_date', windowEndKey)
@@ -166,6 +170,7 @@ export const getCalendarEmployees = cache(async (
         is_private,
         ghosted
       `)
+      .eq('company_id', companyId)
       .eq('ghosted', false)
       .lte('entry_date', windowEndKey)
       .gte('exit_date', windowStartKey)
@@ -184,6 +189,7 @@ export const getCalendarEmployees = cache(async (
     const { data: schengenTrips, error } = await supabase
       .from('trips')
       .select('employee_id')
+      .eq('company_id', companyId)
       .eq('ghosted', false)
       .in('country', schengenCountryCodes)
       .lte('entry_date', windowEndKey)
@@ -210,6 +216,7 @@ export const getCalendarEmployees = cache(async (
     const { data: trips, error } = await supabase
       .from('trips')
       .select('employee_id')
+      .eq('company_id', companyId)
       .eq('ghosted', false)
       .lte('entry_date', windowEndKey)
       .gte('exit_date', windowStartKey)
@@ -234,6 +241,7 @@ export const getCalendarEmployees = cache(async (
   const { data: employees, error } = await supabase
     .from('employees')
     .select('id, name')
+    .eq('company_id', companyId)
     .is('deleted_at', null)
     .order('name')
 

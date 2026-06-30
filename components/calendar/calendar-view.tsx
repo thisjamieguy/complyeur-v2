@@ -261,7 +261,7 @@ export function CalendarView({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       {interactive && (
         <>
           <InteractiveTripEditor
@@ -351,12 +351,11 @@ export function CalendarView({
       )}
 
       {/* Desktop view - Gantt chart */}
-      <div className="hidden md:block">
-        <Card className="h-[calc(100vh-13rem)] min-h-[560px] gap-0 overflow-hidden rounded-xl border-slate-200 py-0 shadow-sm">
+      <div className="hidden min-w-0 md:block">
+        <Card className="h-[calc(100vh-13rem)] min-h-[560px] min-w-0 gap-0 overflow-hidden rounded-xl border-slate-200 py-0 shadow-sm">
           <CalendarToolbar
             visibleEmployeeLabel={visibleEmployeeLabel}
             isPending={isPending}
-            riskSummary={riskSummary}
             weeksForward={weeksForward}
             onWeeksForwardChange={setWeeksForward}
             interactive={interactive}
@@ -365,7 +364,7 @@ export function CalendarView({
             hideEmployeesWithoutSchengenTrips={hideEmployeesWithoutSchengenTrips}
             onHideChange={updateHideEmployeesWithoutSchengenTrips}
           />
-          <CardContent className="min-h-0 flex-1 p-0">
+          <CardContent className="min-h-0 min-w-0 flex-1 p-0">
             <GanttChart
               employees={processedEmployees}
               dates={dates}

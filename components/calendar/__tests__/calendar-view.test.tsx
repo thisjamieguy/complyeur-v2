@@ -282,10 +282,12 @@ describe('CalendarView', () => {
       />
     )
 
+    const [desktopFilterSwitch] = screen.getAllByRole('switch', {
+      name: /schengen trips only/i,
+    })
+
     await act(async () => {
-      fireEvent.click(
-        screen.getByRole('switch', { name: /only show employees with schengen trips/i })
-      )
+      fireEvent.click(desktopFilterSwitch)
       await Promise.resolve()
     })
 
@@ -311,8 +313,9 @@ describe('CalendarView', () => {
     expect(screen.getByRole('group', { name: /calendar zoom/i })).toBeInTheDocument()
     expect(screen.queryByText('Calendar filters')).not.toBeInTheDocument()
     expect(screen.getAllByText(/showing 1 employee/i)).toHaveLength(2)
-    expect(screen.getByText(/1 clear/i)).toBeInTheDocument()
-    expect(screen.getByRole('switch', { name: /schengen trips only/i })).toBeInTheDocument()
+    expect(screen.queryByText(/1 clear/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/180-day window/i)).not.toBeInTheDocument()
+    expect(screen.getAllByRole('switch', { name: /schengen trips only/i })).toHaveLength(2)
     expect(getDesktopProps()).toMatchObject({
       employees: [
         expect.objectContaining({

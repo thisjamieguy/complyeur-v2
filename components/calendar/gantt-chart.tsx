@@ -13,7 +13,6 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react'
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +27,6 @@ import { cn } from '@/lib/utils'
 import { DateHeader } from './date-header'
 import { EmployeeRow } from './employee-row'
 import { GRID_ROW_HEIGHT } from './day-cell'
-import { syncVerticalScroll } from './scroll-sync'
 import { emitCalendarMetric } from './calendar-metrics'
 import type {
   CalendarEmployeeContextMenuRequest,
@@ -374,6 +372,7 @@ export const GanttChart = memo(function GanttChart({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const namesScrollRef = useRef<HTMLDivElement>(null)
+  const namesRowsRef = useRef<HTMLDivElement>(null)
   const timelineScrollRef = useRef<HTMLDivElement>(null)
 
   // Set up virtualizer for employee rows — fixed height, no per-row calculation
@@ -392,6 +391,12 @@ export const GanttChart = memo(function GanttChart({
     const timelineEl = timelineScrollRef.current
 
     if (!namesEl || !timelineEl) return
+
+    const syncNamesToTimeline = () => {
+      if (!namesRowsRef.current) return
+
+      namesRowsRef.current.style.transform = `translate3d(0, -${timelineEl.scrollTop}px, 0)`
+    }
 
     const markFastScroll = () => {
       setOverscan((current) =>
@@ -461,7 +466,7 @@ export const GanttChart = memo(function GanttChart({
       lastTimelineScrollRef.current = { top: timelineEl.scrollTop, at: now }
 
       const startedAt = performance.now()
-      syncVerticalScroll(timelineEl, namesEl)
+      syncNamesToTimeline()
       recordScrollSample('timeline_scroll', performance.now() - startedAt)
     }
 
@@ -477,7 +482,7 @@ export const GanttChart = memo(function GanttChart({
 
       const startedAt = performance.now()
       timelineEl.scrollTop += event.deltaY
-      syncVerticalScroll(timelineEl, namesEl)
+      syncNamesToTimeline()
       recordScrollSample('names_wheel', performance.now() - startedAt)
     }
 
@@ -486,7 +491,7 @@ export const GanttChart = memo(function GanttChart({
       top: timelineEl.scrollTop,
       at: performance.now(),
     }
-    syncVerticalScroll(timelineEl, namesEl)
+    syncNamesToTimeline()
     timelineEl.addEventListener('scroll', handleTimelineScroll, { passive: true })
     namesEl.addEventListener('wheel', handleNamesWheel, { passive: false })
 
@@ -510,15 +515,10 @@ export const GanttChart = memo(function GanttChart({
     if (scrollContainerRef.current) {
       const todayIndex = dates.findIndex((date) => isToday(date))
       if (todayIndex >= 0) {
-        const scrollContainer = scrollContainerRef.current.querySelector(
-          '[data-radix-scroll-area-viewport]'
-        )
-        if (scrollContainer) {
-          const todayOffset = todayIndex * dayWidth
-          const containerWidth = scrollContainer.clientWidth
-          const scrollTo = Math.max(0, todayOffset - containerWidth / 2)
-          scrollContainer.scrollLeft = scrollTo
-        }
+        const todayOffset = todayIndex * dayWidth
+        const containerWidth = scrollContainerRef.current.clientWidth
+        const scrollTo = Math.max(0, todayOffset - containerWidth / 2)
+        scrollContainerRef.current.scrollLeft = scrollTo
       }
     }
   }, [dates, dayWidth])
@@ -588,7 +588,10 @@ export const GanttChart = memo(function GanttChart({
   }, [visibleRows, dates.length, employees.length])
 
   return (
-    <div className={cn('flex h-full min-h-[420px]', className)}>
+    <div
+      data-testid="calendar-gantt"
+      className={cn('flex h-full min-h-0 min-w-0 overflow-hidden', className)}
+    >
       {/* Live region: announces keyboard move/resize progress to screen readers */}
       <div role="status" aria-live="polite" className="sr-only">
         {announcement}
@@ -650,7 +653,12 @@ export const GanttChart = memo(function GanttChart({
           className="min-h-0 flex-1 overflow-x-hidden overflow-y-hidden"
           style={{ contain: 'layout paint' }}
         >
-          <div className="relative" style={{ height: totalHeight }}>
+          <div
+            ref={namesRowsRef}
+            data-testid="calendar-names-rows"
+            className="relative"
+            style={{ height: totalHeight, willChange: 'transform' }}
+          >
             {virtualRows.map((virtualRow) => {
               const employee = employees[virtualRow.index]
               return (
@@ -721,85 +729,86 @@ export const GanttChart = memo(function GanttChart({
       </div>
 
       {/* Right column — horizontally scrollable timeline grid */}
-      <div ref={scrollContainerRef} className="h-full min-w-0 flex-1">
-        <ScrollArea className="h-full w-full whitespace-nowrap rounded-br-xl">
-          <div
-            role="grid"
-            aria-label="Employee travel timeline"
-            aria-rowcount={employees.length + 1}
-            aria-colcount={dates.length}
-            aria-describedby={interactive ? 'calendar-grid-help' : undefined}
-            className="flex h-full flex-col"
-            style={{ width: totalWidth }}
-          >
-            {/* 4-row date header */}
-            <DateHeader
-              dateMeta={dateMeta}
-              dayWidth={dayWidth}
-            />
+      <div
+        ref={scrollContainerRef}
+        data-testid="calendar-horizontal-viewport"
+        className="h-full min-w-0 flex-1 overflow-x-auto overflow-y-hidden rounded-br-xl"
+      >
+        <div
+          role="grid"
+          aria-label="Employee travel timeline"
+          aria-rowcount={employees.length + 1}
+          aria-colcount={dates.length}
+          aria-describedby={interactive ? 'calendar-grid-help' : undefined}
+          className="flex h-full min-h-0 flex-col whitespace-nowrap"
+          style={{ width: totalWidth }}
+        >
+          {/* 4-row date header */}
+          <DateHeader
+            dateMeta={dateMeta}
+            dayWidth={dayWidth}
+          />
 
-            {/* Virtualized grid rows */}
-            <div
-              ref={timelineScrollRef}
-              role="rowgroup"
-              data-testid="calendar-timeline-viewport"
-              className="min-h-0 flex-1 overflow-y-auto bg-white"
-              style={{ contain: 'layout paint' }}
-            >
-              <div role="presentation" className="relative" style={{ height: totalHeight }}>
-                {virtualRows.map((virtualRow) => {
-                  const employee = employees[virtualRow.index]
-                  return (
-                    <div
-                      key={employee.id}
-                      role="presentation"
-                      className={cn(
-                        'absolute left-0 w-full border-b border-slate-100',
-                        dropTargetEmployeeId === employee.id && 'bg-sky-50/40'
-                      )}
-                      data-calendar-employee-row
-                      data-employee-id={employee.id}
-                      data-employee-name={employee.name}
-                      onMouseEnter={() => setHoveredEmployeeId(employee.id)}
-                      onMouseLeave={() => {
-                        setHoveredEmployeeId((current) =>
-                          current === employee.id ? null : current
-                        )
-                      }}
-                      style={{
-                        height: GRID_ROW_HEIGHT,
-                        transform: `translate3d(0, ${virtualRow.start}px, 0)`,
-                        willChange: 'transform',
-                      }}
-                    >
-                      <EmployeeRow
-                        employee={employee}
-                        rowIndex={virtualRow.index}
-                        dateMeta={dateMeta}
-                        dayWidth={dayWidth}
-                        isHovered={hoveredEmployeeId === employee.id}
-                        isDropTarget={dropTargetEmployeeId === employee.id}
-                        interactive={interactive}
-                        onAnnounce={setAnnouncement}
-                        onCreateTrip={onCreateTrip}
-                        onEditTrip={onEditTrip}
-                        onDeleteTrip={onDeleteTrip}
-                        onResizeTrip={onResizeTrip}
-                        onShiftTripDates={onShiftTripDates}
-                        onMoveTrip={onMoveTrip}
-                        onMoveTripTargetChange={setDropTargetEmployeeId}
-                        onOpenContextMenu={
-                          hasContextMenuActions ? setContextMenu : undefined
-                        }
-                      />
-                    </div>
-                  )
-                })}
-              </div>
+          {/* Virtualized grid rows */}
+          <div
+            ref={timelineScrollRef}
+            role="rowgroup"
+            data-testid="calendar-timeline-viewport"
+            className="min-h-0 flex-1 overflow-y-auto bg-white"
+            style={{ contain: 'layout paint' }}
+          >
+            <div role="presentation" className="relative" style={{ height: totalHeight }}>
+              {virtualRows.map((virtualRow) => {
+                const employee = employees[virtualRow.index]
+                return (
+                  <div
+                    key={employee.id}
+                    role="presentation"
+                    className={cn(
+                      'absolute left-0 w-full border-b border-slate-100',
+                      dropTargetEmployeeId === employee.id && 'bg-sky-50/40'
+                    )}
+                    data-calendar-employee-row
+                    data-employee-id={employee.id}
+                    data-employee-name={employee.name}
+                    onMouseEnter={() => setHoveredEmployeeId(employee.id)}
+                    onMouseLeave={() => {
+                      setHoveredEmployeeId((current) =>
+                        current === employee.id ? null : current
+                      )
+                    }}
+                    style={{
+                      height: GRID_ROW_HEIGHT,
+                      transform: `translate3d(0, ${virtualRow.start}px, 0)`,
+                      willChange: 'transform',
+                    }}
+                  >
+                    <EmployeeRow
+                      employee={employee}
+                      rowIndex={virtualRow.index}
+                      dateMeta={dateMeta}
+                      dayWidth={dayWidth}
+                      isHovered={hoveredEmployeeId === employee.id}
+                      isDropTarget={dropTargetEmployeeId === employee.id}
+                      interactive={interactive}
+                      onAnnounce={setAnnouncement}
+                      onCreateTrip={onCreateTrip}
+                      onEditTrip={onEditTrip}
+                      onDeleteTrip={onDeleteTrip}
+                      onResizeTrip={onResizeTrip}
+                      onShiftTripDates={onShiftTripDates}
+                      onMoveTrip={onMoveTrip}
+                      onMoveTripTargetChange={setDropTargetEmployeeId}
+                      onOpenContextMenu={
+                        hasContextMenuActions ? setContextMenu : undefined
+                      }
+                    />
+                  </div>
+                )
+              })}
             </div>
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        </div>
       </div>
     </div>
   )

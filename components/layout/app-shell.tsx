@@ -49,17 +49,17 @@ function AppShellContent({ children, user }: AppShellProps) {
       {/* Main content area - adjusts margin based on sidebar state */}
       <main
         className={cn(
-          'flex-1 flex flex-col min-h-screen w-full transition-[margin-left] duration-200 ease-out',
+          'flex min-h-screen w-full min-w-0 flex-1 flex-col transition-[padding-left] duration-200 ease-out',
           // Mobile: no margin-left, add top padding for fixed mobile header
           'pt-16 lg:pt-0',
-          // Desktop: margin-left matches sidebar width (256px expanded, 72px collapsed)
-          isOpen ? 'lg:ml-64' : 'lg:ml-[72px]'
+          // Desktop: reserve space for the fixed sidebar without widening the page.
+          isOpen ? 'lg:pl-64' : 'lg:pl-[72px]'
         )}
       >
         {/* Content container with max-width and responsive padding */}
         <div
           className={cn(
-            'mx-auto flex-1 w-full px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8',
+            'mx-auto w-full min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8',
             usesWideWorkspace ? 'max-w-[1680px]' : 'max-w-[1280px]'
           )}
         >
