@@ -100,10 +100,11 @@ export function TripEntryRow({
       {/* Date pickers row */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-500">Entry date</Label>
+          <Label htmlFor={`trip-${index}-entry`} className="text-xs text-slate-600">Entry date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                id={`trip-${index}-entry`}
                 type="button"
                 variant="outline"
                 disabled={disabled}
@@ -116,7 +117,7 @@ export function TripEntryRow({
                 {entryDate ? format(new Date(entryDate + 'T00:00:00'), 'dd MMM yyyy') : 'Select date'}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0" align="start" aria-label="Choose entry date">
               <Calendar
                 mode="single"
                 selected={entryDateObj}
@@ -130,15 +131,16 @@ export function TripEntryRow({
             </PopoverContent>
           </Popover>
           {tripError?.entry_date?.message && (
-            <p className="text-xs text-red-500">{tripError.entry_date.message}</p>
+            <p className="text-xs text-red-600">{tripError.entry_date.message}</p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-slate-500">Exit date</Label>
+          <Label htmlFor={`trip-${index}-exit`} className="text-xs text-slate-600">Exit date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                id={`trip-${index}-exit`}
                 type="button"
                 variant="outline"
                 disabled={disabled}
@@ -151,7 +153,7 @@ export function TripEntryRow({
                 {exitDate ? format(new Date(exitDate + 'T00:00:00'), 'dd MMM yyyy') : 'Select date'}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0" align="start" aria-label="Choose exit date">
               <Calendar
                 mode="single"
                 selected={exitDateObj}
@@ -165,15 +167,17 @@ export function TripEntryRow({
             </PopoverContent>
           </Popover>
           {tripError?.exit_date?.message && (
-            <p className="text-xs text-red-500">{tripError.exit_date.message}</p>
+            <p className="text-xs text-red-600">{tripError.exit_date.message}</p>
           )}
         </div>
       </div>
 
       {/* Country picker */}
       <div className="space-y-1.5">
-        <Label className="text-xs text-slate-500">Country</Label>
+        <Label htmlFor={`trip-${index}-country`} className="text-xs text-slate-600">Country</Label>
         <CountryCombobox
+          id={`trip-${index}-country`}
+          aria-label={`Country for trip ${index + 1}`}
           value={country || ''}
           onValueChange={(val) =>
             setValue(`trips.${index}.country`, val, { shouldValidate: true })
@@ -181,7 +185,7 @@ export function TripEntryRow({
           disabled={disabled}
         />
         {tripError?.country?.message && (
-          <p className="text-xs text-red-500">{tripError.country.message}</p>
+          <p className="text-xs text-red-600">{tripError.country.message}</p>
         )}
       </div>
 
@@ -202,7 +206,7 @@ export function TripEntryRow({
           >
             Private trip
           </Label>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <p className="text-xs text-slate-600 mt-0.5">
             Country hidden in reports (shown as &quot;XX&quot;)
           </p>
         </div>
@@ -228,7 +232,7 @@ export function TripEntryRow({
       )}
 
       {impactInfo?.error && (
-        <p className="text-xs text-red-500">{impactInfo.error}</p>
+        <p className="text-xs text-red-600">{impactInfo.error}</p>
       )}
     </div>
   )
