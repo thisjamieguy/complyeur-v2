@@ -60,7 +60,12 @@ Verified from migrations (the authoritative schema definition):
   restrictive no-update / no-delete policies.
 - **`rls_auto_enable()` event trigger** is present (referenced across
   `20260206082114`, `20260218221914`, `20260528120000`) — new tables get RLS by default.
-- **Quarantine + waitlist** locked to `service_role` only (`USING (false)` for `authenticated`).
+- **Quarantine** (`tenant_integrity_quarantine`) locked to `service_role` only —
+  `REVOKE ALL ... FROM anon, authenticated`.
+- **Waitlist** allows public `INSERT` from `anon, authenticated` (it's a public signup
+  form) but denies `authenticated` reads (`waitlist_no_authenticated_read`,
+  `USING (false)`). This is a different, intentional posture from quarantine — not
+  "service_role only" — and should not be conflated with it.
 
 There are also dedicated tests/scripts that exercise this:
 `lib/security/__tests__/tenant-isolation.test.ts`,
@@ -193,12 +198,23 @@ traveller count, so this is a direct revenue-integrity gap.
 I did not implement this change — it has product/UX decisions (exact caps, trial
 behaviour, error copy) that should be confirmed first. Happy to implement on the go-ahead.
 
-### B5 — Trip data integrity — ✅ Present
+### B5 — Trip data integrity — ⚠️ Partially present
 
 Validation helpers exist for range (`exit >= entry`), far-past/far-future thresholds,
 inclusive duration, and overlap (`lib/validations/dates.ts`, `trip.ts`,
-`trip-overlap.ts`). Worth a manual pass on the overlap UX (warn vs merge) per the
-checklist, but the guards are in place.
+`trip-overlap.ts`) — but the 180-day duration guard is **not enforced on every write
+path**. `tripUpdateSchema`'s duration refine only runs when both `entry_date` and
+`exit_date` are present in the same payload (`lib/validations/trip.ts`). `updateTripAction`
+accepts partial updates, and `updateTrip` (`lib/db/trips.ts`) re-checks overlap against
+the merged dates but never re-checks duration. The only DB-level constraint is
+`trips_exit_after_entry CHECK (exit_date >= entry_date)` — there is no `<= 180 days`
+constraint anywhere in the schema. **A partial update that only changes `exit_date`
+(or only `entry_date`) can create a trip exceeding 180 days with no validation error.**
+
+This needs either a DB CHECK constraint on duration or a duration re-check inside
+`updateTrip` against the merged (existing + incoming) dates — both touch the
+compliance engine, so flagging for a go-ahead rather than implementing here.
+Also worth a manual pass on the overlap UX (warn vs merge) per the checklist.
 
 ---
 
