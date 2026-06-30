@@ -21,7 +21,7 @@ import {
   parseDateOnlyAsUTC,
   type Trip as ComplianceTrip,
 } from '@/lib/compliance'
-import { differenceInUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
+import { differenceInUtcDays } from '@/lib/compliance/date-utils'
 import {
   generateComplianceCsv,
   getComplianceCsvFilename,
@@ -46,7 +46,7 @@ import {
   getFutureAlertsPdfFilename,
 } from '@/lib/exports/pdf-generator'
 import { getCountryName } from '@/lib/constants/schengen-countries'
-import { calculateFutureJobCompliance } from '@/lib/services/forecast-service'
+import { calculateAllFutureForecasts } from '@/lib/services/forecast-service'
 import type { ForecastTrip } from '@/types/forecast'
 import { exportOptionsSchema } from '@/lib/validations/exports'
 import { checkServerActionRateLimit } from '@/lib/rate-limit'
@@ -493,9 +493,7 @@ async function exportFutureAlerts(
       return { success: false, error: 'No employees found' }
     }
 
-    // Calculate forecasts for all future trips
-    const today = toUTCMidnight(new Date())
-
+    // Calculate forecasts for active and upcoming trips.
     const allAlerts: FutureAlertExportRow[] = []
 
     for (const employee of employees) {
@@ -514,21 +512,11 @@ async function exportFutureAlerts(
         travelDays: trip.travel_days ?? 0,
       }))
 
-      // Filter to future trips only
-      const futureTrips = forecastTrips.filter((trip) => {
-        if (trip.ghosted) return false
-        const entryDate = parseDateOnlyAsUTC(trip.entryDate)
-        return entryDate >= today
-      })
-
-      // Calculate forecast for each future trip
-      for (const futureTrip of futureTrips) {
-        const forecast = calculateFutureJobCompliance(
-          futureTrip,
-          forecastTrips,
-          employee.name
-        )
-
+      for (const forecast of calculateAllFutureForecasts(
+        employee.id,
+        employee.name,
+        forecastTrips
+      )) {
         allAlerts.push({
           tripId: forecast.tripId,
           employeeName: forecast.employeeName,
@@ -565,7 +553,7 @@ async function exportFutureAlerts(
     if (filteredAlerts.length === 0) {
       return {
         success: false,
-        error: 'No future trips found matching the filter',
+        error: 'No active or upcoming trips found matching the filter',
       }
     }
 

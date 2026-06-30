@@ -12,7 +12,7 @@ export default function Loading() {
           Future Job Alerts
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Review upcoming trips and their compliance status before scheduling.
+          Review active and upcoming trips and their compliance status before scheduling.
         </p>
       </div>
       <FutureAlertsLoading />

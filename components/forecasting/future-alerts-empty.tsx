@@ -1,7 +1,7 @@
 /**
  * Empty State Component for Future Alerts
  *
- * Displayed when there are no future trips scheduled.
+ * Displayed when there are no active or upcoming trips scheduled.
  */
 
 import Link from 'next/link';
@@ -16,11 +16,11 @@ export function FutureAlertsEmpty() {
           <CalendarClock className="h-6 w-6 text-slate-400" aria-hidden="true" />
         </div>
         <h3 className="text-lg font-semibold text-slate-900">
-          No future trips scheduled
+          No active or upcoming trips scheduled
         </h3>
         <p className="mt-2 text-sm text-slate-600">
-          When you add trips with future dates, they&apos;ll appear here with
-          compliance forecasts to help you plan ahead.
+          When you add trips that are active or in the future, they&apos;ll appear
+          here with compliance forecasts to help you plan ahead.
         </p>
         <div className="mt-6">
           <Button variant="outline" asChild>

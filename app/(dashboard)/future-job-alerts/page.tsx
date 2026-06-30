@@ -2,14 +2,14 @@
  * Future Job Alerts Page
  *
  * Phase 10: Forecasting & Planning
- * Displays all future trips with compliance forecasts.
+ * Displays active and upcoming trips with compliance forecasts.
  */
 
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { getAllTripsGroupedByEmployee } from '@/lib/db';
 import {
-  calculateFutureJobCompliance,
+  calculateAllFutureForecasts,
   sortForecasts,
   filterForecastsByRisk,
 } from '@/lib/services/forecast-service';
@@ -27,7 +27,7 @@ import { FutureAlertsLoading } from '@/components/forecasting/future-alerts-load
 
 export const metadata: Metadata = {
   title: 'Future Alerts',
-  description: 'Review upcoming trips and their compliance status before scheduling',
+  description: 'Review active and upcoming trips and their compliance status before scheduling',
 }
 
 interface PageProps {
@@ -84,29 +84,13 @@ async function FutureAlertsContent({
   // Fetch all trips grouped by employee
   const groupedData = await getAllTripsGroupedByEmployee();
 
-  // Calculate forecasts for all future trips
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
+  // Calculate forecasts for active and upcoming trips.
   const allForecasts: ForecastResult[] = [];
 
   for (const [, { employee, trips }] of groupedData) {
-    // Filter to future trips only
-    const futureTrips = trips.filter((trip) => {
-      if (trip.ghosted) return false;
-      const entryDate = new Date(trip.entryDate);
-      return entryDate >= today;
-    });
-
-    // Calculate forecast for each future trip
-    for (const futureTrip of futureTrips) {
-      const forecast = calculateFutureJobCompliance(
-        futureTrip,
-        trips,
-        employee.name
-      );
-      allForecasts.push(forecast);
-    }
+    allForecasts.push(
+      ...calculateAllFutureForecasts(employee.id, employee.name, trips)
+    );
   }
 
   // Apply filtering
@@ -155,7 +139,7 @@ export default async function FutureJobAlertsPage({ searchParams }: PageProps) {
           Future Job Alerts
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Review upcoming trips and their compliance status before scheduling.
+          Review active and upcoming trips and their compliance status before scheduling.
         </p>
       </div>
 

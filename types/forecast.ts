@@ -205,12 +205,12 @@ export interface WhatIfFormState {
 // ============================================================================
 
 /**
- * Response from the forecast API for future trips.
+ * Response from the forecast API for active and future trips.
  */
 export interface FutureAlertsResponse {
-  /** List of forecast results for future trips */
+  /** List of forecast results for active and future trips */
   forecasts: ForecastResult[];
-  /** Total count of future trips */
+  /** Total count of active and future trips */
   total: number;
   /** Number of at-risk trips (yellow + red) */
   atRiskCount: number;

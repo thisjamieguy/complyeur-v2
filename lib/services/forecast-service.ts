@@ -2,7 +2,7 @@
  * @fileoverview Forecast service for future job compliance calculations.
  *
  * Phase 10: Forecasting & Planning
- * Calculates whether future trips will be compliant with the 90/180-day rule.
+ * Calculates whether active and future trips will be compliant with the 90/180-day rule.
  *
  * Key algorithms:
  * - calculateFutureJobCompliance: Core forecast calculation
@@ -517,30 +517,44 @@ export function calculateMultiTripScenario(
 // ============================================================================
 
 /**
- * Calculates forecasts for all future trips for an employee.
+ * Checks whether a trip should be forecasted on the Future Job Alerts surface.
+ * Active trips are included because they can still create future critical days
+ * on the calendar even when their entry date has already passed.
+ */
+export function isActiveOrFutureForecastTrip(
+  trip: ForecastTrip,
+  referenceDate: Date = new Date()
+): boolean {
+  if (trip.ghosted) return false;
+
+  const today = toUTCMidnight(referenceDate);
+  const exitDate = safeParseDate(trip.exitDate);
+  return isAfter(exitDate, today) || isEqual(exitDate, today);
+}
+
+/**
+ * Calculates forecasts for all active or future trips for an employee.
  *
  * @param employeeId - Employee UUID
  * @param employeeName - Employee display name
  * @param allTrips - All trips for the employee
  * @param config - Forecast configuration
- * @returns Array of forecast results for future trips
+ * @param referenceDate - Date used to decide whether a trip is still active
+ * @returns Array of forecast results for active or future trips
  */
 export function calculateAllFutureForecasts(
   employeeId: string,
   employeeName: string,
   allTrips: ForecastTrip[],
-  config: Partial<ForecastConfig> = {}
+  config: Partial<ForecastConfig> = {},
+  referenceDate: Date = new Date()
 ): ForecastResult[] {
-  const today = toUTCMidnight(new Date());
+  // Filter to trips that can still affect future planning.
+  const futureTrips = allTrips.filter((trip) =>
+    isActiveOrFutureForecastTrip(trip, referenceDate)
+  );
 
-  // Filter to future trips only (entry date > today)
-  const futureTrips = allTrips.filter((trip) => {
-    if (trip.ghosted) return false;
-    const entryDate = safeParseDate(trip.entryDate);
-    return isAfter(entryDate, today) || isEqual(entryDate, today);
-  });
-
-  // Calculate forecast for each future trip
+  // Calculate forecast for each active or future trip
   return futureTrips.map((trip) =>
     calculateFutureJobCompliance(trip, allTrips, employeeName, config)
   );

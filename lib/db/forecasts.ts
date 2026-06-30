@@ -31,8 +31,9 @@ function toForecastTrip(trip: Trip): ForecastTrip {
 }
 
 /**
- * Get all future trips for the current user's company.
- * Future trips are those with entry_date > today.
+ * Get all active or future trips for the current user's company.
+ * A trip is included while its exit date is today or later, because ongoing
+ * trips can still create future compliance alerts.
  */
 export async function getFutureTrips(): Promise<
   Array<ForecastTrip & { employee_name: string }>
@@ -52,13 +53,13 @@ export async function getFutureTrips(): Promise<
     )
     .eq('company_id', companyId)
     .is('employees.deleted_at', null)
-    .gte('entry_date', today)
+    .gte('exit_date', today)
     .eq('ghosted', false)
     .order('entry_date', { ascending: true });
 
   if (error) {
-    console.error('Error fetching future trips:', error);
-    throw new DatabaseError('Failed to fetch future trips');
+    console.error('Error fetching active or future trips:', error);
+    throw new DatabaseError('Failed to fetch active or future trips');
   }
 
   return (data ?? []).map((trip) => {

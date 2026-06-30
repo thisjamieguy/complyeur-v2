@@ -6,6 +6,7 @@ import {
 import type { ForecastTrip } from '@/types/forecast';
 
 import {
+  calculateAllFutureForecasts,
   calculateCompliantFromDate,
   calculateFutureJobCompliance,
   calculateTripDuration,
@@ -234,5 +235,47 @@ describe('day-by-day rolling window — regression', () => {
     expect(result.daysUsedBeforeTrip).toBe(89);
     expect(result.isCompliant).toBe(false);
     expect(result.firstViolationDay).toBe(2); // violates on day 2
+  });
+});
+
+describe('calculateAllFutureForecasts', () => {
+  it('includes active trips that started before today but still have future alert days', () => {
+    const activeTrip = createTrip({
+      id: 'active-critical',
+      country: 'FR',
+      entryDate: '2026-06-29',
+      exitDate: '2026-07-02',
+    });
+
+    const historicalTrip = createTrip({
+      id: 'hist-89-before-active',
+      country: 'DE',
+      entryDate: '2026-04-01',
+      exitDate: '2026-06-28',
+    });
+
+    const completedTrip = createTrip({
+      id: 'completed-before-today',
+      country: 'GB',
+      entryDate: '2026-03-01',
+      exitDate: '2026-03-03',
+    });
+
+    const forecasts = calculateAllFutureForecasts(
+      'emp-1',
+      'Grace Liu',
+      [completedTrip, activeTrip, historicalTrip],
+      {},
+      parseDateOnlyAsUTC('2026-06-30')
+    );
+
+    expect(forecasts).toHaveLength(1);
+    expect(forecasts[0]).toMatchObject({
+      tripId: 'active-critical',
+      employeeName: 'Grace Liu',
+      riskLevel: 'red',
+      isCompliant: false,
+    });
+    expect(forecasts[0].firstViolationDay).toBe(2);
   });
 });
