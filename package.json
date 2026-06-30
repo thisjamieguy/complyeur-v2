@@ -124,7 +124,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.2",
-    "@commitlint/cli": "^20.5.3",
+    "@commitlint/cli": "^21.1.0",
     "@commitlint/config-conventional": "^20.5.3",
     "@lhci/cli": "^0.15.1",
     "@next/bundle-analyzer": "^16.2.5",
