@@ -193,6 +193,20 @@ describe('DayCell', () => {
     })
   })
 
+  it('uses a darker, thicker outer border for trip cells', () => {
+    renderCell(
+      makeTripDay({ riskLevel: 'green' }),
+      { isTripStart: true, isTripEnd: true }
+    )
+
+    expect(screen.getByRole('button', { name: /FR trip on Mar 10/i })).toHaveClass(
+      'border-y-2',
+      'border-l-2',
+      'border-r-2',
+      'border-emerald-400'
+    )
+  })
+
   it('moves a trip with the keyboard: m, arrow, Enter', () => {
     const onShiftTripDates = vi.fn()
 

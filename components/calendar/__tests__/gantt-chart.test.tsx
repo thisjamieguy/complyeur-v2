@@ -65,7 +65,7 @@ describe('GanttChart context menu', () => {
     vi.unstubAllGlobals()
   })
 
-  it('shows employee compliance status in the frozen name column', () => {
+  it('shows employee initials and name in the frozen name column without the day count badge', () => {
     render(
       <GanttChart
         employees={[
@@ -81,7 +81,8 @@ describe('GanttChart context menu', () => {
 
     expect(screen.getByText('AM')).toBeInTheDocument()
     expect(screen.getByText('Alice Morgan')).toBeInTheDocument()
-    expect(screen.getByText('62/90')).toHaveClass('bg-amber-50')
+    expect(screen.queryByText('62/90')).not.toBeInTheDocument()
+    expect(screen.getByText('Alice Morgan')).toHaveClass('text-[15px]')
   })
 
   it('keeps frozen employee names aligned when the timeline scrolls vertically', () => {

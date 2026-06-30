@@ -87,21 +87,21 @@ const schengenTripStyles = {
     weekend: 'bg-emerald-200/70',
     text: 'text-emerald-900',
     hover: 'hover:bg-emerald-200/80',
-    border: 'border-emerald-300',
+    border: 'border-emerald-400',
   },
   amber: {
     base: 'bg-amber-100',
     weekend: 'bg-amber-200/70',
     text: 'text-amber-900',
     hover: 'hover:bg-amber-200/80',
-    border: 'border-amber-300',
+    border: 'border-amber-400',
   },
   red: {
     base: 'bg-rose-100',
     weekend: 'bg-rose-200/70',
     text: 'text-rose-900',
     hover: 'hover:bg-rose-200/80',
-    border: 'border-rose-300',
+    border: 'border-rose-400',
   },
   breach: {
     base: 'bg-rose-700',
@@ -117,7 +117,7 @@ const historicalTripStyles = {
   weekend: 'bg-slate-300/60',
   text: 'text-slate-700',
   hover: 'hover:bg-slate-300/75',
-  border: 'border-slate-300',
+  border: 'border-slate-400',
 } as const
 
 const nonSchengenTripStyles = {
@@ -125,7 +125,7 @@ const nonSchengenTripStyles = {
   weekend: 'bg-indigo-100/70',
   text: 'text-indigo-800',
   hover: 'hover:bg-indigo-100/80',
-  border: 'border-indigo-200',
+  border: 'border-indigo-300',
 } as const
 
 /**
@@ -633,10 +633,10 @@ export const DayCell = memo(function DayCell({
               tripStyles && tripStyles.base,
               tripStyles?.hover,
               // Outer border for trip block definition
-              tripStyles && 'border-t border-b',
+              tripStyles && 'border-y-2',
               tripStyles && tripStyles.border,
-              isTripStart && 'border-l rounded-l-md',
-              isTripEnd && 'border-r rounded-r-md',
+              isTripStart && 'border-l-2 rounded-l-md',
+              isTripEnd && 'border-r-2 rounded-r-md',
               keyboardMode !== 'idle' && 'ring-2 ring-inset ring-slate-900',
               'cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-inset'
             )}

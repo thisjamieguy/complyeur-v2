@@ -76,30 +76,21 @@ const FAST_SCROLL_VELOCITY_THRESHOLD = 1.1
 
 /** Emit scroll metrics in smaller batches so short-but-real scroll sessions are captured. */
 const SCROLL_METRIC_BATCH_SIZE = 10
-const COMPLIANCE_LIMIT_DAYS = 90
 
 const employeeRiskStyles: Record<
   ProcessedEmployee['currentRiskLevel'],
-  { dot: string; badge: string; avatar: string }
+  { avatar: string }
 > = {
   green: {
-    dot: 'bg-emerald-500',
-    badge: 'bg-emerald-50 text-emerald-800 ring-emerald-200',
     avatar: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   },
   amber: {
-    dot: 'bg-amber-500',
-    badge: 'bg-amber-50 text-amber-900 ring-amber-200',
     avatar: 'border-amber-200 bg-amber-50 text-amber-900',
   },
   red: {
-    dot: 'bg-rose-500',
-    badge: 'bg-rose-50 text-rose-800 ring-rose-200',
     avatar: 'border-rose-200 bg-rose-50 text-rose-800',
   },
   breach: {
-    dot: 'bg-rose-700',
-    badge: 'bg-rose-700 text-white ring-rose-800',
     avatar: 'border-rose-700 bg-rose-700 text-white',
   },
 }
@@ -118,10 +109,6 @@ function getEmployeeInitials(name: string): string {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join('')
-}
-
-function getDaysUsed(employee: ProcessedEmployee): number {
-  return Math.max(0, COMPLIANCE_LIMIT_DAYS - employee.currentDaysRemaining)
 }
 
 interface GanttChartProps {
@@ -687,39 +674,19 @@ export const GanttChart = memo(function GanttChart({
                   data-employee-id={employee.id}
                   data-employee-name={employee.name}
                 >
-                  <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex min-w-0 items-center gap-3">
                     <span
                       aria-hidden="true"
                       className={cn(
-                        'flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold',
+                        'flex size-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
                         employeeRiskStyles[employee.currentRiskLevel].avatar
                       )}
                     >
                       {getEmployeeInitials(employee.name)}
                     </span>
-                    <div className="min-w-0">
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <span
-                          aria-hidden="true"
-                          className={cn(
-                            'size-2 shrink-0 rounded-full',
-                            employeeRiskStyles[employee.currentRiskLevel].dot
-                          )}
-                        />
-                        <span className="truncate text-sm font-medium text-slate-800">
-                          {employee.name}
-                        </span>
-                      </div>
-                      <span
-                        className={cn(
-                          'mt-0.5 inline-flex rounded-full px-1.5 py-px text-[10px] font-semibold leading-none ring-1',
-                          employeeRiskStyles[employee.currentRiskLevel].badge
-                        )}
-                        title={`${getDaysUsed(employee)} of ${COMPLIANCE_LIMIT_DAYS} Schengen days used`}
-                      >
-                        {getDaysUsed(employee)}/{COMPLIANCE_LIMIT_DAYS}
-                      </span>
-                    </div>
+                    <span className="min-w-0 truncate text-[15px] font-semibold leading-none text-slate-900">
+                      {employee.name}
+                    </span>
                   </div>
                 </div>
               )
