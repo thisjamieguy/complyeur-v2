@@ -7,11 +7,10 @@ import { DayCell, GRID_ROW_HEIGHT } from './day-cell'
 import type {
   ProcessedEmployee,
   TripDateShiftRequest,
-  TripDeleteRequest,
-  TripEditRequest,
   TripMoveRequest,
   TripResizeRequest,
   CalendarEmployeeContextMenuRequest,
+  CalendarTripDetailsRequest,
 } from './types'
 import type { DateMeta } from './gantt-chart'
 
@@ -28,7 +27,6 @@ interface EmployeeRowProps {
   rowIndex: number
   dateMeta: DateMeta[]
   dayWidth: number
-  isHovered: boolean
   isDropTarget?: boolean
   interactive?: boolean
   onAnnounce?: (message: string) => void
@@ -37,8 +35,7 @@ interface EmployeeRowProps {
     employeeName: string
     dateKey: string
   }) => void
-  onEditTrip?: (params: TripEditRequest) => void
-  onDeleteTrip?: (params: TripDeleteRequest) => void
+  onOpenTripDetails?: (params: CalendarTripDetailsRequest) => void
   onResizeTrip?: (params: TripResizeRequest) => void
   onShiftTripDates?: (params: TripDateShiftRequest) => void
   onMoveTrip?: (params: TripMoveRequest) => void
@@ -56,13 +53,11 @@ export const EmployeeRow = memo(function EmployeeRow({
   rowIndex,
   dateMeta,
   dayWidth,
-  isHovered,
   isDropTarget = false,
   interactive = false,
   onAnnounce,
   onCreateTrip,
-  onEditTrip,
-  onDeleteTrip,
+  onOpenTripDetails,
   onResizeTrip,
   onShiftTripDates,
   onMoveTrip,
@@ -120,7 +115,6 @@ export const EmployeeRow = memo(function EmployeeRow({
             colIndex={index}
             dayWidth={dayWidth}
             onAnnounce={onAnnounce}
-            isRowHovered={isHovered}
             isWeekend={dm.isWeekend}
             isToday={dm.isToday}
             isMonthStart={dm.isMonthStart}
@@ -141,23 +135,13 @@ export const EmployeeRow = memo(function EmployeeRow({
                     })
                 : undefined
             }
-            onEditTrip={
-              onEditTrip
-                ? (trip) =>
-                    onEditTrip({
+            onOpenTripDetails={
+              onOpenTripDetails
+                ? (params) =>
+                    onOpenTripDetails({
+                      ...params,
                       employeeId: employee.id,
                       employeeName: employee.name,
-                      trip,
-                    })
-                : undefined
-            }
-            onDeleteTrip={
-              onDeleteTrip
-                ? (trip) =>
-                    onDeleteTrip({
-                      employeeId: employee.id,
-                      employeeName: employee.name,
-                      trip,
                     })
                 : undefined
             }

@@ -39,6 +39,33 @@ interface DayMapContext {
 }
 
 /**
+ * Day-level view of a trip: trip info plus that day's compliance snapshot.
+ * Shared by the grid's day map and the trip-details popover so both always
+ * derive the same shape from current data.
+ */
+export function buildTripDay(
+  trip: ProcessedTrip,
+  referenceDate: Date,
+  complianceByDate: Map<string, DailyCompliance>,
+  today: Date
+): ProcessedTripDay {
+  const dayCompliance = trip.isSchengen
+    ? complianceByDate.get(toDateKey(referenceDate))
+    : undefined
+
+  return {
+    trip,
+    referenceDate,
+    displayMode:
+      referenceDate.getTime() < today.getTime() ? 'historical' : 'planning',
+    daysUsed: dayCompliance?.daysUsed ?? 0,
+    daysRemaining: dayCompliance?.daysRemaining ?? 90,
+    riskLevel: dayCompliance?.riskLevel ?? 'green',
+    isBreachDay: (dayCompliance?.daysUsed ?? 0) > 90,
+  }
+}
+
+/**
  * Build day map for O(1) day-cell lookups.
  */
 export function buildDayMap(
@@ -51,7 +78,6 @@ export function buildDayMap(
   const dayMap = new Map<string, ProcessedTripDay>()
   const startTime = startDate.getTime()
   const endTime = endDate.getTime()
-  const todayTime = context.today.getTime()
 
   for (const trip of trips) {
     const visibleStart = Math.max(trip.entryDate.getTime(), startTime)
@@ -65,22 +91,10 @@ export function buildDayMap(
       const referenceDate = new Date(ts)
       const key = toDateKey(referenceDate)
       if (!dayMap.has(key)) {
-        const dayCompliance = trip.isSchengen
-          ? complianceByDate.get(key)
-          : undefined
-        const displayMode = referenceDate.getTime() < todayTime
-          ? 'historical'
-          : 'planning'
-
-        dayMap.set(key, {
-          trip,
-          referenceDate,
-          displayMode,
-          daysUsed: dayCompliance?.daysUsed ?? 0,
-          daysRemaining: dayCompliance?.daysRemaining ?? 90,
-          riskLevel: dayCompliance?.riskLevel ?? 'green',
-          isBreachDay: (dayCompliance?.daysUsed ?? 0) > 90,
-        })
+        dayMap.set(
+          key,
+          buildTripDay(trip, referenceDate, complianceByDate, context.today)
+        )
       }
     }
   }

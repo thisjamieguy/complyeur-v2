@@ -231,8 +231,11 @@ function calendarButtonForEmployee(
   employeeId: string,
   ariaLabel: string
 ) {
+  // Interactive trip cells append keyboard hints to the label
+  // ("FR trip on Jul 6. Press M to move or R to resize."), so match the
+  // label exactly or with a trailing sentence.
   return page.locator(
-    `[data-calendar-employee-row][data-employee-id="${employeeId}"] button[aria-label="${ariaLabel}"]`
+    `[data-calendar-employee-row][data-employee-id="${employeeId}"] :is(button[aria-label="${ariaLabel}"], button[aria-label^="${ariaLabel}."])`
   );
 }
 
@@ -247,10 +250,39 @@ async function openSeededCalendar(page: Page): Promise<SeedData> {
   test.skip(!authenticated, 'Unable to authenticate test user.');
 
   await expect(
-    page.getByRole('heading', { name: /interactive travel calendar/i })
+    page.getByRole('heading', { name: /travel calendar/i })
   ).toBeVisible({ timeout: 30000 });
+  await expect(page.getByTestId('calendar-gantt')).toBeVisible({
+    timeout: 30000,
+  });
 
   return seeded.data;
+}
+
+/**
+ * Centre of the part of `box` that is actually visible inside the timeline's
+ * horizontal viewport. Cells scrolled partly under the fixed employee-name
+ * column are still "visible" to Playwright, but a pointerdown at their
+ * geometric centre lands on the name column and the drag never starts.
+ */
+async function visiblePointInTimeline(
+  page: Page,
+  box: { x: number; y: number; width: number; height: number }
+): Promise<{ x: number; y: number }> {
+  const viewport = await page
+    .getByTestId('calendar-horizontal-viewport')
+    .boundingBox();
+  if (!viewport) {
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }
+
+  const left = Math.max(box.x, viewport.x + 1);
+  const right = Math.min(box.x + box.width, viewport.x + viewport.width - 1);
+  if (left >= right) {
+    throw new Error('Element is fully outside the timeline viewport.');
+  }
+
+  return { x: (left + right) / 2, y: box.y + box.height / 2 };
 }
 
 async function dragLocatorToLocator(
@@ -261,22 +293,41 @@ async function dragLocatorToLocator(
   await source.scrollIntoViewIfNeeded();
   await target.scrollIntoViewIfNeeded();
 
-  const sourceBox = await source.boundingBox();
-  const targetBox = await target.boundingBox();
+  let sourceBox = await source.boundingBox();
+  let targetBox = await target.boundingBox();
   if (!sourceBox || !targetBox) {
     throw new Error('Cannot drag between elements without visible bounding boxes.');
   }
 
-  await page.mouse.move(
-    sourceBox.x + sourceBox.width / 2,
-    sourceBox.y + sourceBox.height / 2
-  );
+  // Centre the source→target span in the horizontal viewport so neither end
+  // sits under the fixed name column or past the right edge.
+  const viewportLocator = page.getByTestId('calendar-horizontal-viewport');
+  const viewport = await viewportLocator.boundingBox();
+  if (viewport) {
+    const spanLeft = Math.min(sourceBox.x, targetBox.x);
+    const spanRight = Math.max(
+      sourceBox.x + sourceBox.width,
+      targetBox.x + targetBox.width
+    );
+    const delta = (spanLeft + spanRight) / 2 - (viewport.x + viewport.width / 2);
+    if (Math.abs(delta) > 1) {
+      await viewportLocator.evaluate((el, scrollDelta) => {
+        el.scrollLeft += scrollDelta;
+      }, delta);
+      sourceBox = await source.boundingBox();
+      targetBox = await target.boundingBox();
+      if (!sourceBox || !targetBox) {
+        throw new Error('Cannot drag between elements without visible bounding boxes.');
+      }
+    }
+  }
+
+  const from = await visiblePointInTimeline(page, sourceBox);
+  const to = await visiblePointInTimeline(page, targetBox);
+
+  await page.mouse.move(from.x, from.y);
   await page.mouse.down();
-  await page.mouse.move(
-    targetBox.x + targetBox.width / 2,
-    targetBox.y + targetBox.height / 2,
-    { steps: 12 }
-  );
+  await page.mouse.move(to.x, to.y, { steps: 12 });
   await page.mouse.up();
 }
 
@@ -354,7 +405,7 @@ test.describe('Calendar v2 interactive context menu', () => {
     const privateTrip = calendarButtonForEmployee(
       page,
       seeded.sourceEmployeeId,
-      'XX trip on Jul 6'
+      'Private trip on Jul 6'
     );
     await expect(privateTrip).toBeVisible({ timeout: 30000 });
 
@@ -373,7 +424,10 @@ test.describe('Calendar v2 interactive context menu', () => {
 
     await sourceTrip.click({ button: 'right' });
     await page.getByRole('menuitem', { name: 'Go to employee profile' }).click();
-    await expect(page).toHaveURL(new RegExp(`/employee/${seeded.sourceEmployeeId}`));
+    // Generous timeout: in dev the employee page compiles on first navigation.
+    await expect(page).toHaveURL(new RegExp(`/employee/${seeded.sourceEmployeeId}`), {
+      timeout: 20000,
+    });
   });
 
   test('edits and deletes trips from the context menu', async ({ page }) => {
