@@ -1297,6 +1297,7 @@ export type Database = {
           is_private: boolean | null
           job_id: string | null
           job_ref: string | null
+          non_working_days: number
           purpose: string | null
           travel_days: number | null
           updated_at: string
@@ -1313,6 +1314,7 @@ export type Database = {
           is_private?: boolean | null
           job_id?: string | null
           job_ref?: string | null
+          non_working_days?: number
           purpose?: string | null
           travel_days?: number | null
           updated_at?: string
@@ -1329,6 +1331,7 @@ export type Database = {
           is_private?: boolean | null
           job_id?: string | null
           job_ref?: string | null
+          non_working_days?: number
           purpose?: string | null
           travel_days?: number | null
           updated_at?: string

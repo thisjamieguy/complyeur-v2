@@ -10,7 +10,12 @@ function makeDateColumn(date: string, index: number) {
   }
 }
 
-function makeCell(countryCode: string | null, isSchengen = false, rawValue = '') {
+function makeCell(
+  countryCode: string | null,
+  isSchengen = false,
+  rawValue = '',
+  isNonWorkingDay = false
+) {
   return {
     rowIndex: 0,
     colIndex: 0,
@@ -18,6 +23,7 @@ function makeCell(countryCode: string | null, isSchengen = false, rawValue = '')
     countryCode,
     isSchengen,
     isTravelDay: false,
+    isNonWorkingDay,
     countsAsDay: !!countryCode,
   }
 }
@@ -70,6 +76,23 @@ describe('generateTripsFromGantt', () => {
     expect(trips[0].employeeName).toBe('John Smith')
     expect(trips[0].entryDate).toBe('2025-01-06')
     expect(trips[0].exitDate).toBe('2025-01-08')
+    expect(trips[0].nonWorkingDays).toBe(0)
+  })
+
+  test('counts n/w cells as non-working days within a trip', () => {
+    const rows = [{
+      index: 0,
+      employeeName: 'John Smith',
+      cells: [
+        makeCell('FR', true),
+        makeCell('FR', true, 'n/w-FR', true), // rest day, still abroad
+        makeCell('FR', true),
+      ],
+    }]
+    const trips = generateTripsFromGantt(makeResult(rows))
+    expect(trips).toHaveLength(1)
+    expect(trips[0].dayCount).toBe(3)
+    expect(trips[0].nonWorkingDays).toBe(1)
   })
 
   test('splits trip when country changes', () => {

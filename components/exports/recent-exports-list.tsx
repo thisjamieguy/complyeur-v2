@@ -6,6 +6,7 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
   compliance_summary: 'Company summary',
   individual_employee: 'Individual report',
   future_alerts: 'Planned trip forecast',
+  travel_audit: 'Travel audit',
 }
 
 interface RecentExportsListProps {

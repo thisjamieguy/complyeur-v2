@@ -724,6 +724,7 @@ async function parseGanttFromData(buffer: ArrayBuffer, isCsv = false): Promise<P
       exit_date: trip.exitDate,
       country: trip.country,
       purpose: undefined, // Gantt doesn't include purpose
+      non_working_days: trip.nonWorkingDays,
       // Additional fields for UI display
       _generated: true,
       _dayCount: trip.dayCount,

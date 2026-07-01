@@ -36,6 +36,7 @@ export interface TripFormValues {
   job_ref?: string
   is_private: boolean
   ghosted: boolean
+  non_working_days: number
 }
 
 // Form-specific schema with enhanced validation
@@ -61,6 +62,10 @@ const tripFormSchema = z
       .optional(),
     is_private: z.boolean(),
     ghosted: z.boolean(),
+    non_working_days: z
+      .number()
+      .int('Rest days must be a whole number')
+      .min(0, 'Rest days cannot be negative'),
   })
   // Validate entry date is not too far in the past (180 days max)
   .refine(
@@ -96,6 +101,22 @@ const tripFormSchema = z
     {
       message: 'Trip duration cannot exceed 180 days',
       path: ['exit_date'],
+    }
+  )
+  // Rest days cannot exceed the trip length
+  .refine(
+    (data) => {
+      const entry = parseDateOnlyAsUTC(data.entry_date)
+      const exit = parseDateOnlyAsUTC(data.exit_date)
+      if (isNaN(entry.getTime()) || isNaN(exit.getTime()) || exit < entry) {
+        return true
+      }
+      const duration = getTripDurationDays(entry, exit)
+      return data.non_working_days <= duration
+    },
+    {
+      message: 'Rest days cannot exceed the trip length',
+      path: ['non_working_days'],
     }
   )
 
@@ -134,6 +155,8 @@ export function TripForm({
       job_ref: trip?.job_ref || defaultValues?.job_ref || '',
       is_private: trip?.is_private || defaultValues?.is_private || false,
       ghosted: trip?.ghosted || defaultValues?.ghosted || false,
+      non_working_days:
+        trip?.non_working_days ?? defaultValues?.non_working_days ?? 0,
     },
   })
 
@@ -141,6 +164,7 @@ export function TripForm({
   const selectedCountry = form.watch('country')
   const entryDate = form.watch('entry_date')
   const exitDate = form.watch('exit_date')
+  const isPrivate = form.watch('is_private')
 
   const countryValidation = selectedCountry
     ? validateCountry(selectedCountry)
@@ -169,6 +193,7 @@ export function TripForm({
         job_ref: trip.job_ref || '',
         is_private: trip.is_private || false,
         ghosted: trip.ghosted || false,
+        non_working_days: trip.non_working_days ?? 0,
       })
     }
   }, [trip, form])
@@ -295,6 +320,46 @@ export function TripForm({
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="non_working_days"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Rest days{' '}
+                <span className="text-muted-foreground font-normal">
+                  (optional)
+                </span>
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
+                  placeholder="0"
+                  disabled={isLoading || isPrivate}
+                  name={field.name}
+                  ref={field.ref}
+                  onBlur={field.onBlur}
+                  value={Number.isFinite(field.value) ? field.value : 0}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value === '' ? 0 : Math.trunc(Number(e.target.value))
+                    )
+                  }
+                />
+              </FormControl>
+              <p className="text-xs text-muted-foreground">
+                {isPrivate
+                  ? 'Private trips count entirely as rest days.'
+                  : 'Non-working days within this trip (weekends, days off). Used in travel audit reports.'}
+              </p>
               <FormMessage />
             </FormItem>
           )}

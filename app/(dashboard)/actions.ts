@@ -210,6 +210,7 @@ export async function addTripAction(formData: {
   job_ref?: string
   is_private?: boolean
   ghosted?: boolean
+  non_working_days?: number
 }) {
   await enforceMutationAccess(PERMISSIONS.TRIPS_CREATE, 'addTripAction')
   const validated = tripSchema.parse(formData)
@@ -222,6 +223,7 @@ export async function addTripAction(formData: {
     job_ref: validated.job_ref,
     is_private: validated.is_private,
     ghosted: validated.ghosted,
+    non_working_days: validated.non_working_days,
   }
   const trip = await createTrip(tripData)
 
@@ -243,6 +245,7 @@ export async function updateTripAction(
     job_ref?: string | null
     is_private?: boolean
     ghosted?: boolean
+    non_working_days?: number
   }
 ) {
   await enforceMutationAccess(PERMISSIONS.TRIPS_UPDATE, 'updateTripAction')
@@ -256,6 +259,8 @@ export async function updateTripAction(
   if (validated.job_ref !== undefined) updateData.job_ref = validated.job_ref
   if (validated.is_private !== undefined) updateData.is_private = validated.is_private
   if (validated.ghosted !== undefined) updateData.ghosted = validated.ghosted
+  if (validated.non_working_days !== undefined)
+    updateData.non_working_days = validated.non_working_days
 
   const trip = await updateTrip(tripId, updateData)
 
@@ -339,6 +344,7 @@ export async function bulkAddTripsAction(
         job_ref: result.data.job_ref,
         is_private: result.data.is_private,
         ghosted: result.data.ghosted,
+        non_working_days: result.data.non_working_days,
       })
     }
   }

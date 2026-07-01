@@ -444,6 +444,7 @@ export async function createBulkTrips(trips: BulkTripInput[]): Promise<BulkTripR
       job_ref: trip.job_ref,
       is_private: trip.is_private,
       ghosted: trip.ghosted,
+      non_working_days: trip.non_working_days,
     })
   }
 

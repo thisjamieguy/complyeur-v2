@@ -112,3 +112,43 @@ export const exportOptionsSchema = z
 
 export type ExportOptionsInput = z.input<typeof exportOptionsSchema>
 export type ExportOptionsValidated = z.infer<typeof exportOptionsSchema>
+
+/**
+ * Travel audit scope options.
+ */
+export const travelAuditScopeSchema = z.enum(
+  ['individual', 'company'],
+  'Please select a valid audit scope'
+)
+
+/**
+ * ISO 3166-1 alpha-2 country code.
+ */
+const isoCountrySchema = z
+  .string()
+  .regex(/^[A-Za-z]{2}$/, 'Country must be a 2-letter ISO code')
+
+/**
+ * Travel audit export options.
+ * Used by the "Travel Audit" reports (individual + company-wide).
+ */
+export const travelAuditOptionsSchema = z
+  .object({
+    /** Audit scope */
+    scope: travelAuditScopeSchema,
+    /** Employee ID (required when scope is 'individual') */
+    employeeId: z.string().uuid('Invalid employee ID format').optional(),
+    /** Date range / time frame for the audit */
+    dateRange: dateRangeSchema,
+    /** Optional country filter (ISO codes) for customised reports */
+    countries: z.array(isoCountrySchema).max(60).optional(),
+    /** Export format */
+    format: exportFormatSchema,
+  })
+  .refine((data) => data.scope !== 'individual' || !!data.employeeId, {
+    message: 'Employee ID is required for an individual audit',
+    path: ['employeeId'],
+  })
+
+export type TravelAuditOptionsInput = z.input<typeof travelAuditOptionsSchema>
+export type TravelAuditOptionsValidated = z.infer<typeof travelAuditOptionsSchema>

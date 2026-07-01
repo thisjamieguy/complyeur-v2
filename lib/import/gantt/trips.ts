@@ -103,6 +103,15 @@ function createTrip(
   const startDate = dateColumns[tripData.startIdx].date.date!;
   const endDate = dateColumns[tripData.endIdx].date.date!;
 
+  // Count "n/w" (non-working) cells within the trip's span — these are days the
+  // employee was abroad but resting, surfaced in travel audit reports.
+  let nonWorkingDays = 0;
+  for (let i = tripData.startIdx; i <= tripData.endIdx; i++) {
+    if (row.cells[i]?.isNonWorkingDay) {
+      nonWorkingDays++;
+    }
+  }
+
   return {
     employeeName: row.employeeName,
     employeeEmail: row.email,
@@ -111,6 +120,7 @@ function createTrip(
     country: tripData.country,
     isSchengen: tripData.isSchengen,
     dayCount: tripData.endIdx - tripData.startIdx + 1,
+    nonWorkingDays,
     sourceRow: row.index + 2, // +2 for 1-based and header row
   };
 }

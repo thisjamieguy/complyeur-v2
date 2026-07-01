@@ -536,6 +536,7 @@ async function insertTrips(
     entry_date: string;
     exit_date: string;
     purpose?: string;
+    non_working_days?: number;
   }[] = [];
 
   // Pre-collect all unique employee IDs that will be referenced by trip rows
@@ -669,6 +670,7 @@ async function insertTrips(
       entry_date: tripData.entry_date,
       exit_date: tripData.exit_date,
       purpose: tripData.purpose?.trim(),
+      non_working_days: tripData.non_working_days,
     });
   }
 
