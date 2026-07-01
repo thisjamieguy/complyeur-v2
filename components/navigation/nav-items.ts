@@ -54,14 +54,14 @@ export const navItems: NavItem[] = [
   {
     href: '/import',
     label: 'Import',
-    icon: Upload,
+    icon: Download,
     section: 'Data',
     tourId: 'tour-nav-import',
   },
   {
     href: '/exports',
     label: 'Exports',
-    icon: Download,
+    icon: Upload,
     section: 'Data',
     tourId: 'tour-nav-exports',
   },
