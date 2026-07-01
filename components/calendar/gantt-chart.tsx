@@ -22,17 +22,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { addUtcDays, toUTCMidnight } from '@/lib/compliance/date-utils'
+import { parseDateOnlyAsUTC } from '@/lib/compliance'
 import { cn } from '@/lib/utils'
 import { DateHeader } from './date-header'
 import { EmployeeRow } from './employee-row'
 import { GRID_ROW_HEIGHT } from './day-cell'
+import { TripPopover } from './trip-popover'
+import { buildTripDay } from './calendar-view.utils'
 import { emitCalendarMetric } from './calendar-metrics'
 import type {
   CalendarEmployeeContextMenuRequest,
   CalendarCopiedTrip,
   CalendarPasteTripRequest,
+  CalendarTripDetailsRequest,
   ProcessedEmployee,
+  ProcessedTripDay,
   TripDateShiftRequest,
   TripDeleteRequest,
   TripEditRequest,
@@ -61,18 +71,14 @@ const NAME_COLUMN_WIDTH = 224
 /** Height of 180-day window indicator row */
 const WINDOW_INDICATOR_HEIGHT = 18
 
-/** Baseline extra rows to render above/below viewport */
-const BASE_OVERSCAN = 12
-
-/** Temporary overscan used when users fling-scroll quickly */
-const FAST_SCROLL_OVERSCAN = 28
-
-/** Reset burst overscan shortly after fast scrolling stops */
-const FAST_SCROLL_RESET_MS = 180
-
-/** Thresholds to detect high-velocity scrolling */
-const FAST_SCROLL_DELTA_THRESHOLD = GRID_ROW_HEIGHT * 2.5
-const FAST_SCROLL_VELOCITY_THRESHOLD = 1.1
+/**
+ * Extra rows to render above/below the viewport. Kept small and constant:
+ * each row mounts one DayCell per date column, so large or scroll-triggered
+ * overscan changes stall frames exactly when the user is flinging the list
+ * (measured: escalating overscan mid-scroll produced 600ms+ frames). Four rows
+ * balances mount batch size against blank-row flashes when flinging.
+ */
+const OVERSCAN_ROWS = 4
 
 /** Emit scroll metrics in smaller batches so short-but-real scroll sessions are captured. */
 const SCROLL_METRIC_BATCH_SIZE = 10
@@ -385,6 +391,92 @@ function CalendarGridContextMenu({
   )
 }
 
+interface ResolvedTripDetails extends CalendarTripDetailsRequest {
+  tripDay: ProcessedTripDay
+}
+
+interface CalendarTripDetailsPopoverProps {
+  details: ResolvedTripDetails | null
+  interactive: boolean
+  onOpenChange: (open: boolean) => void
+  onEditTrip?: GanttChartProps['onEditTrip']
+  onDeleteTrip?: GanttChartProps['onDeleteTrip']
+}
+
+/**
+ * Single shared trip-details popover for the whole grid, anchored to the
+ * clicked day cell via an invisible fixed-position trigger (same pattern as
+ * the context menu). One Radix root instead of one per rendered trip cell.
+ */
+function CalendarTripDetailsPopover({
+  details,
+  interactive,
+  onOpenChange,
+  onEditTrip,
+  onDeleteTrip,
+}: CalendarTripDetailsPopoverProps) {
+  return (
+    <Popover open={details !== null} onOpenChange={onOpenChange}>
+      <PopoverTrigger asChild>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none fixed opacity-0"
+          style={{
+            left: details?.anchor.x ?? -9999,
+            top: details?.anchor.y ?? -9999,
+            width: details?.anchor.width ?? 1,
+            height: details?.anchor.height ?? 1,
+          }}
+        />
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-auto p-4"
+        align="center"
+        side="top"
+        collisionPadding={8}
+        onCloseAutoFocus={(event) => {
+          // Return focus to the day cell that opened the popover; the trigger
+          // span is decorative and cannot receive focus.
+          if (details?.sourceElement?.isConnected) {
+            event.preventDefault()
+            details.sourceElement.focus()
+          }
+        }}
+      >
+        {details && (
+          <TripPopover
+            tripDay={details.tripDay}
+            onEditTrip={
+              interactive && onEditTrip
+                ? (trip) => {
+                    onEditTrip({
+                      employeeId: details.employeeId,
+                      employeeName: details.employeeName,
+                      trip,
+                    })
+                    onOpenChange(false)
+                  }
+                : undefined
+            }
+            onDeleteTrip={
+              interactive && onDeleteTrip
+                ? (trip) => {
+                    onDeleteTrip({
+                      employeeId: details.employeeId,
+                      employeeName: details.employeeName,
+                      trip,
+                    })
+                    onOpenChange(false)
+                  }
+                : undefined
+            }
+          />
+        )}
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 /**
  * Spreadsheet-style grid showing all employees and their trips.
  * Uses virtualization to only render visible employee rows.
@@ -408,11 +500,11 @@ export const GanttChart = memo(function GanttChart({
   onOpenEmployeeProfile,
   className,
 }: GanttChartProps) {
-  const [overscan, setOverscan] = useState(BASE_OVERSCAN)
-  const [hoveredEmployeeId, setHoveredEmployeeId] = useState<string | null>(null)
   const [dropTargetEmployeeId, setDropTargetEmployeeId] = useState<string | null>(null)
   const [contextMenu, setContextMenu] =
     useState<CalendarEmployeeContextMenuRequest | null>(null)
+  const [tripDetails, setTripDetails] =
+    useState<CalendarTripDetailsRequest | null>(null)
   const [announcement, setAnnouncement] = useState('')
   const mountStartedAtRef = useRef<number>(
     typeof performance !== 'undefined' ? performance.now() : 0
@@ -422,9 +514,8 @@ export const GanttChart = memo(function GanttChart({
     totalDurationMs: 0,
     maxDurationMs: 0,
   })
+  const mountMetricEmittedRef = useRef(false)
   const previousVisibleRowsRef = useRef<number>(-1)
-  const lastTimelineScrollRef = useRef({ top: 0, at: 0 })
-  const fastScrollResetTimerRef = useRef<number | null>(null)
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const namesScrollRef = useRef<HTMLDivElement>(null)
@@ -437,7 +528,7 @@ export const GanttChart = memo(function GanttChart({
     count: employees.length,
     getScrollElement: () => timelineScrollRef.current,
     estimateSize: () => GRID_ROW_HEIGHT,
-    overscan,
+    overscan: OVERSCAN_ROWS,
     observeElementRect: observeCalendarElementRect,
   })
 
@@ -453,23 +544,6 @@ export const GanttChart = memo(function GanttChart({
       if (!namesRowsRef.current) return
 
       namesRowsRef.current.style.transform = `translate3d(0, -${timelineEl.scrollTop}px, 0)`
-    }
-
-    const markFastScroll = () => {
-      setOverscan((current) =>
-        current === FAST_SCROLL_OVERSCAN ? current : FAST_SCROLL_OVERSCAN
-      )
-
-      if (typeof window === 'undefined') return
-
-      if (fastScrollResetTimerRef.current !== null) {
-        window.clearTimeout(fastScrollResetTimerRef.current)
-      }
-
-      fastScrollResetTimerRef.current = window.setTimeout(() => {
-        setOverscan(BASE_OVERSCAN)
-        fastScrollResetTimerRef.current = null
-      }, FAST_SCROLL_RESET_MS)
     }
 
     const flushScrollMetric = (source: 'timeline_scroll' | 'names_wheel') => {
@@ -506,22 +580,6 @@ export const GanttChart = memo(function GanttChart({
     }
 
     const handleTimelineScroll = () => {
-      const now = performance.now()
-      const previous = lastTimelineScrollRef.current
-      if (previous.at > 0) {
-        const deltaPx = Math.abs(timelineEl.scrollTop - previous.top)
-        const elapsedMs = now - previous.at
-        const velocityPxPerMs = elapsedMs > 0 ? deltaPx / elapsedMs : 0
-
-        if (
-          deltaPx >= FAST_SCROLL_DELTA_THRESHOLD ||
-          velocityPxPerMs >= FAST_SCROLL_VELOCITY_THRESHOLD
-        ) {
-          markFastScroll()
-        }
-      }
-      lastTimelineScrollRef.current = { top: timelineEl.scrollTop, at: now }
-
       const startedAt = performance.now()
       syncNamesToTimeline()
       recordScrollSample('timeline_scroll', performance.now() - startedAt)
@@ -533,10 +591,6 @@ export const GanttChart = memo(function GanttChart({
       // Keep scrolling behavior consistent when cursor is on the fixed names column.
       event.preventDefault()
 
-      if (Math.abs(event.deltaY) >= FAST_SCROLL_DELTA_THRESHOLD) {
-        markFastScroll()
-      }
-
       const startedAt = performance.now()
       timelineEl.scrollTop += event.deltaY
       syncNamesToTimeline()
@@ -544,10 +598,6 @@ export const GanttChart = memo(function GanttChart({
     }
 
     // Ensure initial alignment on mount.
-    lastTimelineScrollRef.current = {
-      top: timelineEl.scrollTop,
-      at: performance.now(),
-    }
     syncNamesToTimeline()
     timelineEl.addEventListener('scroll', handleTimelineScroll, { passive: true })
     namesEl.addEventListener('wheel', handleNamesWheel, { passive: false })
@@ -556,14 +606,64 @@ export const GanttChart = memo(function GanttChart({
       flushScrollMetric('timeline_scroll')
       timelineEl.removeEventListener('scroll', handleTimelineScroll)
       namesEl.removeEventListener('wheel', handleNamesWheel)
+    }
+  }, [])
 
-      if (
-        typeof window !== 'undefined' &&
-        fastScrollResetTimerRef.current !== null
-      ) {
-        window.clearTimeout(fastScrollResetTimerRef.current)
-        fastScrollResetTimerRef.current = null
+  // Row-hover highlighting without React re-renders: hovering either column
+  // sets data-row-hovered on both DOM rows for that employee; day cells style
+  // themselves via the group-data-[row-hovered=true]/calrow variant. Going
+  // through state here re-rendered 2 x dates.length cells per row crossed,
+  // which visibly stalled scrolling with the pointer over the grid.
+  useEffect(() => {
+    const namesEl = namesScrollRef.current
+    const timelineEl = timelineScrollRef.current
+
+    if (!namesEl || !timelineEl) return
+
+    let hoveredId: string | null = null
+
+    const applyHover = (employeeId: string | null) => {
+      if (employeeId === hoveredId) return
+
+      if (hoveredId !== null) {
+        for (const row of document.querySelectorAll(
+          `[data-calendar-employee-row][data-employee-id="${CSS.escape(hoveredId)}"]`
+        )) {
+          row.removeAttribute('data-row-hovered')
+        }
       }
+
+      hoveredId = employeeId
+
+      if (employeeId !== null) {
+        for (const row of document.querySelectorAll(
+          `[data-calendar-employee-row][data-employee-id="${CSS.escape(employeeId)}"]`
+        )) {
+          row.setAttribute('data-row-hovered', 'true')
+        }
+      }
+    }
+
+    const handleMouseOver = (event: MouseEvent) => {
+      const row = (event.target as Element | null)?.closest?.(
+        '[data-calendar-employee-row]'
+      )
+      applyHover(row?.getAttribute('data-employee-id') ?? null)
+    }
+
+    const clearHover = () => applyHover(null)
+
+    namesEl.addEventListener('mouseover', handleMouseOver)
+    timelineEl.addEventListener('mouseover', handleMouseOver)
+    namesEl.addEventListener('mouseleave', clearHover)
+    timelineEl.addEventListener('mouseleave', clearHover)
+
+    return () => {
+      namesEl.removeEventListener('mouseover', handleMouseOver)
+      timelineEl.removeEventListener('mouseover', handleMouseOver)
+      namesEl.removeEventListener('mouseleave', clearHover)
+      timelineEl.removeEventListener('mouseleave', clearHover)
+      applyHover(null)
     }
   }, [])
 
@@ -608,6 +708,27 @@ export const GanttChart = memo(function GanttChart({
     [dates]
   )
 
+  // Resolve the open trip-details request against CURRENT data so the popover
+  // reflects optimistic updates and server refreshes (and closes itself if
+  // the trip is gone).
+  const resolvedTripDetails = useMemo((): ResolvedTripDetails | null => {
+    if (!tripDetails) return null
+
+    const employee = employees.find((e) => e.id === tripDetails.employeeId)
+    const trip = employee?.trips.find((t) => t.id === tripDetails.tripId)
+    if (!employee || !trip) return null
+
+    return {
+      ...tripDetails,
+      tripDay: buildTripDay(
+        trip,
+        parseDateOnlyAsUTC(tripDetails.dateKey),
+        employee.complianceByDate,
+        toUTCMidnight(new Date())
+      ),
+    }
+  }, [tripDetails, employees])
+
   const totalWidth = dates.length * dayWidth
   const totalHeight = virtualizer.getTotalSize()
   const virtualRows = virtualizer.getVirtualItems()
@@ -625,6 +746,12 @@ export const GanttChart = memo(function GanttChart({
     )
 
   useEffect(() => {
+    // Emit once, after the virtualizer has measured (visibleRows is 0 until
+    // the first rect measurement), so mountMs reflects a usable calendar.
+    if (mountMetricEmittedRef.current) return
+    if (visibleRows === 0 && employees.length > 0) return
+
+    mountMetricEmittedRef.current = true
     emitCalendarMetric('calendar_mount', {
       employees: employees.length,
       dateColumns: dates.length,
@@ -660,6 +787,17 @@ export const GanttChart = memo(function GanttChart({
           confirm or Escape to cancel.
         </p>
       )}
+      <CalendarTripDetailsPopover
+        details={resolvedTripDetails}
+        interactive={interactive}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTripDetails(null)
+          }
+        }}
+        onEditTrip={onEditTrip}
+        onDeleteTrip={onDeleteTrip}
+      />
       {hasContextMenuActions && (
         <CalendarGridContextMenu
           contextMenu={contextMenu}
@@ -725,16 +863,8 @@ export const GanttChart = memo(function GanttChart({
                     'absolute left-0 flex w-full items-center border-b border-slate-100 px-3 transition-colors',
                     dropTargetEmployeeId === employee.id
                       ? 'bg-sky-100/70'
-                      : hoveredEmployeeId === employee.id
-                        ? 'bg-sky-50/60'
-                        : 'bg-slate-50/60 hover:bg-sky-50/60'
+                      : 'bg-slate-50/60 data-[row-hovered=true]:bg-sky-50/60'
                   )}
-                  onMouseEnter={() => setHoveredEmployeeId(employee.id)}
-                  onMouseLeave={() => {
-                    setHoveredEmployeeId((current) =>
-                      current === employee.id ? null : current
-                    )
-                  }}
                   style={{
                     height: GRID_ROW_HEIGHT,
                     transform: `translate3d(0, ${virtualRow.start}px, 0)`,
@@ -802,18 +932,12 @@ export const GanttChart = memo(function GanttChart({
                     key={employee.id}
                     role="presentation"
                     className={cn(
-                      'absolute left-0 w-full border-b border-slate-100',
+                      'group/calrow absolute left-0 w-full border-b border-slate-100',
                       dropTargetEmployeeId === employee.id && 'bg-sky-50/40'
                     )}
                     data-calendar-employee-row
                     data-employee-id={employee.id}
                     data-employee-name={employee.name}
-                    onMouseEnter={() => setHoveredEmployeeId(employee.id)}
-                    onMouseLeave={() => {
-                      setHoveredEmployeeId((current) =>
-                        current === employee.id ? null : current
-                      )
-                    }}
                     style={{
                       height: GRID_ROW_HEIGHT,
                       transform: `translate3d(0, ${virtualRow.start}px, 0)`,
@@ -825,13 +949,11 @@ export const GanttChart = memo(function GanttChart({
                       rowIndex={virtualRow.index}
                       dateMeta={dateMeta}
                       dayWidth={dayWidth}
-                      isHovered={hoveredEmployeeId === employee.id}
                       isDropTarget={dropTargetEmployeeId === employee.id}
                       interactive={interactive}
                       onAnnounce={setAnnouncement}
                       onCreateTrip={onCreateTrip}
-                      onEditTrip={onEditTrip}
-                      onDeleteTrip={onDeleteTrip}
+                      onOpenTripDetails={setTripDetails}
                       onResizeTrip={onResizeTrip}
                       onShiftTripDates={onShiftTripDates}
                       onMoveTrip={onMoveTrip}

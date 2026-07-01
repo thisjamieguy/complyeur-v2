@@ -25,6 +25,13 @@ const DAYS_BACK = 200
 const MAX_WEEKS_FORWARD = 12
 /** Extra lookback so the 180-day rolling window is fully covered. */
 const COMPLIANCE_LOOKBACK_DAYS = 180
+/**
+ * PostgREST silently caps responses at 1000 rows. Companies with enough
+ * employees exceed that inside the calendar window, so every list query here
+ * must page until a short page — otherwise trips silently vanish from the
+ * calendar and employees look compliant when they are not.
+ */
+const QUERY_PAGE_SIZE = 1000
 
 type TripRow = DbTrip & {
   employee_id: string
@@ -33,6 +40,39 @@ type TripRow = DbTrip & {
 interface EmployeeRow {
   id: string
   name: string
+}
+
+interface PageResult {
+  data: unknown
+  error: { message: string } | null
+}
+
+/**
+ * Page through a query until a short page so results are never truncated at
+ * the PostgREST row cap. `buildPage` must apply `.range(from, to)` itself and
+ * use a deterministic ORDER BY so pages don't overlap.
+ */
+async function fetchAllPages<T>(
+  label: string,
+  buildPage: (from: number, to: number) => PromiseLike<PageResult>
+): Promise<T[]> {
+  const rows: T[] = []
+
+  for (let from = 0; ; from += QUERY_PAGE_SIZE) {
+    const { data, error } = await buildPage(from, from + QUERY_PAGE_SIZE - 1)
+
+    if (error) {
+      console.error(`[Calendar] Error fetching ${label}:`, error)
+      throw new Error(`Failed to fetch ${label}`)
+    }
+
+    const page = (data ?? []) as T[]
+    rows.push(...page)
+
+    if (page.length < QUERY_PAGE_SIZE) {
+      return rows
+    }
+  }
 }
 
 function buildTripsByEmployee(trips: TripRow[]): Map<string, DbTrip[]> {
@@ -98,98 +138,89 @@ export const getCalendarEmployees = cache(async (
   const getEmployeesByIds = async (employeeIds: string[]): Promise<EmployeeRow[]> => {
     if (employeeIds.length === 0) return []
 
-    const { data: employees, error } = await supabase
-      .from('employees')
-      .select('id, name')
-      .eq('company_id', companyId)
-      .is('deleted_at', null)
-      .in('id', employeeIds)
-      .order('name')
-
-    if (error) {
-      console.error('[Calendar] Error fetching employees:', error)
-      throw new Error('Failed to fetch employees')
-    }
-
-    return (employees ?? []) as EmployeeRow[]
+    return fetchAllPages<EmployeeRow>('employees', (from, to) =>
+      supabase
+        .from('employees')
+        .select('id, name')
+        .eq('company_id', companyId)
+        .is('deleted_at', null)
+        .in('id', employeeIds)
+        .order('name')
+        .order('id')
+        .range(from, to)
+    )
   }
 
   const getTripsByEmployeeIds = async (employeeIds: string[]): Promise<TripRow[]> => {
     if (employeeIds.length === 0) return []
 
-    const { data: trips, error } = await supabase
-      .from('trips')
-      .select(`
-        id,
-        employee_id,
-        country,
-        entry_date,
-        exit_date,
-        purpose,
-        job_ref,
-        is_private,
-        ghosted
-      `)
-      .eq('company_id', companyId)
-      .in('employee_id', employeeIds)
-      .eq('ghosted', false)
-      .lte('entry_date', windowEndKey)
-      .gte('exit_date', windowStartKey)
-      .order('entry_date', { ascending: true })
-
-    if (error) {
-      console.error('[Calendar] Error fetching trips:', error)
-      throw new Error('Failed to fetch trips')
-    }
-
-    return (trips ?? []) as TripRow[]
+    return fetchAllPages<TripRow>('trips', (from, to) =>
+      supabase
+        .from('trips')
+        .select(`
+          id,
+          employee_id,
+          country,
+          entry_date,
+          exit_date,
+          purpose,
+          job_ref,
+          is_private,
+          ghosted
+        `)
+        .eq('company_id', companyId)
+        .in('employee_id', employeeIds)
+        .eq('ghosted', false)
+        .lte('entry_date', windowEndKey)
+        .gte('exit_date', windowStartKey)
+        .order('entry_date', { ascending: true })
+        .order('id')
+        .range(from, to)
+    )
   }
 
-  const getTripsInWindow = async (): Promise<TripRow[]> => {
-    const { data: trips, error } = await supabase
-      .from('trips')
-      .select(`
-        id,
-        employee_id,
-        country,
-        entry_date,
-        exit_date,
-        purpose,
-        job_ref,
-        is_private,
-        ghosted
-      `)
-      .eq('company_id', companyId)
-      .eq('ghosted', false)
-      .lte('entry_date', windowEndKey)
-      .gte('exit_date', windowStartKey)
-      .order('entry_date', { ascending: true })
-
-    if (error) {
-      console.error('[Calendar] Error fetching trips:', error)
-      throw new Error('Failed to fetch trips')
-    }
-
-    return (trips ?? []) as TripRow[]
-  }
+  const getTripsInWindow = async (): Promise<TripRow[]> =>
+    fetchAllPages<TripRow>('trips', (from, to) =>
+      supabase
+        .from('trips')
+        .select(`
+          id,
+          employee_id,
+          country,
+          entry_date,
+          exit_date,
+          purpose,
+          job_ref,
+          is_private,
+          ghosted
+        `)
+        .eq('company_id', companyId)
+        .eq('ghosted', false)
+        .lte('entry_date', windowEndKey)
+        .gte('exit_date', windowStartKey)
+        .order('entry_date', { ascending: true })
+        .order('id')
+        .range(from, to)
+    )
 
   // Only employees who have at least one Schengen trip in the window.
   if (hideEmployeesWithoutSchengenTrips) {
-    const { data: schengenTrips, error } = await supabase
-      .from('trips')
-      .select('employee_id')
-      .eq('company_id', companyId)
-      .eq('ghosted', false)
-      .in('country', schengenCountryCodes)
-      .lte('entry_date', windowEndKey)
-      .gte('exit_date', windowStartKey)
+    const schengenTrips = await fetchAllPages<{ employee_id: string }>(
+      'trips',
+      (from, to) =>
+        supabase
+          .from('trips')
+          .select('employee_id')
+          .eq('company_id', companyId)
+          .eq('ghosted', false)
+          .in('country', schengenCountryCodes)
+          .lte('entry_date', windowEndKey)
+          .gte('exit_date', windowStartKey)
+          .order('id')
+          .range(from, to)
+    )
 
-    if (error) {
-      console.error('[Calendar] Error fetching Schengen trip employees:', error)
-      throw new Error('Failed to fetch trips')
-    }
-
-    const employeeIds = Array.from(new Set((schengenTrips ?? []).map((t) => t.employee_id)))
+    const employeeIds = Array.from(new Set(schengenTrips.map((t) => t.employee_id)))
     if (employeeIds.length === 0) return []
 
     const [employees, trips] = await Promise.all([
@@ -202,20 +233,19 @@ export const getCalendarEmployees = cache(async (
 
   // Only employees who have any trip in the window.
   if (calendarLoadMode === 'employees_with_trips') {
-    const { data: trips, error } = await supabase
-      .from('trips')
-      .select('employee_id')
-      .eq('company_id', companyId)
-      .eq('ghosted', false)
-      .lte('entry_date', windowEndKey)
-      .gte('exit_date', windowStartKey)
+    const trips = await fetchAllPages<{ employee_id: string }>('trips', (from, to) =>
+      supabase
+        .from('trips')
+        .select('employee_id')
+        .eq('company_id', companyId)
+        .eq('ghosted', false)
+        .lte('entry_date', windowEndKey)
+        .gte('exit_date', windowStartKey)
+        .order('id')
+        .range(from, to)
+    )
 
-    if (error) {
-      console.error('[Calendar] Error fetching trips (employees_with_trips):', error)
-      throw new Error('Failed to fetch trips')
-    }
-
-    const employeeIds = Array.from(new Set((trips ?? []).map((t) => t.employee_id)))
+    const employeeIds = Array.from(new Set(trips.map((t) => t.employee_id)))
     if (employeeIds.length === 0) return []
 
     const [employees, tripRows] = await Promise.all([
@@ -229,23 +259,21 @@ export const getCalendarEmployees = cache(async (
   // Default: all employees, with their trips in the window. getTripsInWindow()
   // doesn't filter by employee IDs, so it has no dependency on the employees
   // query below — run both concurrently instead of paying two round trips.
-  const [employeesResult, tripRows] = await Promise.all([
-    supabase
-      .from('employees')
-      .select('id, name')
-      .eq('company_id', companyId)
-      .is('deleted_at', null)
-      .order('name'),
+  const [employees, tripRows] = await Promise.all([
+    fetchAllPages<EmployeeRow>('employees', (from, to) =>
+      supabase
+        .from('employees')
+        .select('id, name')
+        .eq('company_id', companyId)
+        .is('deleted_at', null)
+        .order('name')
+        .order('id')
+        .range(from, to)
+    ),
     getTripsInWindow(),
   ])
-  const { data: employees, error } = employeesResult
 
-  if (error) {
-    console.error('[Calendar] Error fetching employees:', error)
-    throw new Error('Failed to fetch employees')
-  }
+  if (employees.length === 0) return []
 
-  if (!employees || employees.length === 0) return []
-
-  return mapEmployeesWithTrips(employees as EmployeeRow[], tripRows)
+  return mapEmployeesWithTrips(employees, tripRows)
 })

@@ -63,15 +63,18 @@ export default async function CalendarPage() {
     redirect('/login')
   }
 
-  const hasCalendar = await checkEntitlement('can_calendar')
+  // Entitlement, settings, and cookies are independent — fetch concurrently.
+  const [hasCalendar, settings, cookieStore] = await Promise.all([
+    checkEntitlement('can_calendar'),
+    getCompanySettings(),
+    cookies(),
+  ])
   if (!hasCalendar) {
     redirect('/dashboard?upgrade=calendar')
   }
 
   const interactive = isInteractiveCalendarEnabled()
-  const settings = await getCompanySettings()
   const calendarLoadMode = settings?.calendar_load_mode ?? 'all_employees'
-  const cookieStore = await cookies()
   const hideEmployeesWithoutSchengenTrips = parseHideNoSchengenCookie(
     cookieStore.get(CALENDAR_HIDE_NO_SCHENGEN_COOKIE)?.value
   )

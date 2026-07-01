@@ -12,15 +12,10 @@ import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { addUtcDays, differenceInUtcDays } from '@/lib/compliance/date-utils'
 import { getCountryName } from '@/lib/constants/schengen-countries'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { TripPopover } from './trip-popover'
 import { toDateKey } from './calendar-view.utils'
 import type {
   CalendarCellContextMenuRequest,
+  CalendarCellTripDetailsRequest,
   ProcessedTrip,
   ProcessedTripDay,
   TripResizeEdge,
@@ -30,6 +25,23 @@ import type {
 export const GRID_ROW_HEIGHT = 40
 const DRAG_ACTIVATION_DISTANCE = 6
 
+/**
+ * Cell class strings depend on a small set of boolean/enum inputs but cn()
+ * (tailwind-merge) is comparatively expensive, and virtualization mounts
+ * hundreds of cells per scroll frame. Memoise by input key — cardinality is
+ * bounded (a few hundred combinations), so the map stays small.
+ */
+const cellClassCache = new Map<string, string>()
+
+function cachedCellClass(key: string, build: () => string): string {
+  let value = cellClassCache.get(key)
+  if (value === undefined) {
+    value = build()
+    cellClassCache.set(key, value)
+  }
+  return value
+}
+
 interface DayCellProps {
   tripDay: ProcessedTripDay | undefined
   date: Date
@@ -37,7 +49,6 @@ interface DayCellProps {
   /** Zero-based column position, used for the grid's aria-colindex. */
   colIndex: number
   dayWidth: number
-  isRowHovered: boolean
   isWeekend: boolean
   isToday: boolean
   isMonthStart: boolean
@@ -49,8 +60,7 @@ interface DayCellProps {
   isDropTarget?: boolean
   interactive?: boolean
   onCreateTrip?: (dateKey: string) => void
-  onEditTrip?: (trip: ProcessedTrip) => void
-  onDeleteTrip?: (trip: ProcessedTrip) => void
+  onOpenTripDetails?: (params: CalendarCellTripDetailsRequest) => void
   onResizeTrip?: (params: {
     tripId: string
     edge: TripResizeEdge
@@ -138,7 +148,6 @@ export const DayCell = memo(function DayCell({
   dateKey,
   colIndex,
   dayWidth,
-  isRowHovered,
   isWeekend,
   isToday,
   isMonthStart,
@@ -150,8 +159,7 @@ export const DayCell = memo(function DayCell({
   isDropTarget = false,
   interactive = false,
   onCreateTrip,
-  onEditTrip,
-  onDeleteTrip,
+  onOpenTripDetails,
   onResizeTrip,
   onShiftTripDates,
   onMoveTrip,
@@ -185,7 +193,19 @@ export const DayCell = memo(function DayCell({
     ? `${trip.isPrivate ? 'Private' : getCountryName(trip.rawCountry)} trip`
     : null
 
-  const baseCls = cn(
+  const baseClsKey = [
+    trip ? 1 : 0,
+    isToday ? 1 : 0,
+    isWeekend ? 1 : 0,
+    isInRollingWindow ? 1 : 0,
+    isMonthStart ? 1 : 0,
+    isTripStart ? 1 : 0,
+    isTripEnd ? 1 : 0,
+    isRollingWindowStart ? 1 : 0,
+    isRollingWindowEnd ? 1 : 0,
+    isDropTarget ? 1 : 0,
+  ].join('')
+  const baseCls = cachedCellClass(`base:${baseClsKey}`, () => cn(
     'shrink-0 flex items-center justify-center border-r border-slate-100',
     // Empty cells
     !trip && !isToday && !isWeekend && !isInRollingWindow && 'bg-white',
@@ -193,17 +213,20 @@ export const DayCell = memo(function DayCell({
     !trip && isWeekend && !isToday && !isInRollingWindow && 'bg-slate-100/70',
     !trip && isWeekend && !isToday && isInRollingWindow && 'bg-sky-100/55',
     !trip && isToday && 'bg-blue-100/80',
-    !trip && isRowHovered && 'bg-slate-100/70',
+    // Row hover is CSS-driven (data-row-hovered set on the row wrapper by the
+    // grid) so hovering never re-renders React rows during scroll.
+    !trip && 'group-data-[row-hovered=true]/calrow:bg-slate-100/70',
     isMonthStart && !(trip && !isTripStart) && 'border-l border-l-slate-400/80',
     // Today's travel cells should preserve trip color while still standing out
     trip && isToday && 'ring-2 ring-inset ring-blue-300',
-    trip && isRowHovered && 'ring-1 ring-inset ring-slate-200/80',
+    trip &&
+      'group-data-[row-hovered=true]/calrow:ring-1 group-data-[row-hovered=true]/calrow:ring-inset group-data-[row-hovered=true]/calrow:ring-slate-200/80',
     // Make trip bars solid — no internal borders
     trip && !isTripEnd && 'border-r-0',
     !trip && isRollingWindowStart && 'border-l border-l-sky-400',
     !trip && isRollingWindowEnd && 'border-r border-r-sky-400',
     isDropTarget && !trip && '!bg-sky-100/70'
-  )
+  ))
 
   const tripStyles = trip
     ? tripDay?.displayMode === 'historical'
@@ -214,6 +237,15 @@ export const DayCell = memo(function DayCell({
         : schengenTripStyles[tripDay?.riskLevel ?? 'green']
       : nonSchengenTripStyles
     : null
+  const tripStyleKey = trip
+    ? tripDay?.displayMode === 'historical'
+      ? 'hist'
+      : trip.isSchengen
+        ? tripDay?.isBreachDay
+          ? 'breach'
+          : tripDay?.riskLevel ?? 'green'
+        : 'nonschengen'
+    : 'none'
 
   const openContextMenu = (
     event: ReactMouseEvent<HTMLButtonElement>,
@@ -242,10 +274,10 @@ export const DayCell = memo(function DayCell({
         >
           <button
             type="button"
-            className={cn(
+            className={cachedCellClass(`empty-btn:${baseClsKey}`, () => cn(
               baseCls,
               'cursor-cell transition-colors hover:bg-sky-100/80 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-inset'
-            )}
+            ))}
             style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
             aria-label={`Add trip on ${format(date, 'MMM d')}`}
             onClick={() => onCreateTrip(dateKey)}
@@ -514,11 +546,22 @@ export const DayCell = memo(function DayCell({
   }
 
   const handleTripClick = (event: ReactMouseEvent<HTMLButtonElement>) => {
-    if (!suppressNextClickRef.current) return
+    if (suppressNextClickRef.current) {
+      event.preventDefault()
+      event.stopPropagation()
+      suppressNextClickRef.current = false
+      return
+    }
 
-    event.preventDefault()
-    event.stopPropagation()
-    suppressNextClickRef.current = false
+    if (!tripDay || !onOpenTripDetails) return
+
+    const rect = event.currentTarget.getBoundingClientRect()
+    onOpenTripDetails({
+      anchor: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+      tripId: tripDay.trip.id,
+      dateKey,
+      sourceElement: event.currentTarget,
+    })
   }
 
   const tripCountryLabel = trip
@@ -625,56 +668,49 @@ export const DayCell = memo(function DayCell({
       className="relative shrink-0"
       style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
     >
-      <Popover>
-        <PopoverTrigger asChild>
-          <button
-            className={cn(
-              baseCls,
-              tripStyles && tripStyles.base,
-              tripStyles?.hover,
-              // Outer border for trip block definition
-              tripStyles && 'border-y-2',
-              tripStyles && tripStyles.border,
-              isTripStart && 'border-l-2 rounded-l-md',
-              isTripEnd && 'border-r-2 rounded-r-md',
-              keyboardMode !== 'idle' && 'ring-2 ring-inset ring-slate-900',
-              'cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-inset'
-            )}
-            style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
-            aria-label={`${trip.isPrivate ? 'Private' : trip.country} trip on ${format(date, 'MMM d')}${
-              canKeyboardMove || canKeyboardResize
-                ? '. Press M to move or R to resize.'
-                : ''
-            }`}
-            aria-keyshortcuts={
-              [canKeyboardMove && 'M', canKeyboardResize && 'R']
-                .filter(Boolean)
-                .join(' ') || undefined
-            }
-            title={tripTitle ?? undefined}
-            onPointerDown={startDrag}
-            onClick={handleTripClick}
-            onKeyDown={interactive ? handleTripKeyDown : undefined}
-            onContextMenu={(event) => openContextMenu(event, trip)}
-          >
-            <span
-              className={cn(
-                'max-w-full truncate px-1 text-[10px] font-semibold leading-none',
-                tripStyles?.text ?? (isToday ? 'text-blue-700' : 'text-slate-600')
-              )}
-            >
-              {cellContent}
-            </span>
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-4" align="center" side="top">
-          <TripPopover
-            tripDay={tripDay!}
-            onEditTrip={interactive ? onEditTrip : undefined}
-            onDeleteTrip={interactive ? onDeleteTrip : undefined}
-          />
-        </PopoverContent>
-      </Popover>
+      <button
+        className={cachedCellClass(
+          `trip-btn:${baseClsKey}:${tripStyleKey}:${keyboardMode !== 'idle' ? 1 : 0}`,
+          () => cn(
+            baseCls,
+            tripStyles && tripStyles.base,
+            tripStyles?.hover,
+            // Outer border for trip block definition
+            tripStyles && 'border-y-2',
+            tripStyles && tripStyles.border,
+            isTripStart && 'border-l-2 rounded-l-md',
+            isTripEnd && 'border-r-2 rounded-r-md',
+            keyboardMode !== 'idle' && 'ring-2 ring-inset ring-slate-900',
+            'cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-inset'
+          )
+        )}
+        style={{ width: dayWidth, height: GRID_ROW_HEIGHT }}
+        aria-label={`${trip.isPrivate ? 'Private' : trip.country} trip on ${format(date, 'MMM d')}${
+          canKeyboardMove || canKeyboardResize
+            ? '. Press M to move or R to resize.'
+            : ''
+        }`}
+        aria-keyshortcuts={
+          [canKeyboardMove && 'M', canKeyboardResize && 'R']
+            .filter(Boolean)
+            .join(' ') || undefined
+        }
+        aria-haspopup="dialog"
+        title={tripTitle ?? undefined}
+        onPointerDown={startDrag}
+        onClick={handleTripClick}
+        onKeyDown={interactive ? handleTripKeyDown : undefined}
+        onContextMenu={(event) => openContextMenu(event, trip)}
+      >
+        <span
+          className={cn(
+            'max-w-full truncate px-1 text-[10px] font-semibold leading-none',
+            tripStyles?.text ?? (isToday ? 'text-blue-700' : 'text-slate-600')
+          )}
+        >
+          {cellContent}
+        </span>
+      </button>
 
       {interactive && onResizeTrip && isTripStart && (
         <button

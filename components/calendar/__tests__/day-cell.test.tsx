@@ -35,7 +35,6 @@ function makeTripDay(overrides: Partial<ProcessedTripDay> = {}): ProcessedTripDa
 function renderCell(
   tripDay: ProcessedTripDay,
   options: {
-    isRowHovered?: boolean
     interactive?: boolean
     isTripStart?: boolean
     isTripEnd?: boolean
@@ -53,8 +52,12 @@ function renderCell(
       originalEntryDateKey: string
       originalExitDateKey: string
     }) => void
-    onEditTrip?: (trip: ProcessedTripDay['trip']) => void
-    onDeleteTrip?: (trip: ProcessedTripDay['trip']) => void
+    onOpenTripDetails?: (params: {
+      anchor: { x: number; y: number; width: number; height: number }
+      tripId: string
+      dateKey: string
+      sourceElement: HTMLElement | null
+    }) => void
     onMoveTrip?: (params: {
       tripId: string
       targetEmployeeId: string
@@ -81,7 +84,6 @@ function renderCell(
       dateKey="2026-03-10"
       dayWidth={32}
       colIndex={0}
-      isRowHovered={options.isRowHovered ?? false}
       isWeekend={false}
       isToday={false}
       isMonthStart={false}
@@ -91,8 +93,7 @@ function renderCell(
       isTripStart={options.isTripStart ?? true}
       isTripEnd={options.isTripEnd ?? false}
       interactive={options.interactive}
-      onEditTrip={options.onEditTrip}
-      onDeleteTrip={options.onDeleteTrip}
+      onOpenTripDetails={options.onOpenTripDetails}
       onResizeTrip={options.onResizeTrip}
       onShiftTripDates={options.onShiftTripDates}
       onMoveTrip={options.onMoveTrip}
@@ -111,7 +112,6 @@ describe('DayCell', () => {
         dateKey="2026-03-10"
         dayWidth={32}
         colIndex={0}
-        isRowHovered={false}
         isWeekend={false}
         isToday={false}
         isMonthStart={false}
@@ -137,7 +137,6 @@ describe('DayCell', () => {
         dateKey="2026-03-10"
         dayWidth={32}
         colIndex={0}
-        isRowHovered={false}
         isWeekend={false}
         isToday={false}
         isMonthStart={false}
@@ -156,6 +155,16 @@ describe('DayCell', () => {
     expect(onCreateTrip).toHaveBeenCalledWith('2026-03-10')
   })
 
+  it('uses a thicker outer border for trip cells', () => {
+    renderCell(makeTripDay(), { isTripStart: true, isTripEnd: true })
+
+    expect(screen.getByRole('button', { name: /FR trip on Mar 10/i })).toHaveClass(
+      'border-y-2',
+      'border-l-2',
+      'border-r-2'
+    )
+  })
+
   it('opens the empty-cell context menu from right click in interactive mode', () => {
     const onOpenContextMenu = vi.fn()
 
@@ -166,7 +175,6 @@ describe('DayCell', () => {
         dateKey="2026-03-10"
         dayWidth={32}
         colIndex={0}
-        isRowHovered={false}
         isWeekend={false}
         isToday={false}
         isMonthStart={false}
@@ -479,7 +487,6 @@ describe('DayCell', () => {
         dateKey="2026-03-10"
         dayWidth={32}
         colIndex={0}
-        isRowHovered={false}
         isWeekend={false}
         isToday={false}
         isMonthStart={false}
@@ -499,15 +506,16 @@ describe('DayCell', () => {
     expect(tripButton).toHaveClass('focus-visible:outline-none')
   })
 
-  it('shows the clicked day status for an amber trip day', () => {
-    renderCell(makeTripDay())
+  it('identifies the clicked trip and day for the shared popover', () => {
+    const onOpenTripDetails = vi.fn()
+    const tripDay = makeTripDay()
+
+    renderCell(tripDay, { onOpenTripDetails })
 
     fireEvent.click(screen.getByRole('button', { name: /FR trip on Mar 10/i }))
 
-    expect(screen.getByText('Status date:')).toBeInTheDocument()
-    expect(screen.getAllByText('Mar 10, 2026')).toHaveLength(2)
-    expect(screen.getByText('Warning')).toBeInTheDocument()
-    expect(screen.getByText('11')).toBeInTheDocument()
+    expect(onOpenTripDetails.mock.calls[0][0].tripId).toBe('trip-1')
+    expect(onOpenTripDetails.mock.calls[0][0].dateKey).toBe('2026-03-10')
   })
 
   it('opens the trip context menu from right click in interactive mode', () => {
@@ -532,37 +540,43 @@ describe('DayCell', () => {
     })
   })
 
-  it('opens the edit flow from the trip popover in interactive mode', () => {
-    const onEditTrip = vi.fn()
+  it('requests the shared trip-details popover when a trip cell is clicked', () => {
+    const onOpenTripDetails = vi.fn()
     const tripDay = makeTripDay()
 
     renderCell(tripDay, {
       interactive: true,
-      onEditTrip,
+      onOpenTripDetails,
     })
 
-    fireEvent.click(screen.getByRole('button', { name: /FR trip on Mar 10/i }))
-    fireEvent.click(screen.getByRole('button', { name: /edit trip/i }))
+    const trigger = screen.getByRole('button', { name: /FR trip on Mar 10/i })
+    fireEvent.click(trigger)
 
-    expect(onEditTrip).toHaveBeenCalledWith(tripDay.trip)
+    expect(onOpenTripDetails).toHaveBeenCalledTimes(1)
+    const request = onOpenTripDetails.mock.calls[0][0]
+    expect(request.tripId).toBe(tripDay.trip.id)
+    expect(request.dateKey).toBe('2026-03-10')
+    expect(request.sourceElement).toBe(trigger)
+    expect(request.anchor).toMatchObject({
+      x: expect.any(Number),
+      y: expect.any(Number),
+      width: expect.any(Number),
+      height: expect.any(Number),
+    })
   })
 
-  it('opens the delete flow from the trip popover in interactive mode', () => {
-    const onDeleteTrip = vi.fn()
+  it('opens trip details on click in read-only mode too', () => {
+    const onOpenTripDetails = vi.fn()
     const tripDay = makeTripDay()
 
-    renderCell(tripDay, {
-      interactive: true,
-      onDeleteTrip,
-    })
+    renderCell(tripDay, { onOpenTripDetails })
 
     fireEvent.click(screen.getByRole('button', { name: /FR trip on Mar 10/i }))
-    fireEvent.click(screen.getByRole('button', { name: /delete/i }))
 
-    expect(onDeleteTrip).toHaveBeenCalledWith(tripDay.trip)
+    expect(onOpenTripDetails).toHaveBeenCalledTimes(1)
   })
 
-  it('renders past trip days as neutral history with recap copy', () => {
+  it('renders past trip days as neutral history', () => {
     const tripDay = makeTripDay({
       referenceDate: new Date('2026-03-08T00:00:00.000Z'),
       displayMode: 'historical',
@@ -576,53 +590,13 @@ describe('DayCell', () => {
     const trigger = screen.getByRole('button', { name: /FR trip on Mar 8/i })
     expect(trigger).toHaveClass('bg-slate-200/75')
     expect(trigger).not.toHaveClass('bg-rose-100')
-
-    fireEvent.click(trigger)
-
-    expect(screen.getByText('Historical trip')).toBeInTheDocument()
-    expect(screen.getByText('Trip day:')).toBeInTheDocument()
-    expect(screen.queryByText('Status date:')).not.toBeInTheDocument()
-    expect(screen.queryByText('Current planning status')).not.toBeInTheDocument()
   })
 
-  it('shows a later red day in the same trip as critical', () => {
-    renderCell(
-      makeTripDay({
-        referenceDate: new Date('2026-03-12T00:00:00.000Z'),
-        daysUsed: 81,
-        daysRemaining: 9,
-        riskLevel: 'red',
-      })
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: /FR trip on Mar 12/i }))
-
-    expect(screen.getByText('Critical')).toBeInTheDocument()
-    expect(screen.getByText('9')).toBeInTheDocument()
-  })
-
-  it('labels true breach days as breach in the popover', () => {
-    renderCell(
-      makeTripDay({
-        referenceDate: new Date('2026-03-21T00:00:00.000Z'),
-        daysUsed: 90,
-        daysRemaining: 0,
-        riskLevel: 'red',
-        isBreachDay: true,
-      })
-    )
-
-    fireEvent.click(screen.getByRole('button', { name: /FR trip on Mar 21/i }))
-
-    expect(screen.getByText('Breach')).toBeInTheDocument()
-    expect(screen.getByText('0')).toBeInTheDocument()
-  })
-
-  it('applies row hover styling when the frozen employee column is hovered', () => {
-    renderCell(makeTripDay(), { isRowHovered: true })
+  it('styles row hover from the row group data attribute instead of props', () => {
+    renderCell(makeTripDay())
 
     expect(
       screen.getByRole('button', { name: /FR trip on Mar 10/i })
-    ).toHaveClass('ring-slate-200/80')
+    ).toHaveClass('group-data-[row-hovered=true]/calrow:ring-slate-200/80')
   })
 })

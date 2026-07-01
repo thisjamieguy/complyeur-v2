@@ -120,6 +120,26 @@ export interface CalendarCellContextMenuRequest {
   trip?: ProcessedTrip
 }
 
+/**
+ * Request to open the shared trip-details popover, anchored to a day cell.
+ * The grid renders a single popover instead of one Radix root per trip cell —
+ * mounting thousands of popover roots made row virtualization visibly janky.
+ * Carries the cell identity (not a data snapshot) so the popover always
+ * renders live trip data, even across an optimistic update or refresh.
+ */
+export interface CalendarCellTripDetailsRequest {
+  anchor: { x: number; y: number; width: number; height: number }
+  tripId: string
+  dateKey: string
+  /** Focus is returned here when the popover closes (keyboard support). */
+  sourceElement: HTMLElement | null
+}
+
+export interface CalendarTripDetailsRequest extends CalendarCellTripDetailsRequest {
+  employeeId: string
+  employeeName: string
+}
+
 export interface CalendarEmployeeContextMenuRequest
   extends CalendarCellContextMenuRequest {
   employeeId: string
