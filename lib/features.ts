@@ -2,7 +2,24 @@ export function isSavedJobsEnabled(): boolean {
   return process.env.FEATURE_SAVED_JOBS === 'true'
 }
 
-export function isInteractiveCalendarEnabled(): boolean {
+function isEmailAllowlisted(email: string | null | undefined, allowlist: string | undefined): boolean {
+  if (!email || !allowlist) return false
+
+  const normalizedEmail = email.trim().toLowerCase()
+  if (!normalizedEmail) return false
+
+  return allowlist
+    .split(/[,\s;]+/)
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(normalizedEmail)
+}
+
+export function isInteractiveCalendarEnabled(userEmail?: string | null): boolean {
+  if (isEmailAllowlisted(userEmail, process.env.INTERACTIVE_CALENDAR_ALLOWED_EMAILS)) {
+    return true
+  }
+
   const configured = process.env.ENABLE_INTERACTIVE_CALENDAR
   if (configured !== undefined) {
     return configured === 'true'

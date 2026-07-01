@@ -73,7 +73,7 @@ export default async function CalendarPage() {
     redirect('/dashboard?upgrade=calendar')
   }
 
-  const interactive = isInteractiveCalendarEnabled()
+  const interactive = isInteractiveCalendarEnabled(user.email)
   const calendarLoadMode = settings?.calendar_load_mode ?? 'all_employees'
   const hideEmployeesWithoutSchengenTrips = parseHideNoSchengenCookie(
     cookieStore.get(CALENDAR_HIDE_NO_SCHENGEN_COOKIE)?.value
