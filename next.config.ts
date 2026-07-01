@@ -73,7 +73,16 @@ function getAllowedDevOrigins(): string[] | undefined {
     .filter((entry) => entry.family === 'IPv4' && !entry.internal)
     .map((entry) => entry.address)
 
-  const origins = Array.from(new Set([...configuredOrigins, ...localNetworkOrigins]))
+  // Always trust loopback. Once `allowedDevOrigins` is set to any value (e.g. the
+  // machine's LAN IPs above), Next.js stops implicitly trusting `127.0.0.1` and
+  // `::1` — only `localhost` stays trusted — so opening the dev server via the
+  // IP form rejects the HMR websocket and the app never hydrates (blank client
+  // components). Keeping loopback here means localhost AND 127.0.0.1 both work.
+  const loopbackOrigins = ['localhost', '127.0.0.1', '::1']
+
+  const origins = Array.from(
+    new Set([...loopbackOrigins, ...configuredOrigins, ...localNetworkOrigins])
+  )
   return origins.length > 0 ? origins : undefined
 }
 
