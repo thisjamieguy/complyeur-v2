@@ -156,6 +156,16 @@ describe('DayCell', () => {
     expect(onCreateTrip).toHaveBeenCalledWith('2026-03-10')
   })
 
+  it('uses a thicker outer border for trip cells', () => {
+    renderCell(makeTripDay(), { isTripStart: true, isTripEnd: true })
+
+    expect(screen.getByRole('button', { name: /FR trip on Mar 10/i })).toHaveClass(
+      'border-y-2',
+      'border-l-2',
+      'border-r-2'
+    )
+  })
+
   it('opens the empty-cell context menu from right click in interactive mode', () => {
     const onOpenContextMenu = vi.fn()
 
