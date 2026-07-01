@@ -93,6 +93,8 @@ interface LocalRateLimitEntry {
 
 const localRateLimitStore = new Map<string, LocalRateLimitEntry>()
 let localFallbackNoticeLogged = false
+let useDevelopmentLocalFallback = false
+let developmentFallbackNoticeLogged = false
 
 function isLocalSupabaseTarget(): boolean {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -148,7 +150,7 @@ function runLocalRateLimit(identifier: string, type: RateLimitType): RateLimitRe
  *
  * FAIL-CLOSED BEHAVIOR:
  * - Production: If rate limiter is unavailable, requests are REJECTED (503)
- * - Development/Test: If rate limiter is unavailable, requests are ALLOWED (for local dev)
+ * - Development/Test: If rate limiter is unavailable, requests use the local fallback
  *
  * This ensures SOC 2 CC6/A1 compliance by preventing unthrottled access in production.
  */
@@ -161,7 +163,7 @@ export async function rateLimit(
 
   // FAIL-CLOSED in production: Reject requests if rate limiter is unavailable
   // Development/Test fallback: enforce in-memory local rate limits
-  if (!redis) {
+  if (!redis || (!isProduction && useDevelopmentLocalFallback)) {
     if (isProduction) {
       console.error(
         '[RateLimit] CRITICAL: Upstash Redis not configured in production. ' +
@@ -176,7 +178,7 @@ export async function rateLimit(
         limiterUnavailable: true,
       }
     } else {
-      if (!localFallbackNoticeLogged) {
+      if (!redis && !localFallbackNoticeLogged) {
         console.warn(
           '[RateLimit] Upstash not configured. Using in-memory local rate limiting fallback for development/test.'
         )
@@ -238,19 +240,17 @@ export async function rateLimit(
       }
     }
 
-    // FAIL-OPEN in development/test so local auth and API flows remain usable
-    console.warn(
-      '[RateLimit] Upstash rate limit check failed in development. ' +
-      'Allowing request (dev mode).',
-      errorMessage
-    )
-    return {
-      success: true,
-      limit: 60,
-      remaining: 60,
-      reset: Date.now() + 60000,
-      limiterUnavailable: false,
+    // Development/Test fallback: stop retrying a bad remote limiter in this process.
+    useDevelopmentLocalFallback = true
+    if (!developmentFallbackNoticeLogged) {
+      console.warn(
+        '[RateLimit] Upstash rate limit check failed in development. ' +
+        'Using in-memory local rate limiting fallback for this dev server process.',
+        errorMessage
+      )
+      developmentFallbackNoticeLogged = true
     }
+    return runLocalRateLimit(identifier, type)
   }
 }
 

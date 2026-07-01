@@ -4,8 +4,9 @@
 
 import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { GanttChart } from '../gantt-chart'
+import { GanttChart, observeCalendarElementRect } from '../gantt-chart'
 import type { ProcessedEmployee, ProcessedTrip } from '../types'
+import type { Virtualizer } from '@tanstack/react-virtual'
 
 vi.mock('@tanstack/react-virtual', () => ({
   useVirtualizer: ({ count }: { count: number }) => ({
@@ -83,6 +84,51 @@ describe('GanttChart context menu', () => {
     expect(screen.getByText('Alice Morgan')).toBeInTheDocument()
     expect(screen.queryByText('62/90')).not.toBeInTheDocument()
     expect(screen.getByText('Alice Morgan')).toHaveClass('text-[15px]')
+  })
+
+  it('keeps measuring the viewport when ResizeObserver is unavailable', () => {
+    const element = document.createElement('div')
+    let offsetWidth = 320
+    let offsetHeight = 0
+    const animationFrames: FrameRequestCallback[] = []
+    const fakeWindow = {
+      ResizeObserver: undefined,
+      requestAnimationFrame: vi.fn((callback: FrameRequestCallback) => {
+        animationFrames.push(callback)
+        return animationFrames.length
+      }),
+      cancelAnimationFrame: vi.fn(),
+      setInterval: vi.fn(() => 1),
+      clearInterval: vi.fn(),
+    } as unknown as Window & typeof globalThis
+    const instance = {
+      scrollElement: element,
+      targetWindow: fakeWindow,
+    } as unknown as Virtualizer<HTMLDivElement, Element>
+    const onRect = vi.fn()
+
+    Object.defineProperty(element, 'offsetWidth', {
+      configurable: true,
+      get: () => offsetWidth,
+    })
+    Object.defineProperty(element, 'offsetHeight', {
+      configurable: true,
+      get: () => offsetHeight,
+    })
+
+    const cleanup = observeCalendarElementRect(instance, onRect)
+    expect(onRect).toHaveBeenLastCalledWith({ width: 320, height: 0 })
+
+    offsetWidth = 640
+    offsetHeight = 240
+    animationFrames[0]?.(0)
+
+    expect(onRect).toHaveBeenLastCalledWith({ width: 640, height: 240 })
+    expect(fakeWindow.setInterval).toHaveBeenCalled()
+
+    cleanup?.()
+    expect(fakeWindow.cancelAnimationFrame).toHaveBeenCalled()
+    expect(fakeWindow.clearInterval).toHaveBeenCalledWith(1)
   })
 
   it('keeps frozen employee names aligned when the timeline scrolls vertically', () => {

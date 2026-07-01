@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const ORIGINAL_ENV = { ...process.env }
 
 function mockUpstashLimitFailure() {
+  const limitMock = vi.fn(async () => {
+    throw new Error('WRONGPASS invalid username-password pair or user is disabled')
+  })
+
   class MockRedis {
     constructor(_options: unknown) {}
   }
@@ -10,9 +14,7 @@ function mockUpstashLimitFailure() {
   class MockRatelimit {
     static slidingWindow = vi.fn(() => ({}))
     constructor(_options: unknown) {}
-    limit = vi.fn(async () => {
-      throw new Error('WRONGPASS invalid username-password pair or user is disabled')
-    })
+    limit = limitMock
   }
 
   vi.doMock('@upstash/redis', () => ({
@@ -22,6 +24,8 @@ function mockUpstashLimitFailure() {
   vi.doMock('@upstash/ratelimit', () => ({
     Ratelimit: MockRatelimit,
   }))
+
+  return { limitMock }
 }
 
 describe('rateLimit fallback behavior', () => {
@@ -34,8 +38,8 @@ describe('rateLimit fallback behavior', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-    vi.unmock('@upstash/redis')
-    vi.unmock('@upstash/ratelimit')
+    vi.doUnmock('@upstash/redis')
+    vi.doUnmock('@upstash/ratelimit')
     process.env = { ...ORIGINAL_ENV }
   })
 
@@ -50,8 +54,29 @@ describe('rateLimit fallback behavior', () => {
 
     expect(result.success).toBe(true)
     expect(result.limiterUnavailable).toBe(false)
+    expect(result.limit).toBe(10)
     expect(warnSpy).toHaveBeenCalled()
     expect(errorSpy).not.toHaveBeenCalled()
+  })
+
+  it('uses local fallback after the first development Upstash failure', async () => {
+    process.env.NODE_ENV = 'development'
+    const { limitMock } = mockUpstashLimitFailure()
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const { rateLimit } = await import('@/lib/rate-limit')
+
+    await expect(rateLimit('127.0.0.1', 'auth')).resolves.toMatchObject({
+      success: true,
+      limit: 10,
+    })
+    await expect(rateLimit('127.0.0.1', 'auth')).resolves.toMatchObject({
+      success: true,
+      limit: 10,
+    })
+
+    expect(limitMock).toHaveBeenCalledTimes(1)
+    expect(warnSpy).toHaveBeenCalledTimes(1)
   })
 
   it('fails closed in production when Upstash limit check throws', async () => {

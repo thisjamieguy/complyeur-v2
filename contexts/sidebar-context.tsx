@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 
 interface SidebarContextValue {
   /** Desktop sidebar collapsed/expanded state */
@@ -18,6 +18,7 @@ interface SidebarContextValue {
 }
 
 const SidebarContext = createContext<SidebarContextValue | null>(null)
+const SIDEBAR_STORAGE_KEY = 'complyeur.sidebar.open'
 
 interface SidebarProviderProps {
   children: ReactNode
@@ -29,8 +30,29 @@ export function SidebarProvider({ children, defaultOpen = true }: SidebarProvide
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
+  useEffect(() => {
+    try {
+      const storedOpen = window.localStorage.getItem(SIDEBAR_STORAGE_KEY)
+      if (storedOpen !== null) {
+        setIsOpen(storedOpen === 'true')
+      }
+    } catch {
+      // Ignore storage failures; the sidebar still works for the current session.
+    }
+  }, [])
+
   const toggle = useCallback(() => {
-    setIsOpen((prev) => !prev)
+    setIsOpen((prev) => {
+      const next = !prev
+
+      try {
+        window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next))
+      } catch {
+        // Ignore storage failures; the in-memory state has already changed.
+      }
+
+      return next
+    })
   }, [])
 
   const toggleMobile = useCallback(() => {

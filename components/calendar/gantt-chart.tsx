@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useMemo, useRef, useEffect, useState } from 'react'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useVirtualizer, type Rect, type Virtualizer } from '@tanstack/react-virtual'
 import { format, isToday, isWeekend } from 'date-fns'
 import {
   Briefcase,
@@ -76,6 +76,75 @@ const FAST_SCROLL_VELOCITY_THRESHOLD = 1.1
 
 /** Emit scroll metrics in smaller batches so short-but-real scroll sessions are captured. */
 const SCROLL_METRIC_BATCH_SIZE = 10
+const FALLBACK_RECT_CHECK_FRAMES = 20
+const FALLBACK_RECT_CHECK_INTERVAL_MS = 500
+
+function getElementRect(element: HTMLElement): Rect {
+  return {
+    width: element.offsetWidth,
+    height: element.offsetHeight,
+  }
+}
+
+export function observeCalendarElementRect(
+  instance: Virtualizer<HTMLDivElement, Element>,
+  cb: (rect: Rect) => void
+): (() => void) | undefined {
+  const element = instance.scrollElement
+  const targetWindow = instance.targetWindow
+
+  if (!element || !targetWindow) return
+
+  let lastRect: Rect | null = null
+
+  const notifyIfChanged = () => {
+    const rect = getElementRect(element)
+    if (lastRect?.width === rect.width && lastRect.height === rect.height) {
+      return
+    }
+
+    lastRect = rect
+    cb(rect)
+  }
+
+  notifyIfChanged()
+
+  if (targetWindow.ResizeObserver) {
+    const observer = new targetWindow.ResizeObserver(() => notifyIfChanged())
+    observer.observe(element, { box: 'border-box' })
+    const frameId = targetWindow.requestAnimationFrame(notifyIfChanged)
+
+    return () => {
+      targetWindow.cancelAnimationFrame(frameId)
+      observer.unobserve(element)
+    }
+  }
+
+  let frameCount = 0
+  let frameId: number | null = null
+
+  const checkNextFrame = () => {
+    notifyIfChanged()
+    frameCount += 1
+
+    if (frameCount < FALLBACK_RECT_CHECK_FRAMES) {
+      frameId = targetWindow.requestAnimationFrame(checkNextFrame)
+    }
+  }
+
+  frameId = targetWindow.requestAnimationFrame(checkNextFrame)
+  const intervalId = targetWindow.setInterval(
+    notifyIfChanged,
+    FALLBACK_RECT_CHECK_INTERVAL_MS
+  )
+
+  return () => {
+    if (frameId !== null) {
+      targetWindow.cancelAnimationFrame(frameId)
+    }
+    targetWindow.clearInterval(intervalId)
+  }
+}
 
 const employeeRiskStyles: Record<
   ProcessedEmployee['currentRiskLevel'],
@@ -364,11 +433,12 @@ export const GanttChart = memo(function GanttChart({
 
   // Set up virtualizer for employee rows — fixed height, no per-row calculation
   // eslint-disable-next-line react-hooks/incompatible-library
-  const virtualizer = useVirtualizer({
+  const virtualizer = useVirtualizer<HTMLDivElement, Element>({
     count: employees.length,
     getScrollElement: () => timelineScrollRef.current,
     estimateSize: () => GRID_ROW_HEIGHT,
     overscan,
+    observeElementRect: observeCalendarElementRect,
   })
 
   // Sync vertical scroll from timeline to names column.

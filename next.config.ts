@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import bundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
+import { networkInterfaces } from "node:os";
 import { hasSentryBuildConfiguration } from "./lib/monitoring/sentry";
 import { shouldEnforceHttps } from "./lib/security/transport-security";
 
@@ -48,8 +49,39 @@ const baseSecurityHeaders = [
   },
 ]
 
+function normalizeDevOrigin(origin: string): string | null {
+  const trimmed = origin.trim()
+  if (!trimmed) return null
+
+  try {
+    return new URL(trimmed).hostname
+  } catch {
+    return trimmed.split('/')[0]?.split(':')[0] ?? null
+  }
+}
+
+function getAllowedDevOrigins(): string[] | undefined {
+  if (process.env.NODE_ENV !== 'development') return undefined
+
+  const configuredOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS ?? '')
+    .split(',')
+    .map(normalizeDevOrigin)
+    .filter((origin): origin is string => Boolean(origin))
+
+  const localNetworkOrigins = Object.values(networkInterfaces())
+    .flatMap((entries) => entries ?? [])
+    .filter((entry) => entry.family === 'IPv4' && !entry.internal)
+    .map((entry) => entry.address)
+
+  const origins = Array.from(new Set([...configuredOrigins, ...localNetworkOrigins]))
+  return origins.length > 0 ? origins : undefined
+}
+
+const allowedDevOrigins = getAllowedDevOrigins()
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  ...(allowedDevOrigins ? { allowedDevOrigins } : {}),
 
   // Fix turbopack workspace root detection
   turbopack: {
