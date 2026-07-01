@@ -2,6 +2,10 @@ export function isSavedJobsEnabled(): boolean {
   return process.env.FEATURE_SAVED_JOBS === 'true'
 }
 
+interface InteractiveCalendarOptions {
+  globalEnabled?: boolean
+}
+
 function isEmailAllowlisted(email: string | null | undefined, allowlist: string | undefined): boolean {
   if (!email || !allowlist) return false
 
@@ -15,9 +19,20 @@ function isEmailAllowlisted(email: string | null | undefined, allowlist: string 
     .includes(normalizedEmail)
 }
 
-export function isInteractiveCalendarEnabled(userEmail?: string | null): boolean {
+export function isInteractiveCalendarEnabled(
+  userEmail?: string | null,
+  options: InteractiveCalendarOptions = {}
+): boolean {
+  if (options.globalEnabled === true) {
+    return true
+  }
+
   if (isEmailAllowlisted(userEmail, process.env.INTERACTIVE_CALENDAR_ALLOWED_EMAILS)) {
     return true
+  }
+
+  if (options.globalEnabled === false) {
+    return false
   }
 
   const configured = process.env.ENABLE_INTERACTIVE_CALENDAR

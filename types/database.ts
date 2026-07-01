@@ -142,6 +142,41 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value_boolean: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value_boolean?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value_boolean?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           acknowledged: boolean | null

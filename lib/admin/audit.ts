@@ -82,6 +82,9 @@ export const ADMIN_ACTIONS = {
   TIER_DELETED: 'tier.deleted',
   /** @deprecated Use TIER_ARCHIVED — retained for older audit rows */
   TIER_DEACTIVATED: 'tier.deactivated',
+
+  // App settings
+  APP_SETTING_UPDATED: 'app_setting.updated',
 } as const
 
 export type AdminAction = typeof ADMIN_ACTIONS[keyof typeof ADMIN_ACTIONS]

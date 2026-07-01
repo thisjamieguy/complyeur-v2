@@ -77,10 +77,11 @@ INTERACTIVE_CALENDAR_ALLOWED_EMAILS
 `FEATURE_SAVED_JOBS` defaults to disabled unless set to `true`. Keep it unset
 or set it to `false` for private beta.
 
-`ENABLE_INTERACTIVE_CALENDAR=true` enables editing for every company with the
-calendar entitlement. For account-limited production access, keep it unset or
-`false` and set `INTERACTIVE_CALENDAR_ALLOWED_EMAILS` to a comma-separated list
-of approved user emails.
+`ENABLE_INTERACTIVE_CALENDAR` is a legacy fallback before the admin-managed
+runtime setting exists. Use `/admin/settings` for normal global interactive
+calendar changes. For account-limited production access, keep the global setting
+off and set `INTERACTIVE_CALENDAR_ALLOWED_EMAILS` to a comma-separated list of
+approved user emails.
 
 ---
 

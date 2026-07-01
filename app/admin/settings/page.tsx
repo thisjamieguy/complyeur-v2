@@ -1,13 +1,26 @@
 import { requireSuperAdmin } from '@/lib/admin/auth'
+import { getInteractiveCalendarGlobalSetting } from '@/lib/app-settings'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, Shield, Database, Key } from 'lucide-react'
+import { InteractiveCalendarSettingsCard } from '@/components/admin/interactive-calendar-settings-card'
 
 export const dynamic = 'force-dynamic'
+
+function parseAllowedEmails(value: string | undefined): string[] {
+  return (value ?? '')
+    .split(/[,\s;]+/)
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean)
+}
 
 export default async function AdminSettingsPage() {
   const { user, profile } = await requireSuperAdmin()
   const hasAdminSupabaseKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const interactiveCalendarEnabled = (await getInteractiveCalendarGlobalSetting()) ?? false
+  const interactiveCalendarAllowedEmails = parseAllowedEmails(
+    process.env.INTERACTIVE_CALENDAR_ALLOWED_EMAILS
+  )
 
   return (
     <div className="space-y-6">
@@ -51,6 +64,11 @@ export default async function AdminSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <InteractiveCalendarSettingsCard
+        initialEnabled={interactiveCalendarEnabled}
+        allowedEmails={interactiveCalendarAllowedEmails}
+      />
 
       {/* Security Notice */}
       <Card className="border-amber-200 bg-amber-50">

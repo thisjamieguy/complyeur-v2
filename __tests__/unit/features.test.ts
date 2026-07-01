@@ -60,6 +60,24 @@ describe('feature flags', () => {
     expect(isInteractiveCalendarEnabled('someone@example.com')).toBe(true)
   })
 
+  it('uses the admin-managed global interactive calendar setting when provided', () => {
+    process.env.NODE_ENV = 'production'
+    process.env.ENABLE_INTERACTIVE_CALENDAR = 'true'
+    delete process.env.INTERACTIVE_CALENDAR_ALLOWED_EMAILS
+
+    expect(
+      isInteractiveCalendarEnabled('someone@example.com', {
+        globalEnabled: false,
+      })
+    ).toBe(false)
+
+    expect(
+      isInteractiveCalendarEnabled('someone@example.com', {
+        globalEnabled: true,
+      })
+    ).toBe(true)
+  })
+
   it('enables the interactive calendar for allowlisted account emails', () => {
     process.env.NODE_ENV = 'production'
     process.env.ENABLE_INTERACTIVE_CALENDAR = 'false'

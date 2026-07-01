@@ -122,6 +122,18 @@ export interface AdminDatabase {
         }
         Update: never
       }
+      app_settings: {
+        Row: {
+          key: string
+          value_boolean: boolean | null
+          description: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<AdminDatabase['public']['Tables']['app_settings']['Row']> & { key: string }
+        Update: Partial<AdminDatabase['public']['Tables']['app_settings']['Row']>
+      }
     }
   }
 }

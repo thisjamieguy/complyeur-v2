@@ -12,6 +12,7 @@ import {
   parseHideNoSchengenCookie,
 } from '@/lib/calendar/filter-preferences'
 import { isInteractiveCalendarEnabled } from '@/lib/features'
+import { getInteractiveCalendarGlobalSetting } from '@/lib/app-settings'
 import type { CalendarLoadMode } from '@/lib/types/settings'
 
 export const dynamic = 'force-dynamic'
@@ -64,16 +65,19 @@ export default async function CalendarPage() {
   }
 
   // Entitlement, settings, and cookies are independent — fetch concurrently.
-  const [hasCalendar, settings, cookieStore] = await Promise.all([
+  const [hasCalendar, settings, cookieStore, globalInteractiveCalendarEnabled] = await Promise.all([
     checkEntitlement('can_calendar'),
     getCompanySettings(),
     cookies(),
+    getInteractiveCalendarGlobalSetting(),
   ])
   if (!hasCalendar) {
     redirect('/dashboard?upgrade=calendar')
   }
 
-  const interactive = isInteractiveCalendarEnabled(user.email)
+  const interactive = isInteractiveCalendarEnabled(user.email, {
+    globalEnabled: globalInteractiveCalendarEnabled,
+  })
   const calendarLoadMode = settings?.calendar_load_mode ?? 'all_employees'
   const hideEmployeesWithoutSchengenTrips = parseHideNoSchengenCookie(
     cookieStore.get(CALENDAR_HIDE_NO_SCHENGEN_COOKIE)?.value
